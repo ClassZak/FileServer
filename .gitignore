@@ -1,0 +1,7 @@
+desktop.ini
+.password.json
+.vscode/
+__pycache__/
+.venv/
+tempCodeRunnerFile.py
+*.log
