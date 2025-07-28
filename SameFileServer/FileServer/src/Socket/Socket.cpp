@@ -10,21 +10,38 @@ void Socket::Close()
 
 void Socket::CloseClientSocket()
 {
-#ifdef __unix__
-	if (m_clientSockedFd > 0)
-		close(m_clientSockedFd);
-	m_clientSockedFd = -1;
+#ifdef _WIN32
+	if (m_clientSocket != INVALID_SOCKET)
+	{
+		closesocket(m_clientSocket);
+		m_clientSocket = INVALID_SOCKET;
+	}
+#elifdef __unix__
+	if (m_clientSocketFd > 0)
+	{
+		close(m_clientSocketFd);
+		m_clientSocketFd = -1;
+	}
 #endif
 }
 
 void Socket::CloseServerSocket()
 {
-#ifdef __unix__
-	if (m_sockedFd > 0)
-		close(m_sockedFd);
-	m_sockedFd = -1;
+#ifdef _WIN32
+	if (m_socket != INVALID_SOCKET)
+	{
+		closesocket(m_socket);
+		m_socket = INVALID_SOCKET;
+	}
+#elifdef __unix__
+	if (m_socketFd > 0)
+	{
+		close(m_socketFd);
+		m_socketFd = -1;
+	}
 #endif
 }
+
 
 void Socket::BindNewConnection(int domainType, ConnectionType connectionType, int port)
 {
@@ -37,6 +54,7 @@ void Socket::BindNewConnection(int domainType, ConnectionType connectionType, in
 	Bind();
 }
 
+
 void Socket::Bind()
 {
 	if (m_domainType == -1)
@@ -48,45 +66,79 @@ void Socket::Bind()
 		m_connectionType == ConnectionType::TCP ? SOCK_STREAM :
 		(m_connectionType == ConnectionType::UDP ? SOCK_DGRAM : SOCK_RAW);
 
-	if ((m_sockedFd = socket(m_domainType, connectType, 0)) < 0)
+#ifdef _WIN32	
+	if ((m_socket = socket(m_domainType, connectType, 0)) == INVALID_SOCKET)
+#elifdef __unix__
+	if ((m_socketFd = socket(m_domainType, connectType, 0)) < 0)
+#endif
 		throw std::runtime_error("Socket creation failed");
 
-	m_addr.sin_family = m_domainType;
-	m_addr.sin_port = htons(m_port);
-	m_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-	if (bind(m_sockedFd, (struct sockaddr*)&m_addr, sizeof(m_addr)) < 0)
+#ifdef _WIN32
+	memset(&m_addr, 0, sizeof(m_addr));
+#elifdef __unix__
+#endif
+	m_addr.sin_family = m_domainType;
+	m_addr.sin_addr.s_addr = 
+#ifdef _WIN32
+	inet_addr("0.0.0.0");
+#elifdef __unix__
+	htonl(INADDR_ANY);
+#endif
+	m_addr.sin_port = htons(m_port);
+
+
+#ifdef _WIN32
+	if (bind(m_socket, (struct sockaddr*)&m_addr, sizeof(m_addr)) == SOCKET_ERROR)
+#elifdef __unix__
+	if (bind(m_socketFd, (struct sockaddr*)&m_addr, sizeof(m_addr)) < 0)
+#endif
 		throw std::runtime_error("Socket binding failed");
 
 	// Если прочитали меньше, чем BUFFER_SIZE, значит, данных больше нет
-	listen(m_sockedFd, 1);
+	listen(m_socket, 2);
 }
+
 
 int Socket::Listen(const struct timeval& timeout, bool crash_by_timeout)
 {
-	unsigned int client_add_size = sizeof(m_clientAddr);
-	if (m_clientSockedFd != -1)
-		CloseClientSocket();
-#ifdef __unix__
-	m_clientSockedFd = accept(m_sockedFd, (struct sockaddr*)&m_clientAddr, &client_add_size);
+	int client_addr_size = sizeof(m_clientAddr);
+#ifdef _WIN32
+	if (m_clientSocket != INVALID_SOCKET)
+#elifdef __unix__
+	if (m_clientSocketFd != -1)
 #endif
-	if (m_clientSockedFd < 0)
-		return EXIT_FAILURE;
+		CloseClientSocket();
 
-	if (setsockopt(m_clientSockedFd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout)) < 0)
+	if ((m_clientSocket = accept(m_socket, (struct sockaddr*)&m_clientAddr, &client_addr_size)) < 0)
+		return WSAGetLastError();
+	
+	
+#ifdef _WIN32
+	DWORD timeout_ms = timeout.tv_sec * 1000;
+	if (setsockopt(m_clientSocket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout_ms, sizeof(timeout_ms)) == SOCKET_ERROR)
+	{
+		perror("Set socket waiting limit options failed");
+		return WSAGetLastError();
+	}
+#elifdef __unix__
+	if (setsockopt(m_clientSocketFd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout)) < 0)
 	{
 		perror("Set socket waiting limit options failed");
 		return EXIT_FAILURE;
 	}
-
+#endif
+	
+	
 	std::stringstream received_data;
 	Socket::AllocateBufferMemory();
+	
 
+	static int client_length = sizeof(m_clientAddr);
+	int bytes_read;
 	while (true)
 	{
-		int bytes_read = recv(m_clientSockedFd, m_buffer, BUFFER_SIZE, 0);
-
-		if (bytes_read < 0)
+		if ((bytes_read = recv(m_clientSocket, m_buffer, BUFFER_SIZE, 0)) < 0)
 		{
 			if (errno == EAGAIN || errno == EWOULDBLOCK)
 			{
@@ -121,13 +173,20 @@ int Socket::Listen(const struct timeval& timeout, bool crash_by_timeout)
 	return EXIT_SUCCESS;
 }
 
+
 int Socket::SendAnswer(const std::string& answer)
 {
-	if (m_clientSockedFd != -1)
-		try
+#ifdef _WIN32
+	if (m_clientSocket == INVALID_SOCKET)
+#elifdef __unix__
+	if (m_clientSocket == -1)
+#endif
+		return -1;
+
+	try
 	{
 		if (answer.size() < BUFFER_SIZE)
-			return send(m_clientSockedFd, answer.c_str(), std::min(answer.size(), (std::size_t)BUFFER_SIZE), 0);
+			return send(m_clientSocket, answer.c_str(), std::min(answer.size(), (std::size_t)BUFFER_SIZE), 0);
 		else
 		{
 			long long bytes_sent = 0;
@@ -139,13 +198,13 @@ int Socket::SendAnswer(const std::string& answer)
 #ifdef __unix__
 					send
 					(
-						m_clientSockedFd,
+						m_clientSocketFd,
 						curr_str.c_str(),
 						std::min(curr_str.size(), (std::size_t)BUFFER_SIZE),
 						MSG_NOSIGNAL
 					);
 #elifdef _WIN32
-					send(m_clientSockedFd, curr_str.c_str(), std::min(curr_str.size(), (std::size_t)BUFFER_SIZE), 0);
+					send(m_clientSocket, curr_str.c_str(), std::min(curr_str.size(), (std::size_t)BUFFER_SIZE), 0);
 #endif
 			}
 			return bytes_sent;
@@ -155,8 +214,6 @@ int Socket::SendAnswer(const std::string& answer)
 	{
 		CloseClientSocket();
 	}
-	else
-		return -1;
 }
 
 void Socket::ClearBuffer()

@@ -1,6 +1,6 @@
 #pragma once
 #ifdef _WIN32
-#define PLATFORM_WINDOWS 1
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define NOMINMAX
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -9,7 +9,6 @@
 #endif // _WIN32
 
 #ifdef __unix__
-#define PLATFORM_LINUX 1
 #include <sys/socket.h>
 #include <unistd.h>
 #include <netinet/in.h>
@@ -50,7 +49,7 @@ static inline void print_color(int color)
 
 
 #pragma region Сокеты
-#ifdef PLATFORM_WINDOWS
+#ifdef _WIN32
 static WSADATA WsaData;
 static inline int InitWSA()
 {
@@ -60,7 +59,7 @@ static inline int ClearWSA()
 {
 	return WSACleanup();
 }
-#elifdef PLATFORM_LINUX
+#elifdef __unix__
 
 #endif
 #pragma endregion

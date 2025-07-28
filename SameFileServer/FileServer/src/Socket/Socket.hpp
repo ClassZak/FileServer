@@ -20,6 +20,7 @@
 #include <sstream>
 
 #include "../ConnectionType/ConnectionType.hpp"
+#include "../Functions/Functions.hpp"
 
 
 #define TIMEOUT_FAILURE 2
@@ -31,8 +32,15 @@ class Socket
 	sockaddr_in m_clientAddr{};
 	char* m_buffer{};
 	int m_domainType = -1;
-	int m_sockedFd = -1;
-	int m_clientSockedFd = -1;
+#ifdef _WIN32
+	SOCKET m_socket=INVALID_SOCKET;
+	SOCKET m_clientSocket=INVALID_SOCKET;
+#elifdef __unix__
+	int m_socketFd = -1;
+	int m_clientSocketFd = -1;
+#define m_socket m_socketFd
+#define m_clientSocket m_clientSocketFd
+#endif
 	int m_port = -1;
 
 	ConnectionType m_connectionType = ConnectionType::None;
@@ -57,7 +65,7 @@ public:
 	void CloseClientSocket();
 	void CloseServerSocket();
 	void BindNewConnection(int domainType, ConnectionType connectionType, int port);
-	int Listen(const struct timeval& timeout = { 10,0 }, bool crash_by_timeout = false);
+	int Listen(const struct timeval& timeout = { 100,0 }, bool crash_by_timeout = false);
 	int SendAnswer(const std::string& answer);
 	void ClearBuffer();
 	void AllocateBufferMemory();
