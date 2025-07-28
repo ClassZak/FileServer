@@ -27,7 +27,7 @@ int main(int argc, char** argv)
 	Socket socket(AF_INET, ConnectionType::TCP, 1000);
 	int res = socket.Listen();
 	if(!res)
-		std::print("{}\n",socket.GetBufferedString());
+		std::println("{}",socket.GetBufferedString());
 
 
 	Socket::CleanTheWSA();

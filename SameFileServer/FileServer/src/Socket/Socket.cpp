@@ -110,9 +110,14 @@ int Socket::Listen(const struct timeval& timeout, bool crash_by_timeout)
 #endif
 		CloseClientSocket();
 
+
 	if ((m_clientSocket = accept(m_socket, (struct sockaddr*)&m_clientAddr, &client_addr_size)) < 0)
+#ifdef _WIN32
 		return WSAGetLastError();
-	
+#elifdef __unix__
+		return EXIT_FAILURE;
+#endif
+
 	
 #ifdef _WIN32
 	DWORD timeout_ms = timeout.tv_sec * 1000;
@@ -153,7 +158,11 @@ int Socket::Listen(const struct timeval& timeout, bool crash_by_timeout)
 			else
 			{
 				perror("Receiving failed");
+#ifdef _WIN32
+				return WSAGetLastError();
+#elifdef __unix__
 				return EXIT_FAILURE;
+#endif
 			}
 		}
 		else if (bytes_read == 0)
