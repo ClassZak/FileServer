@@ -78,16 +78,30 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
-      <AdditionalIncludeDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\include;F:\Windows Kits\10\Include\json</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>mysqlcppconn.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libcrypto.lib;libssl.lib;mysqlcppconn-static.lib;mysqlcppconn.lib;mysqlcppconnx-static.lib;mysqlcppconnx.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Y "C:\mysql-connector-c++\lib64\vs14\mysqlcppconn.dll" "$(OutDir)"</Command>
+      <Command>xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\libcrypto.lib" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\libssl.lib" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\mysqlcppconn.lib" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\mysqlcppconn-static.lib" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\mysqlcppconnx.lib" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\mysqlcppconnx-static.lib" "$(OutDir)" &amp;
+
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\libcrypto-3-x64.dll" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\libssl-3-x64.dll" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\mysqlcppconn-10-vs14.dll" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\mysqlcppconnx-2-vs14.dll" "$(OutDir)"
+
+
+
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -101,16 +115,30 @@
       <LanguageStandard>stdcpp23</LanguageStandard>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
-      <AdditionalIncludeDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\include;F:\Windows Kits\10\Include\json</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>mysqlcppconn.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libcrypto.lib;libssl.lib;mysqlcppconn-static.lib;mysqlcppconn.lib;mysqlcppconnx-static.lib;mysqlcppconnx.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Y "C:\mysql-connector-c++\lib64\vs14\mysqlcppconn.dll" "$(OutDir)"</Command>
+      <Command>xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\libcrypto.lib" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\libssl.lib" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\mysqlcppconn.lib" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\mysqlcppconn-static.lib" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\mysqlcppconnx.lib" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\mysqlcppconnx-static.lib" "$(OutDir)" &amp;
+
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\libcrypto-3-x64.dll" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\libssl-3-x64.dll" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\mysqlcppconn-10-vs14.dll" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\mysqlcppconnx-2-vs14.dll" "$(OutDir)"
+
+
+
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -121,16 +149,30 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
-      <AdditionalIncludeDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\include;F:\Windows Kits\10\Include\json</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>mysqlcppconn.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libcrypto.lib;libssl.lib;mysqlcppconn-static.lib;mysqlcppconn.lib;mysqlcppconnx-static.lib;mysqlcppconnx.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Y "C:\mysql-connector-c++\lib64\vs14\mysqlcppconn.dll" "$(OutDir)"</Command>
+      <Command>xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\libcrypto.lib" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\libssl.lib" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\mysqlcppconn.lib" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\mysqlcppconn-static.lib" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\mysqlcppconnx.lib" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\mysqlcppconnx-static.lib" "$(OutDir)" &amp;
+
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\libcrypto-3-x64.dll" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\libssl-3-x64.dll" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\mysqlcppconn-10-vs14.dll" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\mysqlcppconnx-2-vs14.dll" "$(OutDir)"
+
+
+
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -144,20 +186,43 @@
       <LanguageStandard>stdcpp23</LanguageStandard>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
-      <AdditionalIncludeDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\include;F:\Windows Kits\10\Include\json</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>mysqlcppconn.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libcrypto.lib;libssl.lib;mysqlcppconn-static.lib;mysqlcppconn.lib;mysqlcppconnx-static.lib;mysqlcppconnx.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Y "C:\mysql-connector-c++\lib64\vs14\mysqlcppconn.dll" "$(OutDir)"</Command>
+      <Command>xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\libcrypto.lib" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\libssl.lib" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\mysqlcppconn.lib" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\mysqlcppconn-static.lib" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\mysqlcppconnx.lib" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14\mysqlcppconnx-static.lib" "$(OutDir)" &amp;
+
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\libcrypto-3-x64.dll" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\libssl-3-x64.dll" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\mysqlcppconn-10-vs14.dll" "$(OutDir)" &amp;
+xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\mysqlcppconnx-2-vs14.dll" "$(OutDir)"
+
+
+
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Functions\Functions.cpp" />
+    <ClCompile Include="src\Socket\Socket.cpp" />
+    <ClCompile Include="src\ConnectionType\ConnectionType.hpp" />
+    <ClCompile Include="src\Server\Server.cpp" />
     <ClCompile Include="src\main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Socket\Socket.hpp" />
+    <ClInclude Include="src\Functions\Functions.hpp" />
+    <ClInclude Include="src\Server\Server.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
