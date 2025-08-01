@@ -100,7 +100,7 @@ void Socket::Bind()
 }
 
 
-int Socket::Listen(const struct timeval& timeout, bool crash_by_timeout)
+bool Socket::Accept(const timeval& timeout)
 {
 	int client_addr_size = sizeof(m_clientAddr);
 #ifdef _WIN32
@@ -109,22 +109,22 @@ int Socket::Listen(const struct timeval& timeout, bool crash_by_timeout)
 	if (m_clientSocketFd != -1)
 #endif
 		CloseClientSocket();
-
-
+	
+	
 	if ((m_clientSocket = accept(m_socket, (struct sockaddr*)&m_clientAddr, &client_addr_size)) < 0)
 #ifdef _WIN32
-		return WSAGetLastError();
+		return EXIT_FAILURE;
 #elifdef __unix__
 		return EXIT_FAILURE;
 #endif
-
+	
 	
 #ifdef _WIN32
 	DWORD timeout_ms = timeout.tv_sec * 1000;
 	if (setsockopt(m_clientSocket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout_ms, sizeof(timeout_ms)) == SOCKET_ERROR)
 	{
 		perror("Set socket waiting limit options failed");
-		return WSAGetLastError();
+		return EXIT_FAILURE;
 	}
 #elifdef __unix__
 	if (setsockopt(m_clientSocketFd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout)) < 0)
@@ -133,7 +133,13 @@ int Socket::Listen(const struct timeval& timeout, bool crash_by_timeout)
 		return EXIT_FAILURE;
 	}
 #endif
-	
+
+	return EXIT_SUCCESS;
+}
+int Socket::Listen(const struct timeval& timeout, bool crash_by_timeout)
+{
+	if(Accept(timeout))
+		return EXIT_FAILURE;
 	
 	std::stringstream received_data;
 	Socket::AllocateBufferMemory();
@@ -145,7 +151,12 @@ int Socket::Listen(const struct timeval& timeout, bool crash_by_timeout)
 	{
 		if ((bytes_read = recv(m_clientSocket, m_buffer, BUFFER_SIZE, 0)) < 0)
 		{
+#ifdef _WIN32
+			int error = WSAGetLastError();
+			if(error == WSA_WAIT_TIMEOUT)
+#elifdef __unix__
 			if (errno == EAGAIN || errno == EWOULDBLOCK)
+#endif
 			{
 				if (crash_by_timeout)
 					return TIMEOUT_FAILURE;

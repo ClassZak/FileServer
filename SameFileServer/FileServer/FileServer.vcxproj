@@ -78,7 +78,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
-      <AdditionalIncludeDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\include;F:\Windows Kits\10\Include\json</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\include;F:\Windows Kits\10\Include\json;G:\Program Files\OpenSSL-Win64\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -115,7 +115,7 @@ xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\mysqlcppconnx-2-v
       <LanguageStandard>stdcpp23</LanguageStandard>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
-      <AdditionalIncludeDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\include;F:\Windows Kits\10\Include\json</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\include;F:\Windows Kits\10\Include\json;G:\Program Files\OpenSSL-Win64\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -149,7 +149,7 @@ xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\mysqlcppconnx-2-v
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
-      <AdditionalIncludeDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\include;F:\Windows Kits\10\Include\json</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\include;F:\Windows Kits\10\Include\json;G:\Program Files\OpenSSL-Win64\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -186,7 +186,7 @@ xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\mysqlcppconnx-2-v
       <LanguageStandard>stdcpp23</LanguageStandard>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
-      <AdditionalIncludeDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\include;F:\Windows Kits\10\Include\json</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\include;F:\Windows Kits\10\Include\json;G:\Program Files\OpenSSL-Win64\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -213,6 +213,7 @@ xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\mysqlcppconnx-2-v
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Socket\SecureSocket.cpp" />
     <ClCompile Include="src\Functions\Functions.cpp" />
     <ClCompile Include="src\Socket\Socket.cpp" />
     <ClCompile Include="src\ConnectionType\ConnectionType.hpp" />
@@ -220,6 +221,8 @@ xcopy /Y "C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\mysqlcppconnx-2-v
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Socket\SecureSocket.hpp" />
+    <ClInclude Include="src\Crypto\EAS_GCM.hpp" />
     <ClInclude Include="src\Socket\Socket.hpp" />
     <ClInclude Include="src\Functions\Functions.hpp" />
     <ClInclude Include="src\Server\Server.hpp" />

@@ -27,6 +27,7 @@
 
 class Socket
 {
+protected:
 	std::string m_bufferedString;
 	sockaddr_in m_addr{};
 	sockaddr_in m_clientAddr{};
@@ -65,6 +66,7 @@ public:
 	void CloseClientSocket();
 	void CloseServerSocket();
 	void BindNewConnection(int domainType, ConnectionType connectionType, int port);
+	virtual bool Accept(const struct timeval& timeout = { 100,0 });
 	int Listen(const struct timeval& timeout = { 100,0 }, bool crash_by_timeout = false);
 	int SendAnswer(const std::string& answer);
 	void ClearBuffer();
