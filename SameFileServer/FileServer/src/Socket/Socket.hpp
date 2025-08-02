@@ -47,8 +47,8 @@ protected:
 	ConnectionType m_connectionType = ConnectionType::None;
 	bool m_isListening = false;
 
-	void Bind();
 
+	void Bind();
 public:
 	static const unsigned short BUFFER_SIZE = 0x400;
 
