@@ -21,12 +21,12 @@ public:
 	// Дополнительные методы
 	void ParseReceivedData();
 	void ClearSecureBuffer();
-private:
+protected:
 	std::array<uint8_t, 32> m_aesKey;
 	std::vector<uint8_t> m_encryptedData;
-	std::array<uint8_t, 12> m_iv;
-	std::array<uint8_t, 16> m_tag;
-	uint32_t m_dataSize;
+	std::array<uint8_t, 12> m_iv{};
+	std::array<uint8_t, 16> m_tag{};
+	uint32_t m_dataSize=0;
 
 	void throw_openssl_error(const std::string& prefix);
 	std::vector<uint8_t> AesEncrypt

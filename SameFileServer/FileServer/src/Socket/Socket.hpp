@@ -20,7 +20,6 @@
 #include <sstream>
 
 #include "../ConnectionType/ConnectionType.hpp"
-#include "../Functions/Functions.hpp"
 
 
 #define TIMEOUT_FAILURE 2

@@ -10,37 +10,31 @@ SecureSocket::SecureSocket
 
 
 
-void SecureSocket::ParseReceivedData() {
+void SecureSocket::ParseReceivedData()
+{
 	const std::string& data = GetBufferedString();
-	if (data.size() < 12 + 16 + 4) {
+	if (data.size() < (size_t) 12 + 16 + 4)
 		throw std::runtime_error("Received data too short");
-	}
 
-	// Разбираем единый пакет
 	const uint8_t* ptr = reinterpret_cast<const uint8_t*>(data.data());
-
 	// 1. IV (12 байт)
 	memcpy(m_iv.data(), ptr, 12);
 	ptr += 12;
-
 	// 2. TAG (16 байт)
 	memcpy(m_tag.data(), ptr, 16);
 	ptr += 16;
-
 	// 3. Размер данных (4 байта, big-endian)
 	memcpy(&m_dataSize, ptr, 4);
 	ptr += 4;
 	m_dataSize = ntohl(m_dataSize);
-
 	// 4. Проверка размера данных
-	size_t total_size = 12 + 16 + 4 + m_dataSize;
-	if (data.size() < total_size) {
+	size_t total_size = (size_t)12 + 16 + 4 + m_dataSize;
+	if (data.size() < total_size)
 		throw std::runtime_error("Incomplete data received");
-	}
-
 	// 5. Зашифрованные данные
 	m_encryptedData.assign(ptr, ptr + m_dataSize);
 
+#ifdef DEBUG
 	// Отладочный вывод
 	std::cout << "C++ received IV: ";
 	for (auto b : m_iv) printf("%02x", b);
@@ -51,8 +45,10 @@ void SecureSocket::ParseReceivedData() {
 	for (size_t i = 0; i < std::min<size_t>(16, m_encryptedData.size()); i++)
 		printf("%02x", m_encryptedData[i]);
 	std::cout << "..." << std::endl;
+#endif
 }
-void SecureSocket::ClearSecureBuffer() {
+void SecureSocket::ClearSecureBuffer()
+{
 	m_encryptedData.clear();
 	m_iv.fill(0);
 	m_tag.fill(0);
@@ -216,42 +212,42 @@ std::vector<uint8_t> SecureSocket::AesEncrypt
 		throw;
 	}
 }
-std::vector<uint8_t> SecureSocket::AesDecrypt(
+std::vector<uint8_t> SecureSocket::AesDecrypt
+(
 	const std::vector<uint8_t>& cipherText,
 	const std::array<uint8_t, 12>& iv,
-	const std::array<uint8_t, 16>& tag)
+	const std::array<uint8_t, 16>& tag
+)
 {
 	// Инициализация контекста
 	EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
 	if (!ctx) throw_openssl_error("EVP_CIPHER_CTX_new failed");
 
-	try {
+	try
+	{
 		// 1. Инициализация
 		if (1 != EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), nullptr, nullptr, nullptr))
 			throw_openssl_error("EVP_DecryptInit_ex failed (initial)");
-
 		// 2. Установка длины IV
 		if (1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv.size(), nullptr))
 			throw_openssl_error("EVP_CTRL_GCM_SET_IVLEN failed");
-
 		// 3. Установка ключа и IV
 		if (1 != EVP_DecryptInit_ex(ctx, nullptr, nullptr, m_aesKey.data(), iv.data()))
 			throw_openssl_error("EVP_DecryptInit_ex failed (key/iv)");
-
 		// 4. Дешифрование данных
 		std::vector<uint8_t> plaintext(cipherText.size() + EVP_MAX_BLOCK_LENGTH);
 		int out_len = 0;
 		if (1 != EVP_DecryptUpdate(ctx, plaintext.data(), &out_len, cipherText.data(), cipherText.size()))
 			throw_openssl_error("EVP_DecryptUpdate failed");
-
+		
 		int total_len = out_len;
-
+		
 		// 5. Установка тега для проверки
 		if (1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, tag.size(), const_cast<uint8_t*>(tag.data())))
 			throw_openssl_error("EVP_CTRL_GCM_SET_TAG failed");
-
 		// 6. Финальная проверка
-		if (1 != EVP_DecryptFinal_ex(ctx, plaintext.data() + out_len, &out_len)) {
+		if (1 != EVP_DecryptFinal_ex(ctx, plaintext.data() + out_len, &out_len))
+		{
 			// Детализация ошибки
 			char err_buf[256];
 			ERR_error_string_n(ERR_get_error(), err_buf, sizeof(err_buf));
@@ -262,23 +258,27 @@ std::vector<uint8_t> SecureSocket::AesDecrypt(
 		total_len += out_len;
 		plaintext.resize(total_len);
 
+#ifdef DEBUG
 		// Отладочная информация
 		std::cout << "C++ decrypted plaintext size: " << plaintext.size() << std::endl;
 		std::cout << "C++ decrypted start: ";
 		for (size_t i = 0; i < std::min<size_t>(16, plaintext.size()); i++)
 			printf("%02x", plaintext[i]);
 		std::cout << "..." << std::endl;
+#endif // DEBUG
 
 		EVP_CIPHER_CTX_free(ctx);
 		return plaintext;
 	}
-	catch (...) {
+	catch (...)
+	{
 		EVP_CIPHER_CTX_free(ctx);
 		throw;
 	}
 }
 
-void SecureSocket::throw_openssl_error(const std::string& prefix) {
+void SecureSocket::throw_openssl_error(const std::string& prefix)
+{
 	char err_buf[256];
 	ERR_error_string_n(ERR_get_error(), err_buf, sizeof(err_buf));
 	throw std::runtime_error(prefix + ": " + err_buf);
