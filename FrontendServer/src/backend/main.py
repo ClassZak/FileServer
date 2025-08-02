@@ -25,6 +25,10 @@ log_path = ''
 def root():
 	return render_template('index.html')
 
+@app.route('/files_search')
+def files_search():
+	return 405
+
 
 # Точка входа
 def main():

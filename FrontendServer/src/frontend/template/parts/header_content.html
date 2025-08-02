@@ -1,0 +1,17 @@
+<header>
+	<a href="/">Главная</a>
+	<a href="/">О проекте</a>
+	<a href="/">Аккаунт</a>
+	<form action="{{ url_for('files_search') }}" method="GET" class="search-form">
+		<input
+			name="q"
+			class="item"
+			placeholder="Поиск..."
+			type="text"
+			value=""
+		>
+		<button type="submit" class="image-button">
+			<img alt="search" src="{{ url_for('static', filename='magnifyingglass.png') }}">
+		</button>
+	</form>
+</header>
