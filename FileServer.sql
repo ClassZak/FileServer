@@ -12,16 +12,18 @@ CREATE TABLE `User` (
     Salt			CHAR(32) NOT NULL,
     CreatedAt		TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
--- Группы
+-- -----------------------------------------------------
+-- Группа
+-- -----------------------------------------------------
 CREATE TABLE `Group` (
     Id			INT AUTO_INCREMENT PRIMARY KEY,
     `Name`		VARCHAR(64) UNIQUE NOT NULL,
     LeaderId	INT NOT NULL,
     FOREIGN KEY (LeaderId) REFERENCES `User`(Id)
 );
-
+-- -----------------------------------------------------
 -- Связь пользователей с группами
+-- -----------------------------------------------------
 CREATE TABLE GroupMember (
     IdGroup	INT NOT NULL,
     IdUser	INT NOT NULL,
@@ -29,8 +31,9 @@ CREATE TABLE GroupMember (
     FOREIGN KEY (IdGroup) REFERENCES `Group`(Id),
     FOREIGN KEY (IdUser) REFERENCES `User`(Id)
 );
-
+-- -----------------------------------------------------
 -- Метаданные файлов
+-- -----------------------------------------------------
 CREATE TABLE FileMetadata (
     Id			BIGINT AUTO_INCREMENT PRIMARY KEY,
     `Path`		VARCHAR(4096) NOT NULL,
