@@ -1,8 +1,8 @@
 #include "SecureSocket.hpp"
 
 SecureSocket::SecureSocket
-(int domainType, ConnectionType connectionType, int port, const std::array<uint8_t, 32>& key)
-	: Socket(domainType, connectionType, port), m_aesKey{key}
+(int domainType, ConnectionType connectionType, int port, const std::array<uint8_t, 32>& key, bool onePackageMode)
+	: Socket(domainType, connectionType, port), m_aesKey{key}, m_onePackageMode{onePackageMode}
 {
 	OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, nullptr);
 }
@@ -12,27 +12,43 @@ SecureSocket::SecureSocket
 
 void SecureSocket::ParseReceivedData()
 {
-	const std::string& data = GetBufferedString();
-	if (data.size() < (size_t) 12 + 16 + 4)
-		throw std::runtime_error("Received data too short");
+	if (m_onePackageMode)
+	{
+		const std::string& data = GetBufferedString();
+		if (data.size() < (size_t) 12 + 16 + 4)
+			throw std::runtime_error("Received data too short");
 
-	const uint8_t* ptr = reinterpret_cast<const uint8_t*>(data.data());
-	// 1. IV (12 байт)
-	memcpy(m_iv.data(), ptr, 12);
-	ptr += 12;
-	// 2. TAG (16 байт)
-	memcpy(m_tag.data(), ptr, 16);
-	ptr += 16;
-	// 3. Размер данных (4 байта, big-endian)
-	memcpy(&m_dataSize, ptr, 4);
-	ptr += 4;
-	m_dataSize = ntohl(m_dataSize);
-	// 4. Проверка размера данных
-	size_t total_size = (size_t)12 + 16 + 4 + m_dataSize;
-	if (data.size() < total_size)
-		throw std::runtime_error("Incomplete data received");
-	// 5. Зашифрованные данные
-	m_encryptedData.assign(ptr, ptr + m_dataSize);
+		const uint8_t* ptr = reinterpret_cast<const uint8_t*>(data.data());
+		// 1. IV (12 байт)
+		memcpy(m_iv.data(), ptr, 12);
+		ptr += 12;
+		// 2. TAG (16 байт)
+		memcpy(m_tag.data(), ptr, 16);
+		ptr += 16;
+		// 3. Размер данных (4 байта, big-endian)
+		memcpy(&m_dataSize, ptr, 4);
+		ptr += 4;
+		m_dataSize = ntohl(m_dataSize);
+		// 4. Проверка размера данных
+		size_t total_size = (size_t)12 + 16 + 4 + m_dataSize;
+		if (data.size() < total_size)
+			throw std::runtime_error("Incomplete data received");
+		// 5. Зашифрованные данные
+		m_encryptedData.assign(ptr, ptr + m_dataSize);
+	}
+	else
+	{
+		if(!ReceiveExact(m_iv.data(), m_iv.size()))
+			throw std::runtime_error("IV is not received");
+		if(!ReceiveExact(m_tag.data(), m_tag.size()))
+			throw std::runtime_error("Tag is not received");
+		if(!ReceiveExact(&m_dataSize, sizeof(m_dataSize)))
+			throw std::runtime_error("Data size is not received");
+		m_dataSize = ntohl(m_dataSize);
+		m_encryptedData.assign(m_dataSize, 0);
+		if(!ReceiveExact(m_encryptedData.data(), m_dataSize))
+			throw std::runtime_error("Ciphered text is not received");
+	}
 
 #ifdef DEBUG
 	// Отладочный вывод
@@ -53,6 +69,16 @@ void SecureSocket::ClearSecureBuffer()
 	m_iv.fill(0);
 	m_tag.fill(0);
 	m_dataSize = 0;
+}
+
+
+
+int SecureSocket::Listen(const timeval& timeout, bool crash_by_timeout)
+{
+	if(m_isListening)
+		return WRONG_MODE_FAILURE;
+	else
+		return ::Socket::Listen();
 }
 
 

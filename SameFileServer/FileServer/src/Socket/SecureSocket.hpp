@@ -7,10 +7,12 @@
 
 #include "Socket.hpp"
 
+#define WRONG_MODE_FAILURE 3
+
 class SecureSocket : public Socket
 {
 public:
-	SecureSocket(int domainType, ConnectionType connectionType, int port, const std::array<uint8_t, 32>& key);
+	SecureSocket(int domainType, ConnectionType connectionType, int port, const std::array<uint8_t, 32>& key, bool onePackageMode=true);
 	bool SendEncrypted(const std::vector<uint8_t>& data);
 	bool SendJson(const nlohmann::json& json);
 	bool SendJsonMsgpack(const nlohmann::json& json);
@@ -21,12 +23,20 @@ public:
 	// Дополнительные методы
 	void ParseReceivedData();
 	void ClearSecureBuffer();
+	int Listen(const struct timeval& timeout = { 100,0 }, bool crash_by_timeout = false) override;
+	bool GetMode() const
+	{
+		return m_onePackageMode;
+	}
 protected:
 	std::array<uint8_t, 32> m_aesKey;
 	std::vector<uint8_t> m_encryptedData;
 	std::array<uint8_t, 12> m_iv{};
 	std::array<uint8_t, 16> m_tag{};
 	uint32_t m_dataSize=0;
+private:
+	bool m_onePackageMode=true;
+protected:
 
 	void throw_openssl_error(const std::string& prefix);
 	std::vector<uint8_t> AesEncrypt

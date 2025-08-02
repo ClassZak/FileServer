@@ -66,7 +66,7 @@ public:
 	void CloseServerSocket();
 	void BindNewConnection(int domainType, ConnectionType connectionType, int port);
 	virtual bool Accept(const struct timeval& timeout = { 100,0 });
-	int Listen(const struct timeval& timeout = { 100,0 }, bool crash_by_timeout = false);
+	virtual int Listen(const struct timeval& timeout = { 100,0 }, bool crash_by_timeout = false);
 	int SendAnswer(const std::string& answer);
 	void ClearBuffer();
 	void AllocateBufferMemory();

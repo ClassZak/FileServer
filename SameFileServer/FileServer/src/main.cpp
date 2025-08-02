@@ -55,7 +55,7 @@ int main()
 			{
 				try
 				{
-					SecureSocket server(AF_INET, ConnectionType::TCP, 54321, key);
+					SecureSocket server(AF_INET, ConnectionType::TCP, 54321, key, false);
 					
 					printMutex.lock();
 					std::cout <<
@@ -63,16 +63,20 @@ int main()
 					printMutex.unlock();
 					
 					// Ожидание подключения и получение данных
-					struct timeval timeout = { 5, 0 }; // 5 секунд
-					if (server.Listen(timeout, false) == EXIT_SUCCESS)
+					struct timeval timeout = { 500, 0 };
+					bool accepted = server.GetMode() ? server.Listen(timeout, false) == EXIT_SUCCESS : !server.Accept(timeout);
+					if (accepted)
 					{
 						try
 						{
-							printMutex.lock();
-							std::cout<<
-							"Client connected. Data size: " <<
-							server.GetBufferedString().size() << " bytes\n";
-							printMutex.unlock();
+							if (server.GetMode())
+							{
+								printMutex.lock();
+								std::cout<<
+								"Client connected. Data size: " <<
+								server.GetBufferedString().size() << " bytes\n";
+								printMutex.unlock();
+							}
 							
 							// Прием и обработка запроса
 							auto request = server.ReceiveJson();
