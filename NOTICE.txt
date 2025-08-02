@@ -1,0 +1,21 @@
+FileServer – облачная система управления файлами
+
+Этот проект использует сторонние библиотеки с различными лицензиями. Ниже приведены уведомления, обязательные по условиям лицензий этих компонентов.
+
+---
+
+This product includes software developed by:
+
+- The OpenSSL Project for use in the OpenSSL Toolkit (https://www.openssl.org/)
+  Licensed under the Apache License, Version 2.0
+
+  You may obtain a copy of the License at:
+  http://www.apache.org/licenses/LICENSE-2.0
+
+---
+
+This product includes MySQL Connector/C++,
+Licensed under the GNU General Public License, Version 2.0 (GPL-2.0).
+
+See the LICENSE file and library-specific license files
+(`OpenSSLLicense.txt`, `MySQLConnectorCPPLicense.txt`) for full details.
