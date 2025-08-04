@@ -13,25 +13,84 @@
 		{% include 'parts/header_content.html' %}
 	</header>
 	<main class="content-wrapper">
-		<h1>228</h1>
-		<h1>228</h1>
-		<h1>228</h1>
-		<h1>228</h1>
-		<h1>228</h1>
-		<h1>228</h1>
-		<h1>228</h1>
-		<h1>228</h1>
-		<h1>228</h1>
-		<h1>228</h1>
-		<h1>228</h1>
-		<h1>228</h1>
-		<h1>228</h1>
-		<h1>228</h1>
-		<h1>228</h1>
-		<h1>228</h1>
-		<h1>228</h1>
-		<h1>228</h1>
-		<h1>228</h1>
+		<h1>FileServer</h1>
+		<p>
+FileServer - это облачная система управления файлами для личного, публичного и корпаротивного доступа с открытим исходным кодом.
+Данный проект разрабатывается при помощи mysql 8.0.42, python 3.12 и C++23.
+		</p>
+		<h1>🗃️ Зависимости</h1>
+		<p>
+Библиотеки python: mysql-connector-python, фреймворк Flask 3.1.0, библиотека Flask-WTF 1.2.2.
+Библиотеки C++23: MySQL Connector/C++ 9.4.0, OpenSSL 3.5.1
+		</p>
+		<h1>⚖️ Лицензии</h1>
+		<p>
+Проект FileServer распространяется под лицензией **GNU General Public License v2.0 (GPL-2.0)**.
+
+mysql-connector-cpp 9.4.0: GPL-2.0
+OpenSSL 3.5.1: Apache-2.0
+		</p>
+		<style>
+			/*Таблица*/
+			table{
+				width: 90%;
+				margin-left: auto;
+				margin-right: auto;
+				border-collapse: collapse;
+				font-family: Consolas, sans-serif;
+			}
+			table,td,th{
+				height:100%;
+				border: 2px solid rgb(255, 255, 255);
+			}
+			.table-header{
+				position: flex;
+			}
+		</style>
+		<table>
+			<thead>
+				<tr>
+					<th>Библиотека</th>
+					<th>Версия</th>
+					<th>Язык</th>
+					<th>Лицензия</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>MySQL Connector/C++</td>
+					<td>9.4.0</td>
+					<td>C++</td>
+					<td>GPL-2.0</td>
+				</tr>
+				<tr>
+					<td>OpenSSL</td>
+					<td>3.5.1</td>
+					<td>C++</td>
+					<td>Apache-2.0</td>
+				</tr>
+				<tr>
+					<td>mysql-connector-python</td>
+					<td>9.3.0</td>
+					<td>Python</td>
+					<td>GPL-2.0</td>
+				</tr>
+				<tr>
+					<td>Flask</td>
+					<td>3.1.0</td>
+					<td>Python</td>
+					<td>BSD</td>
+				</tr>
+				<tr>
+					<td>Flask-WTF</td>
+					<td>1.2.2</td>
+					<td>Python</td>
+					<td>BSD</td>
+				</tr>
+			</tbody>
+		</table>
+		<h1>Схема работы сервиса</h1>
+		<img src="https://github.com/ClassZak/FileServer/blob/master/FileServer.png">
 	</main>
 	<footer>
 		{% include 'parts/footer_content.html' %}
