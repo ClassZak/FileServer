@@ -96,6 +96,12 @@ a.in-text:hover {
 		font-size: 0.7rem;
 	}
 }
+.image-button{
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 0;
+}
 
 
 
