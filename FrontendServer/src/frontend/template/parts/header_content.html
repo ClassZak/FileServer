@@ -1,7 +1,9 @@
-<header>
-	<a href="/">Главная</a>
-	<a href="/">О проекте</a>
-	<a href="/">Аккаунт</a>
+<div class="header-content">
+	<nav>
+		<a href="/">Главная</a>
+		<a href="/">О проекте</a>
+		<a href="/">Аккаунт</a>
+	</nav>
 	<form action="{{ url_for('files_search') }}" method="GET" class="search-form">
 		<input
 			name="q"
@@ -14,4 +16,4 @@
 			<img alt="search" src="{{ url_for('static', filename='magnifyingglass.png') }}">
 		</button>
 	</form>
-</header>
+</div>

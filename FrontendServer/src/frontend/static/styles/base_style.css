@@ -1,0 +1,74 @@
+:root {
+	--primary-dark:		#095256;	/* Темно-зеленый */
+	--primary-accent:	#087F8C;	/* Акцентный бирюзовый */
+	--secondary-green:	#5AAA95;	/* Светло-зеленый */
+	--secondary-olive:	#86A873;	/* Оливковый */
+	--accent-gold:		#BB9F06;	/* Золотой акцент */
+}
+
+* {
+	margin: 0;
+	padding: 0;
+}
+
+html {
+	height: 100%;
+	background: linear-gradient(220deg,var(--primary-dark),var(--secondary-green));
+	background-attachment: fixed;
+}
+
+body {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	font-family: Arial, sans-serif;
+	color: white;
+}
+
+
+
+/*Шапка*/
+header{
+	width: 100%;
+	background-color: var(--secondary-green);
+	position: fixed;
+	font-weight: bold;
+	z-index: 1000;
+}
+.header-content {
+	width: 90%;
+	margin: 10px auto;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+header > *{
+	display: inline;
+}
+header > form{
+	display: flex;
+	gap: 5px;
+	width: 100%;
+}
+header form {
+	display: flex;
+	gap: 5px;
+	width: 100%;
+}
+header form input[type="text"] {
+	flex-grow: 1;
+	padding: 5px;
+	border: 1px solid #ccc;
+	border-radius: 0px;
+	width: inherit;
+	min-width: 20px;
+}
+header nav{
+	display: flex;
+	align-items: center;
+	width: auto;
+	gap: 10px;
+}
+header nav > *{
+	display: inline;
+}
