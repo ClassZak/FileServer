@@ -27,6 +27,7 @@ body {
 
 
 
+
 /*Шапка*/
 header{
 	width: 100%;
@@ -71,4 +72,27 @@ header nav{
 }
 header nav > *{
 	display: inline;
+}
+/*Ссылки*/
+a{
+    color: white;
+    text-decoration: none;
+}
+p a{
+	text-decoration: underline;
+	color: #ddd;
+}
+a:hover{
+	text-decoration: underline;
+}
+a.in-text:hover {
+	color: var(--accent-gold)  !important;
+}
+@media screen and (width< 500px) {
+	.header-content a {
+		font-size: 0.7rem;
+	}
+	.header-content input{
+		font-size: 0.7rem;
+	}
 }
