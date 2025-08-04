@@ -75,8 +75,8 @@ header nav > *{
 }
 /*Ссылки*/
 a{
-    color: white;
-    text-decoration: none;
+	color: white;
+	text-decoration: none;
 }
 p a{
 	text-decoration: underline;
@@ -95,4 +95,103 @@ a.in-text:hover {
 	.header-content input{
 		font-size: 0.7rem;
 	}
+}
+
+
+
+
+/* Основной контент */
+.content-wrapper {
+	width: 85%;
+	height: 100%;
+	margin: 0 auto;
+	flex: 1;
+	padding: 4rem 0;
+	background-color: var(--primary-accent);
+	isolation: isolate; /* Создаем новый контекст наложения */
+}
+@media screen and (width< 300px) {
+	.content-wrapper {
+		width: 100%;
+	}
+}
+.content-wrapper > *{
+	margin: 30px;
+}
+h1,h2,h3,h4,h5,h6 {
+	font-family: Montserrat, sans-serif;
+}
+h2,h3,h4,h5,h6 {
+	padding-left: 35px;
+}
+h1{
+	text-align: center;
+}
+.content-wrapper > h2,.content-wrapper > h3,.content-wrapper > h4,.content-wrapper > h5,.content-wrapper > h6 {
+	margin-bottom:5px;
+}
+.content-wrapper > p{
+	margin-top: 0px;
+	margin-bottom: 0px;
+}
+.content-wrapper p {
+	white-space: pre-wrap; /* Сохраняем переносы и печатаем табы*/
+}
+
+br {
+	display: inline-block;
+	margin-left: -30px;    /* Корректируовка отступа после <br> */
+}
+
+
+
+
+/* Подвал */
+footer{
+	background-color: var(--secondary-olive);
+	color: black;
+	padding-bottom:15px;
+	padding-top:10px;
+	position: relative;
+	margin:0 auto;
+	bottom: 0px;
+	width:85%;
+	font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
+}
+footer > h2, 
+footer > h3,
+footer > h4,
+footer > h5,
+footer > h6
+{
+	padding-left: 0px;
+	margin-bottom: 20px;
+	text-align: center;
+}
+footer .contact p {
+	margin: 1px 0;
+	text-align: center;
+}
+footer .social+p{
+	margin-top: 1px;
+	text-align: center;
+}
+footer a {
+	color: #333;
+	margin: 0 1px;
+	text-decoration: none;
+	text-align: center;
+}
+footer .social{
+	text-align: center;
+}
+footer .social > a:hover {
+	text-decoration: underline;
+}
+/* Описание проекта */
+footer p + h2{
+	margin-top: 20px;
+}
+footer ol{
+	margin-left: 5rem;
 }
