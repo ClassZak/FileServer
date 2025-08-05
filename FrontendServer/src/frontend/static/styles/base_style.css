@@ -143,7 +143,6 @@ h1{
 .content-wrapper p {
 	white-space: pre-wrap; /* Сохраняем переносы и печатаем табы*/
 }
-
 br {
 	display: inline-block;
 	margin-left: -30px;    /* Корректируовка отступа после <br> */
