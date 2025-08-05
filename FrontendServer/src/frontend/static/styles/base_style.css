@@ -108,7 +108,7 @@ a.in-text:hover {
 
 /* Основной контент */
 .content-wrapper {
-	width: 85%;
+	width: 90%;
 	height: 100%;
 	margin: 0 auto;
 	flex: 1;
@@ -197,8 +197,13 @@ footer{
 	position: relative;
 	margin:0 auto;
 	bottom: 0px;
-	width:85%;
+	width:90%;
 	font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
+}
+@media screen and (width< 300px) {
+	footer{
+		width: 100%;
+	}
 }
 footer > h2, 
 footer > h3,
