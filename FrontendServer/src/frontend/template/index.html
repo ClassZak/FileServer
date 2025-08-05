@@ -30,23 +30,6 @@ FileServer - это облачная система управления фай�
 mysql-connector-cpp 9.4.0: GPL-2.0
 OpenSSL 3.5.1: Apache-2.0
 		</p>
-		<style>
-			/*Таблица*/
-			table{
-				width: 90%;
-				margin-left: auto;
-				margin-right: auto;
-				border-collapse: collapse;
-				font-family: Consolas, sans-serif;
-			}
-			table,td,th{
-				height:100%;
-				border: 2px solid rgb(255, 255, 255);
-			}
-			.table-header{
-				position: flex;
-			}
-		</style>
 		<table>
 			<thead>
 				<tr>
@@ -90,7 +73,9 @@ OpenSSL 3.5.1: Apache-2.0
 			</tbody>
 		</table>
 		<h1>Схема работы сервиса</h1>
-		<img src="https://github.com/ClassZak/FileServer/blob/master/FileServer.png">
+		<div class="image-container">
+			<img src="{{ url_for('static', filename='FileServer.png') }}">
+		</div>
 	</main>
 	<footer>
 		{% include 'parts/footer_content.html' %}
