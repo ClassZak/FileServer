@@ -13,16 +13,12 @@ table{
 	border-collapse: collapse;
 	font-family: Consolas, sans-serif;
 }
-.content-wrapper > table{
-	margin-left: auto;
-	margin-right: auto;
-}
 table,td,th{
 	height:100%;
-	border: 2px solid rgb(19, 16, 16);
+	border: 2px solid rgb(30, 30, 30);
 }
 table *{
-	padding: 0.1rem;
+	padding: 0.1em;
 }
 .table-header{
 	position: flex;

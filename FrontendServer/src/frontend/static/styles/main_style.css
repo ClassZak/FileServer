@@ -1,5 +1,5 @@
 /* Основной контент */
-.content-wrapper {
+main {
 	width: 90%;
 	height: 100%;
 	margin: 0 auto;
@@ -9,20 +9,20 @@
 	isolation: isolate; /* Создаем новый контекст наложения */
 }
 @media screen and (width< 300px) {
-	.content-wrapper {
+	main {
 		width: 100%;
 	}
 }
-.content-wrapper > *{
+main > *{
 	margin: 30px;
 }
-.content-wrapper > h2,.content-wrapper > h3,.content-wrapper > h4,.content-wrapper > h5,.content-wrapper > h6 {
+main > h2,main > h3,main > h4,main > h5,main > h6 {
 	margin-bottom:5px;
 }
-.content-wrapper > p{
+main > p{
 	margin-top: 0px;
 	margin-bottom: 0px;
 }
-.content-wrapper p {
+main p {
 	white-space: pre-wrap; /* Сохраняем переносы и печатаем табы*/
 }

@@ -6,7 +6,7 @@
 	<link rel="icon" href="{{url_for('static', filename='favicon.ico')}}" type="image/x-icon">
 	<link rel="stylesheet" href="{{ url_for('static', filename='styles/base_style.css') }}">
 	<link rel="stylesheet" href="{{ url_for('static', filename='styles/header_style.css') }}">
-	<link rel="stylesheet" href="{{ url_for('static', filename='styles/content-wrapper.css') }}">
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles/main_style.css') }}">
 	<link rel="stylesheet" href="{{ url_for('static', filename='styles/footer_style.css') }}">
 	
 	<link rel="stylesheet" href="{{ url_for('static', filename='styles/image-button.css') }}">
@@ -20,7 +20,7 @@
 	<header>
 		{% include 'parts/header_content.html' %}
 	</header>
-	<main class="content-wrapper">
+	<main>
 		<h1>FileServer</h1>
 		<p>
 	FileServer - это облачная система управления файлами для личного, публичного и корпаротивного доступа с открытим исходным кодом. Данный проект разрабатывается при помощи mysql 8.0.42, python 3.12 и C++23.
