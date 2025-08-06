@@ -6,11 +6,6 @@
 	--accent-gold:		#BB9F06;	/* Золотой акцент */
 }
 
-* {
-	margin: 0;
-	padding: 0;
-}
-
 html {
 	height: 100%;
 	background: linear-gradient(220deg,var(--primary-dark),var(--secondary-green));
@@ -28,51 +23,6 @@ body {
 
 
 
-/*Шапка*/
-header{
-	width: 100%;
-	background-color: var(--secondary-green);
-	position: fixed;
-	font-weight: bold;
-	z-index: 1000;
-}
-.header-content {
-	width: 90%;
-	margin: 10px auto;
-	display: flex;
-	align-items: center;
-	gap: 10px;
-}
-header > *{
-	display: inline;
-}
-header > form{
-	display: flex;
-	gap: 5px;
-	width: 100%;
-}
-header form {
-	display: flex;
-	gap: 5px;
-	width: 100%;
-}
-header form input[type="text"] {
-	flex-grow: 1;
-	padding: 5px;
-	border: 1px solid #ccc;
-	border-radius: 0px;
-	width: inherit;
-	min-width: 20px;
-}
-header nav{
-	display: flex;
-	align-items: center;
-	width: auto;
-	gap: 10px;
-}
-header nav > *{
-	display: inline;
-}
 /*Ссылки*/
 a{
 	color: white;
@@ -88,42 +38,11 @@ a:hover{
 a.in-text:hover {
 	color: var(--accent-gold)  !important;
 }
-@media screen and (width< 500px) {
-	.header-content a {
-		font-size: 0.7rem;
-	}
-	.header-content input{
-		font-size: 0.7rem;
-	}
-}
-.image-button{
-	background: none;
-	border: none;
-	cursor: pointer;
-	padding: 0;
-}
 
 
 
 
-/* Основной контент */
-.content-wrapper {
-	width: 90%;
-	height: 100%;
-	margin: 0 auto;
-	flex: 1;
-	padding: 4rem 0;
-	background-color: var(--primary-accent);
-	isolation: isolate; /* Создаем новый контекст наложения */
-}
-@media screen and (width< 300px) {
-	.content-wrapper {
-		width: 100%;
-	}
-}
-.content-wrapper > *{
-	margin: 30px;
-}
+/*Заголовки*/
 h1,h2,h3,h4,h5,h6 {
 	font-family: Montserrat, sans-serif;
 }
@@ -133,111 +52,7 @@ h2,h3,h4,h5,h6 {
 h1{
 	text-align: center;
 }
-.content-wrapper > h2,.content-wrapper > h3,.content-wrapper > h4,.content-wrapper > h5,.content-wrapper > h6 {
-	margin-bottom:5px;
-}
-.content-wrapper > p{
-	margin-top: 0px;
-	margin-bottom: 0px;
-}
-.content-wrapper p {
-	white-space: pre-wrap; /* Сохраняем переносы и печатаем табы*/
-}
 br {
 	display: inline-block;
 	margin-left: -30px;    /* Корректируовка отступа после <br> */
-}
-/*Таблица*/
-.content-wrapper>table{
-	margin: 0px;
-	margin-left: auto;
-	margin-right: auto;
-	margin-top: 2rem;
-	margin-bottom: 2rem;
-}
-table{
-	color: rgb(34, 30, 30);
-	background-color: #00000036;
-	width: 90%;
-	margin-left: auto;
-	margin-right: auto;
-	border-collapse: collapse;
-	font-family: Consolas, sans-serif;
-}
-table,td,th{
-	height:100%;
-	border: 2px solid rgb(19, 16, 16);
-}
-table *{
-	padding: 0.1rem;
-}
-.table-header{
-	position: flex;
-}
-/*Изображение*/
-.image-container{
-	width: 90%;
-	margin-left: auto;
-	margin-right: auto;
-}
-.image-container img {
-	max-width: 100%;
-	max-height: 100%;
-	width: 100%;
-	object-fit: contain;
-}
-
-/* Подвал */
-footer{
-	background-color: var(--secondary-olive);
-	color: black;
-	padding-bottom:15px;
-	padding-top:10px;
-	position: relative;
-	margin:0 auto;
-	bottom: 0px;
-	width:90%;
-	font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
-}
-@media screen and (width< 300px) {
-	footer{
-		width: 100%;
-	}
-}
-footer > h2, 
-footer > h3,
-footer > h4,
-footer > h5,
-footer > h6
-{
-	padding-left: 0px;
-	margin-bottom: 20px;
-	text-align: center;
-}
-footer .contact p {
-	margin: 1px 0;
-	text-align: center;
-}
-footer .social+p{
-	margin-top: 1px;
-	text-align: center;
-}
-footer a {
-	color: #333;
-	margin: 0 1px;
-	text-decoration: none;
-	text-align: center;
-}
-footer .social{
-	text-align: center;
-}
-footer .social > a:hover {
-	text-decoration: underline;
-}
-/* Описание проекта */
-footer p + h2{
-	margin-top: 20px;
-}
-footer ol{
-	margin-left: 5rem;
 }
