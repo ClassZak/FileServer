@@ -4,7 +4,7 @@ table{
 	margin-top: 2rem;
 	margin-bottom: 2rem;
 }
-table{
+* > table{
 	color: rgb(34, 30, 30);
 	background-color: #00000036;
 	width: 90%;
@@ -12,6 +12,10 @@ table{
 	margin-right: auto;
 	border-collapse: collapse;
 	font-family: Consolas, sans-serif;
+}
+.content-wrapper > table{
+	margin-left: auto;
+	margin-right: auto;
 }
 table,td,th{
 	height:100%;
