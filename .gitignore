@@ -12,3 +12,6 @@ tempCodeRunnerFile.py
 x64/
 Debug/
 Release/
+
+# SSL
+*.pem
