@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	{% include 'parts/base_head.html' %}
+	<link rel="stylesheet" href="{{ url_for('static', filename = 'styles/classes/error_window.css') }}">
+	<script src="{{ url_for('static', filename = 'scripts/classes/error_window.js') }}"></script>
+	
+	<title>FileService — Вход</title>
+</head>
+<body>
+	<header>
+		{% include 'parts/header_content.html' %}
+	</header>
+	<main>
+		<h1>Авторизация</h1>
+
+		{% if error %}
+			<p style="color: red;">{{ error }}</p>
+		{% endif %}
+
+		<script src="{{ url_for('static', filename = 'scripts/classes/login.js') }}"></script>
+		<form method="POST" action="/login" id = "login">
+			<input type="hidden" name="next_url" value="{{ next_url or '' }}">
+
+			<label for="login">Логин</label>
+			<input type="text" name="login" required>
+			
+			<label for="password">Пароль</label>
+			<input type="password" name="password" required>
+
+			<button type="submit">Войти</button>
+		</form>
+	</main>
+	<footer>
+		{% include 'parts/footer_content.html' %}
+	</footer>
+</body>
+</html>

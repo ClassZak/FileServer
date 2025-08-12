@@ -1,19 +1,9 @@
 <div class="header-content">
 	<nav>
 		<a href="/">Главная</a>
-		<a href="/">О проекте</a>
-		<a href="/">Аккаунт</a>
+		<a href="/api/files_search">Файлы</a>
+		<a href="/about">О проекте</a>
+		<a href="/account	">Аккаунт</a>
 	</nav>
-	<form action="{{ url_for('files_search') }}" method="GET" class="search-form">
-		<input
-			name="q"
-			class="item"
-			placeholder="Поиск..."
-			type="text"
-			value=""
-		>
-		<button type="submit" class="image-button">
-			<img alt="search" src="{{ url_for('static', filename='magnifyingglass.png') }}">
-		</button>
-	</form>
+	{% include 'classes/files_search.html' %}
 </div>
