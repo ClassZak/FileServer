@@ -20,7 +20,7 @@
 
 		<script src="{{ url_for('static', filename = 'scripts/classes/login.js') }}"></script>
 		<form method="POST" action="/login" id = "login">
-			<input type="hidden" name="next_url" value="{{ next_url or '' }}">
+			<input type="hidden" name="next_url" value="{{ next_url }}">
 
 			<label for="login">Логин</label>
 			<input type="text" name="login" required>

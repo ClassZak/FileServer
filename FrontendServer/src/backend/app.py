@@ -5,6 +5,7 @@ from flask import(
 	render_template,	request,	jsonify,
 	redirect,			url_for
 )
+from flask_jwt_extended.exceptions import NoAuthorizationError
 from markupsafe import escape
 import base64
 from datetime import datetime
@@ -79,42 +80,39 @@ def files_search():
 users = {'user1' : { 'password' : '1'}, 'user2' : { 'password' : '2'}}
 # Для запретных страниц
 def login_required(fn):
-    @jwt_required()
-    def wrapper(*args, **kwargs):
-        current_user = get_jwt_identity()
-        if not current_user:
-            next_url = request.url
-            return redirect(url_for('login', next_url=next_url))
-        return fn(*args, **kwargs)
-    return wrapper
+	@jwt_required(optional=True)
+	def wrapper(*args, **kwargs):
+		if not get_jwt_identity():
+			# Сохраняем запрошенный URL для перенаправления после авторизации
+			next_url = request.url
+			return redirect(url_for('login', next_url=next_url))
+		return fn(*args, **kwargs)
+	return wrapper
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
 	data = get_dict_from_request_form(request)
-	next_url = data.get('next_url', '/')  # Значение по умолчанию
+	next_url = request.args.get('next_url', '/')  # URL для перенаправления после авторизации
+	if data.get('next_url'):
+		next_url = data['next_url']
 
 	if request.method == 'POST':
-		login = data.get('login')
-		password = data.get('password')
+		login = request.form.get('login')
+		password = request.form.get('password')
 		
 		user = users.get(login)
 		if user and user['password'] == password:
-			# Создаем токен
 			access_token = create_access_token(identity=login)
-			
-			# Возвращаем JSON с токеном вместо редиректа
-			response = jsonify({
-				'success': True,
-				'redirect': next_url,
-				'access_token': access_token
-			})
-			
-			# Устанавливаем токен в куки
+			response = redirect(next_url)
 			set_access_cookies(response, access_token)
 			return response
 		else:
-			return jsonify({'error': 'Неверный логин и/или пароль'}), 401
+			# Возвращаем ошибку с сохранением next_url
+			return render_template('classes/login.html', 
+								error='Неверный логин и/или пароль',
+								next_url=next_url)
 	else:
+		# Отображаем форму входа с сохраненным next_url
 		return render_template('classes/login.html', next_url=next_url)
 
 @app.route('/api/verify_token', methods=['POST'])
@@ -125,6 +123,11 @@ def verify_token():
 		'valid': True,
 		'user': current_user
 	}), 200
+
+@app.errorhandler(NoAuthorizationError)
+def handle_auth_error(e):
+	next_url = request.url
+	return redirect(url_for('login', next_url=next_url))
 	
 @app.route('/api/logout')
 def logout():
@@ -138,8 +141,14 @@ def logout():
 def account():
 	current_user = get_jwt_identity()
 	user_data = users.get(current_user, {})
+	
+	# Добавляем проверку, что пользователь авторизован
+	if not current_user:
+		return redirect(url_for('login', next_url=request.url))
+	
 	return render_template(
-		'account.html', usernane = current_user
+		'account.html', 
+		username=current_user
 	)
 
 # Сервисные маршруты
@@ -157,7 +166,10 @@ def main():
 			"JWT_TOKEN_LOCATION": ["headers", "cookies"],
 			"JWT_COOKIE_SECURE": True,     # Отправлять только по HTTPS
 			"JWT_COOKIE_CSRF_PROTECT": True,
-			"JWT_CSRF_CHECK_FORM": True
+			"JWT_CSRF_CHECK_FORM": True,
+			"JWT_ACCESS_COOKIE_PATH": "/",
+			"JWT_REFRESH_COOKIE_PATH": "/",
+			"JWT_SESSION_COOKIE": False
 		})
 		app.run(debug=True, host='0.0.0.0', port=5000, ssl_context = ssl_context)
 	except Exception as e:
