@@ -5,10 +5,10 @@ from flask import(
 	render_template,	request,	jsonify,
 	redirect,			url_for
 )
-from flask_jwt_extended.exceptions import NoAuthorizationError
+from flask_jwt_extended.exceptions import NoAuthorizationError, JWTDecodeError
 from markupsafe import escape
 import base64
-from datetime import datetime
+import datetime
 
 
 
@@ -115,6 +115,21 @@ def login():
 		# Отображаем форму входа с сохраненным next_url
 		return render_template('classes/login.html', next_url=next_url)
 
+
+
+# Обраюботка ошибок авторизацции
+@app.errorhandler(NoAuthorizationError)
+@app.errorhandler(JWTDecodeError)
+def handle_auth_error(e):
+	next_url = request.url
+	return redirect(url_for('login', next_url=next_url))
+# Глобальный обработчик истекшего токена
+@jwt.expired_token_loader
+def expired_token_callback(jwt_header, jwt_payload):
+	next_url = request.url
+	return redirect(url_for('login', next_url=next_url))
+
+
 @app.route('/api/verify_token', methods=['POST'])
 @jwt_required()
 def verify_token():
@@ -124,10 +139,6 @@ def verify_token():
 		'user': current_user
 	}), 200
 
-@app.errorhandler(NoAuthorizationError)
-def handle_auth_error(e):
-	next_url = request.url
-	return redirect(url_for('login', next_url=next_url))
 	
 @app.route('/api/logout')
 def logout():
@@ -158,6 +169,7 @@ def account():
 
 # Точка входа
 def main():
+	#TODO: увеличить время авторизации для продакшена
 	try:
 		ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 		ssl_context.load_cert_chain('FrontendServer/cert.pem', 'FrontendServer/key.pem')
@@ -169,6 +181,7 @@ def main():
 			"JWT_CSRF_CHECK_FORM": True,
 			"JWT_ACCESS_COOKIE_PATH": "/",
 			"JWT_REFRESH_COOKIE_PATH": "/",
+			"JWT_ACCESS_TOKEN_EXPIRES": datetime.timedelta(days=0, seconds=5, microseconds=0, milliseconds=0, minutes=0, hours=0, weeks=0),
 			"JWT_SESSION_COOKIE": False
 		})
 		app.run(debug=True, host='0.0.0.0', port=5000, ssl_context = ssl_context)
