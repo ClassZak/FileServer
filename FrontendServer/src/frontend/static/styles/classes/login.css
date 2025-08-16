@@ -1,0 +1,106 @@
+.login{
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column; 
+	gap: 10px;
+
+	background: linear-gradient(295deg,var(--primary-accent),var(--secondary-green),var(--secondary-olive));
+	border-radius: 10px;
+	padding: 10px;
+	width: 70%;
+	margin-left: auto;
+	margin-right: auto;
+}
+.login-field{
+	width: 90%;
+	display: flex;
+	justify-content: center;
+	flex-direction: column;
+}
+.login-field > input{
+	margin-left: auto;
+	margin-right: auto;
+	display: inline;
+	width: 100%;
+}
+
+
+
+
+
+
+
+
+
+
+button.shadow-card:active {
+	-webkit-transform: scale(0.9);
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+button.shadow-card {
+	transition: none;
+}
+/* Убрать тени у кнопок при нажатии у телефонов */
+@media (hover: hover) and (pointer: fine) {
+	button.shadow-card:hover {
+		box-shadow: 1px 1px 10px #111;
+		background-color: white;
+	}
+}
+
+
+button.shadow-card {
+	border-radius: 10px;
+	font-weight: bold;
+
+	padding: 0.2rem;
+	min-width: auto;
+	min-height: auto;
+	
+	background-color: lightgoldenrodyellow;
+	color: var(--accent-gold);
+	font-size: medium;
+	font-family: Arial, sans-serif;
+	
+	margin: 0;
+}
+/* Адаптация для маленьких экранов */
+@media (max-width : 400px) {
+	button.shadow-card {
+		width:	.1em;
+		height:	.1em;
+		min-width:	1.3em;
+		min-height:	1.3em;
+		border-radius: 6px;
+		font-size: small;
+	}
+}
+@media (max-width : 300px) {
+	button.shadow-card {
+		width:	.1em;
+		height:	.1em;
+		min-width:	1.2em;
+		min-height:	1.2em;
+		border-radius: 3px;
+		font-size: xx-small;
+	}
+}
+@media (max-width : 300px) {
+	button.shadow-card {
+		box-shadow: 1px 1px 15px #111;
+	}
+}
+/*button.shadow-card{
+	background-color: white;
+	padding: 0.2rem;
+	border-radius: 0.5cap;
+	border-color: black;
+	border-width: 0.1cap;
+	transition: none;
+
+	color: var(--accent-gold);
+	font-size: large;
+	font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}*/

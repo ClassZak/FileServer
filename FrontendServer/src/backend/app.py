@@ -108,9 +108,7 @@ def login():
 			return response
 		else:
 			# Возвращаем ошибку с сохранением next_url
-			return render_template('classes/login.html', 
-								error='Неверный логин и/или пароль',
-								next_url=next_url)
+			return jsonify({'error':'Неверный логин и/или пароль'}), 401
 	else:
 		# Отображаем форму входа с сохраненным next_url
 		return render_template('classes/login.html', next_url=next_url)
@@ -181,7 +179,7 @@ def main():
 			"JWT_CSRF_CHECK_FORM": True,
 			"JWT_ACCESS_COOKIE_PATH": "/",
 			"JWT_REFRESH_COOKIE_PATH": "/",
-			"JWT_ACCESS_TOKEN_EXPIRES": datetime.timedelta(days=0, seconds=5, microseconds=0, milliseconds=0, minutes=0, hours=0, weeks=0),
+			"JWT_ACCESS_TOKEN_EXPIRES": datetime.timedelta(days=0, seconds=10, microseconds=0, milliseconds=0, minutes=0, hours=0, weeks=0),
 			"JWT_SESSION_COOKIE": False
 		})
 		app.run(debug=True, host='0.0.0.0', port=5000, ssl_context = ssl_context)

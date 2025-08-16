@@ -46,13 +46,6 @@
 		background-color: rgb(197, 17, 53);
 	}
 }
-@media (hover: hover)  and (pointer: fine) {
-	.error-window-square-btn:hover {
-		box-shadow: 1px 1px 15px #111;
-		background-color: rgb(197, 17, 53);
-	}
-}
-
 
 
 
