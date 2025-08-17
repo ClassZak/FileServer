@@ -12,6 +12,16 @@ import datetime
 
 
 
+config_path = 'FrontendServer/src/backend/.password.json'
+
+
+
+# Сервисы
+from service.userservice import UserService
+user_service = UserService(config_path)
+
+
+
 
 # Utilites
 # Получение словаря из формы
@@ -21,6 +31,11 @@ def get_dict_from_request_form(request:Request) -> Dict:
 		for k in request.form.keys() 
 			for v in request.form.getlist(k)
 	}
+def get_data_from_request(request: Request) -> Dict:
+	if request.is_json:
+		return request.get_json()
+	else:
+		return get_dict_from_request_form(request)
 
 
 
@@ -32,7 +47,7 @@ app = Flask(
 	template_folder='../frontend/template'
 )
 from flask_wtf.csrf import CSRFProtect
-def get_app_config(filename:str='FrontendServer/src/backend/.password.json'):
+def get_app_config(filename:str=config_path):
 	with open(filename, 'r', encoding='UTF-8') as file:
 		return json.load(file)
 app_config = get_app_config()
@@ -159,6 +174,15 @@ def account():
 		'account.html', 
 		username=current_user
 	)
+
+
+#Регистрация
+@app.route('/register')
+def register_page():
+	return render_template('classes/register.html')
+@app.route('/api/register')
+def register():
+	return user_service.create_user(get_data_from_request(request))
 
 # Сервисные маршруты
 

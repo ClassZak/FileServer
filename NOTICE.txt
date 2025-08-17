@@ -17,5 +17,8 @@ This product includes software developed by:
 This product includes MySQL Connector/C++,
 Licensed under the GNU General Public License, Version 2.0 (GPL-2.0).
 
+This product includes bcrypt,
+Licensed under the GNU General Public License, Version 2.0 (GPL-2.0).
+
 See the LICENSE file and library-specific license files
-(`OpenSSLLicense.txt`, `MySQLConnectorCPPLicense.txt`) for full details.
+(`OpenSSLLicense.txt`, `MySQLConnectorCPPLicense.txt`, `bcryptLICENSE.txt`) for full details.

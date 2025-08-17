@@ -59,20 +59,10 @@ class User(metaclass=UserMeta):
 	password_hash = {
 		'field_meta':{
 			'type': str,
-			'max_len': 128,
+			'max_len': 60,
 			'required': True,
 			'db_column': {
 				'name' : 'PasswordHash'
-			}
-		}
-	}
-	salt = {
-		'field_meta':{
-			'type': str,
-			'max_len': 32,
-			'required': True,
-			'db_column': {
-				'name' : 'Salt'
 			}
 		}
 	}

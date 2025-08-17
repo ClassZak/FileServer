@@ -22,6 +22,7 @@ OpenSSL 3.5.1: Apache-2.0
 | mysql-connector-python    | 9.3.0    | Python   | GPL-2.0    |
 | Flask                     | 3.1.0    | Python   | BSD        |
 | Flask-WTF                 | 1.2.2    | Python   | BSD        |
+| bcrypt                    | 4.3.0    | Python   | Apache-2.0 |
 
 
 ## Схема работы сервиса

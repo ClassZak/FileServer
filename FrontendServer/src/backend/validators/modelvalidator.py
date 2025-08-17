@@ -1,6 +1,6 @@
 from typing import Dict, Any
 from flask import jsonify
-from datetime import date
+from datetime import datetime, date
 
 class ModelValidator:
 	@staticmethod
@@ -14,17 +14,20 @@ class ModelValidator:
 			# Проверка обязательности
 			if meta.get('required') and value in (None, ''):
 				if not meta.get('default'):
-					raise ValueError(f"Поле {field} обязательно")
+					raise ValueError(f'Поле {field} обязательно')
 				else:
 					value=meta['default']
 			
 			# Преобразование типа
 			if value is not None:
 				try:
-					if meta['type'] == date:
-						value = date.fromisoformat(value)
-					else:
-						value = meta['type'](value)
+					if not isinstance(value, meta['type']):
+						if meta['type'] == date:
+							value = date.fromisoformat(value)
+						if meta['type'] == datetime:
+							value = datetime.fromisoformat(value)
+						else:
+							value = meta['type'](value)
 				except:
 					raise TypeError(f'Некорректный тип для {field}')
 			else:
@@ -43,6 +46,8 @@ class ModelValidator:
 					raise ValueError(f"Длина {field} должна быть ≥ {meta['min_len']}")
 				if 'max_len' in meta and len(value) > meta['max_len']:
 					raise ValueError(f"Длина {field} должна быть ≤ {meta['max_len']}")
+				if 'len' in meta and len(value) != meta['len']:
+					raise ValueError(f"Длина {field} должна быть = {meta['len']}")
 			
 			# Проверка внешних ключей
 			fk_info = db_settings.get('foreign_key')
