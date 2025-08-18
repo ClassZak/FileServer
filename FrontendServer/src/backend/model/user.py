@@ -77,7 +77,7 @@ class User(metaclass=UserMeta):
 	}
 
 
-class UserCreateModel(metaclass=UserMeta):
+class UserJSONModel(metaclass=UserMeta):
 	login = {
 		'field_meta': {
 			'type': str,

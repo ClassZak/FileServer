@@ -104,6 +104,8 @@ def login_required(fn):
 		return fn(*args, **kwargs)
 	return wrapper
 
+# Old version
+"""
 @app.route('/login', methods=['GET', 'POST'])
 def login():
 	data = get_dict_from_request_form(request)
@@ -127,7 +129,28 @@ def login():
 	else:
 		# Отображаем форму входа с сохраненным next_url
 		return render_template('classes/login.html', next_url=next_url)
+"""
+	
+# New version
+#"""
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+	data = get_dict_from_request_form(request)
+	next_url = request.args.get('next_url', '/')  # URL для перенаправления после авторизации
+	if data.get('next_url'):
+		next_url = data['next_url']
 
+
+	if request.method == 'POST':
+		if data.get('next_url'):
+			data.pop('next_url')
+		
+		return user_service.authorization(data, next_url)
+	else:
+		# Отображаем форму входа с сохраненным next_url
+		return render_template('classes/login.html', next_url=next_url)
+
+#"""
 
 
 # Обраюботка ошибок авторизацции
