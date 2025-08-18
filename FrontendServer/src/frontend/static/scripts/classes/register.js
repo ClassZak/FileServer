@@ -19,30 +19,25 @@ document.addEventListener('DOMContentLoaded', function() {
 			}
 			
 			// Проверяем тип контента
-			const contentType = response.headers.get('content-type');
-			if (contentType){
-				if(contentType.includes('text/html')) {
-					return response.text().then(html => {
-						// Заменяем текущую форму на новую (с сообщением об ошибке)
-						const parser = new DOMParser();
-						const newDoc = parser.parseFromString(html, 'text/html');
-						const newForm = newDoc.getElementById('register-form');
-						
-						if (newForm) {
-							registerForm.innerHTML = newForm.innerHTML;
-						}
+			try{
+				const contentType = response.headers.get('content-type');
+				if (contentType){
+					if(contentType.includes('text/html')) {
+						return response.text().then(html => {
+						throw new Error(html);
 					});
-				}else if(contentType.includes('application/json')){
-					return response.json().then(json=>{
-						if(json.error)
-							throw new Error(json.error);
-					});
-				}
+					}else if(contentType.includes('application/json')){
+						return response.json().then(json=>{
+							if(json.error)
+								throw new Error(json.error);
+							else if (json.message)
+								console.log(json.message);
+						});
+					}}
 			}
-			
-			return response.text().then(text => {
-				showError('Неожиданный ответ сервера');
-			});
+			catch (error){
+				throw error;
+			}
 		})
 		.catch(error => {
 			console.error('Ошибка:', error);

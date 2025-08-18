@@ -180,7 +180,7 @@ def account():
 @app.route('/register')
 def register_page():
 	return render_template('classes/register.html')
-@app.route('/api/register')
+@app.route('/api/register', methods = ['POST'])
 def register():
 	return user_service.create_user(get_data_from_request(request))
 

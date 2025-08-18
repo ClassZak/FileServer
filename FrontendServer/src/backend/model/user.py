@@ -59,7 +59,7 @@ class User(metaclass=UserMeta):
 	password_hash = {
 		'field_meta':{
 			'type': str,
-			'max_len': 60,
+			'len': 60,
 			'required': True,
 			'db_column': {
 				'name' : 'PasswordHash'
@@ -73,5 +73,22 @@ class User(metaclass=UserMeta):
 			'db_column': {
 				'name' : 'CreatedAt'
 			}
+		}
+	}
+
+
+class UserCreateModel(metaclass=UserMeta):
+	login = {
+		'field_meta': {
+			'type': str,
+			'max_len': 64,
+			'required': True
+		}
+	}
+	password = {
+		'field_meta':{
+			'type': str,
+			'max_len': 120,
+			'required': True
 		}
 	}
