@@ -80,6 +80,9 @@ import ssl
 @app.route('/')
 def root():
 	return render_template('index.html')
+@app.route('/about')
+def about():
+	return render_template('about.html')
 
 @app.route('/api/files_search')
 def files_search():
