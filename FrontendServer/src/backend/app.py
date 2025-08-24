@@ -104,42 +104,13 @@ def login_required(fn):
 		return fn(*args, **kwargs)
 	return wrapper
 
-# Old version
-"""
 @app.route('/login', methods=['GET', 'POST'])
 def login():
 	data = get_dict_from_request_form(request)
 	next_url = request.args.get('next_url', '/')  # URL для перенаправления после авторизации
 	if data.get('next_url'):
 		next_url = data['next_url']
-
-	if request.method == 'POST':
-		login = request.form.get('login')
-		password = request.form.get('password')
-		
-		user = users.get(login)
-		if user and user['password'] == password:
-			access_token = create_access_token(identity=login)
-			response = redirect(next_url)
-			set_access_cookies(response, access_token)
-			return response
-		else:
-			# Возвращаем ошибку с сохранением next_url
-			return jsonify({'error':'Неверный логин и/или пароль'}), 401
-	else:
-		# Отображаем форму входа с сохраненным next_url
-		return render_template('classes/login.html', next_url=next_url)
-"""
-	
-# New version
-#"""
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-	data = get_dict_from_request_form(request)
-	next_url = request.args.get('next_url', '/')  # URL для перенаправления после авторизации
-	if data.get('next_url'):
-		next_url = data['next_url']
-
+	# TODO: добавить проверку нового url
 
 	if request.method == 'POST':
 		if data.get('next_url'):

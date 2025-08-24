@@ -30,10 +30,14 @@ document.addEventListener('DOMContentLoaded', function() {
 						return response.json().then(json=>{
 							if(json.error)
 								throw new Error(json.error);
-							else if (json.message)
+							else if (json.message){
 								console.log(json.message);
+								this.reset();
+								showAlert('Вы успешно зарегистрировались!');
+							}
 						});
-					}}
+					}
+				}
 			}
 			catch (error){
 				throw error;

@@ -92,15 +92,9 @@ button.shadow-card {
 		box-shadow: 1px 1px 15px #111;
 	}
 }
-/*button.shadow-card{
-	background-color: white;
-	padding: 0.2rem;
-	border-radius: 0.5cap;
-	border-color: black;
-	border-width: 0.1cap;
-	transition: none;
 
-	color: var(--accent-gold);
-	font-size: large;
-	font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-}*/
+
+
+p a{
+	color:white;
+}

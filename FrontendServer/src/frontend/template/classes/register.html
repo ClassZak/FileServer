@@ -2,11 +2,11 @@
 <html lang="ru">
 <head>
 	{% include 'parts/base_head.html' %}
-	<link rel="stylesheet" href="{{ url_for('static', filename = 'styles/classes/error_window.css') }}">
 	<link rel="stylesheet" href="{{ url_for('static', filename = 'styles/classes/shadow_card.css') }}">
 	<link rel="stylesheet" href="{{ url_for('static', filename = 'styles/classes/shadow_box.css') }}">
 	<link rel="stylesheet" href="{{ url_for('static', filename = 'styles/classes/register.css') }}">
-	<script src="{{ url_for('static', filename = 'scripts/classes/error_window.js') }}"></script>
+	{% include 'classes/include/error_window.html' %}
+	{% include 'classes/include/alert_window.html' %}
 	
 	<title>FileService — Регистрация</title>
 </head>

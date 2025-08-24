@@ -2,11 +2,10 @@
 <html lang="ru">
 <head>
 	{% include 'parts/base_head.html' %}
-	<link rel="stylesheet" href="{{ url_for('static', filename = 'styles/classes/error_window.css') }}">
 	<link rel="stylesheet" href="{{ url_for('static', filename = 'styles/classes/shadow_card.css') }}">
 	<link rel="stylesheet" href="{{ url_for('static', filename = 'styles/classes/shadow_box.css') }}">
 	<link rel="stylesheet" href="{{ url_for('static', filename = 'styles/classes/login.css') }}">
-	<script src="{{ url_for('static', filename = 'scripts/classes/error_window.js') }}"></script>
+	{% include 'classes/include/error_window.html' %}
 	
 	<title>FileService — Вход</title>
 </head>
@@ -37,6 +36,9 @@
 
 			<button type="submit" class="shadow-card">Войти</button>
 		</form>
+		<p style="display: inline-block;">
+			Нет учётной записи? <a href="/register">Регистрация</a>
+		</p>
 	</main>
 	<footer>
 		{% include 'parts/footer_content.html' %}

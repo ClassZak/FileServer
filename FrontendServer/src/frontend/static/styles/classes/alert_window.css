@@ -1,4 +1,4 @@
-.error-window{
+.alert-window{
 	position: fixed;
 	margin-top: 3.9rem;
 	z-index: 1000;
@@ -6,7 +6,8 @@
 	margin-right: auto;
 	align-self: center;
 
-	background-color: rgb(243, 15, 60);
+	color: color-mix(in srgb, var(--accent-gold) 70%, black);
+	background-color: var(--accent-gold);
 
 	display: flex;
 	align-items: center;
@@ -19,37 +20,35 @@
 	box-shadow: 1px 1px 10px #111;
 }
 
-.error-window-text-content {
+.alert-window-text-content {
 	flex: 1;
 	word-wrap: anywhere;
 }
 
-.error-window-square-btn {
+.alert-window-square-btn {
 	border-radius: 10px;
 	font-weight: bold;
 
-	color: white;
-	background-color: crimson;
+	color: var(--accent-gold);
+	background-color: lightgoldenrodyellow;
 }
-.error-window-square-btn:active {
+.alert-window-square-btn:active {
 	-webkit-transform: scale(0.7);
     transform: scale(0.7);
     transition: transform 0.3s ease;
 }
-.error-window-square-btn {
+.alert-window-square-btn {
 	transition: none;
 }
 /* Убрать тени у кнопок при нажатии у телефонов */
 @media (hover: hover) and (pointer: fine) {
-	.error-window-square-btn:hover {
+	.alert-window-square-btn:hover {
 		box-shadow: 1px 1px 7px #111;
-		background-color: rgb(197, 17, 53);
 	}
 }
 
 
-
-.error-window-square-btn {
+.alert-window-square-btn {
 	width:	30px;
 	height:	30px;
 	min-width: auto;
@@ -62,10 +61,10 @@
 }
 /* Адаптация для маленьких экранов */
 @media (max-width : 400px) {
-	.error-window-text-content{
+	.alert-window-text-content{
 		font-size: medium;
 	}
-	.error-window-square-btn {
+	.alert-window-square-btn {
 		width:	.1em;
 		height:	.1em;
 		min-width:	1.3em;
@@ -75,10 +74,10 @@
 	}
 }
 @media (max-width : 300px) {
-	.error-window-text-content{
+	.alert-window-text-content{
 		font-size: small;
 	}
-	.error-window-square-btn {
+	.alert-window-square-btn {
 		width:	.1em;
 		height:	.1em;
 		min-width:	1.2em;
@@ -88,7 +87,7 @@
 	}
 }
 @media (max-width : 300px) {
-	.error-window-square-btn {
+	.alert-window-square-btn {
 		box-shadow: 1px 1px 15px #111;
 	}
 }
