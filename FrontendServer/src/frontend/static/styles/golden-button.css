@@ -1,0 +1,59 @@
+
+.golden-button:active {
+	-webkit-transform: scale(0.9);
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+.golden-button {
+	transition: none;
+}
+/* Убрать тени у кнопок при нажатии у телефонов */
+@media (hover: hover) and (pointer: fine) {
+	.golden-button:hover {
+		box-shadow: 1px 1px 10px #111;
+		background-color: white;
+	}
+}
+
+
+.golden-button {
+	border-radius: 10px;
+	font-weight: bold;
+
+	padding: 0.2rem;
+	min-width: auto;
+	min-height: auto;
+	
+	background-color: lightgoldenrodyellow;
+	color: var(--accent-gold);
+	font-size: medium;
+	font-family: Arial, sans-serif;
+	
+	margin: 0;
+}
+/* Адаптация для маленьких экранов */
+@media (max-width : 400px) {
+	.golden-button {
+		width:	.1em;
+		height:	.1em;
+		min-width:	1.3em;
+		min-height:	1.3em;
+		border-radius: 6px;
+		font-size: small;
+	}
+}
+@media (max-width : 300px) {
+	.golden-button {
+		width:	.1em;
+		height:	.1em;
+		min-width:	1.2em;
+		min-height:	1.2em;
+		border-radius: 3px;
+		font-size: xx-small;
+	}
+}
+@media (max-width : 300px) {
+	.golden-button {
+		box-shadow: 1px 1px 15px #111;
+	}
+}

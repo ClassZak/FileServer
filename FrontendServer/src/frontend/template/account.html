@@ -2,6 +2,11 @@
 <html lang="ru">
 <head>
 	{% include 'parts/base_head.html' %}
+	{% include 'classes/include/error_window.html' %}
+
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles/golden-button.css') }}">
+
+	<script src="{{ url_for('static', filename='scripts/logout.js') }}"></script>
 
 	<title>FileService — Аккаунт</title>
 </head>
@@ -10,6 +15,7 @@
 		{% include 'parts/header_content.html' %}
 	</header>
 	<main>
+		<button onclick="logout()" class="golden-button">Выйти</button>
 		<h1>Имя пользователя: {{ username }}</h1>
 	</main>
 	<footer>
