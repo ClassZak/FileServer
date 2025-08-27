@@ -42,16 +42,17 @@ class GroupService(AService):
 	def create_group(self, data:dict) -> Tuple[Response, int]:
 		try:
 			validated = ModelValidator.validate(data, Group.FIELDS_META)
-			if self.exists_name(validated):
+			if self.exists_name(validated.get('name')):
 				return jsonify({'error' : 'Такая группа уже существует'}), 400
-			values = tuple(validated)
-			db_columns = [Group.DB_COLUMNS['column'][field] for field in validated.values()]
+			values = tuple(validated.values())
+			db_columns = [Group.DB_COLUMNS['columns'][field] for field in validated.keys()]
 
 			query = f"""
 				INSERT INTO `{GroupService.TABLE_NAME}` ({','.join(db_columns)})
 				VALUES ({','.join(['%s'] * len(values)) })
 			"""
 
+			self.connect()
 			self.cursor.execute(query, values)
 			self.connection.commit()
 
@@ -63,9 +64,13 @@ class GroupService(AService):
 			self.connection.rollback()
 			return jsonify({'error' : f'Ошибка БД: {str(e)}'}), 500
 		except Error as e:
-			if self.connection:
-				self.connection.rollback()
-			return jsonify({'error' : f'Ошибка БД: {str(e)}'}), 500
+			try:
+				if self.connection:
+					self.connection.rollback()
+			except Error as newE:
+				return jsonify({'error' : f'Ошибка БД: {str(e)}'}), 500
+			finally:
+				return jsonify({'error' : f'Ошибка БД: {str(e)}'}), 500
 		finally:
 			self.disconnect()
 	def read_groups(self):
