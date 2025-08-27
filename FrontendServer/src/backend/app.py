@@ -18,7 +18,9 @@ config_path = 'FrontendServer/src/backend/.password.json'
 
 # Сервисы
 from service.userservice import UserService
+from service.groupservice import GroupService
 user_service = UserService(config_path)
+group_service = GroupService(config_path)
 
 
 
@@ -75,27 +77,7 @@ import ssl
 
 
 
-# Маршруты
-# Базовые маршруты
-@app.route('/')
-def root():
-	return render_template('index.html')
-@app.route('/about')
-def about():
-	return render_template('about.html')
-
-@app.route('/api/files_search')
-def files_search():
-	try:
-		pass
-	except Exception as e:
-		pass
-	finally:
-		return render_template('http_error.html', error = 405)
-	
-	
-# Авторизация и регистрация
-users = {'user1' : { 'password' : '1'}, 'user2' : { 'password' : '2'}}
+# Настройка JWT 
 # Для запретных страниц
 def login_required(fn):
 	@jwt_required(optional=True)
@@ -106,6 +88,47 @@ def login_required(fn):
 			return redirect(url_for('login', next_url=next_url))
 		return fn(*args, **kwargs)
 	return wrapper
+# Обраюботка ошибок авторизацции
+@app.errorhandler(NoAuthorizationError)
+@app.errorhandler(JWTDecodeError)
+def handle_auth_error(e):
+	next_url = request.url
+	return redirect(url_for('login', next_url=next_url))
+# Глобальный обработчик истекшего токена
+@jwt.expired_token_loader
+def expired_token_callback(jwt_header, jwt_payload):
+	next_url = request.url
+	return redirect(url_for('login', next_url=next_url))
+
+
+
+
+# Маршруты
+# Базовые маршруты
+@app.route('/')
+def root():
+	return render_template('index.html')
+@app.route('/about')
+def about():
+	return render_template('about.html')
+@app.route('/account')
+@login_required
+def account():
+	current_user = get_jwt_identity()
+	# Проверка на то, что пользователь авторизован
+	if not current_user:
+		return redirect(url_for('login', next_url=request.url))
+	
+	return render_template(
+		'account.html', 
+		username=current_user
+	)
+@app.route('/register')
+def register_page():
+	return render_template('classes/register.html')
+
+
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -124,22 +147,16 @@ def login():
 		# Отображаем форму входа с сохраненным next_url
 		return render_template('classes/login.html', next_url=next_url)
 
-#"""
 
 
-# Обраюботка ошибок авторизацции
-@app.errorhandler(NoAuthorizationError)
-@app.errorhandler(JWTDecodeError)
-def handle_auth_error(e):
-	next_url = request.url
-	return redirect(url_for('login', next_url=next_url))
-# Глобальный обработчик истекшего токена
-@jwt.expired_token_loader
-def expired_token_callback(jwt_header, jwt_payload):
-	next_url = request.url
-	return redirect(url_for('login', next_url=next_url))
 
 
+
+
+
+# Сервисные маршруты
+# API
+# Авторизация
 @app.route('/api/verify_token', methods=['POST'])
 @jwt_required()
 def verify_token():
@@ -149,7 +166,7 @@ def verify_token():
 		'user': current_user
 	}), 200
 
-	
+# Выход
 @app.route('/api/logout')
 def logout():
 	response = redirect('/')
@@ -157,38 +174,39 @@ def logout():
 
 	return response
 
-@app.route('/account')
-@login_required
-def account():
-	current_user = get_jwt_identity()
-	user_data = users.get(current_user, {})
-	
-	# Добавляем проверку, что пользователь авторизован
-	if not current_user:
-		return redirect(url_for('login', next_url=request.url))
-	
-	return render_template(
-		'account.html', 
-		username=current_user
-	)
-
-
-#Регистрация
-@app.route('/register')
-def register_page():
-	return render_template('classes/register.html')
+# Регистрация
 @app.route('/api/register', methods = ['POST'])
 def register():
 	return user_service.create_user(get_data_from_request(request))
 
-# Сервисные маршруты
+
+
+
+# Группы
+@app.route('/api/groups', methods = ['GET','POST'])
+def group_route():
+	if request.method == 'GET':
+		return group_service.read_groups()
+	elif request.method == 'POST':
+		return group_service.create_group(get_data_from_request(request))
+
+
+# Файлы
+@app.route('/api/files_search')
+def files_search():
+	try:
+		pass
+	except Exception as e:
+		pass
+	finally:
+		return render_template('http_error.html', error = 405)
 
 
 
 
 # Точка входа
 def main():
-	#TODO: увеличить время авторизации для продакшена
+	#TODO: Настроить время авторизации для продакшена
 	try:
 		ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 		ssl_context.load_cert_chain('FrontendServer/cert.pem', 'FrontendServer/key.pem')

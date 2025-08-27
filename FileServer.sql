@@ -15,7 +15,7 @@ CREATE TABLE `User` (
 -- -----------------------------------------------------
 CREATE TABLE `Group` (
 	Id			INT AUTO_INCREMENT PRIMARY KEY,
-	`Name`		VARCHAR(64) UNIQUE NOT NULL,
+	`Name`		NVARCHAR(64) UNIQUE NOT NULL,
 	LeaderId	INT NOT NULL,
 	FOREIGN KEY (LeaderId) REFERENCES `User`(Id)
 );
@@ -34,7 +34,7 @@ CREATE TABLE GroupMember (
 -- -----------------------------------------------------
 CREATE TABLE FileMetadata (
 	Id			BIGINT AUTO_INCREMENT PRIMARY KEY,
-	`Path`		VARCHAR(4096) NOT NULL,
+	`Path`		NVARCHAR(4096) NOT NULL,
 	IdOwener	INT NOT NULL,
 	IdGroup		INT,
 	`Mode`		SMALLINT UNSIGNED NOT NULL, -- UNIX permissions
