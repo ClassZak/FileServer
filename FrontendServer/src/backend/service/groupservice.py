@@ -93,8 +93,65 @@ class GroupService(AService):
 			return jsonify({'error' : f'Ошибка БД: {str(e)}'}), 500
 		finally:
 			self.disconnect()
+	def update_group(self, data:dict, id: int) -> Tuple[Response, int]:
+		try:
+			# Проверка конфликта ID
+			if 'id' in data and data['id'] != data:
+				return jsonify({'error': 'ID в теле запроса не совпадает с ID в URL'}), 400
+			
+			data['id'] = id
+			# Проверка ID и валидация
+			if not self.exists(data['id']):
+				return jsonify({'error': 'Объект для обновления данных не найден'}), 404
+			validated = ModelValidator.validate(data, Group.FIELDS_META, self.cursor)
 
+			set_clause = ', '.join([
+				f"{Group.DB_COLUMNS['columns'][field]} = %s"
+				for field in validated if field != 'id'
+			])
+			values = [validated[field] for field in validated if field != 'id']
+			values.append(data['id'])
 
+			query = f"""
+				UPDATE `{GroupService.TABLE_NAME}`
+				SET {set_clause}
+				WHERE {Group.DB_COLUMNS['columns']['id']} = %s
+			"""
+
+			self.connect()
+			self.cursor.execute(query, values)
+			self.connection.commit()
+
+			if self.cursor.rowcount == 0:
+				return jsonify({'error': 'Объект уже имеет эти данные'}), 400
+		
+			return jsonify({'message': 'Данные объекта обновлены'}), 200
+		except ValueError as e:
+			return jsonify({'error': str(e)}), 400
+		except Error as e:
+			self.connection.rollback()
+			return jsonify({'error': f'Ошибка БД: {str(e)}'}), 500
+		finally:
+			self.disconnect()	
+	#TODO: добавить проверку на ссылки
+	def delete_group(self, id:int):
+		try:
+			if not self.exists(id):
+				return jsonify({'error': 'Объект для удаления не найден'}), 404
+			
+			self.connect()
+			query = f"""
+				DELETE FROM `{GroupService.TABLE_NAME}`
+				WHERE {Group.DB_COLUMNS['columns']['id']} = %s
+			"""
+			self.cursor.execute(query, (id,))
+			self.connection.commit()
+			return jsonify({'message': 'Объект успешно удалён'}), 200
+		except Error as e:
+			self.connection.rollback()
+			return jsonify({'error': f'Ошибка БД: {str(e)}'}), 500
+		finally:
+			self.disconnect()
 	"""
 		CRUD операции
 	"""

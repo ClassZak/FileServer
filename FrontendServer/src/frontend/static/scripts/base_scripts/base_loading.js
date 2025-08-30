@@ -2,7 +2,13 @@ var csrfToken = undefined;
 
 document.addEventListener('DOMContentLoaded', function() {
 	// CSRF токен
-	csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+	const csrfMetaTag = document.querySelector('meta[name="csrf-token"]');
+    if (csrfMetaTag) {
+        csrfToken = csrfMetaTag.getAttribute('content');
+        console.log('CSRF token loaded:', csrfToken);
+    } else {
+        console.error('CSRF meta tag not found!');
+    }
 });
 
 
