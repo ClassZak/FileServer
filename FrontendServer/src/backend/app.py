@@ -125,7 +125,8 @@ def account():
 	)
 @app.route('/register')
 def register_page():
-	return render_template('classes/register.html')
+	csrf_token = generate_csrf()
+	return render_template('classes/register.html', csrf_token=csrf_token)
 
 
 from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf

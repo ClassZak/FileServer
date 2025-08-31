@@ -4,12 +4,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	registerForm.addEventListener('submit', function(e) {
 		e.preventDefault();
+		hideError();
 		const formData = new FormData(this);
+
+		//formData.append('csrf_token', csrfToken);
 
 		fetch(this.action, {
 			method: this.method,
 			body: formData,
-			headers: { 'X-CSRFToken': csrfToken }
+			headers: { 
+				'X-CSRF-Token': csrfToken, 
+				'X-Requested-With': 'XMLHttpRequest' 
+			},
+			credentials: 'include',
+			mode: 'cors',
+			// Для разработки с самоподписанными сертификатами
+			// Это не рекомендуется для продакшена
+			// referrerPolicy: 'unsafe-url'
 		})
 		.then(response => {
 			// Если ответ - редирект (код 302)
