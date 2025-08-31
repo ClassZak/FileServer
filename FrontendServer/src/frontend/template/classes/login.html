@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 	{% include 'parts/base_head.html' %}
-	<link rel="stylesheet" href="{{ url_for('static', filename = 'styles/classes/shadow_card.css') }}">
+	<link rel="stylesheet" href="{{ url_for('static', filename = 'styles/golden-button.css') }}">
 	<link rel="stylesheet" href="{{ url_for('static', filename = 'styles/classes/shadow_box.css') }}">
 	<link rel="stylesheet" href="{{ url_for('static', filename = 'styles/classes/login.css') }}">
 	{% include 'classes/include/error_window.html' %}
@@ -34,7 +34,7 @@
 				<input type="password" placeholder="Пароль..." name="password" id="password" required>
 			</div>
 
-			<button type="submit" class="shadow-card">Войти</button>
+			<button type="submit" class="golden-button">Войти</button>
 		</form>
 		<p style="display: inline-block;">
 			Нет учётной записи? <a href="/register">Регистрация</a>

@@ -34,20 +34,12 @@
 /* Адаптация для маленьких экранов */
 @media (max-width : 400px) {
 	.golden-button {
-		width:	.1em;
-		height:	.1em;
-		min-width:	1.3em;
-		min-height:	1.3em;
 		border-radius: 6px;
 		font-size: small;
 	}
 }
 @media (max-width : 300px) {
 	.golden-button {
-		width:	.1em;
-		height:	.1em;
-		min-width:	1.2em;
-		min-height:	1.2em;
 		border-radius: 3px;
 		font-size: xx-small;
 	}

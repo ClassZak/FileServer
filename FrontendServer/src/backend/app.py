@@ -125,6 +125,18 @@ def account():
 	)
 @app.route('/register')
 def register_page():
+	try:
+		verify_jwt_in_request(optional=True)
+		current_user = get_jwt_identity()
+		if current_user:
+			# Для AJAX-запросов возвращаем JSON
+			if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+				return jsonify({'redirect': url_for('account')}), 200
+			# Для обычных запросов - редирект
+			app.logger.debug(f"Redirecting to account")
+			return redirect('/account')
+	except Exception as e:
+		app.logger.debug(f"JWT check failed: {e}")
 	csrf_token = generate_csrf()
 	return render_template('classes/register.html', csrf_token=csrf_token)
 
