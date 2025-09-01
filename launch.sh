@@ -1,5 +1,5 @@
 python3 -m venv .venv && \
-. .ven/bin/activate && \
+. .venv/bin/activate && \
 
 git stash && \
 git pull origin master &&  \
