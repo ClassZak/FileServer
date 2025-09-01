@@ -1,3 +1,5 @@
+#!/bin/bash
+
 sudo apt-get install mysql-server
 
 sudo apt install python3.12-venv
