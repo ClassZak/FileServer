@@ -13,5 +13,8 @@ x64/
 Debug/
 Release/
 
+# CMake
+build/
+
 # SSL
 *.pem
