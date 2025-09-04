@@ -7,6 +7,8 @@ project(FilesServer VERSION 1.0
 		LANGUAGES CXX
 )
 
+add_definitions(-DSTATIC_CONCPP)
+
 
 set(SOURCES
 	${CMAKE_SOURCE_DIR}/src/main.cpp
@@ -31,6 +33,7 @@ find_package(OpenSSL 3.5.1 REQUIRED)
 if(OpenSSL_FOUND)
 	include_directories(${OPENSSL_INCLUDE_DIR})
 	message(STATUS "Found OpenSSL ${OPENSSL_VERSION}")
+	message(STATUS "OpenSSL INCLUDE_DIR ${OPENSSL_INCLUDE_DIR}")
 endif()
 
 # MySQL connector
@@ -44,38 +47,87 @@ if(NOT WIN32)
 		message(FATAL_ERROR "MySQL Connector/C++ not found")
 	endif()
 elseif(WIN32)
-	set(MYSQL_CONNECTOR_CPP_ROOT "C:/Program Files/MySQL/MySQL Connector C++ 9.4")
-	find_path(MYSQL_CPP_CONNECTION_INCLUDE_DIR
-		NAMES mysql/jdbc.h
-		PATHS "${MYSQL_CONNECTOR_CPP_ROOT}/include"
-	)
-	include_directories(${MYSQL_CPP_CONNECTION_INCLUDE_DIR})
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+		set(MYSQL_CONNECTOR_CPP_ROOT "G:/Programs/Libraries/mysql-connector-c++-9.4.0-winx64")
+		find_path(MYSQL_CPP_CONNECTION_INCLUDE_DIR
+			NAMES mysqlx/xdevapi.h
+			PATHS "${MYSQL_CONNECTOR_CPP_ROOT}/include"
+		)
+		include_directories(${MYSQL_CPP_CONNECTION_INCLUDE_DIR})
 
-	set(MYSQL_CONNECTOR_CPP_LIB_DIR "${MYSQL_CONNECTOR_CPP_ROOT}/lib64/vs14")
-	link_directories(${MYSQL_CONNECTOR_ROOT}/lib64/vs14)
+		set(MYSQL_CONNECTOR_CPP_LIB_DIR_DEBUG "${MYSQL_CONNECTOR_CPP_ROOT}/lib64/debug/vs14")
+		set(MYSQL_CONNECTOR_CPP_LIB_DIR "${MYSQL_CONNECTOR_CPP_ROOT}/lib64/vs14")
+		set(MYSQL_CONNECTOR_DEBUG_LIBS
+			"${MYSQL_CONNECTOR_CPP_LIB_DIR_DEBUG}/mysqlcppconn-static.lib"
+			"${MYSQL_CONNECTOR_CPP_LIB_DIR_DEBUG}/mysqlcppconnx-static.lib"
+		)
+		set(MYSQL_CONNECTOR_RELEASE_LIBS
+			"${MYSQL_CONNECTOR_CPP_LIB_DIR}/mysqlcppconn-static.lib"
+			"${MYSQL_CONNECTOR_CPP_LIB_DIR}/mysqlcppconnx-static.lib"
+		)
+		if(MYSQL_CPP_CONNECTION_INCLUDE_DIR AND MYSQL_CONNECTOR_DEBUG_LIBS)
+			set(MYSQL_CPP_CONNECTION_FOUND TRUE)
+			message(STATUS "Found MySQL Connector/C++ Debug libraries")
+		else()
+			message(FATAL_ERROR "MySQL Connector/C++ Debug libraries not found")
+		endif()
 
-	if(MYSQL_CPP_CONNECTION_INCLUDE_DIR AND MYSQL_CONNECTOR_CPP_LIB_DIR)
-		set(MYSQL_CPP_CONNECTION_FOUND TRUE)
-		message(STATUS "Found MySQL Connector/C++ root dir: ${MYSQL_CONNECTOR_CPP_ROOT}")
-		message(STATUS "Found MySQL Connector/C++ include dir: ${MYSQL_CPP_CONNECTION_INCLUDE_DIR}")
-		message(STATUS "Found MySQL Connector/C++ library: ${MYSQL_CONNECTOR_CPP_LIB_DIR}")
+		if(MYSQL_CPP_CONNECTION_INCLUDE_DIR AND MYSQL_CONNECTOR_CPP_LIB_DIR_DEBUG)
+			set(MYSQL_CPP_CONNECTION_FOUND TRUE)
+			message(STATUS "Found MySQL Connector/C++ root dir: ${MYSQL_CONNECTOR_CPP_ROOT}")
+			message(STATUS "Found MySQL Connector/C++ include dir: ${MYSQL_CPP_CONNECTION_INCLUDE_DIR}")
+			message(STATUS "Found MySQL Connector/C++ library: ${MYSQL_CONNECTOR_CPP_LIB_DIR_DEBUG}")
+		else()
+			message(STATUS "Found MySQL Connector/C++ root dir: ${MYSQL_CONNECTOR_CPP_ROOT}")
+			message(STATUS "Found MySQL Connector/C++ include dir: ${MYSQL_CPP_CONNECTION_INCLUDE_DIR}")
+			message(STATUS "Found MySQL Connector/C++ library: ${MYSQL_CONNECTOR_CPP_LIB_DIR_DEBUG}")
+			message(FATAL_ERROR "MySQL Connector/C++ not found. "
+				"Include dir: ${MYSQL_CPP_CONNECTION_INCLUDE_DIR}, "
+				"Library: ${MYSQL_CONNECTOR_CPP_LIB_DIR_DEBUG}")
+		endif()
 	else()
-		message(STATUS "Found MySQL Connector/C++ root dir: ${MYSQL_CONNECTOR_CPP_ROOT}")
-		message(STATUS "Found MySQL Connector/C++ include dir: ${MYSQL_CPP_CONNECTION_INCLUDE_DIR}")
-		message(STATUS "Found MySQL Connector/C++ library: ${MYSQL_CONNECTOR_CPP_LIB_DIR}")
-		message(FATAL_ERROR "MySQL Connector/C++ not found. "
-			"Include dir: ${MYSQL_CPP_CONNECTION_INCLUDE_DIR}, "
-			"Library: ${MYSQL_CONNECTOR_CPP_LIB_DIR}")
+		set(MYSQL_CONNECTOR_CPP_ROOT "C:/Program Files/MySQL/MySQL Connector C++ 9.4")
+		find_path(MYSQL_CPP_CONNECTION_INCLUDE_DIR
+			NAMES mysqlx/xdevapi.h
+			PATHS "${MYSQL_CONNECTOR_CPP_ROOT}/include"
+		)
+		include_directories(${MYSQL_CPP_CONNECTION_INCLUDE_DIR})
+
+		set(MYSQL_CONNECTOR_CPP_LIB_DIR "${MYSQL_CONNECTOR_CPP_ROOT}/lib64/vs14")
+		set(MYSQL_CONNECTOR_RELEASE_LIBS
+			"${MYSQL_CONNECTOR_CPP_LIB_DIR}/mysqlcppconn-static.lib"
+			"${MYSQL_CONNECTOR_CPP_LIB_DIR}/mysqlcppconnx-static.lib"
+		)
+		link_directories(MYSQL_CONNECTOR_CPP_LIB_DIR)
+
+		if(MYSQL_CPP_CONNECTION_INCLUDE_DIR AND MYSQL_CONNECTOR_CPP_LIB_DIR)
+			set(MYSQL_CPP_CONNECTION_FOUND TRUE)
+			message(STATUS "Found MySQL Connector/C++ root dir: ${MYSQL_CONNECTOR_CPP_ROOT}")
+			message(STATUS "Found MySQL Connector/C++ include dir: ${MYSQL_CPP_CONNECTION_INCLUDE_DIR}")
+			message(STATUS "Found MySQL Connector/C++ library: ${MYSQL_CONNECTOR_CPP_LIB_DIR}")
+		else()
+			message(STATUS "Found MySQL Connector/C++ root dir: ${MYSQL_CONNECTOR_CPP_ROOT}")
+			message(STATUS "Found MySQL Connector/C++ include dir: ${MYSQL_CPP_CONNECTION_INCLUDE_DIR}")
+			message(STATUS "Found MySQL Connector/C++ library: ${MYSQL_CONNECTOR_CPP_LIB_DIR}")
+			message(FATAL_ERROR "MySQL Connector/C++ not found. "
+				"Include dir: ${MYSQL_CPP_CONNECTION_INCLUDE_DIR}, "
+				"Library: ${MYSQL_CONNECTOR_CPP_LIB_DIR}")
+		endif()
 	endif()
 endif()
-target_link_libraries(FilesServer
-	libcrypto
-	mysqlcppconnx
-	mysqlcppconn-static
-	mysqlcppconn
-	mysqlcppconnx-static
-	libssl
-)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	target_link_libraries(FilesServer
+		${MYSQL_CONNECTOR_DEBUG_LIBS}  # Debug-версии библиотек MySQL
+		OpenSSL::SSL  # Импортированные цели OpenSSL
+		OpenSSL::Crypto
+	)
+else()
+	target_link_libraries(FilesServer
+		${MYSQL_CONNECTOR_RELEASE_LIBS} # Release-версии библиотек MySQL
+		OpenSSL::SSL
+		OpenSSL::Crypto
+	)
+endif()
 
 
 

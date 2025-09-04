@@ -1,6 +1,7 @@
 #include <iostream>
 #include <iomanip>
 #include <mysqlx/xdevapi.h>
+#include <mysql/jdbc.h>
 
 #include "utils/functions.hpp"
 
@@ -11,28 +12,55 @@ int main(int argc, char** argv)
 	std::string password = LoadDataFromFile("password.bin");
 	password = password.substr(0, password.length()-2);
 
+	sql::Driver* driver = sql::mysql::get_driver_instance();
+	const std::string url = "tcp://127.0.0.1:3306"; // URL для классического протокола
+	const std::string user = "root";
+	const std::string database = "FileServer";
+
+	std::cout << "Connector/C++ JDBC example program..." << std::endl;
+	
+
 
 	try
 	{
-		mysqlx::Session session(3306, "root", password);
-		
+		sql::Driver* driver = sql::mysql::get_driver_instance();
+		sql::Connection* con(driver->connect(url, user, password));
+		std::cout << "Connection established successfully!" << std::endl;
+
+		con->setSchema(database);
+		sql::Statement* stmt(con->createStatement());
+		sql::ResultSet* res(stmt->executeQuery("SELECT PasswordHash FROM `User`"));
+
+		while (res->next())
+		{
+			std::cout << "MySQL replies: \t\t" << res->getString("PasswordHash") << std::endl;
+			std::cout << "MySQL says it again:\t" << res->getString(1) << std::endl;
+		}
+
+
 	}
-	catch (const mysqlx::Error& err)
+	catch (sql::SQLException& e)
 	{
-		std::cout << "ERROR: " << err << std::endl;
-		return 1;
+		// Обработка исключений, специфичных для MySQL
+		std::cout << "# ERR: SQLException in " << __FILE__;
+		std::cout << "(" << __FUNCTION__ << ") on line " << __LINE__ << std::endl;
+		std::cout << "# ERR: " << e.what();
+		std::cout << " (MySQL error code: " << e.getErrorCode();
+		std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+		return EXIT_FAILURE;
 	}
-	catch (std::exception& ex)
+	catch (std::exception& e)
 	{
-		std::cout << "STD EXCEPTION: " << ex.what() << std::endl;
-		return 1;
+		// Обработка других стандартных исключений
+		std::cout << "STD EXCEPTION: " << e.what() << std::endl;
+		return EXIT_FAILURE;
 	}
-	catch (const char* ex)
+	catch (...)
 	{
-		std::cout << "EXCEPTION: " << ex << std::endl;
-		return 1;
+		// Обработка всех остальных исключений
+		std::cout << "Unknown exception" << std::endl;
+		return EXIT_FAILURE;
 	}
-	system("pause");
 }
 
 std::string UrlEncode(const std::string& value)
