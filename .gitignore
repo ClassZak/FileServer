@@ -18,3 +18,4 @@ build/
 
 # SSL
 *.pem
+/SameFileServerCmake/cert.key
