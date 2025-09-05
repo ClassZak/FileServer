@@ -3,6 +3,9 @@
 #include <mysqlx/xdevapi.h>
 #include <mysql/jdbc.h>
 
+#define CPPHTTPLIB_OPENSSL_SUPPORT
+#include <httplib.h>
+
 #include "utils/functions.hpp"
 
 std::string UrlEncode(const std::string& value);
@@ -19,7 +22,10 @@ int main(int argc, char** argv)
 
 	std::cout << "Connector/C++ JDBC example program..." << std::endl;
 	
-
+	httplib::SSLServer server("../cert.pem", "../cert.key");
+	server.Get("/hi", [](const httplib::Request& req, httplib::Response& res) {
+		res.set_content("Hello World!", "text/plain");
+	});
 
 	try
 	{
@@ -61,6 +67,9 @@ int main(int argc, char** argv)
 		std::cout << "Unknown exception" << std::endl;
 		return EXIT_FAILURE;
 	}
+
+
+	server.listen("0.0.0.0", 5000);
 }
 
 std::string UrlEncode(const std::string& value)
