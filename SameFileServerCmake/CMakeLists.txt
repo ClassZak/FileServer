@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-set(CXX_STANDARD 14)
+set(CXX_STANDARD 23)
 
 project(FilesServer VERSION 1.0
 		DESCRIPTION "File Server"
@@ -115,17 +115,30 @@ elseif(WIN32)
 		endif()
 	endif()
 endif()
+# nlohmann/json
+include(FetchContent)
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz)
+FetchContent_MakeAvailable(json)
+target_include_directories(FilesServer PRIVATE ${json_SOURCE_DIR}/include)
+if(TARGET nlohmann_json::nlohmann_json)
+	message(STATUS "Цель nlohmann_json найдена, отлично!")
+else()
+	message(FATAL_ERROR "Цель nlohmann_json не найдена! Проверьте загрузку через FetchContent.")
+endif()
+# Линковка
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	target_link_libraries(FilesServer
 		${MYSQL_CONNECTOR_DEBUG_LIBS}  # Debug-версии библиотек MySQL
 		OpenSSL::SSL  # Импортированные цели OpenSSL
 		OpenSSL::Crypto
+		nlohmann_json::nlohmann_json
 	)
 else()
 	target_link_libraries(FilesServer
 		${MYSQL_CONNECTOR_RELEASE_LIBS} # Release-версии библиотек MySQL
 		OpenSSL::SSL
 		OpenSSL::Crypto
+		nlohmann_json::nlohmann_json
 	)
 endif()
 
@@ -146,7 +159,7 @@ endif()
 if(MSVC)
 	# Активация политики для Edit and Continue
 	cmake_policy(SET CMP0141 NEW)
-	target_compile_options(${PROJECT_NAME} PRIVATE "/std:c++14")
+	target_compile_options(${PROJECT_NAME} PRIVATE "/std:c++latest")
 	
 	set_property(TARGET ${PROJECT_NAME} PROPERTY
 		MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug>:EditAndContinue>"

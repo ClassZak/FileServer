@@ -1,20 +1,25 @@
 #include <iostream>
 #include <iomanip>
+#include <string>
 #include <mysqlx/xdevapi.h>
 #include <mysql/jdbc.h>
 
 #define CPPHTTPLIB_OPENSSL_SUPPORT
 #include <httplib.h>
 
+#include <nlohmann/json.hpp>
+
 #include "utils/functions.hpp"
 
 std::string UrlEncode(const std::string& value);
 
+
+const nlohmann::json CONFIG = nlohmann::json::parse(LoadDataFromFile("../config.json"));
+const std::string FRONTEND_SERVER_IP = CONFIG.at("server_ip").get<std::string>();
+const std::string PASSWORD = CONFIG.at("password").get<std::string>();
+
 int main(int argc, char** argv)
 {
-	std::string password = LoadDataFromFile("password.bin");
-	password = password.substr(0, password.length()-2);
-
 	sql::Driver* driver = sql::mysql::get_driver_instance();
 	const std::string url = "tcp://127.0.0.1:3306"; // URL для классического протокола
 	const std::string user = "root";
@@ -22,15 +27,15 @@ int main(int argc, char** argv)
 
 	std::cout << "Connector/C++ JDBC example program..." << std::endl;
 	
-	httplib::SSLServer server("../cert.pem", "../cert.key");
+	httplib::SSLServer server("../cert.pem", "../key.pem");
 	server.Get("/hi", [](const httplib::Request& req, httplib::Response& res) {
-		res.set_content("Hello World!", "text/plain");
+		res.set_content("{\"message\":\"Hello World!\"}", "application/json");
 	});
 
 	try
 	{
 		sql::Driver* driver = sql::mysql::get_driver_instance();
-		sql::Connection* con(driver->connect(url, user, password));
+		sql::Connection* con(driver->connect(url, user, PASSWORD));
 		std::cout << "Connection established successfully!" << std::endl;
 
 		con->setSchema(database);

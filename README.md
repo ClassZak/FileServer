@@ -24,6 +24,7 @@ OpenSSL 3.5.1: Apache-2.0
 | Flask-WTF                 | 1.2.2    | Python   | BSD        |
 | bcrypt                    | 4.3.0    | Python   | Apache-2.0 |
 | cpp-httplib               | 0.26.0   | C++      | MIT        |
+| nlohmann/json             | 0.26.0   | C++      | MIT        |
 
 
 ## Схема работы сервиса
