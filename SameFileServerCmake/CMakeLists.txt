@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 
 set(CXX_STANDARD 23)
+set(CXX_STANDARD_REQUIRED)
 
 project(FilesServer VERSION 1.0
 		DESCRIPTION "File Server"
@@ -15,6 +16,9 @@ set(SOURCES
 
 	${CMAKE_SOURCE_DIR}/src/utils/functions.hpp
 	${CMAKE_SOURCE_DIR}/src/utils/functions.cpp
+
+	${CMAKE_SOURCE_DIR}/src/Core/FileManager.hpp
+	${CMAKE_SOURCE_DIR}/src/Core/FileManager.cpp
 )
 
 add_executable(FilesServer
