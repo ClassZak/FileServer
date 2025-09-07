@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <string>
 #include <print>
+#include <locale>
 #include <mysqlx/xdevapi.h>
 #include <mysql/jdbc.h>
 
@@ -24,6 +25,7 @@ const std::string ROOT_DIRECTORY = CONFIG.value("root_directory", "files");
 
 int main(int argc, char** argv)
 {
+	setlocale(LC_ALL, "Russian");
 	FileManager::TestMakePathSafe();
 	std::cout<< CONFIG<< std::endl;
 	std::cout <<"Connect to MySQL server"<<std::endl;

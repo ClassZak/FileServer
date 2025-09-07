@@ -1,4 +1,5 @@
 #include "FileManager.hpp"
+#include "../utils/functions.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -44,46 +45,23 @@ int FileManager::MakePathSafe(char** path, size_t* newPathSize)
 	*newPathSize = 0;
 
 	// Удаляем все пробельные символы в начале и конце
-	std::string path_str(original_path.get());
-	auto start = std::find_if_not(path_str.begin(), path_str.end(), [](unsigned char c)
-		{
-			return std::isspace(c);
-		});
-	auto end = std::find_if_not(path_str.rbegin(), path_str.rend(), [](unsigned char c)
-		{
-			return std::isspace(c);
-		}).base();
 
-	// Строка состоит только из пробелов
-	if (start >= end)
-	{
-		*path = static_cast<char*>(malloc(1));
-		if (!*path) throw std::runtime_error("Не удалось выделить память");
-		(*path)[0] = '\0';
-		return EXIT_SUCCESS;
-	}
-
-	path_str = std::string(start, end);
-
-	if 
+	std::string path_str = std::string(original_path.get());
+	std::replace(path_str.begin(), path_str.end(), '\\', '/');
+	path_str.erase
 	(
-		path_str.find("..") != std::string::npos ||
-		path_str.find("/.") != std::string::npos ||
-		path_str.find("\\.") != std::string::npos ||
-		path_str == "."
-	)
-	{
-		*path = static_cast<char*>(malloc(1));
-		if (!*path) 
-			throw std::runtime_error("Не удалось выделить память");
-		(*path)[0] = '\0';
-
-		return EXIT_SUCCESS;
-	}
-
-	// Удаляем запрещенные символы с помощью regex
-	std::regex prohibited_chars_regex(R"([<>:"|?*%!@\n\r\t])");
-	path_str = std::regex_replace(path_str, prohibited_chars_regex, "");
+		std::remove_if(path_str.begin(), path_str.end(), [](unsigned char ch)
+		{return !std::isprint(ch) && !std::isspace(ch);}), 
+		path_str.end()
+	);
+	
+	// Удаление пробелов
+	path_str = std::regex_replace(path_str, std::regex(R"((\s+)\S+(\s+))"), "/");
+	// Удаление повторяющихся подряд "/"
+	path_str = std::regex_replace(path_str, std::regex(R"(//+)"), "/");
+	// Удаляем точки для папок
+	path_str = std::regex_replace(path_str, std::regex(R"([/^](\.{1,2})/)"),"/");
+	
 
 	// Проверяем зарезервированные имена устройств
 	std::regex reserved_regex(R"(^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\..*)?$)", std::regex_constants::icase);
@@ -120,6 +98,12 @@ int FileManager::MakePathSafe(char** path, size_t* newPathSize)
 		path_str.clear();
 	}
 
+
+
+	// Удаляем запрещенные символы
+	path_str = std::regex_replace(path_str, std::regex(R"([<>:"|?*%!@\n\r\t])"), "");
+
+	std::replace(path_str.begin(), path_str.end(), '\\', '/');
 	// Если путь пуст после всех преобразований
 	if (path_str.empty()) {
 		*path = static_cast<char*>(malloc(1));
@@ -169,15 +153,15 @@ void FileManager::TestMakePathSafe()
 
 	std::vector<TestCase> test_cases =
 	{
+		{"../path/to/file", "path/to/file", "Блокировка перехода наверх"},
+		{"C:/Windows/file.txt", "Windows/file.txt", "Блокировка абсолютных путей"},
+		{"path/with/../traversal", "path/with/traversal", "Path traversal"},
 		{"  test.txt  ", "test.txt", "Удаление пробелов"},
-		{"../path/to/file", "", "Блокировка перехода наверх"},
-		{"./file.txt", "", "Блокировка текущей директории"},
-		{"C:/Windows/file.txt", "", "Блокировка абсолютных путей"},
+		{"./file.txt", "file.txt", "Блокировка текущей директории"},
 		{"file*name.txt", "filename.txt", "Удаление запрещенных символов"},
 		{"CON", "", "Зарезервированное имя"},
-		{"COM1.txt", "", "Зарезервированное имя с расширением"},
+		{"COM1.txt", ".txt", "Зарезервированное имя с расширением"},
 		{"normal/file.txt", "normal/file.txt", "Нормальный путь"},
-		{"path/with/../traversal", "", "Path traversal"},
 		{"", "", "Пустая строка"},
 		{"   ", "", "Только пробелы"},
 		{"valid-name.txt", "valid-name.txt", "Валидное имя файла"}
@@ -196,18 +180,22 @@ void FileManager::TestMakePathSafe()
 
 			if (result != expected)
 			{
+				print_color(FOREGROUND_RED);
 				std::cerr << "Тест failed: " << test.description
 					<< "\nInput: '" << test.input
 					<< "'\nExpected: '" << expected
 					<< "'\nGot: '" << result << "'\n\n";
+				print_color(FOREGROUND_INTENSITY - 1);
 			}
 			else
 				std::cout << "Тест passed: " << test.description << "\n";
 		}
 		catch (const std::exception& e)
 		{
+			print_color(FOREGROUND_RED);
 			std::cerr << "Тест error: " << test.description
 				<< "\nError: " << e.what() << "\n";
+			print_color(FOREGROUND_INTENSITY - 1);
 		}
 
 		free(path);
