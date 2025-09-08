@@ -159,11 +159,12 @@ else()
 	# Настройки для Linux/MacOS
 	target_compile_options(${PROJECT_NAME} PRIVATE -O0)
 endif()
+
 # Настройки для MSVC (Windows 10/11)
 if(MSVC)
 	# Активация политики для Edit and Continue
 	cmake_policy(SET CMP0141 NEW)
-	target_compile_options(${PROJECT_NAME} PRIVATE "/std:c++latest")
+	target_compile_options(${PROJECT_NAME} PRIVATE "/std:c++20")
 	
 	set_property(TARGET ${PROJECT_NAME} PROPERTY
 		MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug>:EditAndContinue>"
@@ -177,3 +178,10 @@ if(MSVC)
 		"$<$<CONFIG:Debug>:/Od>"
 	)
 endif()
+
+
+# Debug режим для компиляции
+target_compile_definitions(FilesServer PRIVATE
+	$<$<CONFIG:Debug>:DEBUG_MODE>
+)
+

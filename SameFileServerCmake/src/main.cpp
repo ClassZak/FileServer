@@ -26,7 +26,9 @@ const std::string ROOT_DIRECTORY = CONFIG.value("root_directory", "files");
 int main(int argc, char** argv)
 {
 	setlocale(LC_ALL, "Russian");
+#ifdef _DEBUG
 	FileManager::TestMakePathSafe();
+#endif
 	std::cout<< CONFIG<< std::endl;
 	std::cout <<"Connect to MySQL server"<<std::endl;
 

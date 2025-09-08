@@ -46,5 +46,9 @@ void print_with_color(const char* format, int color, ...)
 	vprintf(format, args);
 	va_end(args);
 
+#ifndef _WIN32
 	print_color(0);
+#else
+	print_color(FOREGROUND_INTENSITY - 1);
+#endif
 }

@@ -1,4 +1,5 @@
 #pragma once
+#include <regex>
 
 class FileManager
 {
@@ -25,7 +26,16 @@ public:
 	static const char PROHIBITED_CHARS[15];
 
 	static inline bool IsProhibitedChar(const char ch);
+#ifdef _DEBUG
 	static void TestMakePathSafe();
+#endif
+
+	static const std::regex REGEX_SPACE;
+	static const std::regex REGEX_SLASH;
+	static const std::regex REGEX_DOT;
+	static const std::regex REGEX_DISK;
+	static const std::regex REGEX_DEVICE;
+	static const std::regex REGEX_PROHIBITED_CHARS;
 #elif
 
 #endif

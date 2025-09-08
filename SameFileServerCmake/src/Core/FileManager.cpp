@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <thread>
 #include <stdexcept>
 #include <iostream>
 
@@ -51,44 +52,38 @@ int FileManager::MakePathSafe(char** path, size_t* newPathSize)
 	path_str.erase
 	(
 		std::remove_if(path_str.begin(), path_str.end(), [](unsigned char ch)
-		{return !std::isprint(ch) && !std::isspace(ch);}), 
+		{return !std::isprint(ch) || std::isspace(ch);}), 
 		path_str.end()
 	);
 	
 	// Удаление пробелов
-	path_str = std::regex_replace(path_str, std::regex(R"((\s+)\S+(\s+))"), "/");
+	path_str = std::regex_replace(path_str, REGEX_SPACE, "/");
 	// Удаление повторяющихся подряд "/"
-	path_str = std::regex_replace(path_str, std::regex(R"(//+)"), "/");
+	path_str = std::regex_replace(path_str, REGEX_SLASH, "/");
 	// Удаляем точки для папок
-	path_str = std::regex_replace(path_str, std::regex(R"([/^](\.{1,2})/)"),"/");
+	path_str = std::regex_replace(path_str, REGEX_DOT,"");
+	// Удаление метки диска
+	path_str = std::regex_replace(path_str, REGEX_DISK, "");
 	
 
 	// Проверяем зарезервированные имена устройств
-	std::regex reserved_regex(R"(^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\..*)?$)", std::regex_constants::icase);
-	if (std::regex_match(path_str, reserved_regex))
-	{
-		*path = static_cast<char*>(malloc(1));
-		if (!*path)
-			throw std::runtime_error("Не удалось выделить память");
-		(*path)[0] = '\0';
-
-		return EXIT_SUCCESS;
-	}
+	path_str = std::regex_replace(path_str, REGEX_DEVICE, "");
 
 	// Нормализуем путь и проверяем, что он относительный
 	try
 	{
-		fs::path fs_path(path_str);
-		fs_path = fs_path.lexically_normal();
-
-		// Проверяем, что путь относительный и не выходит за пределы текущей директории
-		if (fs_path.is_absolute() || fs_path.string().find("..") != std::string::npos)
+		if (path_str.empty())
 		{
 			*path = static_cast<char*>(malloc(1));
-			if (!*path) throw std::runtime_error("Не удалось выделить память");
+			if (!*path)
+				throw std::runtime_error("Не удалось выделить память");
 			(*path)[0] = '\0';
+
 			return EXIT_SUCCESS;
 		}
+
+		fs::path fs_path(path_str);
+		fs_path = fs_path.lexically_normal();
 
 		path_str = fs_path.string();
 	}
@@ -101,11 +96,12 @@ int FileManager::MakePathSafe(char** path, size_t* newPathSize)
 
 
 	// Удаляем запрещенные символы
-	path_str = std::regex_replace(path_str, std::regex(R"([<>:"|?*%!@\n\r\t])"), "");
+	path_str = std::regex_replace(path_str, std::regex(REGEX_PROHIBITED_CHARS), "");
 
 	std::replace(path_str.begin(), path_str.end(), '\\', '/');
 	// Если путь пуст после всех преобразований
-	if (path_str.empty()) {
+	if (path_str.empty())
+	{
 		*path = static_cast<char*>(malloc(1));
 		if (!*path)
 			throw std::runtime_error("Не удалось выделить память");
@@ -141,7 +137,8 @@ inline bool FileManager::IsProhibitedChar(const char ch)
 	};
 	return false;
 }
-
+#ifdef _DEBUG
+#include <chrono>
 void FileManager::TestMakePathSafe()
 {
 	struct TestCase
@@ -153,28 +150,36 @@ void FileManager::TestMakePathSafe()
 
 	std::vector<TestCase> test_cases =
 	{
+		{"path/with/../traversal", "path/with/traversal", "Path traversal"},
 		{"../path/to/file", "path/to/file", "Блокировка перехода наверх"},
 		{"C:/Windows/file.txt", "Windows/file.txt", "Блокировка абсолютных путей"},
-		{"path/with/../traversal", "path/with/traversal", "Path traversal"},
+		{"COM1.txt", ".txt", "Зарезервированное имя с расширением"},
+		{"", "", "Пустая строка"},
+		{"   ", "", "Только пробелы"},
 		{"  test.txt  ", "test.txt", "Удаление пробелов"},
 		{"./file.txt", "file.txt", "Блокировка текущей директории"},
 		{"file*name.txt", "filename.txt", "Удаление запрещенных символов"},
 		{"CON", "", "Зарезервированное имя"},
-		{"COM1.txt", ".txt", "Зарезервированное имя с расширением"},
 		{"normal/file.txt", "normal/file.txt", "Нормальный путь"},
-		{"", "", "Пустая строка"},
-		{"   ", "", "Только пробелы"},
-		{"valid-name.txt", "valid-name.txt", "Валидное имя файла"}
+		{"valid-name.txt", "valid-name.txt", "Валидное имя файла"},
 	};
 
 	for (const auto& test : test_cases)
 	{
 		char* path = strdup(test.input);
 		size_t newSize;
-
+		
 		try
 		{
+			auto start = std::chrono::system_clock::now();
 			MakePathSafe(&path, &newSize);
+			print_with_color
+			(
+				"Time elapsed:%d\n",
+				FOREGROUND_GREEN | FOREGROUND_RED,
+				std::chrono::duration_cast<std::chrono::milliseconds>
+				(std::chrono::system_clock::now() - start).count()
+			);
 			std::string result(path);
 			std::string expected(test.expected);
 
@@ -201,7 +206,15 @@ void FileManager::TestMakePathSafe()
 		free(path);
 	}
 }
+#endif
 
 const char FileManager::PROHIBITED_CHARS[15] =
 { '<', '>', ':', '\"', '/', '\\', '|', '?', '*', '%', '!', '@', '\n', '\r', '\t' };
+const std::regex FileManager::REGEX_SPACE				= std::regex(R"((\s+)\S+(\s+))");
+const std::regex FileManager::REGEX_SLASH				= std::regex(R"(//+)");
+const std::regex FileManager::REGEX_DOT					= std::regex(R"((\.\.\/|\.\/))");
+const std::regex FileManager::REGEX_DISK				= std::regex(R"(^(\w:/))");
+const std::regex FileManager::REGEX_PROHIBITED_CHARS	= std::regex(R"([<>:"|?*%!@\n\r\t])");
+const std::regex FileManager::REGEX_DEVICE				= std::regex(R"((CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9]))",
+																		std::regex_constants::icase);
 #endif

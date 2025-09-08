@@ -13,7 +13,9 @@ static inline void print_color(int color)
 #ifdef _WIN32
 	static HANDLE console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleTextAttribute(console_handle, color);
-#elifdef __unix__
+#else
+#ifdef __unix__
 	printf("\x1b[%dm", color);
+#endif
 #endif
 }
