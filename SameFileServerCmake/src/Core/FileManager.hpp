@@ -6,12 +6,14 @@ class FileManager
 	char* m_rootDirectory = nullptr;
 	FileManager() = default;
 public:
-	int CreateTheFile	(const char* path, const char* data = nullptr);
-	int ReadTheFile		(const char* path, char* data, size_t* size);
-	int UpdateTheFile	(const char* path, const char* data);
-	int DeleteTheFile	(const char* path, const char* data);
+	inline void SetRootDirectory(const char* path);
+	
+	int CreateTheFile	(const char* path, const char* data = nullptr, size_t data_size = 0);
+	int ReadTheFile		(const char* path, char** data, size_t* size);
+	int UpdateTheFile	(const char* path, const char* data, size_t size);
+	int DeleteTheFile	(const char* path);
 
-
+	int UpdateTheFile	(const char* path, const char* data, long long offset, size_t size);
 
 	static inline FileManager& GetInstance()
 	{
@@ -37,6 +39,5 @@ public:
 	static const std::regex REGEX_DEVICE;
 	static const std::regex REGEX_PROHIBITED_CHARS;
 #elif
-
 #endif
 };

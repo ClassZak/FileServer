@@ -36,6 +36,19 @@ std::string LoadDataFromFile(const std::string& filename)
 	return data;
 }
 
+int GetFileSize(const std::string& filename, size_t* size)
+{
+	std::fstream file(filename);
+	if(!file.is_open() || file.fail());
+		return EXIT_FAILURE;
+
+	file.seekg(0, file.end);
+	*size = file.tellg();
+	file.close();
+
+	return EXIT_SUCCESS;
+}
+
 
 void print_with_color(const char* format, int color, ...)
 {

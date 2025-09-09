@@ -5,6 +5,7 @@
 #include <cctype>
 #include <cstring>
 #include <filesystem>
+#include <fstream>
 #include <regex>
 #include <string>
 #include <vector>
@@ -13,25 +14,137 @@
 #include <stdexcept>
 #include <iostream>
 
-int FileManager::CreateTheFile(const char* path, const char* data)
+
+
+
+inline void FileManager::SetRootDirectory(const char* path)
 {
-	return 0;
+	if(m_rootDirectory)
+		delete [] m_rootDirectory;
+	if(!(m_rootDirectory = static_cast<char*>(malloc(strlen(path)+1))));
+		throw std::runtime_error("Не удалось выделить память");
+	strcpy(m_rootDirectory, path);
 }
 
-int FileManager::ReadTheFile(const char* path, char* data, size_t* size)
+
+
+
+int FileManager::CreateTheFile(const char* path, const char* data, size_t data_size)
 {
-	return 0;
+	size_t save_path_size = strlen(path);
+	char* save_path = static_cast<char*>(malloc(save_path_size+1));
+	if(!save_path)
+		return EXIT_FAILURE;
+	strcpy(save_path, path);
+	
+	if (!MakePathSafe(&save_path, &save_path_size))
+	{
+		if(strlen(save_path) == 0)
+			return EXIT_FAILURE;
+		
+		std::fstream file(save_path, std::ios::binary | std::ios::out);
+		if(!file.is_open() || file.fail())
+			return EXIT_FAILURE;
+		
+		if(data != nullptr and data_size)
+			file.write(data, data_size);
+		
+		file.close();
+	}
+	else
+		return EXIT_FAILURE;
+	
+	return EXIT_SUCCESS;
 }
 
-int FileManager::UpdateTheFile(const char* path, const char* data)
+int FileManager::ReadTheFile(const char* path, char** data, size_t* size)
 {
-	return 0;
+	if(!data || !size)
+		return EXIT_FAILURE;
+	if(*data)
+		free(*data);
+	
+	size_t save_path_size = strlen(path);
+	char* save_path = static_cast<char*>(malloc(save_path_size + 1));
+	if (!save_path)
+		return EXIT_FAILURE;
+	strcpy(save_path, path);
+	
+	if (!MakePathSafe(&save_path, &save_path_size))
+	{
+		if(!std::filesystem::exists(save_path) || !std::filesystem::is_regular_file(save_path))
+			return EXIT_FAILURE;
+		
+		try
+		{
+			std::string loaded_data = LoadDataFromFile(save_path);
+			if(!(*data = static_cast<char*>(malloc(loaded_data.size()))))
+				return EXIT_FAILURE;
+			
+			strcpy(*data, loaded_data.data());
+			
+			return EXIT_SUCCESS;
+		}
+		catch (...)
+		{
+			return EXIT_FAILURE;
+		}
+		
+		return EXIT_SUCCESS;
+	}
+	else
+		return EXIT_FAILURE;
+	
 }
 
-int FileManager::DeleteTheFile(const char* path, const char* data)
+int FileManager::UpdateTheFile(const char* path, const char* data, size_t size)
 {
-	return 0;
+	return UpdateTheFile(path, data, NULL, size);
 }
+
+int FileManager::DeleteTheFile(const char* path)
+{
+	size_t save_path_size = strlen(path);
+	char* save_path = static_cast<char*>(malloc(save_path_size + 1));
+	if (!save_path)
+		return EXIT_FAILURE;
+	strcpy(save_path, path);
+	
+	if (!MakePathSafe(&save_path, &save_path_size) and std::filesystem::is_regular_file(save_path))
+		return !std::filesystem::remove(save_path);
+	else
+		return EXIT_FAILURE;
+}
+
+
+int FileManager::UpdateTheFile(const char* path, const char* data, long long offset, size_t size)
+{
+	size_t save_path_size = strlen(path);
+	char* save_path = static_cast<char*>(malloc(save_path_size + 1));
+	if (!save_path)
+		return EXIT_FAILURE;
+	strcpy(save_path, path);
+	
+	if (!MakePathSafe(&save_path, &save_path_size))
+	{
+		std::fstream file(save_path, std::ios::binary | std::ios::in | std::ios::out);
+		if (!std::filesystem::exists(save_path) || !std::filesystem::is_regular_file(save_path))
+			return EXIT_FAILURE;
+		
+		file.seekg(offset);
+		file.write(data, size);
+		if(file.fail())
+			return EXIT_FAILURE;
+		file.close();
+
+		return EXIT_SUCCESS;
+	}
+	else
+		return EXIT_FAILURE;
+}
+
+
+
 
 int FileManager::MakePathSafe(char** path, size_t* newPathSize)
 {

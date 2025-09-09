@@ -26,10 +26,10 @@ const std::string ROOT_DIRECTORY = CONFIG.value("root_directory", "files");
 int main(int argc, char** argv)
 {
 	setlocale(LC_ALL, "Russian");
-#ifdef _DEBUG
-	FileManager::TestMakePathSafe();
-#endif
+
 	std::cout<< CONFIG<< std::endl;
+	FileManager::GetInstance().SetRootDirectory(ROOT_DIRECTORY.c_str());
+
 	std::cout <<"Connect to MySQL server"<<std::endl;
 
 	sql::Driver* driver = sql::mysql::get_driver_instance();
@@ -40,6 +40,13 @@ int main(int argc, char** argv)
 	
 	httplib::SSLServer server("../cert.pem", "../key.pem");
 	server.Get("/hi", [](const httplib::Request& req, httplib::Response& res) {
+		res.set_content("{\"message\":\"Hello World!\"}", "application/json");
+	});
+
+
+	httplib::SSLServer server("../cert.pem", "../key.pem");
+	server.Post("/api/files", [](const httplib::Request& req, httplib::Response& res) {
+		
 		res.set_content("{\"message\":\"Hello World!\"}", "application/json");
 	});
 
