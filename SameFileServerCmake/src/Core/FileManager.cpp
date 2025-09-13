@@ -50,6 +50,9 @@ int FileManager::CreateTheFile(const char* path, const char* data, size_t data_s
 		if(!fs::exists(file_path.parent_path()))
 			if(!CreateDirectoriesForFile(file_path.string().c_str()))
 				return EXIT_FAILURE;
+		if(fs::exists(file_path))
+			return EXIT_FAILURE;
+
 
 		std::fstream file(file_path, std::ios::binary | std::ios::out);
 		if(!file.is_open() || file.fail())
@@ -121,9 +124,16 @@ int FileManager::DeleteTheFile(const char* path)
 	if (!save_path)
 		return EXIT_FAILURE;
 	strcpy(save_path, path);
-	
-	if (!MakePathSafe(&save_path, &save_path_size) and std::filesystem::is_regular_file(save_path))
-		return !std::filesystem::remove(save_path);
+
+	if (!MakePathSafe(&save_path, &save_path_size))
+	{
+		namespace fs = std::filesystem;
+		fs::path file_path =
+		!m_rootDirectory ? fs::path(save_path) : fs::path(m_rootDirectory) / fs::path(save_path);
+
+		if(fs::is_regular_file(file_path))
+			return !std::filesystem::remove(file_path);
+	}
 	else
 		return EXIT_FAILURE;
 }
@@ -139,8 +149,12 @@ int FileManager::UpdateTheFile(const char* path, const char* data, long long off
 	
 	if (!MakePathSafe(&save_path, &save_path_size))
 	{
-		std::fstream file(save_path, std::ios::binary | std::ios::in | std::ios::out);
-		if (!std::filesystem::exists(save_path) || !std::filesystem::is_regular_file(save_path))
+		namespace fs = std::filesystem;
+		fs::path file_path =
+		!m_rootDirectory ? fs::path(save_path) : fs::path(m_rootDirectory) / fs::path(save_path);
+
+		std::fstream file(file_path, std::ios::binary | std::ios::in | std::ios::out);
+		if (!std::filesystem::exists(file_path) || !std::filesystem::is_regular_file(file_path))
 			return EXIT_FAILURE;
 		
 		file.seekg(offset);
