@@ -38,7 +38,6 @@ int main(int argc, char** argv)
 		res.set_content("{\"message\":\"Hello World!\"}", "application/json");
 	});
 	server.Post("/api/files/create", [](const httplib::Request& req, httplib::Response& res) {
-		
 		if (req.has_param("file"))
 		{
 			std::string filename = req.get_param_value("file");
@@ -57,7 +56,29 @@ int main(int argc, char** argv)
 			res.set_content("No file name", "text/plain");
 		}
 	});
+	server.Get("/api/files/read", [](const httplib::Request& req, httplib::Response& res) {
+		if (req.has_param("file"))
+		{
+			std::string filename = req.get_param_value("file");
+			char* data = nullptr;
+			size_t data_size = NULL;
+			bool readed = !FileManager::GetInstance().ReadTheFile(filename.c_str(), &data, &data_size);
 
+			if (readed)
+			{
+				std::string content = std::string(data, data_size);
+				res.set_content(content,"text/plain");
+				res.status = 200;
+			}
+			else
+				res.status = 500;
+		}
+		else
+		{
+			res.status = 400;
+			res.set_content("No file name", "text/plain");
+		}
+	});
 
 	server.listen("0.0.0.0", 5000);
 

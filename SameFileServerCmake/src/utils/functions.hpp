@@ -6,6 +6,7 @@
 
 
 std::string LoadDataFromFile(const std::string& filename);
+std::string LoadDataFromFile(const std::wstring& filename);
 int GetFileSize(const std::string& filename, size_t* size);
 
 void print_with_color(const char* format, int color, ...);

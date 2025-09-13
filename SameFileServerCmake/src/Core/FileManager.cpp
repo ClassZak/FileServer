@@ -90,11 +90,12 @@ int FileManager::ReadTheFile(const char* path, char** data, size_t* size)
 		
 		try
 		{
-			std::string loaded_data = LoadDataFromFile(save_path);
+			std::string loaded_data = LoadDataFromFile(file_path.c_str());
 			if(!(*data = static_cast<char*>(malloc(loaded_data.size()))))
 				return EXIT_FAILURE;
 			
 			strcpy(*data, loaded_data.data());
+			*size = strlen(*data);
 			
 			return EXIT_SUCCESS;
 		}
@@ -102,8 +103,6 @@ int FileManager::ReadTheFile(const char* path, char** data, size_t* size)
 		{
 			return EXIT_FAILURE;
 		}
-		
-		return EXIT_SUCCESS;
 	}
 	else
 		return EXIT_FAILURE;
