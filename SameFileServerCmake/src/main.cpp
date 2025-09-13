@@ -16,6 +16,7 @@
 
 
 std::string UrlEncode(const std::string& value);
+inline void ConnectToMySQL();
 
 
 const nlohmann::json CONFIG = nlohmann::json::parse(LoadDataFromFile("../config.json"));
@@ -30,70 +31,32 @@ int main(int argc, char** argv)
 	std::cout<< CONFIG<< std::endl;
 	FileManager::GetInstance().SetRootDirectory(ROOT_DIRECTORY.c_str());
 
-	std::cout <<"Connect to MySQL server"<<std::endl;
-
-	sql::Driver* driver = sql::mysql::get_driver_instance();
-	const std::string url = "tcp://127.0.0.1:3306"; // URL для классического протокола
-	const std::string user = "root";
-	const std::string database = "FileServer";
-
 	
 	httplib::SSLServer server("../cert.pem", "../key.pem");
+
 	server.Get("/hi", [](const httplib::Request& req, httplib::Response& res) {
 		res.set_content("{\"message\":\"Hello World!\"}", "application/json");
 	});
-
-
-	httplib::SSLServer server("../cert.pem", "../key.pem");
-	server.Post("/api/files", [](const httplib::Request& req, httplib::Response& res) {
+	server.Post("/api/files/create", [](const httplib::Request& req, httplib::Response& res) {
 		
-		res.set_content("{\"message\":\"Hello World!\"}", "application/json");
-	});
-
-	try
-	{
-		sql::Driver* driver = sql::mysql::get_driver_instance();
-		sql::Connection* con(driver->connect(url, user, PASSWORD));
-		std::cout << "Connection established successfully!" << std::endl;
-
-		con->setSchema(database);
-		sql::Statement* stmt(con->createStatement());
-		sql::ResultSet* res(stmt->executeQuery("SELECT PasswordHash FROM `User`"));
-
-		while (res->next())
+		if (req.has_param("file"))
 		{
-			std::cout << "MySQL replies: \t\t" << res->getString("PasswordHash") << std::endl;
-			std::cout << "MySQL says it again:\t" << res->getString(1) << std::endl;
+			std::string filename = req.get_param_value("file");
+			bool created = false;
+			if(req.body.empty())
+				created = !FileManager::GetInstance().CreateTheFile(filename.c_str());
+			else
+				created = 
+				!FileManager::GetInstance().CreateTheFile(filename.c_str(), req.body.c_str(), req.body.length());
+
+			res.status = created ? 201 : 500;
 		}
-
-
-	}
-	catch (sql::SQLException& e)
-	{
-		// Обработка исключений, специфичных для MySQL
-		std::cout << "# ERR: SQLException in " << __FILE__;
-		std::cout << "(" << __FUNCTION__ << ") on line " << __LINE__ << std::endl;
-		std::cout << "# ERR: " << e.what();
-		std::cout << " (MySQL error code: " << e.getErrorCode();
-		std::cout << ", SQLState: " << e.getSQLState() << " )" << std::endl;
-
-		getchar();
-		return EXIT_FAILURE;
-	}
-	catch (std::exception& e)
-	{
-		// Обработка других стандартных исключений
-		std::cout << "STD EXCEPTION: " << e.what() << std::endl;
-		getchar();
-		return EXIT_FAILURE;
-	}
-	catch (...)
-	{
-		// Обработка всех остальных исключений
-		std::cout << "Unknown exception" << std::endl;
-		getchar();
-		return EXIT_FAILURE;
-	}
+		else
+		{
+			res.status = 400;
+			res.set_content("No file name", "text/plain");
+		}
+	});
 
 
 	server.listen("0.0.0.0", 5000);
@@ -115,4 +78,14 @@ std::string UrlEncode(const std::string& value)
 			escaped << std::uppercase << '%' << std::setw(2) << int(static_cast<unsigned char>(c)) << std::setw(0);
 	}
 	return escaped.str();
+}
+
+inline void ConnectToMySQL()
+{
+	std::cout << "Connect to MySQL server" << std::endl;
+
+	sql::Driver* driver = sql::mysql::get_driver_instance();
+	const std::string url = "tcp://127.0.0.1:3306"; // URL для классического протокола
+	const std::string user = "root";
+	const std::string database = "FileServer";
 }

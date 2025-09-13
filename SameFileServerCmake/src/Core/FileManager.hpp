@@ -6,7 +6,7 @@ class FileManager
 	char* m_rootDirectory = nullptr;
 	FileManager() = default;
 public:
-	inline void SetRootDirectory(const char* path);
+	void SetRootDirectory(const char* path);
 	
 	int CreateTheFile	(const char* path, const char* data = nullptr, size_t data_size = 0);
 	int ReadTheFile		(const char* path, char** data, size_t* size);
@@ -22,6 +22,11 @@ public:
 		return instance;
 	}
 	static int MakePathSafe(char** path, size_t* newPathSize);
+	/// <summary>
+	/// </summary>
+	/// <param name="filename">Save string processed by MakePathSafe</param>
+	/// <returns></returns>
+	static int CreateDirectoriesForFile(const char* filename);
 
 #ifdef _WIN32
 	static const size_t MAX_PATH_SIZE = 260;

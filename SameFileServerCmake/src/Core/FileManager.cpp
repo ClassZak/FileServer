@@ -17,11 +17,12 @@
 
 
 
-inline void FileManager::SetRootDirectory(const char* path)
+void FileManager::SetRootDirectory(const char* path)
 {
 	if(m_rootDirectory)
 		delete [] m_rootDirectory;
-	if(!(m_rootDirectory = static_cast<char*>(malloc(strlen(path)+1))));
+	m_rootDirectory = static_cast<char*>(malloc(strlen(path)+1));
+	if(!m_rootDirectory)
 		throw std::runtime_error("Не удалось выделить память");
 	strcpy(m_rootDirectory, path);
 }
@@ -39,10 +40,18 @@ int FileManager::CreateTheFile(const char* path, const char* data, size_t data_s
 	
 	if (!MakePathSafe(&save_path, &save_path_size))
 	{
+		namespace fs = std::filesystem;
 		if(strlen(save_path) == 0)
 			return EXIT_FAILURE;
-		
-		std::fstream file(save_path, std::ios::binary | std::ios::out);
+
+		fs::path file_path =
+		!m_rootDirectory ? fs::path(save_path) : fs::path(m_rootDirectory) / fs::path(save_path);
+
+		if(!fs::exists(file_path.parent_path()))
+			if(!CreateDirectoriesForFile(file_path.string().c_str()))
+				return EXIT_FAILURE;
+
+		std::fstream file(file_path, std::ios::binary | std::ios::out);
 		if(!file.is_open() || file.fail())
 			return EXIT_FAILURE;
 		
@@ -72,7 +81,11 @@ int FileManager::ReadTheFile(const char* path, char** data, size_t* size)
 	
 	if (!MakePathSafe(&save_path, &save_path_size))
 	{
-		if(!std::filesystem::exists(save_path) || !std::filesystem::is_regular_file(save_path))
+		namespace fs = std::filesystem;
+		fs::path file_path = 
+		!m_rootDirectory ? fs::path(save_path) : fs::path(m_rootDirectory) / fs::path(save_path);
+		
+		if(!fs::exists(file_path) || !fs::is_regular_file(file_path))
 			return EXIT_FAILURE;
 		
 		try
@@ -233,6 +246,27 @@ int FileManager::MakePathSafe(char** path, size_t* newPathSize)
 		throw std::runtime_error("Не удалось выделить память");
 
 	std::memcpy(*path, path_str.c_str(), *newPathSize + 1);
+
+	return EXIT_SUCCESS;
+}
+
+int FileManager::CreateDirectoriesForFile(const char* filename)
+{
+	namespace sf = std::filesystem;
+	sf::path filepath(filename);
+	sf::path::iterator last_it = std::next(filepath.begin());
+	for (; last_it != filepath.end(); ++last_it)
+	{
+		sf::path curr_path;
+		for (auto it = filepath.begin(); it != last_it; ++it)
+			curr_path.append((*it).c_str());
+
+		if (!sf::exists(curr_path) || !sf::is_directory(curr_path))
+		{
+			if(!sf::create_directory(curr_path))
+				return EXIT_FAILURE;
+		}
+	}
 
 	return EXIT_SUCCESS;
 }
