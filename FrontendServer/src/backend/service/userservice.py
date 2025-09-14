@@ -167,6 +167,26 @@ class UserService(AService):
 			return jsonify({'error' : f'Ошибка БД: {str(e)}'}), 500
 		finally:
 			self.disconnect()
+	def read_user_by_id(self, id:int) -> Tuple[Response, int]:
+		try:
+			if not self.exists(id):
+				return jsonify({'error' : 'Пользователь не найден'}), 404
+			self.connect()
+			columns = [User.DB_COLUMNS['columns'][field] for field in User.FIELDS_META.keys()]
+			self.cursor.execute(f"""
+				SELECT {','.join(columns)} FROM `{UserService.TABLE_NAME}`
+				WHERE {User.DB_COLUMNS['columns']['id']} = %s""", (id,))
+			raw_data = self.cursor.fetchone()
+			if raw_data:
+				return jsonify({'name' : raw_data[User.DB_COLUMNS['columns']['name']]}), 200
+			else:
+				return jsonify({'error' : 'Пользователь не найден'}), 404
+		except Error as e:
+			if self.connection:
+				self.connection.rollback()
+			return jsonify({'error' : f'Ошибка БД: {str(e)}'}), 500
+		finally:
+			self.disconnect()
 	"""
 		Доп. запросы
 	"""

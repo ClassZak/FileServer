@@ -10,7 +10,7 @@ CREATE TABLE `User` (
 	PasswordHash	CHAR(60) NOT NULL, -- bcrypt
 	CreatedAt		TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-SELECT * FROM `Group`;
+SELECT * FROM `User`;
 -- -----------------------------------------------------
 -- Группа
 -- -----------------------------------------------------

@@ -19,8 +19,10 @@ config_path = 'FrontendServer/src/backend/.password.json'
 # Сервисы
 from service.userservice import UserService
 from service.groupservice import GroupService
+from service.publicgroupservice import PublicGroupService
 user_service = UserService(config_path)
 group_service = GroupService(config_path)
+public_group_service = PublicGroupService(config_path)
 
 
 
@@ -119,9 +121,23 @@ def account():
 	if not current_user:
 		return redirect(url_for('login', next_url=request.url))
 	
+	csrf_token = generate_csrf()
+#	groups_resp, status_code = group_service.read_groups()
+#	groups = []
+#	if status_code != 200:
+#		#return groups_resp
+#		pass
+#	else:
+#		groups = [{
+#			'name' : groups_resp['name'], 
+#			'leader' : user_service.read_user_by_id(group['leader_id'])}
+#			for group in groups_resp.get_json()['groups']
+#		]
 	return render_template(
 		'account.html', 
-		username=current_user
+		username = current_user,
+		csrf_token = csrf_token
+#		groups=groups
 	)
 @app.route('/register')
 def register_page():
@@ -226,6 +242,10 @@ def group_route():
 		return group_service.read_groups()
 	elif request.method == 'POST':
 		return group_service.create_group(get_data_from_request(request))
+@app.route('/api/groups/public', methods = ['GET','POST'])
+def public_group_route():
+	if request.method == 'GET':
+		return public_group_service.read_groups()
 
 
 # Файлы

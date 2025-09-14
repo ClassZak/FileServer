@@ -31,3 +31,25 @@ class Group(metaclass=ModelMeta):
 			}
 		}
 	}
+
+class PublicGroup(metaclass=ModelMeta):
+	name = {
+		'field_meta':{
+			'type': str,
+			'max_len': 64,
+			'required': True,
+			'db_column': {
+				'name' : 'Name'
+			}
+		}
+	}
+	leader = {
+		'field_meta':{
+			'type': str,
+			'max_len': 64,
+			'required': True,
+			'db_column': {
+				'name' : 'Name'
+			}
+		}
+	}

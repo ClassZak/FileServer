@@ -15,6 +15,11 @@ function showError(error){
 		error = 'Неизвестная ошибка';
 	document.getElementById('error-message').textContent=error;
 }
+// TODO: переместить в отдельный скрипт
+function catchError(error){
+	showError(error);
+	console.log(error);
+}
 
 
 function createErrorNotification(){

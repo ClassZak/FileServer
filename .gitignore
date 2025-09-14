@@ -21,3 +21,6 @@ build/
 cert.key
 /SameFileServerCmake/config.json
 /SameFileServerCmake/include/httplib.h
+
+# Draw.io
+*.drawio.bkp

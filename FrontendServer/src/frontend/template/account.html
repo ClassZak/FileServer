@@ -5,8 +5,12 @@
 	{% include 'classes/include/error_window.html' %}
 
 	<link rel="stylesheet" href="{{ url_for('static', filename='styles/golden-button.css') }}">
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles/table_style.css') }}">
 
 	<script src="{{ url_for('static', filename='scripts/logout.js') }}"></script>
+	<script src="{{ url_for('static', filename='scripts/data_scripts/read_data/load_groups.js') }}"></script>
+	<script src="{{ url_for('static', filename='scripts/data_scripts/render_data/render_groups.js') }}"></script>
+	<script src="{{ url_for('static', filename='scripts/pages/account.js') }}"></script>
 
 	<title>FileService — Аккаунт</title>
 </head>
@@ -17,6 +21,23 @@
 	<main>
 		<button onclick="logout()" class="golden-button">Выйти</button>
 		<h1>Имя пользователя: {{ username }}</h1>
+
+		<h1>Мои группы:</h1>
+		<table id="group-table">
+			<thead>
+				<tr>
+					<th>Название</th>
+					<th>Владелец</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for group in groups%}
+					<tr>group["name"]</tr>
+					<tr>group["leader"]</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+
 	</main>
 	<footer>
 		{% include 'parts/footer_content.html' %}
