@@ -178,7 +178,7 @@ class UserService(AService):
 				WHERE {User.DB_COLUMNS['columns']['id']} = %s""", (id,))
 			raw_data = self.cursor.fetchone()
 			if raw_data:
-				return jsonify({'name' : raw_data[User.DB_COLUMNS['columns']['name']]}), 200
+				return jsonify({'login' : raw_data[User.DB_COLUMNS['columns']['login']]}), 200
 			else:
 				return jsonify({'error' : 'Пользователь не найден'}), 404
 		except Error as e:
@@ -187,6 +187,14 @@ class UserService(AService):
 			return jsonify({'error' : f'Ошибка БД: {str(e)}'}), 500
 		finally:
 			self.disconnect()
+	def get_id_by_login(self, login:str) -> str:
+		self.connect()
+		self.cursor.execute(f"""
+			SELECT {User.DB_COLUMNS['columns']['id']} FROM `{UserService.TABLE_NAME}`
+			WHERE {User.DB_COLUMNS['columns']['login']} = %s""", (login,))
+		raw_data = self.cursor.fetchone()
+		self.disconnect()
+		return raw_data['Id'] if raw_data else None
 	"""
 		Доп. запросы
 	"""

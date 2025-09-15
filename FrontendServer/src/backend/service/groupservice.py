@@ -31,8 +31,8 @@ class GroupService(AService):
 	CREATE TABLE `Group` (
 		Id			INT AUTO_INCREMENT PRIMARY KEY,
 		`Name`		NVARCHAR(64) UNIQUE NOT NULL,
-		LeaderId	INT NOT NULL,
-		FOREIGN KEY (LeaderId) REFERENCES `User`(Id)
+		IdLeader	INT NOT NULL,
+		FOREIGN KEY (IdLeader) REFERENCES `User`(Id)
 	);
 	"""
 

@@ -10,15 +10,39 @@ CREATE TABLE `User` (
 	PasswordHash	CHAR(60) NOT NULL, -- bcrypt
 	CreatedAt		TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- SELECT * FROM `User`;
 SELECT * FROM `User`;
+SELECT * FROM `Group`;
+SELECT * FROM `GroupMember`;
+SELECT 
+	g.`Name` AS 'name', u.Login AS 'Leader'
+FROM GroupMember gm
+	JOIN `Group` g
+LEFT JOIN `User` u ON
+ 	u.Id = g.IdLeader
+LEFT JOIN `User` u2 ON
+	u2.Id = gm.IdUser
+WHERE u.Id = 8 OR u2.Id = 8
+;
+-- SELECT 
+-- 	g.`Name` AS 'name', u.Login AS 'Leader'
+-- FROM `Group` g
+-- LEFT JOIN `User` u ON
+--	u.Id = g.IdLeader;
+
+INSERT INTO `Group` (`Name`, IdLeader)  VALUES ('sus', 2);
+INSERT INTO `GroupMember`  VALUES (1, 7);
+
+
 -- -----------------------------------------------------
 -- Группа
 -- -----------------------------------------------------
 CREATE TABLE `Group` (
 	Id			INT AUTO_INCREMENT PRIMARY KEY,
 	`Name`		NVARCHAR(64) UNIQUE NOT NULL,
-	LeaderId	INT NOT NULL,
-	FOREIGN KEY (LeaderId) REFERENCES `User`(Id)
+	IdLeader	INT NOT NULL,
+	FOREIGN KEY (IdLeader) REFERENCES `User`(Id)
 );
 -- -----------------------------------------------------
 -- Связь пользователей с группами

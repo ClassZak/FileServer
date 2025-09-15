@@ -130,7 +130,7 @@ def account():
 #	else:
 #		groups = [{
 #			'name' : groups_resp['name'], 
-#			'leader' : user_service.read_user_by_id(group['leader_id'])}
+#			'leader' : user_service.read_user_by_id(group['id_leader'])}
 #			for group in groups_resp.get_json()['groups']
 #		]
 	return render_template(
@@ -244,8 +244,10 @@ def group_route():
 		return group_service.create_group(get_data_from_request(request))
 @app.route('/api/groups/public', methods = ['GET','POST'])
 def public_group_route():
+	verify_jwt_in_request(optional=True)
+	current_user = get_jwt_identity()
 	if request.method == 'GET':
-		return public_group_service.read_groups()
+		return public_group_service.read_groups(user_service.get_id_by_login(current_user))
 
 
 # Файлы

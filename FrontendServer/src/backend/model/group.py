@@ -22,12 +22,12 @@ class Group(metaclass=ModelMeta):
 			}
 		}
 	}
-	leader_id = {
+	id_leader = {
 		'field_meta':{
 			'type': int,
 			'required': True,
 			'db_column': {
-				'name' : 'LeaderId'
+				'name' : 'IdLeader'
 			}
 		}
 	}
