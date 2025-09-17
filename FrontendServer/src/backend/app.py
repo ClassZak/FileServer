@@ -247,7 +247,7 @@ def public_group_route():
 	verify_jwt_in_request(optional=True)
 	current_user = get_jwt_identity()
 	if request.method == 'GET':
-		return public_group_service.read_groups(user_service.get_id_by_login(current_user))
+		return public_group_service.read_groups_by_user_id(user_service.get_id_by_login(current_user))
 
 
 # Файлы

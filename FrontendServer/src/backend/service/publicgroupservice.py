@@ -44,7 +44,7 @@ class PublicGroupService(GroupService):
 	"""
 	def create_group(self, data:dict) -> Tuple[Response, int]:
 		return super().create_group(data)
-	def read_groups(self, id:int):
+	def read_groups_by_user_id(self, id:int):
 		try:
 			self.connect()
 
@@ -74,19 +74,44 @@ class PublicGroupService(GroupService):
 			return jsonify({'error' : f'Ошибка БД: {str(e)}'}), 500
 		finally:
 			self.disconnect()
-	def read_groups_by_user_id(self, id: int):
+	def read_groups_by_leader_id(self, id: int):
 		try:
 			self.connect()
 
 			# HANDLE COLUMNS MANAGMENT!
 			self.cursor.execute(f"""
 				SELECT 
-					`{PublicGroup.DB_COLUMNS['columns']['name']}`	AS 'name', 
+					g.`{PublicGroup.DB_COLUMNS['columns']['name']}`	AS 'name', 
 					u.{User.DB_COLUMNS['columns']['login']}			AS 'leader'
-				FROM `{PublicGroupService.TABLE_NAME}` g
-				INNER JOIN `{UserService.TABLE_NAME}` u ON 
-				u.{User.DB_COLUMNS['columns']['id']} = g.{Group.DB_COLUMNS['columns']['id_leader']}
-			""")
+				FROM GroupMember gm
+				JOIN `{GroupService.TABLE_NAME}` g
+				LEFT JOIN `{UserService.TABLE_NAME}` u ON
+					u.{User.DB_COLUMNS['columns']['id']} = g.{Group.DB_COLUMNS['columns']['id_leader']}
+				WHERE u.Id = %s
+			""", (id, ))
+			raw_data = self.cursor.fetchall()
+			
+			# Преобразуем данные БД в формат модели
+			return jsonify({'groups': raw_data}), 200
+		except Error as e:
+			return jsonify({'error' : f'Ошибка БД: {str(e)}'}), 500
+		finally:
+			self.disconnect()
+	def read_groups_by_member_id(self, id: int):
+		try:
+			self.connect()
+
+			# HANDLE COLUMNS MANAGMENT!
+			self.cursor.execute(f"""
+				SELECT 
+					g.`{PublicGroup.DB_COLUMNS['columns']['name']}`	AS 'name', 
+					u.{User.DB_COLUMNS['columns']['login']}			AS 'leader'
+				FROM GroupMember gm
+				JOIN `{GroupService.TABLE_NAME}` g
+				LEFT JOIN `{UserService.TABLE_NAME}` u ON
+					u.{User.DB_COLUMNS['columns']['id']} = gm.IdUser
+				WHERE u.Id = %s
+			""", (id, ))
 			raw_data = self.cursor.fetchall()
 			
 			# Преобразуем данные БД в формат модели
