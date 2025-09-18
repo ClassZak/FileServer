@@ -122,17 +122,6 @@ def account():
 		return redirect(url_for('login', next_url=request.url))
 	
 	csrf_token = generate_csrf()
-#	groups_resp, status_code = group_service.read_groups()
-#	groups = []
-#	if status_code != 200:
-#		#return groups_resp
-#		pass
-#	else:
-#		groups = [{
-#			'name' : groups_resp['name'], 
-#			'leader' : user_service.read_user_by_id(group['id_leader'])}
-#			for group in groups_resp.get_json()['groups']
-#		]
 	return render_template(
 		'account.html', 
 		username = current_user,
@@ -244,11 +233,18 @@ def group_route():
 		return group_service.create_group(get_data_from_request(request))
 @app.route('/api/groups/public', methods = ['GET','POST'])
 def public_group_route():
-	verify_jwt_in_request(optional=True)
-	current_user = get_jwt_identity()
-	if request.method == 'GET':
-		return public_group_service.read_groups_by_user_id(user_service.get_id_by_login(current_user))
-
+	try:
+		verify_jwt_in_request(optional=True)
+		current_user = get_jwt_identity()
+		if not current_user:
+			return redirect('/login')
+		if request.method == 'GET':
+			return public_group_service.read_groups_by_user_id(user_service.get_id_by_login(current_user))
+		elif request.method == 'POST':
+			return 
+	except Exception as e:
+		app.logger.debug(f"JWT check failed: {e}")
+		return jsonify({'error':f"JWT check failed: {e}"}), 400
 
 # Файлы
 @app.route('/api/files_search')
