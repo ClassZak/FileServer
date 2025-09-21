@@ -5,6 +5,7 @@ from flask import(
 	render_template,	request,	jsonify,
 	redirect,			url_for
 )
+import flask_jwt_extended
 from flask_jwt_extended.exceptions import NoAuthorizationError, JWTDecodeError
 from markupsafe import escape
 import base64
@@ -50,7 +51,7 @@ app = Flask(
 	static_folder='../frontend/static',
 	template_folder='../frontend/template'
 )
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFProtect, CSRFError
 def get_app_config(filename:str=config_path):
 	with open(filename, 'r', encoding='UTF-8') as file:
 		return json.load(file)
@@ -58,11 +59,10 @@ app_config = get_app_config()
 
 
 
-
 # Настройка CSRF
 app.secret_key = app_config['secret_key']
-csrf = CSRFProtect(app)
-csrf.init_app(app)
+#csrf = CSRFProtect(app)
+#csrf.init_app(app)
 
 
 
@@ -101,7 +101,14 @@ def handle_auth_error(e):
 def expired_token_callback(jwt_header, jwt_payload):
 	next_url = request.url
 	return redirect(url_for('login', next_url=next_url))
-
+@app.errorhandler(CSRFError)
+def handle_csrf_error(e):
+	return jsonify({'error': f'CSRF validation failed: {e.description}'}), 400
+@app.before_request
+def log_request():
+	#app.logger.debug(f"Headers: {request.headers}")
+	#app.logger.debug(f"Cookies: {request.cookies}")
+	pass
 
 
 
@@ -113,81 +120,65 @@ def root():
 @app.route('/about')
 def about():
 	return render_template('about.html')
-@app.route('/account')
+@app.route("/account")
 @login_required
 def account():
 	current_user = get_jwt_identity()
-	# Проверка на то, что пользователь авторизован
-	if not current_user:
-		return redirect(url_for('login', next_url=request.url))
-	
 	csrf_token = generate_csrf()
-	return render_template(
-		'account.html', 
-		username = current_user,
-		csrf_token = csrf_token
-#		groups=groups
-	)
-@app.route('/register')
-def register_page():
+	return render_template("account.html", username=current_user, csrf_token=csrf_token)
+
+# Регистрация
+@app.route("/register", methods=["GET", "POST"])
+def register():
+	# Если уже вошёл — не даём регистрироваться
 	try:
 		verify_jwt_in_request(optional=True)
-		current_user = get_jwt_identity()
-		if current_user:
-			# Для AJAX-запросов возвращаем JSON
-			if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-				return jsonify({'redirect': url_for('account')}), 200
-			# Для обычных запросов - редирект
-			app.logger.debug(f"Redirecting to account")
-			return redirect('/account')
+		if get_jwt_identity():
+			return redirect("/account")
 	except Exception as e:
 		app.logger.debug(f"JWT check failed: {e}")
+
 	csrf_token = generate_csrf()
-	return render_template('classes/register.html', csrf_token=csrf_token)
+	if request.method == "POST":
+		form_data = request.form.to_dict()
+		try:
+			validate_csrf(form_data.get("csrf_token"))
+		except Exception:
+			return jsonify({"error": "Неверный CSRF токен"}), 400
+
+		return user_service.register(form_data)
+
+	return render_template("classes/register.html", csrf_token=csrf_token)
+
 
 
 from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route("/login", methods=["GET", "POST"])
 def login():
-	# Проверяем, авторизован ли уже пользователь
+	# Если уже вошёл — редиректим на account
 	try:
 		verify_jwt_in_request(optional=True)
-		current_user = get_jwt_identity()
-		if current_user:
-			# Для AJAX-запросов возвращаем JSON
-			if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-				return jsonify({'redirect': url_for('account')}), 200
-			# Для обычных запросов - редирект
-			app.logger.debug(f"Redirecting to account")
-			return redirect('/account')
+		if get_jwt_identity():
+			return redirect("/account")
 	except Exception as e:
 		app.logger.debug(f"JWT check failed: {e}")
-	# Генерируем CSRF токен
-	csrf_token = generate_csrf()
-	
-	data = get_dict_from_request_form(request)
-	next_url = request.args.get('next_url', '/')
-	if data.get('next_url'):
-		next_url = data['next_url']
 
-	if request.method == 'POST':
-		if data.get('next_url'):
-			data.pop('next_url')
-		
-		# Проверяем CSRF токен для POST-запросов
+	csrf_token = generate_csrf()
+	if request.method == "POST":
+		form_data = request.form.to_dict()
 		try:
-			validate_csrf(request.form.get('csrf_token'))
-		except Exception as e:
-			print(e, csrf_token)
-			return jsonify({'error': 'Invalid CSRF token'}), 400
-		
-		return user_service.authorization(data, next_url)
-	else:
-		# Отображаем форму входа с сохраненным next_url и CSRF токеном
-		return render_template('classes/login.html', 
-							next_url=next_url,
-							csrf_token=csrf_token)
+			validate_csrf(form_data.get("csrf_token"))
+		except Exception:
+			return jsonify({"error": "Неверный CSRF токен"}), 400
+
+		return user_service.authorization(form_data, request.args.get("next_url", "/"))
+
+	return render_template("classes/login.html",
+						next_url=request.args.get("next_url", "/"),
+						csrf_token=csrf_token)
+
+
 
 
 
@@ -216,22 +207,24 @@ def logout():
 
 	return response
 
-# Регистрация
-@app.route('/api/register', methods = ['POST'])
-def register():
-	return user_service.create_user(get_data_from_request(request))
-
 
 
 
 # Группы
-@app.route('/api/groups', methods = ['GET','POST'])
+@app.route('/api/groups', methods=['GET', 'POST'])
+@jwt_required()  # Добавляем JWT аутентификацию
 def group_route():
+	current_user = get_jwt_identity()
+	user_id = user_service.get_id_by_login(current_user)
+	
 	if request.method == 'GET':
 		return group_service.read_groups()
 	elif request.method == 'POST':
-		return group_service.create_group(get_data_from_request(request))
+		data = get_data_from_request(request)
+		data['id_leader'] = user_id  # Добавляем ID владельца
+		return group_service.create_group(data)
 @app.route('/api/groups/public', methods = ['GET','POST'])
+@jwt_required() 
 def public_group_route():
 	try:
 		verify_jwt_in_request(optional=True)
@@ -242,9 +235,11 @@ def public_group_route():
 			return public_group_service.read_groups_by_user_id(user_service.get_id_by_login(current_user))
 		elif request.method == 'POST':
 			return 
-	except Exception as e:
+	except flask_jwt_extended.exceptions.CSRFError as e:
 		app.logger.debug(f"JWT check failed: {e}")
 		return jsonify({'error':f"JWT check failed: {e}"}), 400
+	except Exception as e:
+		return jsonify({'error':str(e)}), 500
 
 # Файлы
 @app.route('/api/files_search')
@@ -267,15 +262,10 @@ def main():
 		ssl_context.load_cert_chain('FrontendServer/cert.pem', 'FrontendServer/key.pem')
 
 		app.config.update({
-			"JWT_TOKEN_LOCATION": ["headers", "cookies"],
-			"JWT_COOKIE_SECURE": True,     # Отправлять только по HTTPS
-			"JWT_COOKIE_CSRF_PROTECT": True,
-			"JWT_CSRF_CHECK_FORM": True,
-			"JWT_ACCESS_COOKIE_PATH": "/",
-			"JWT_REFRESH_COOKIE_PATH": "/",
+			"JWT_TOKEN_LOCATION": ["cookies"],  # только cookies
+			"JWT_COOKIE_SECURE": False,         # True в проде (только HTTPS)
+			"JWT_COOKIE_CSRF_PROTECT": True,    # включаем CSRF защиту
 			"JWT_ACCESS_TOKEN_EXPIRES": datetime.timedelta(days=10, seconds=10, microseconds=0, milliseconds=0, minutes=0, hours=0, weeks=0),
-			"JWT_SESSION_COOKIE": False,
-			"JWT_CSRF_HEADER_NAME": 'X-CSRF-Token'
 		})
 		app.run(debug=True, host='0.0.0.0', port=5000, ssl_context = ssl_context)
 	except Exception as e:

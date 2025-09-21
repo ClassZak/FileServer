@@ -2,7 +2,12 @@ class DBFormFactory {
 	static createForm(modelClass, container, onSubmit) {
 		const form = document.createElement('form');
 		form.className = 'db-form';
-		
+
+		{
+			let csrfInput = this.createInput('csrf_token', csrfToken);
+			csrfInput.setAttribute('type','hidden');
+			form.appendChild(csrfInput);
+		}
 		// Получаем поля модели на основе её экземпляра
 		const instance = new modelClass();
 		const fields = Object.keys(instance).filter(key => key !== '_id');

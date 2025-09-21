@@ -1,3 +1,10 @@
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+
 class CreateModel_Group extends BaseModel{
 	constructor(data = {}){
 		super(data);
@@ -16,39 +23,56 @@ class CreateModel_Group extends BaseModel{
 	static createGroup(createModel_Group) {
 		hideError();
 
-		const token = localStorage.getItem('access_token');
+		const jwt = localStorage.getItem('access_token');
+		if (!jwt) {
+			/*catchError('Вы не авторизованы!');
+			return;*/
+		}
 
-		console.log(csrfToken);
-
-		fetch('/api/groups/public', {
+		
+		fetch('/api/groups', {  // Изменили endpoint на /api/groups
 			method: 'POST',
-			body: JSON.stringify(createModel_Group.toJSON()),  // Преобразуйте в JSON строку
+			body: JSON.stringify(createModel_Group.toJSON()),
 			headers: { 
-				'X-CSRF-Token': csrfToken,
-				'Content-Type': 'application/json',  // Добавьте Content-Type
-				'X-Requested-With': 'XMLHttpRequest'
+				'Content-Type': 'application/json',
+				'X-Requested-With': 'XMLHttpRequest',
+				'Authorization': `Bearer ${jwt}`,
+				"X-CSRF-TOKEN": getCookie("csrf_access_token")
 			},
-			credentials: 'include'
+			credentials: "include"
 		})
 		.then(async response => {
-			// Если ответ - редирект (код 302)
 			if (response.redirected) {
 				window.location.href = response.url;
 				return;
 			}
-			try{
-				let data = response.json();
-				return data;
-			} catch(error){
-				throw error;	
+			
+			if (!response.ok) {
+				const errorData = await response.json();
+				throw new Error(errorData.error || 'Server error');
 			}
+			
+			return response.json();
 		})
-		.then(data=>{
-			if(data && data.message)
+		.then(data => {
+			if (data && data.message) {
 				console.log(data.message);
+				showAlert('Группа успешно создана!');
+			}
 		})
 		.catch(error => {
 			catchError(error);
 		});
 	} 
 }
+
+
+
+
+
+
+
+
+
+
+

@@ -23,6 +23,7 @@
 		<script src="{{ url_for('static', filename = 'scripts/classes/login.js') }}"></script>
 		<form method="POST" action="/login" id = "login-form" class = "login shadow-box">
 			<input type="hidden" name="next_url" value="{{ next_url }}">
+			<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
 			<div class = "login-field">
 				<label for="login">Логин</label>

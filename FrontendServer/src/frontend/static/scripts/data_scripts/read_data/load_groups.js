@@ -13,6 +13,8 @@ async function loadGroups(){
 		}
 	})
 	.then(data => {
+		if(data.error)
+			throw new Error(data.error);
 		groups = data['groups'];
 	})
 	.catch(error=>{
