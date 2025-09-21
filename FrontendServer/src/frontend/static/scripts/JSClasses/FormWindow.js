@@ -1,6 +1,8 @@
 class DBFormFactory {
-	static createForm(modelClass, container, onSubmit) {
+	static createForm(modelClass, container, onSubmit, id = undefined) {
 		const form = document.createElement('form');
+		if(id)
+			form.setAttribute('id', id);
 		form.className = 'db-form';
 
 		{

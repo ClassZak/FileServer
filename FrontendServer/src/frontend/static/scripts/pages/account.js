@@ -9,6 +9,10 @@ addEventListener('DOMContentLoaded', async function(e){
 	this.setTimeout(async function() {
 		await loadGroups();
 		renderGroups();
-		DBFormFactory.createForm(CreateModel_Group, null, CreateModel_Group.createGroup); 
+		DBFormFactory.createForm(CreateModel_Group, null, async function(createModel_Group) {
+			CreateModel_Group.createGroup(createModel_Group); 	
+			await loadGroups();
+			renderGroups();
+		});
 	}, 5)
 });
