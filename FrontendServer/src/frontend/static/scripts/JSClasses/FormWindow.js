@@ -1,5 +1,10 @@
+// Требуется включить 
+// styles/classes/modal.css
+// styles/classes/model_form.css
+// styles/classes/overlay.css
+
 class DBFormFactory {
-	static createForm(modelClass, container, onSubmit, id = undefined) {
+	static createForm(modelClass, container, onSubmit, label_dict = undefined, id = undefined) {
 		const form = document.createElement('form');
 		if(id)
 			form.setAttribute('id', id);
@@ -19,7 +24,10 @@ class DBFormFactory {
 			fieldContainer.className = 'form-field';
 			
 			const label = document.createElement('label');
-			label.textContent = this.formatFieldName(field);
+			let formatedName = this.formatFieldName(field);
+			if(label_dict && label_dict.hasOwnProperty(formatedName))
+				formatedName = label_dict[formatedName];
+			label.textContent = formatedName
 			label.htmlFor = field;
 			
 			const input = this.createInput(field, instance[field]);
@@ -95,7 +103,42 @@ class DBFormFactory {
 	static formatFieldName(fieldName) {
 		return fieldName
 			.replace(/([A-Z])/g, ' $1')
-			.replace(/^./, str => str.toUpperCase())
 			.replace(/Id(\w)/g, 'ID $1');
+	}
+
+	static createOverlayForForm(form, formName){
+		let overlay, modelForm, header;
+
+		overlay	=	document.createElement('div');
+		overlay.	classList.add('overlay');
+		modelForm =	document.createElement('div');
+		modelForm.	classList.add('model-form');
+
+		header = document.createElement('h1');
+		header.textContent = formName;
+
+		modelForm.appendChild(header);
+		modelForm.appendChild(form);
+
+		overlay.appendChild(modelForm);
+
+		document.body.append(overlay);
+
+		return overlay;
+	}
+
+	static addCanselButtonForOverlayForm(form){
+		let button	= document.createElement()
+		button.type	= 'reset';
+		button.textContent = 'Отмена';
+
+		
+		if(!form.parentElement && 
+			form.parentElement.classList.contains('overlay') &&
+			form.classList.contains('modal')
+		)
+
+
+		form.append(button);
 	}
 }

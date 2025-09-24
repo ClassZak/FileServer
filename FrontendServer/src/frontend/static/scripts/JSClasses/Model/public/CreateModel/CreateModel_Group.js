@@ -16,6 +16,9 @@ class CreateModel_Group extends BaseModel{
 		return json;
 	}
 
+	static CREATE_MODEL_GROUP_LABELS_DICT = {
+		'name': 'Название'
+	};
 	/**
 	 * 
 	 * @param {Объект класса CreateModel_Group} createModel_Group 

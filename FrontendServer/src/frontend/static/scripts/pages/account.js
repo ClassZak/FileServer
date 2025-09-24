@@ -13,6 +13,6 @@ addEventListener('DOMContentLoaded', async function(e){
 			CreateModel_Group.createGroup(createModel_Group); 	
 			await loadGroups();
 			renderGroups();
-		});
+		}, CreateModel_Group.CREATE_MODEL_GROUP_LABELS_DICT );
 	}, 5)
 });
