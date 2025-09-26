@@ -4,7 +4,7 @@
 // styles/classes/overlay.css
 
 class DBFormFactory {
-	static createForm(modelClass, container, onSubmit, label_dict = undefined, id = undefined) {
+	static createForm(modelClass, container, label_dict = undefined, id = undefined) {
 		const form = document.createElement('form');
 		if(id)
 			form.setAttribute('id', id);
@@ -17,7 +17,7 @@ class DBFormFactory {
 		}
 		// Получаем поля модели на основе её экземпляра
 		const instance = new modelClass();
-		const fields = Object.keys(instance).filter(key => key !== '_id');
+		const fields = getModelFields(modelClass);
 		
 		fields.forEach(field => {
 			const fieldContainer = document.createElement('div');
@@ -36,11 +36,21 @@ class DBFormFactory {
 			form.appendChild(fieldContainer);
 		});
 		
+		if(container !== null && container !== undefined)
+			container.appendChild(form);
+		else
+			document.body.appendChild(form);
+
+		return form;
+	}
+
+	static addSubmitButtonForOverlayForm(form, onSubmit, modelClass, buttonText){
 		const submitButton = document.createElement('button');
 		submitButton.type = 'submit';
-		submitButton.textContent = 'Сохранить';
-		form.appendChild(submitButton);
-		
+		submitButton.textContent = buttonText;
+
+		const fields = getModelFields(modelClass);
+
 		form.addEventListener('submit', (e) => {
 			e.preventDefault();
 			const formData = new FormData(form);
@@ -52,13 +62,17 @@ class DBFormFactory {
 			
 			onSubmit(new modelClass(data));
 		});
-		
-		if(container !== null && container !== undefined)
-			container.appendChild(form);
-		else
-			document.body.appendChild(form);
 
-		return form;
+		form.appendChild(submitButton);
+
+		return submitButton;
+	}
+
+	static getModelFields(modelClass){
+		const instance = new modelClass();
+		const fields = Object.keys(instance).filter(key => key !== '_id');
+
+		return fields;
 	}
 	
 	static createInput(fieldName, defaultValue) {
@@ -128,15 +142,29 @@ class DBFormFactory {
 	}
 
 	static addCanselButtonForOverlayForm(form){
-		let button	= document.createElement()
+		let button	= document.createElement('button')
 		button.type	= 'reset';
 		button.textContent = 'Отмена';
 
 		
-		if(!form.parentElement && 
-			form.parentElement.classList.contains('overlay') &&
-			form.classList.contains('modal')
+		if(
+			form.parentElement && 
+			form.parentElement.classList.contains('model-form') &&
+			form.parentElement.parentElement &&
+			form.parentElement.parentElement.classList.contains('overlay')
 		)
+			button.addEventListener('click', function(e){
+				form.reset();
+
+				const overlay = form.parentElement.parentElement;
+
+				overlay.style.display = 'none';
+				document.body.classList.remove('no-scroll');
+			});
+		else
+			button.addEventListener('click', function(){
+				form.reset();
+			});
 
 
 		form.append(button);

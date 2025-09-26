@@ -232,7 +232,8 @@ def public_group_route():
 		if not current_user:
 			return redirect('/login')
 		if request.method == 'GET':
-			return public_group_service.read_groups_by_user_id(user_service.get_id_by_login(current_user))
+			return public_group_service.read_groups_by_user_id(
+				user_service.get_id_by_login(current_user))
 		elif request.method == 'POST':
 			return 
 	except flask_jwt_extended.exceptions.CSRFError as e:
@@ -265,7 +266,15 @@ def main():
 			"JWT_TOKEN_LOCATION": ["cookies"],  # только cookies
 			"JWT_COOKIE_SECURE": False,         # True в проде (только HTTPS)
 			"JWT_COOKIE_CSRF_PROTECT": True,    # включаем CSRF защиту
-			"JWT_ACCESS_TOKEN_EXPIRES": datetime.timedelta(days=10, seconds=10, microseconds=0, milliseconds=0, minutes=0, hours=0, weeks=0),
+			"JWT_ACCESS_TOKEN_EXPIRES": datetime.timedelta(
+				days=10, 
+				seconds=10, 
+				microseconds=0, 
+				milliseconds=0, 
+				minutes=0, 
+				hours=0, 
+				weeks=0
+			),
 		})
 		app.run(debug=True, host='0.0.0.0', port=5000, ssl_context = ssl_context)
 	except Exception as e:
