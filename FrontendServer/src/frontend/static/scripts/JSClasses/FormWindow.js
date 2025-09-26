@@ -17,7 +17,7 @@ class DBFormFactory {
 		}
 		// Получаем поля модели на основе её экземпляра
 		const instance = new modelClass();
-		const fields = getModelFields(modelClass);
+		const fields = DBFormFactory.getModelFields(modelClass);
 		
 		fields.forEach(field => {
 			const fieldContainer = document.createElement('div');
@@ -49,7 +49,7 @@ class DBFormFactory {
 		submitButton.type = 'submit';
 		submitButton.textContent = buttonText;
 
-		const fields = getModelFields(modelClass);
+		const fields = DBFormFactory.getModelFields(modelClass);
 
 		form.addEventListener('submit', (e) => {
 			e.preventDefault();
