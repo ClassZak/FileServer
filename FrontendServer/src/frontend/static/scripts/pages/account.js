@@ -11,11 +11,11 @@ addEventListener('DOMContentLoaded', async function(e){
 		renderGroups();
 
 		let form = 
-		DBFormFactory.createForm(CreateModel_Group, null, CreateModel_Group.CREATE_MODEL_GROUP_LABELS_DICT );
+		DBFormFactory.createForm('Form_CreateModel_Group', CreateModel_Group, null, CreateModel_Group.CREATE_MODEL_GROUP_LABELS_DICT );
 		let overlay = 
 		DBFormFactory.createOverlayForForm(form, 'Создание новой группы');
 		
-		overlay.style.display = 'flex';
+		//overlay.style.display = 'flex';
 		document.body.appendChild(overlay);
 
 		DBFormFactory.addSubmitButtonForOverlayForm(form, async function(createModel_Group) {

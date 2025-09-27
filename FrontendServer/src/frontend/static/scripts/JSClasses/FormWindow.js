@@ -3,9 +3,56 @@
 // styles/classes/model_form.css
 // styles/classes/overlay.css
 
+class DBForm{
+	static OverlayDBForms = [];
+	constructor(name = '', formRef){
+		this.name = name;
+		this.formRef = formRef;
+	}
+
+	
+
+	static openForm(name = ''){
+		const formRef = DBForm.findForm(name);
+
+		formRef.parentElement.parentElement.style.display = 'flex';
+		document.body.classList.add('no-scroll');
+	}
+
+	
+	static closeForm(name = ''){
+		const formRef = DBForm.findForm(name);
+
+		formRef.parentElement.parentElement.style.display = 'none';
+		document.body.classList.remove('no-scroll');
+	}
+
+
+	static findForm(name = ''){
+		const form = DBForm.OverlayDBForms.find(f=>f.name == name);
+		if(!form)
+			throw new Error('Не найдена форма для открытия');
+
+		const formRef = form.formRef;
+		if(
+			!formRef.parentElement ||
+			!formRef.parentElement.classList.contains('model-form') ||
+			!formRef.parentElement.parentElement ||
+			!formRef.parentElement.parentElement.classList.contains('overlay')
+		)
+			throw new Error('Сохранена неверная форма');
+
+		return formRef;
+	}
+}
+
+
+
+
 class DBFormFactory {
-	static createForm(modelClass, container, label_dict = undefined, id = undefined) {
+	static createForm(name, modelClass, container, label_dict = undefined, id = undefined) {
 		const form = document.createElement('form');
+		form.setAttribute('name', name);
 		if(id)
 			form.setAttribute('id', id);
 		form.className = 'db-form';
@@ -40,6 +87,9 @@ class DBFormFactory {
 			container.appendChild(form);
 		else
 			document.body.appendChild(form);
+
+
+		DBForm.OverlayDBForms.push(new DBForm(name, form));
 
 		return form;
 	}
@@ -125,7 +175,7 @@ class DBFormFactory {
 			.replace(/Id(\w)/g, 'ID $1');
 	}
 
-	static createOverlayForForm(form, formName){
+	static createOverlayForForm(form, formHeader){
 		let overlay, modelForm, header;
 
 		overlay	=	document.createElement('div');
@@ -134,7 +184,7 @@ class DBFormFactory {
 		modelForm.	classList.add('model-form');
 
 		header = document.createElement('h1');
-		header.textContent = formName;
+		header.textContent = formHeader;
 
 		modelForm.appendChild(header);
 		modelForm.appendChild(form);
@@ -156,15 +206,16 @@ class DBFormFactory {
 			form.parentElement && 
 			form.parentElement.classList.contains('model-form') &&
 			form.parentElement.parentElement &&
-			form.parentElement.parentElement.classList.contains('overlay')
+			form.parentElement.parentElement.classList.contains('overlay')&&
+
+			form.hasAttribute('name')
 		)
 			button.addEventListener('click', function(e){
 				form.reset();
 
 				const overlay = form.parentElement.parentElement;
 
-				overlay.style.display = 'none';
-				document.body.classList.remove('no-scroll');
+				DBForm.closeForm(form.getAttribute('name'))
 			});
 		else
 			button.addEventListener('click', function(){
@@ -175,3 +226,6 @@ class DBFormFactory {
 		form.append(button);
 	}
 }
+
+
+
