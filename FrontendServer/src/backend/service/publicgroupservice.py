@@ -50,7 +50,7 @@ class PublicGroupService(GroupService):
 
 			# HANDLE COLUMNS MANAGMENT!
 			query = f"""
-				SELECT 
+				SELECT DISTINCT
 					g.`{PublicGroup.DB_COLUMNS['columns']['name']}`	AS 'name', 
 					u.{User.DB_COLUMNS['columns']['login']}			AS 'leader'
 				FROM GroupMember gm

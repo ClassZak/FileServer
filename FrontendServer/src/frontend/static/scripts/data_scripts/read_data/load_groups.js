@@ -2,6 +2,7 @@ var groups = null;
 
 async function loadGroups(){
 	hideError();
+	groups = [];
 
 	await fetch('/api/groups/public')
 	.then(async response=>{
