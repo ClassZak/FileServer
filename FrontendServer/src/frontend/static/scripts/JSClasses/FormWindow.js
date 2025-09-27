@@ -61,6 +61,10 @@ class DBFormFactory {
 			});
 			
 			onSubmit(new modelClass(data));
+
+			const overlay = form.parentElement.parentElement;
+			overlay.style.display = 'none';
+			document.body.classList.remove('no-scroll');
 		});
 
 		form.appendChild(submitButton);
@@ -80,6 +84,7 @@ class DBFormFactory {
 		input.id = fieldName;
 		input.name = fieldName;
 		input.value = defaultValue || '';
+		input.type = 'text'
 		
 		// Специальная обработка для разных типов полей
 		if (fieldName.includes('password')) {

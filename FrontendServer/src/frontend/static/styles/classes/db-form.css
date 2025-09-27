@@ -1,0 +1,10 @@
+.db-form * {
+	display: block;
+}
+.db-form input[type='text']{
+	width: 100%;
+}
+
+.db-form button{
+	display: inline;
+}

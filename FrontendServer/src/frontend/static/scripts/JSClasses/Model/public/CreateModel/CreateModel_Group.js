@@ -23,7 +23,7 @@ class CreateModel_Group extends BaseModel{
 	 * 
 	 * @param {Объект класса CreateModel_Group} createModel_Group 
 	 */
-	static createGroup(createModel_Group) {
+	static async createGroup(createModel_Group) {
 		hideError();
 
 		const jwt = localStorage.getItem('access_token');
@@ -33,7 +33,7 @@ class CreateModel_Group extends BaseModel{
 		}
 
 		
-		fetch('/api/groups', {  // Изменили endpoint на /api/groups
+		await fetch('/api/groups', {  // Изменили endpoint на /api/groups
 			method: 'POST',
 			body: JSON.stringify(createModel_Group.toJSON()),
 			headers: { 

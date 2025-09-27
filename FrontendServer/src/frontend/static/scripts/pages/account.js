@@ -19,7 +19,7 @@ addEventListener('DOMContentLoaded', async function(e){
 		document.body.appendChild(overlay);
 
 		DBFormFactory.addSubmitButtonForOverlayForm(form, async function(createModel_Group) {
-			CreateModel_Group.createGroup(createModel_Group); 	
+			await CreateModel_Group.createGroup(createModel_Group); 	
 			await loadGroups();
 			renderGroups();
 		}, CreateModel_Group, "Создать");
