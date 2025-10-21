@@ -5,9 +5,9 @@ document.addEventListener('DOMContentLoaded', function() {
 	registerForm.addEventListener('submit', function(e) {
 		e.preventDefault();
 		hideError();
+		
 		const formData = new FormData(this);
-
-		//formData.append('csrf_token', csrfToken);
+		formData.append('csrf_token', csrfToken);
 
 		fetch(this.action, {
 			method: this.method,

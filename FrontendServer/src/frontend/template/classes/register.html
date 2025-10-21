@@ -22,7 +22,7 @@
 		{% endif %}
 
 		<script src="{{ url_for('static', filename = 'scripts/classes/register.js') }}"></script>
-		<form method="POST" action="/api/register" id = "register-form" class = "register shadow-box">
+		<form method="POST" action="/register" id = "register-form" class = "register shadow-box">
 			<input type="hidden" name="next_url" value="{{ next_url }}">
 
 			<div class = "register-field">

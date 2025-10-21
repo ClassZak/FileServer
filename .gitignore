@@ -1,6 +1,6 @@
 # VS Code
 desktop.ini
-.password.json
+.config.json
 .vscode/
 __pycache__/
 .venv/

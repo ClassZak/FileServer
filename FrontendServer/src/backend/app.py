@@ -13,7 +13,7 @@ import datetime
 
 
 
-config_path = 'FrontendServer/src/backend/.password.json'
+config_path = 'FrontendServer/src/backend/.config.json'
 
 
 
@@ -146,7 +146,7 @@ def register():
 		except Exception:
 			return jsonify({"error": "Неверный CSRF токен"}), 400
 
-		return user_service.register(form_data)
+		return user_service.create_user(form_data)
 
 	return render_template("classes/register.html", csrf_token=csrf_token)
 
@@ -278,7 +278,7 @@ def main():
 		})
 		app.run(debug=True, host='0.0.0.0', port=5000, ssl_context = ssl_context)
 	except Exception as e:
-		print(e)
+		print(f'Exception in main: {e}')
 
 if __name__=='__main__':
 	main()
