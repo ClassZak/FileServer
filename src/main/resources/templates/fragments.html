@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <!-- Фрагмент header -->
+    <div th:fragment="header">
+        <header>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <!--meta name="csrf-token" content="{{ csrf_token }}"-->
+
+            <link rel="icon" th:href="@{/favicon.ico}" type="image/x-icon">
+            <link rel="stylesheet" th:href="@{/styles/base_style.css}">
+            <link rel="stylesheet" th:href="@{/styles/header_style.css}">
+            <link rel="stylesheet" th:href="@{/styles/main_style.css}">
+            <link rel="stylesheet" th:href="@{/styles/footer_style.css}">
+
+            <link rel="stylesheet" th:href="@{/styles/image-button.css}">
+
+
+            <script th:src="@{scripts/base_scripts/base_loading.js}"></script>
+            <script th:src="@{scripts/base_scripts/escape.js}"></script>
+        </header>
+    </div>
+
+    <!-- Фрагмент footer -->
+    <div th:fragment="footer">
+        <footer>
+            <p>&copy; 2025 Мой сайт. Все права защищены.</p>
+        </footer>
+    </div>
+
+    <!-- Фрагмент с параметрами -->
+    <div th:fragment="userInfo(user)">
+        <div class="user-card">
+            <h3 th:text="${user.name}">Имя пользователя</h3>
+            <p>ID: <span th:text="${user.id}">0</span></p>
+        </div>
+    </div>
+</body>
+</html>

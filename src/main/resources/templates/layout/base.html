@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title layout:title-pattern="$CONTENT_TITLE">Мой сайт</title>
+
+    <!-- Общие ресурсы -->
+    <link rel="icon" th:href="@{/favicon.ico}" type="image/x-icon">
+    <link rel="stylesheet" th:href="@{/styles/base_style.css}">
+    <link rel="stylesheet" th:href="@{/styles/header_style.css}">
+    <link rel="stylesheet" th:href="@{/styles/main_style.css}">
+    <link rel="stylesheet" th:href="@{/styles/footer_style.css}">
+    <link rel="stylesheet" th:href="@{/styles/image-button.css}">
+
+    <script th:src="@{/scripts/base_scripts/base_loading.js}"></script>
+    <script th:src="@{/scripts/base_scripts/escape.js}"></script>
+
+    <!-- Блок для дополнительных стилей конкретных страниц -->
+    <th:block layout:fragment="head"></th:block>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav>
+            <a th:href="@{/}">Главная</a>
+        </nav>
+    </header>
+
+    <!-- Основной контент -->
+    <main layout:fragment="content">
+        <p>Контент по умолчанию</p>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 Мой сайт</p>
+    </footer>
+
+    <!-- Блок для дополнительных скриптов -->
+    <th:block layout:fragment="scripts"></th:block>
+</body>
+</html>
