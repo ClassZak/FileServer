@@ -67,7 +67,7 @@ class GroupService(AService):
 			try:
 				if self.connection:
 					self.connection.rollback()
-			except Error as newE:
+			except Error as e:
 				return jsonify({'error' : f'Ошибка БД: {str(e)}'}), 500
 			finally:
 				return jsonify({'error' : f'Ошибка БД: {str(e)}'}), 500
