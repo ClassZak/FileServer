@@ -1,8 +1,5 @@
-
-
 :root {
-    /*--primary-dark:		#095256; */
-	--primary-dark:		#000000;	/* Темно-зеленый */
+	--primary-dark:		#095256;	/* Темно-зеленый */
 	--primary-accent:	#087F8C;	/* Акцентный бирюзовый */
 	--secondary-green:	#5AAA95;	/* Светло-зеленый */
 	--secondary-olive:	#86A873;	/* Оливковый */
