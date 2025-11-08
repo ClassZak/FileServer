@@ -1,0 +1,55 @@
+/*Шапка*/
+header{
+	width: 100%;
+	background-color: var(--secondary-green);
+	position: fixed;
+	font-weight: bold;
+	z-index: 1000;
+}
+.header-content {
+	width: 90%;
+	margin: 10px auto;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+header > *{
+	display: inline;
+}
+header > form{
+	display: flex;
+	gap: 5px;
+	width: 100%;
+}
+header form {
+	display: flex;
+	gap: 5px;
+	width: 100%;
+}
+header form input[type="text"] {
+	flex-grow: 1;
+	padding: 5px;
+	border: 1px solid #ccc;
+	border-radius: 0px;
+	width: inherit;
+	min-width: 20px;
+}
+header nav{
+	display: flex;
+	align-items: center;
+	width: auto;
+	gap: 10px;
+}
+header nav > *{
+	display: inline;
+}
+
+
+@media screen and (width< 500px) {
+	.header-content a {
+		font-size: 0.7rem;
+	}
+	.header-content input{
+		font-size: 0.7rem;
+	}
+}

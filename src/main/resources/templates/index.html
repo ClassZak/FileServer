@@ -5,72 +5,12 @@
 
 <head>
     <title>Главная страница</title>
-
-    <!-- Дополнительные стили только для этой страницы -->
-    <th:block layout:fragment="head">
-        <style>
-            .counter-container {
-                text-align: center;
-                padding: 2rem;
-                margin: 2rem auto;
-                max-width: 600px;
-            }
-            .counter-value {
-                font-size: 3rem;
-                font-weight: bold;
-                color: #2c3e50;
-                margin: 1rem 0;
-            }
-            .counter-btn {
-                padding: 0.5rem 1.5rem;
-                font-size: 1.2rem;
-                background: #3498db;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-            }
-            .counter-btn:hover {
-                background: #2980b9;
-            }
-        </style>
-    </th:block>
 </head>
 
 <body>
-    <main layout:fragment="content">
-        <div class="counter-container">
-            <h1>Счётчик</h1>
-            <div class="counter-value" th:text="${count}">0</div>
-            <button class="counter-btn" onclick="incrementCounter()">Увеличить</button>
-        </div>
+    <main>
+        <th:block th:include="fragments/about.html :: headerfiles">
+        </th:block>
     </main>
-
-    <!-- Дополнительные скрипты только для этой страницы -->
-    <th:block layout:fragment="scripts">
-        <script>
-            function incrementCounter() {
-                fetch('/increment', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    document.querySelector('.counter-value').textContent = data.count;
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Ошибка при увеличении счётчика');
-                });
-            }
-        </script>
-    </th:block>
 </body>
 </html>

@@ -1,0 +1,65 @@
+
+
+:root {
+    /*--primary-dark:		#095256; */
+	--primary-dark:		#000000;	/* Темно-зеленый */
+	--primary-accent:	#087F8C;	/* Акцентный бирюзовый */
+	--secondary-green:	#5AAA95;	/* Светло-зеленый */
+	--secondary-olive:	#86A873;	/* Оливковый */
+	--accent-gold:		#BB9F06;	/* Золотой акцент */
+}
+
+html {
+	height: 100%;
+	background: linear-gradient(220deg,var(--primary-dark),var(--secondary-green));
+	background-attachment: fixed;
+}
+
+body {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	font-family: Arial, sans-serif;
+	color: white;
+}
+*{
+	margin: 0;
+	padding: 0;
+}
+
+
+
+
+/*Ссылки*/
+a{
+	color: white;
+	text-decoration: none;
+}
+p a{
+	text-decoration: underline;
+	color: #ddd;
+}
+a:hover{
+	text-decoration: underline;
+}
+a.in-text:hover {
+	color: var(--accent-gold)  !important;
+}
+
+
+
+
+/*Заголовки*/
+h1,h2,h3,h4,h5,h6 {
+	font-family: Montserrat, sans-serif;
+}
+h2,h3,h4,h5,h6 {
+	padding-left: 35px;
+}
+h1{
+	text-align: center;
+}
+br {
+	display: inline-block;
+	margin-left: -30px;    /* Корректируовка отступа после <br> */
+}

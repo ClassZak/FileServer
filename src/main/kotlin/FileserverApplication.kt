@@ -7,6 +7,5 @@ import org.springframework.boot.runApplication
 class FileserverApplication
 
 fun main(args: Array<String>) {
-    println("Sugoma!")
     runApplication<FileserverApplication>(*args)
 }
