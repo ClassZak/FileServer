@@ -12,7 +12,7 @@ CREATE TABLE `User` (
 	Surname         VARCHAR(45) NOT NULL,
 	Patronymic		VARCHAR(45) NOT NULL,
 	Email			VARCHAR(60) NOT NULL,
-	PasswordHash	CHAR(60) NOT NULL,
+	PasswordHash	CHAR(60) NOT NULL ,
 	CreatedAt		TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 -- -----------------------------------------------------
