@@ -2,6 +2,7 @@
 CREATE DATABASE FileServer2;
 USE FileServer2;
 
+
 -- -----------------------------------------------------
 -- Пользователь
 -- -----------------------------------------------------
@@ -10,6 +11,7 @@ CREATE TABLE `User` (
 	`Name`			VARCHAR(45) NOT NULL,
 	Surname         VARCHAR(45) NOT NULL,
 	Patronymic		VARCHAR(45) NOT NULL,
+	Email			VARCHAR(60) NOT NULL,
 	PasswordHash	CHAR(60) NOT NULL,
 	CreatedAt		TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -49,8 +51,8 @@ CREATE TABLE GroupMember (
 CREATE TABLE DirectoryMetadata (
 	Id			BIGINT AUTO_INCREMENT PRIMARY KEY,
 	`Path`		NVARCHAR(4096) NOT NULL,
-	IdGroup		INT,
 	IdUser		INT,
+	IdGroup		INT,
 	`Mode`		SMALLINT UNSIGNED NOT NULL,
 
 	FOREIGN KEY (IdUser)	REFERENCES `User`(Id),
@@ -58,7 +60,7 @@ CREATE TABLE DirectoryMetadata (
 	INDEX path_index (path(768)), -- Префиксный индекс для длинных путей
 
 	CONSTRAINT CHK_DirectoryMetadata_is_used_for_subject
-    CHECK (IdGroup != NULL OR IdUser != NULL)
+	CHECK (IdGroup != NULL OR IdUser != NULL)
 );
 -- -----------------------------------------------------
 -- Метаданные файлов
@@ -66,8 +68,8 @@ CREATE TABLE DirectoryMetadata (
 CREATE TABLE FileMetadata (
 	Id			BIGINT AUTO_INCREMENT PRIMARY KEY,
 	`Path`		NVARCHAR(4096) NOT NULL,
-	IdGroup		INT,
 	IdUser		INT,
+	IdGroup		INT,
 	`Mode`		SMALLINT UNSIGNED NOT NULL,
 
 	FOREIGN KEY (IdUser)	REFERENCES `User`(Id),
@@ -75,24 +77,32 @@ CREATE TABLE FileMetadata (
 	INDEX path_index (path(768)), -- Префиксный индекс для длинных путей
 
 	CONSTRAINT CHK_FileMetadata_is_used_for_subject
-    CHECK (IdGroup != NULL OR IdUser != NULL)
+	CHECK (IdGroup != NULL OR IdUser != NULL)
 );
 -- -----------------------------------------------------
 -- Удалённый файл
 -- -----------------------------------------------------
 CREATE TABLE DeletedFile(
-	Id		INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
-	`Path`	NVARCHAR(4096) NOT NULL
+	IdFileMetaData		INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
+	WorkTime	DATETIME NOT NULL,
 );
 -- -----------------------------------------------------
 -- Тип операции
 -- -----------------------------------------------------
 CREATE TABLE OperationType(
-	Id		INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
-	`Name`	NVARCHAR(45) NOT NULL
+	Id					INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
+	`Name`				NVARCHAR(45) NOT NULL
 );
+-- -----------------------------------------------------
+-- История работы
+-- -----------------------------------------------------
 CREATE TABLE WorkHistory(
-	Id			INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
-	WorkTime	DATETIME NOT NULL,
-	
+	Id					INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
+	WorkTime			DATETIME NOT NULL,
+	Path				NVARCHAR(4096) NOT NULL,
+	IdOperationType		INT NOT NULL,
+    IdUser				INT NOT NULL,
+
+    FOREIGN KEY (IdOperationType)	REFERENCES `OperationType`(Id),
+    FOREIGN KEY (IdUser)			REFERENCES `User`(Id)
 )
