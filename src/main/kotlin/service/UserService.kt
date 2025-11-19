@@ -1,6 +1,6 @@
 package org.zak.service
 
-
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
@@ -17,7 +17,18 @@ import java.time.format.DateTimeFormatter
 class UserService(
 	private val userRepository: UserRepository,
 	private val passwordEncoder: PasswordEncoder
-) {
+) : UserDetailsService {
+	
+	override fun loadUserByUsername(email: String): UserDetails {
+		val user = userRepository.findByEmail(email)
+			?: throw UsernameNotFoundException("Пользователь с email $email не найден")
+		
+		return org.springframework.security.core.userdetails.User(
+			user.email,
+			user.passwordHash,
+			listOf(SimpleGrantedAuthority("ROLE_USER"))
+		)
+	}
 	
 	fun createUser(request: CreateUserRequest): UserResponse {
 		if (userRepository.existsByEmail(request.email)) {
@@ -38,15 +49,21 @@ class UserService(
 		return toUserResponse(savedUser)
 	}
 	
-	fun authenticate(request: LoginRequest): Boolean {
+	fun authenticate(request: LoginRequest): User? {
 		val user = userRepository.findByEmail(request.email)
-		return user?.let {
-			passwordEncoder.matches(request.password, user.passwordHash)
-		} ?: false
+		return if (user != null && passwordEncoder.matches(request.password, user.passwordHash)) {
+			user
+		} else {
+			null
+		}
 	}
 	
 	fun getUserByEmail(email: String): UserResponse? {
 		return userRepository.findByEmail(email)?.let { toUserResponse(it) }
+	}
+	
+	fun getUserById(id: Int): UserResponse? {
+		return userRepository.findById(id.toLong()).orElse(null)?.let { toUserResponse(it) }
 	}
 	
 	private fun toUserResponse(user: User): UserResponse {

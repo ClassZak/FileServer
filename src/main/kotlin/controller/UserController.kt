@@ -33,10 +33,10 @@ class UserController(
 			"email" to request.email
 		)
 		
-		return if (isAuthenticated) {
-			ResponseEntity.ok(response)
+		if (isAuthenticated!=null) {
+			 return ResponseEntity.ok(response) as ResponseEntity<Map<String, Any>>
 		} else {
-			ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response)
+			 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response) as ResponseEntity<Map<String, Any>>
 		}
 	}
 	
