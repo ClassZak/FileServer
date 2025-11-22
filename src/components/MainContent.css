@@ -1,0 +1,31 @@
+.MainContent {
+	width: 90%;
+	height: 100%;
+	margin: 0 auto;
+	flex: 1;
+	padding: 4rem 0;
+	background-color: var(--primary-accent);
+	isolation: isolate; /* Создаем новый контекст наложения */
+}
+@media screen and (width< 300px) {
+	.MainContent {
+		width: 100%;
+	}
+}
+.MainContent > div > *{
+	margin: 30px;
+}
+.MainContent > div > h2,
+.MainContent > div > h3,
+.MainContent > div > h4,
+.MainContent > div > h5,
+.MainContent > div > h6 {
+	margin-bottom:5px;
+}
+.MainContent > div > p + p{
+	margin-top: 0px;
+	margin-bottom: 0px;
+}
+.MainContent p {
+	white-space: pre-wrap; /* Сохраняем переносы и печатаем табы*/
+}

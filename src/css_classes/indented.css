@@ -1,0 +1,10 @@
+.block-indent {
+	padding-left: 2em;
+	/* Убираем text-indent, так как используем padding */
+	text-indent: 0;
+}
+.block-indent br {
+	display: block;
+	content: "";
+	margin-top: 0.5em;
+}

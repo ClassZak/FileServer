@@ -1,0 +1,81 @@
+/*body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+*/
+
+:root {
+	--primary-dark:		#095256;	/* Темно-зеленый */
+	--primary-accent:	#087F8C;	/* Акцентный бирюзовый */
+	--secondary-green:	#5AAA95;	/* Светло-зеленый */
+	--secondary-olive:	#86A873;	/* Оливковый */
+	--accent-gold:		#BB9F06;	/* Золотой акцент */
+}
+
+html, body, #root {
+	height: 100%;
+	margin: 0;
+}
+
+html {
+	background: linear-gradient(220deg,var(--primary-dark),var(--secondary-green));
+	background-attachment: fixed;
+}
+
+body {
+	display: flex;
+	flex-direction: column;
+	font-family: Arial, sans-serif;
+	color: white;
+}
+*{
+	margin: 0;
+	padding: 0;
+}
+
+
+
+
+/*Ссылки*/
+a{
+	color: white;
+	text-decoration: none;
+}
+p a{
+	text-decoration: underline;
+	color: #ddd;
+	
+}
+a:hover{
+	text-decoration: underline;
+}
+a.in-text:hover {
+	color: var(--accent-gold)  !important;
+}
+
+
+
+
+/*Заголовки*/
+h1,h2,h3,h4,h5,h6 {
+	font-family: Montserrat, sans-serif;
+}
+h2,h3,h4,h5,h6 {
+	padding-left: 35px;
+}
+h1{
+	text-align: center;
+}
+br {
+	display: inline-block;
+	margin-left: -30px;
+}

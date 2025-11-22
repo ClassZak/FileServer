@@ -1,0 +1,1 @@
+export { default as Magnifyingglass } from './magnifyingglass.png';
