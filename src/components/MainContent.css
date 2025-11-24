@@ -3,7 +3,7 @@
 	height: 100%;
 	margin: 0 auto;
 	flex: 1;
-	padding: 4rem 0;
+	padding-top: 4rem;
 	background-color: var(--primary-accent);
 	isolation: isolate; /* Создаем новый контекст наложения */
 }
@@ -12,20 +12,24 @@
 		width: 100%;
 	}
 }
-.MainContent > div > *{
+.MainContent > *{
 	margin: 30px;
 }
-.MainContent > div > h2,
-.MainContent > div > h3,
-.MainContent > div > h4,
-.MainContent > div > h5,
-.MainContent > div > h6 {
+.MainContent > h2,
+.MainContent > h3,
+.MainContent > h4,
+.MainContent > h5,
+.MainContent > h6 {
 	margin-bottom:5px;
 }
-.MainContent > div > p + p{
+.MainContent > p + p{
 	margin-top: 0px;
 	margin-bottom: 0px;
 }
 .MainContent p {
 	white-space: pre-wrap; /* Сохраняем переносы и печатаем табы*/
+}
+
+div:has(.MainContent){
+	height: 100%;
 }
