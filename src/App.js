@@ -48,7 +48,7 @@ import Header from "./parts/Header";
 import FilesPage from './pages/FilesPage'
 
 function Container({ children }) {
-return <div className="max-w-5xl mx-auto px-6 py-10">{children}</div>;
+	return <div className="max-w-5xl mx-auto px-6 py-10">{children}</div>;
 }
 
 
