@@ -3,19 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@mui/icons-material": "^7.3.5",
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.0",
-    "@testing-library/user-event": "^13.5.0",
-    "concurrently": "^9.2.1",
-    "express": "^4.21.2",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "react-icons": "^5.5.0",
-    "react-router-dom": "^7.9.6",
+    "@mui/icons-material": "7.3.5",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.0",
+    "@testing-library/user-event": "13.5.0",
+    "concurrently": "9.2.1",
+    "express": "4.21.2",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-icons": "5.5.0",
+    "react-router-dom": "7.9.6",
     "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "2.1.4"
   },
   "scripts": {
     "dev": "node dev-server.js",
@@ -44,9 +44,9 @@
     ]
   },
   "devDependencies": {
-    "http-proxy-middleware": "^3.0.5",
-    "webpack": "^5.103.0",
-    "webpack-dev-middleware": "^7.4.5",
-    "webpack-hot-middleware": "^2.26.1"
+    "http-proxy-middleware": "3.0.5",
+    "webpack": "5.103.0",
+    "webpack-dev-middleware": "7.4.5",
+    "webpack-hot-middleware": "2.26.1"
   }
 }
