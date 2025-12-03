@@ -66,7 +66,7 @@ class UserService(
 		return userRepository.findById(id.toLong()).orElse(null)?.let { toUserResponse(it) }
 	}
 	
-	private fun toUserResponse(user: User): UserResponse {
+	fun toUserResponse(user: User): UserResponse {
 		return UserResponse(
 			id = user.id,
 			name = user.name,

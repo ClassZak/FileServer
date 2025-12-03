@@ -1,103 +1,152 @@
 package org.zak.controller
 
+import org.slf4j.LoggerFactory
+import io.jsonwebtoken.JwtException
+import jakarta.security.auth.message.AuthException
+import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.ResponseEntity
-import org.springframework.security.authentication.AuthenticationManager
-import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.stereotype.Controller
-import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.*
-import org.zak.dto.CreateUserRequest
 import org.zak.dto.LoginRequest
 import org.zak.service.UserService
 import org.zak.util.JwtUtil
-import jakarta.servlet.http.Cookie
-import jakarta.servlet.http.HttpServletResponse
+import org.springframework.http.HttpStatus
+import org.springframework.security.authentication.BadCredentialsException
+import org.springframework.security.core.userdetails.UserDetails
+import org.zak.dto.UserResponse
 
-@Controller
+@RestController
+@RequestMapping("/api/auth")
 class AuthController(
-	private val authenticationManager: AuthenticationManager,
 	private val userService: UserService,
 	private val jwtUtil: JwtUtil
 ) {
+	private val logger = LoggerFactory.getLogger(AuthController::class.java)
 	
-	@GetMapping("/login")
-	fun loginPage(@RequestParam(value = "error", defaultValue = "false") error: Boolean, model: Model): String {
-		if (error) {
-			model.addAttribute("error", "Неверный email или пароль")
-		}
-		return "login"
-	}
-	
-	@GetMapping("/register")
-	fun registerPage(): String {
-		return "register"
-	}
-	
-	@PostMapping("/api/auth/login")
-	@ResponseBody
-	fun login(
-		@RequestBody request: LoginRequest,
-		response: HttpServletResponse
-	): ResponseEntity<Map<String, Any>> {
-		val user = userService.authenticate(request)
-		if (user != null) {
-			val userDetails = userService.loadUserByUsername(user.email)
-			val token = jwtUtil.generateToken(userDetails, user.id!!)
-			
-			// Устанавливаем токен в cookie
-			val cookie = Cookie("jwtToken", token)
-			cookie.path = "/"
-			cookie.maxAge = 60 * 60 * 24 // 1 день
-			response.addCookie(cookie)
-			
-			return ResponseEntity.ok(mapOf(
-				"success" to true,
-				"userId" to user.id,
-				"email" to user.email,
-				"name" to "${user.surname} ${user.name} ${user.patronymic}"
-			)) as ResponseEntity<Map<String, Any>>
-		} else {
-			return ResponseEntity.status(401).body(mapOf("success" to false, "error" to "Неверные учетные данные"))
-		}
-	}
-	
-	@PostMapping("/api/auth/register")
-	@ResponseBody
-	fun register(@RequestBody request: CreateUserRequest): ResponseEntity<Map<String, Any>> {
-		 try {
-			val user = userService.createUser(request)
-			return ResponseEntity.ok(mapOf("success" to true, "user" to user))
-		} catch (e: IllegalArgumentException) {
-			return ResponseEntity.badRequest().body(mapOf("success" to false, "error" to e.message)) as ResponseEntity<Map<String, Any>>
-		}
-	}
-	
-	@PostMapping("/api/auth/logout")
-	@ResponseBody
-	fun logout(response: HttpServletResponse): ResponseEntity<Map<String, String>> {
-		// Удаляем токен из cookie
-		val cookie = Cookie("jwtToken", "")
-		cookie.path = "/"
-		cookie.maxAge = 0
-		response.addCookie(cookie)
+	@PostMapping("/login")
+	fun login(@RequestBody request: LoginRequest): ResponseEntity<Any> {
+		logger.info("Login attempt for email: ${request.email}")
 		
-		SecurityContextHolder.clearContext()
-		return ResponseEntity.ok(mapOf("message" to "Успешный выход"))
+		try {
+			val user = userService.authenticate(request)
+			
+			if (user == null) {
+				logger.warn("Authentication failed for email: ${request.email}")
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+					.body(mapOf("error" to "Invalid credentials", "message" to "Пользователь не найден или неверный пароль"))
+			}
+			
+			if (user.id == null) {
+				logger.error("User ID is null for email: ${request.email}")
+				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(mapOf("error" to "User ID cannot be null"))
+			}
+			
+			val userDetails = userService.loadUserByUsername(user.email)
+			val token = jwtUtil.generateToken(userDetails, user.id!!.toInt())
+			val refreshToken = jwtUtil.generateRefreshToken(userDetails, user.id!!.toInt())
+			
+			logger.info("Login successful for email: ${request.email}, userId: ${user.id}")
+			
+			return ResponseEntity.ok(
+				AuthResponse(
+					token = token,
+					refreshToken = refreshToken,
+					user = userService.toUserResponse(user)
+				)
+			)
+			
+		} catch (e: Exception) {
+			logger.error("Login error for email: ${request.email}", e)
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(mapOf(("error" to e.message ?: "Unknown error") as Pair<String, String>))
+		}
+	}
+	// Создаем refresh token (упрощенный вариант
+	@PostMapping("/refresh")
+	fun refresh(@RequestBody request: RefreshRequest): ResponseEntity<AuthResponse> {
+		val username = jwtUtil.extractUsername(request.refreshToken)
+		val userDetails = userService.loadUserByUsername(username)
+		
+		if (!jwtUtil.validateToken(request.refreshToken, userDetails)) {
+			throw JwtException("Invalid refresh token")
+		}
+		
+		val userId = jwtUtil.extractUserId(request.refreshToken)
+		val newToken = jwtUtil.generateToken(userDetails, userId)
+		
+		return ResponseEntity.ok(
+			AuthResponse(
+				token = newToken,
+				refreshToken = request.refreshToken,
+				user = userService.getUserByEmail(username)
+			)
+		)
 	}
 	
-	@GetMapping("/api/auth/me")
-	@ResponseBody
-	fun getCurrentUser(): ResponseEntity<Map<String, Any?>> {
-		val authentication = SecurityContextHolder.getContext().authentication
-		return if (authentication.isAuthenticated && authentication.name != "anonymousUser") {
-			val email = authentication.name
-			val user = userService.getUserByEmail(email)
-			ResponseEntity.ok(mapOf(
-				"authenticated" to true,
-				"user" to user
-			))
+	@GetMapping("/verify")
+	fun verifyToken(@RequestHeader("Authorization") authHeader: String): ResponseEntity<VerifyResponse> {
+		val token = authHeader.removePrefix("Bearer ")
+		val username = jwtUtil.extractUsername(token)
+		val user = userService.getUserByEmail(username)
+		
+		return if (user != null && jwtUtil.validateToken(token, userService.loadUserByUsername(username))) {
+			ResponseEntity.ok(VerifyResponse(user = user, valid = true))
 		} else {
-			ResponseEntity.ok(mapOf("authenticated" to false))
+			ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+		}
+	}
+	
+	@PostMapping("/logout")
+	fun logout(): ResponseEntity<Map<String, String>> {
+		return ResponseEntity.ok(mapOf("message" to "Logged out successfully"))
+	}
+	
+	@GetMapping("/check-auth")
+	@ResponseBody
+	fun checkAuth(
+		@RequestHeader(value = "Authorization", required = false) authHeader: String?
+	): ResponseEntity<AuthCheckResponse> {
+		val isValid = authHeader?.startsWith("Bearer ") == true && try {
+			val token = authHeader.removePrefix("Bearer ")
+			val username = jwtUtil.extractUsername(token)
+			val userDetails = userService.loadUserByUsername(username)
+			jwtUtil.validateToken(token, userDetails)
+		} catch (e: Exception) {
+			false
+		}
+		
+		return if (isValid) {
+			ResponseEntity.ok(AuthCheckResponse(authenticated = true))
+		} else {
+			ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+				.body(AuthCheckResponse(authenticated = false, redirectTo = "/login"))
 		}
 	}
 }
+
+
+private fun JwtUtil.generateRefreshToken(
+	userDetails: UserDetails,
+	toInt: Int
+) {
+}
+
+data class AuthCheckResponse(
+	val authenticated: Boolean,
+	val redirectTo: String? = null
+)
+
+data class AuthResponse(
+	val token: String,
+	val refreshToken: String,
+	val user: UserResponse?
+)
+
+data class RefreshRequest(
+	val refreshToken: String
+)
+
+data class VerifyResponse(
+	val user: UserResponse,
+	val valid: Boolean
+)

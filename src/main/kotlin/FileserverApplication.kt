@@ -9,5 +9,5 @@ import org.springframework.context.annotation.ComponentScan
 class FileserverApplication
 
 fun main(args: Array<String>) {
-    runApplication<FileserverApplication>(*args)
+	runApplication<FileserverApplication>(*args)
 }
