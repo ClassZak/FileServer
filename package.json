@@ -1,8 +1,8 @@
 {
   "name": "file_server2",
   "version": "0.1.0",
+  "proxy": "http://localhost:8888", 
   "private": true,
-  "proxy": "http://localhost:8888",
   "dependencies": {
     "@mui/icons-material": "7.3.5",
     "@testing-library/dom": "10.4.1",

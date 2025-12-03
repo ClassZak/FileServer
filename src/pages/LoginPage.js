@@ -33,12 +33,13 @@ const LoginPage = () => {
         
         try {
             // Отправляем запрос через прокси на Spring сервер
-            const response = await api.post('/api/auth/login', {
-                email,
-                password
-            });
+
+			let response = AuthService.loginByEmail(email, password);
+			if (!response.success)
+				throw Error(response.message);
             
-            const { token, user } = response.data;
+            const token	= response.token;
+            const user	= response.user;
             
             // Сохраняем токен
             localStorage.setItem('token', token);

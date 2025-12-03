@@ -31,17 +31,6 @@ export default function App() {
 	return (
 		<div>
 			<Header />
-			<Router>
-				<Routes>
-					<Route path="/" element={<HomePage />} />
-					<Route path="/login" element={<LoginPage />} />
-					<Route path="/account" element={<AccountPage/>} />
-					<Route path="/about" element={<AboutPage />} />
-					<Route path="/files" element={<FilesPage />} />
-					<Route path="*" element={<NotFound />} />
-				</Routes>
-			</Router>
-
 			<AuthProvider>
 				<Router>
 					<Routes>
@@ -61,9 +50,11 @@ export default function App() {
 								{/* Компонент админ-панели */}
 							</ProtectedRoute>
 						} />
-
-						 <Route path="/" element={<HomePage />} />
-						<Route path="/login" requireAuth={false} element={<LoginPage />} />
+						<Route path="/"			requireAuth={false} element={<HomePage />} />
+						<Route path="/about"	requireAuth={false} element={<AboutPage/>} />
+						<Route path="/login"	requireAuth={false} element={<LoginPage />} />
+						<Route path="/files"	element={<FilesPage/>} />
+						<Route path="/account"	element={<AccountPage/>} />
 					</Routes>
 				</Router>
 			</AuthProvider>
