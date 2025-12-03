@@ -1,90 +1,85 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Header from "../parts/Header";
 import MainContent from "../components/MainContent";
 import Footer from "../parts/Footer";
-import Header from "../parts/Header";
-
-
-
-
-import { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import AuthService from "../services/AuthService";
 
 const AccountPage = () => {
-	const { user, logout } = useAuth();
-	const [accountData, setAccountData] = useState(null);
-	const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
 
-	useEffect(() => {
-		const fetchAccountData = async () => {
-			try {
-				const { data } = await axios.get('/api/user');
-				setAccountData(data);
-			} catch (error) {
-				console.error('Ошибка загрузки данных:', error);
-			} finally {
-				setLoading(false);
-			}
-		};
+    useEffect(() => {
+        // При загрузке страницы проверяем авторизацию через сервер
+        const checkAuthAndLoadUser = async () => {
+            try {
+                const result = await AuthService.checkAuth();
+                
+                if (result.authenticated) {
+                    setUser(result.user);
+                    if (result.user) {
+                        AuthService.setUser(result.user);
+                    }
+                } else {
+                    // Если не авторизован - редирект на логин
+                    navigate('/login');
+                }
+            } catch (error) {
+                console.error('Ошибка проверки авторизации:', error);
+                navigate('/login');
+            } finally {
+                setLoading(false);
+            }
+        };
 
-		fetchAccountData();
-	}, []);
+        checkAuthAndLoadUser();
+    }, [navigate]);
 
-	if (loading) {
-		return <div>Загрузка...</div>;
-	}
+    const handleLogout = () => {
+        AuthService.logout();
+		navigate('/login')
+    };
 
-	return (
-	<div>
-		<Header />
-			<MainContent>
-				<div className="min-h-screen bg-gray-100 py-12 px-4">
-					<div className="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-8">
-						<div className="flex justify-between items-center mb-8">
-							<h1 className="text-3xl font-bold">Мой аккаунт</h1>
-							<button
-								onClick={logout}
-								className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-							>
-								Выйти
-							</button>
-						</div>
-						
-						{user && (
-							<div className="mb-8">
-								<h2 className="text-xl font-semibold mb-4">Информация о пользователе</h2>
-								<div className="grid grid-cols-2 gap-4">
-									<div>
-										<p className="text-gray-600">Имя:</p>
-										<p className="font-medium">{user.name}</p>
-									</div>
-									<div>
-										<p className="text-gray-600">Фамилия:</p>
-										<p className="font-medium">{user.surname}</p>
-									</div>
-									<div>
-										<p className="text-gray-600">Email:</p>
-										<p className="font-medium">{user.email}</p>
-									</div>
-									<div>
-										<p className="text-gray-600">Дата регистрации:</p>
-										<p className="font-medium">{user.createdAt}</p>
-									</div>
-								</div>
-							</div>
-						)}
-						
-						{accountData && (
-							<div>
-								<h2 className="text-xl font-semibold mb-4">Дополнительные данные</h2>
-								{/* Отобразите дополнительные данные с бэкенда */}
-							</div>
-						)}
-					</div>
-				</div>
-			</MainContent>
-			<Footer />
-		</div>
-	);
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return null; // Редирект уже должен был произойти
+    }
+
+    return (
+        <div>
+            <Header />
+            <MainContent>
+                <div className="min-h-screen bg-gray-100 py-12 px-4">
+                    <h1 className="text-3xl font-bold mb-6">Личный кабинет</h1>
+                    <div className="bg-white rounded-lg shadow p-6">
+                        <div className="mb-4">
+                            <h2 className="text-xl font-semibold">Информация о пользователе</h2>
+                            <p className="text-gray-600">Email: {user.email}</p>
+                            <p className="text-gray-600">Имя: {user.name}</p>
+                            <p className="text-gray-600">Фамилия: {user.surname}</p>
+                            <p className="text-gray-600">Отчество: {user.patronymic || 'Не указано'}</p>
+                        </div>
+                        
+                        <button
+                            onClick={handleLogout}
+                            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+                        >
+                            Выйти
+                        </button>
+                    </div>
+                </div>
+            </MainContent>
+            <Footer />
+        </div>
+    );
 };
 
 export default AccountPage;
