@@ -1,43 +1,5 @@
-/*import React from 'react';
-
-function App() {
-	return (
-		<div className="App">
-		</div>
-	);
-}
-
-export default App;
-*/
-/*
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Link } from 'react-router-dom';
-import HomePage from './pages/HomePage';
-import AboutPage from './pages/AboutPage';
-import LoginPage from './pages/LoginPage';
-
-function App() {
-  return (
-    <Router>
-      {}
-      <nav>
-        <Link to="/">Главная</Link>
-        <Link to="/about">О нас</Link>
-        <Link to="/login">Вход</Link>
-      </nav>
-
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        {}
-      </Routes>
-    </Router>
-  );
-}
-
-export default App;*/
-
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './context/ProtectedRoute';
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import HomePage from "./pages/HomePage";
@@ -65,7 +27,6 @@ return (
 );
 }
 
-
 export default function App() {
 	return (
 		<div>
@@ -80,17 +41,32 @@ export default function App() {
 					<Route path="*" element={<NotFound />} />
 				</Routes>
 			</Router>
-			{/* <header>
-				<div className="header-content">
-				<nav>
-					<a href="/">Главная</a>
-					<a href="/files">Файлы</a>
-					<a href="/about">О проекте</a>
-					<a href="/account">Аккаунт</a>
-				</nav>
-				<FileSearch />
-				</div>
-			</header> */}
+
+			<AuthProvider>
+				<Router>
+					<Routes>
+						{/* Публичные маршруты */}
+						<Route path="/" element={<HomePage />} />
+						
+						{/* Защищенные маршруты */}
+						<Route path="/account" element={
+							<ProtectedRoute>
+								<AccountPage />
+							</ProtectedRoute>
+						} />
+						
+						{/* Другие защищенные маршруты */}
+						<Route path="/admin/*" element={
+							<ProtectedRoute>
+								{/* Компонент админ-панели */}
+							</ProtectedRoute>
+						} />
+
+						 <Route path="/" element={<HomePage />} />
+						<Route path="/login" requireAuth={false} element={<LoginPage />} />
+					</Routes>
+				</Router>
+			</AuthProvider>
 		</div>
 	);
 }
