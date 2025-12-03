@@ -2,6 +2,7 @@
   "name": "file_server2",
   "version": "0.1.0",
   "private": true,
+  "proxy": "http://localhost:8888",
   "dependencies": {
     "@mui/icons-material": "7.3.5",
     "@testing-library/dom": "10.4.1",
@@ -19,10 +20,8 @@
     "web-vitals": "2.1.4"
   },
   "scripts": {
-    "dev": "node dev-server.js",
+    "start": "react-scripts start",
     "build": "react-scripts build",
-    "start": "node server.js",
-    "start:dev": "node dev-server.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -43,11 +42,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "http-proxy-middleware": "3.0.5",
-    "webpack": "5.103.0",
-    "webpack-dev-middleware": "7.4.5",
-    "webpack-hot-middleware": "2.26.1"
   }
 }

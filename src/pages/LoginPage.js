@@ -1,35 +1,30 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import AuthService from '../services/AuthService';
 import Header from '../parts/Header';
 import MainContent from '../components/MainContent';
 import Footer from '../parts/Footer';
-
+import api from '../services/api';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const { login, isAuthenticated } = useAuth();
-	console.log(`login:${login}`);
-	console.log(`isAuthenticated:${isAuthenticated}`);
-	console.log(`useAuth:${useAuth()}`);
     const navigate = useNavigate();
     const location = useLocation();
-
 
     const from = location.state?.from || '/account';
 
     useEffect(() => {
         // Если уже авторизован, перенаправляем
-        if (isAuthenticated) {
+        if (AuthService.isAuthenticated()) {
             navigate(from, { replace: true });
         }
-    }, [isAuthenticated, navigate, from]);
+    }, [navigate, from]);
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        e.preventDefault(); // Отключаем дефолтное поведение формы
         
         if (isSubmitting) return;
         
@@ -37,24 +32,56 @@ const LoginPage = () => {
         setIsSubmitting(true);
         
         try {
-            // ✅ Теперь login доступна как функция!
-            const result = await login(email, password);
+            // Отправляем запрос через прокси на Spring сервер
+            const response = await api.post('/api/auth/login', {
+                email,
+                password
+            });
             
-            if (result.success) {
-                navigate(from, { replace: true });
-            } else {
-                setError(result.message || 'Ошибка входа');
+            const { token, user } = response.data;
+            
+            // Сохраняем токен
+            localStorage.setItem('token', token);
+            if (response.data.refreshToken) {
+                localStorage.setItem('refreshToken', response.data.refreshToken);
             }
+            
+            // Обновляем состояние аутентификации
+            AuthService.setToken(token);
+            
+            // Редирект на защищенную страницу
+            navigate(from, { replace: true });
+            
         } catch (err) {
-            setError('Произошла непредвиденная ошибка');
-            console.error('Login error:', err);
+            console.error('Login failed:', err);
+            
+            // Обрабатываем разные типы ошибок
+            if (err.response) {
+                // Сервер ответил с кодом ошибки
+                const status = err.response.status;
+                if (status === 401 || status === 403) {
+                    setError('Неверный email или пароль');
+                } else if (status === 404) {
+                    setError('Сервер авторизации недоступен');
+                } else if (status >= 500) {
+                    setError('Ошибка сервера. Попробуйте позже');
+                } else {
+                    setError(err.response.data?.message || 'Ошибка входа');
+                }
+            } else if (err.request) {
+                // Запрос был сделан, но ответа нет
+                setError('Сервер не отвечает. Проверьте подключение');
+            } else {
+                // Ошибка при настройке запроса
+                setError('Ошибка при отправке запроса');
+            }
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    if (isAuthenticated) {
-        return null; // Или индикатор загрузки
+    if (AuthService.isAuthenticated()) {
+        return null;
     }
 
     return (

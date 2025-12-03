@@ -17,7 +17,7 @@ const AccountPage = () => {
 	useEffect(() => {
 		const fetchAccountData = async () => {
 			try {
-				const { data } = await axios.get('/api/users/me');
+				const { data } = await axios.get('/api/user');
 				setAccountData(data);
 			} catch (error) {
 				console.error('Ошибка загрузки данных:', error);
