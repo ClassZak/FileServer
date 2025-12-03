@@ -1,16 +1,12 @@
 package org.zak.controller
 
 import org.slf4j.LoggerFactory
-import io.jsonwebtoken.JwtException
-import jakarta.security.auth.message.AuthException
-import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.zak.dto.LoginRequest
 import org.zak.service.UserService
 import org.zak.util.JwtUtil
 import org.springframework.http.HttpStatus
-import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.core.userdetails.UserDetails
 import org.zak.dto.UserResponse
 
@@ -42,7 +38,9 @@ class AuthController(
 			}
 			
 			val userDetails = userService.loadUserByUsername(user.email)
-			val token = jwtUtil.generateToken(userDetails, user.id!!.toInt())
+			// ✅ Используем токен с userId в claims
+			val token = jwtUtil.generateToken(userDetails, mapOf("userId" to user.id!!))
+			// ✅ Теперь этот метод существует с двумя параметрами
 			val refreshToken = jwtUtil.generateRefreshToken(userDetails, user.id!!.toInt())
 			
 			logger.info("Login successful for email: ${request.email}, userId: ${user.id}")
@@ -58,41 +56,66 @@ class AuthController(
 		} catch (e: Exception) {
 			logger.error("Login error for email: ${request.email}", e)
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-				.body(mapOf(("error" to e.message ?: "Unknown error") as Pair<String, String>))
+				.body(mapOf("error" to (e.message ?: "Unknown error")))
 		}
-	}
-	// Создаем refresh token (упрощенный вариант
-	@PostMapping("/refresh")
-	fun refresh(@RequestBody request: RefreshRequest): ResponseEntity<AuthResponse> {
-		val username = jwtUtil.extractUsername(request.refreshToken)
-		val userDetails = userService.loadUserByUsername(username)
-		
-		if (!jwtUtil.validateToken(request.refreshToken, userDetails)) {
-			throw JwtException("Invalid refresh token")
-		}
-		
-		val userId = jwtUtil.extractUserId(request.refreshToken)
-		val newToken = jwtUtil.generateToken(userDetails, userId)
-		
-		return ResponseEntity.ok(
-			AuthResponse(
-				token = newToken,
-				refreshToken = request.refreshToken,
-				user = userService.getUserByEmail(username)
-			)
-		)
 	}
 	
 	@GetMapping("/verify")
 	fun verifyToken(@RequestHeader("Authorization") authHeader: String): ResponseEntity<VerifyResponse> {
-		val token = authHeader.removePrefix("Bearer ")
-		val username = jwtUtil.extractUsername(token)
-		val user = userService.getUserByEmail(username)
-		
-		return if (user != null && jwtUtil.validateToken(token, userService.loadUserByUsername(username))) {
-			ResponseEntity.ok(VerifyResponse(user = user, valid = true))
-		} else {
-			ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+		return try {
+			val token = authHeader.removePrefix("Bearer ")
+			
+			if (!jwtUtil.validateToken(token)) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+					.body(VerifyResponse(null, false))
+			}
+			
+			val username = jwtUtil.extractUsername(token)
+			val user = userService.getUserByEmail(username)
+			
+			if (user == null) {
+				ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+					.body(VerifyResponse(null, false))
+			} else {
+				ResponseEntity.ok(VerifyResponse(user, true))
+			}
+		} catch (e: Exception) {
+			logger.error("Token verification error", e)
+			ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+				.body(VerifyResponse(null, false))
+		}
+	}
+	
+	@PostMapping("/refresh")
+	fun refresh(@RequestBody request: RefreshRequest): ResponseEntity<Any> {
+		return try {
+			val refreshToken = request.refreshToken
+			
+			if (!jwtUtil.validateToken(refreshToken)) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+					.body(mapOf("error" to "Invalid refresh token"))
+			}
+			
+			val username = jwtUtil.extractUsername(refreshToken)
+			val userId = jwtUtil.extractUserId(refreshToken) ?: throw Exception("No userId in token")
+			val userDetails = userService.loadUserByUsername(username)
+			// ✅ Генерируем новый access token с userId
+			val newToken = jwtUtil.generateToken(userDetails, mapOf("userId" to userId))
+			// ✅ Генерируем новый refresh token с userId
+			val newRefreshToken = jwtUtil.generateRefreshToken(userDetails, userId)
+			val user = userService.getUserByEmail(username)
+			
+			ResponseEntity.ok(
+				AuthResponse(
+					token = newToken,
+					refreshToken = newRefreshToken,
+					user = user
+				)
+			)
+		} catch (e: Exception) {
+			logger.error("Refresh token error", e)
+			ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+				.body(mapOf("error" to "Token refresh failed"))
 		}
 	}
 	
@@ -124,13 +147,6 @@ class AuthController(
 	}
 }
 
-
-private fun JwtUtil.generateRefreshToken(
-	userDetails: UserDetails,
-	toInt: Int
-) {
-}
-
 data class AuthCheckResponse(
 	val authenticated: Boolean,
 	val redirectTo: String? = null
@@ -147,6 +163,17 @@ data class RefreshRequest(
 )
 
 data class VerifyResponse(
-	val user: UserResponse,
+	val user: UserResponse?,
 	val valid: Boolean
 )
+
+
+
+
+
+
+
+
+
+
+

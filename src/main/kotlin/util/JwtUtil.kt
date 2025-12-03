@@ -2,71 +2,96 @@ package org.zak.util
 
 import io.jsonwebtoken.*
 import io.jsonwebtoken.security.Keys
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.stereotype.Component
 import java.util.*
 import javax.crypto.SecretKey
 
-
 @Component
-class JwtUtil {
-	private val secretKey: SecretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256)
-	private val accessTokenExpiration: Long = 1000 * 60 * 60 * 10 // 10 часов
-	private val refreshTokenExpiration: Long = 1000 * 60 * 60 * 24 * 7 // 7 дней
+class JwtUtil(
+	@Value("\${jwt.secret}") private val secret: String
+) {
+	private val secretKey: SecretKey = Keys.hmacShaKeyFor(secret.toByteArray())
+	private val tokenExpirationMs = 3600000L // 1 час
+	private val refreshTokenExpirationMs = 604800000L // 7 дней
 	
-	fun generateToken(userDetails: UserDetails, userId: Int): String {
-		val claims: Map<String, Any> = mapOf("userId" to userId)
-		return createToken(claims, userDetails.username, accessTokenExpiration)
+	fun generateToken(userDetails: UserDetails): String {
+		return generateToken(userDetails, emptyMap())
 	}
 	
-	fun generateRefreshToken(userDetails: UserDetails, userId: Int): String {
-		val claims: Map<String, Any> = mapOf(
-			"userId" to userId,
-			"tokenType" to "refresh"
-		)
-		return createToken(claims, userDetails.username, refreshTokenExpiration)
+	fun generateToken(userDetails: UserDetails, claims: Map<String, Any>): String {
+		val builder = Jwts.builder()
+			.setSubject(userDetails.username)
+			.claim("authorities", userDetails.authorities)
+			.setIssuedAt(Date())
+			.setExpiration(Date(System.currentTimeMillis() + tokenExpirationMs))
+			.signWith(secretKey, SignatureAlgorithm.HS256)
+		
+		// Добавляем дополнительные claims
+		claims.forEach { (key, value) ->
+			builder.claim(key, value)
+		}
+		
+		return builder.compact()
 	}
 	
-	private fun createToken(claims: Map<String, Any>, subject: String, expiration: Long): String {
+	fun generateRefreshToken(userDetails: UserDetails): String {
 		return Jwts.builder()
-			.setClaims(claims)
-			.setSubject(subject)
-			.setIssuedAt(Date(System.currentTimeMillis()))
-			.setExpiration(Date(System.currentTimeMillis() + expiration))
-			.signWith(secretKey)
+			.setSubject(userDetails.username)
+			.setIssuedAt(Date())
+			.setExpiration(Date(System.currentTimeMillis() + refreshTokenExpirationMs))
+			.signWith(secretKey, SignatureAlgorithm.HS256)
+			.compact()
+	}
+	
+	// ✅ ДОБАВЬТЕ ЭТОТ МЕТОД для генерации refresh token с userId
+	fun generateRefreshToken(userDetails: UserDetails, userId: Int): String {
+		return Jwts.builder()
+			.setSubject(userDetails.username)
+			.claim("userId", userId)
+			.setIssuedAt(Date())
+			.setExpiration(Date(System.currentTimeMillis() + refreshTokenExpirationMs))
+			.signWith(secretKey, SignatureAlgorithm.HS256)
 			.compact()
 	}
 	
 	fun extractUsername(token: String): String {
-		return extractAllClaims(token).subject
+		return getClaimsFromToken(token).subject
 	}
 	
-	fun extractUserId(token: String): Int {
-		return extractAllClaims(token).get("userId", Int::class.java)
-	}
-	
-	private fun extractAllClaims(token: String): Claims {
+	// ✅ Извлечение userId из токена
+	fun extractUserId(token: String): Int? {
 		return try {
-			Jwts.parserBuilder()
-				.setSigningKey(secretKey)
-				.build()
-				.parseClaimsJws(token)
-				.body
-		} catch (e: JwtException) {
-			throw JwtException("Invalid JWT token", e)
+			getClaimsFromToken(token)["userId"]?.toString()?.toInt()
+		} catch (e: Exception) {
+			null
 		}
 	}
 	
-	fun validateToken(token: String, userDetails: UserDetails): Boolean {
+	fun validateToken(token: String): Boolean {
 		return try {
-			val username = extractUsername(token)
-			username == userDetails.username && !isTokenExpired(token)
-		} catch (e: JwtException) {
+			getClaimsFromToken(token)
+			true
+		} catch (e: Exception) {
 			false
 		}
 	}
 	
-	private fun isTokenExpired(token: String): Boolean {
-		return extractAllClaims(token).expiration.before(Date())
+	fun validateToken(token: String, userDetails: UserDetails): Boolean {
+		val username = extractUsername(token)
+		return username == userDetails.username && validateToken(token)
+	}
+	
+	private fun getClaimsFromToken(token: String): Claims {
+		return Jwts.parserBuilder()
+			.setSigningKey(secretKey)
+			.build()
+			.parseClaimsJws(token)
+			.body
+	}
+	
+	fun isTokenExpired(token: String): Boolean {
+		return getClaimsFromToken(token).expiration.before(Date())
 	}
 }
