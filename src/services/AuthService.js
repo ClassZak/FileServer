@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 class AuthService {
-    // Вход по email (существующий)
+    // Вход по email
     static async loginByEmail(email, password) {
         try {
             const response = await axios.post('/api/auth/login', {
@@ -28,7 +28,7 @@ class AuthService {
         }
     }
 
-    // Вход по ФИО (новый)
+    // Вход по ФИО
     static async loginBySnp(surname, name, patronymic, password) {
         try {
             const response = await axios.post('/api/auth/login-by-snp', {
@@ -101,7 +101,7 @@ class AuthService {
         }
     }
 
-    // Обновление токена (существующий)
+    // Обновление токена
     static async tryRefreshToken() {
         try {
             const refreshToken = localStorage.getItem('refreshToken');

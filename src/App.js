@@ -11,18 +11,6 @@ import Footer from './parts/Footer';
 import FilesPage from './pages/FilesPage';
 import './App.css'; // Создадим этот файл
 
-function Container({ children }) {
-	return <div className="max-w-5xl mx-auto px-6 py-10">{children}</div>;
-}
-
-function NotFound() {
-	return (
-		<Container>
-			<h1 className="text-2xl font-bold">404 — Страница не найдена</h1>
-			<p className="mt-2">Такой страницы не существует.</p>
-		</Container>
-	);
-}
 
 function App() {
 	return (

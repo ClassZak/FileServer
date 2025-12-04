@@ -1,4 +1,3 @@
-// components/Breadcrumbs.jsx
 import React from 'react';
 
 const Breadcrumbs = ({ currentPath, onNavigate }) => {

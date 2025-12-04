@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import MainContent from "../components/MainContent";
 import AuthService from "../services/AuthService";
+import { FileService } from '../services/FileService';
 import { useParams, useNavigate } from 'react-router-dom';
 
 // Импортируем новые компоненты
@@ -103,27 +104,29 @@ const FilesPage = () => {
         setPathInput(e.target.value);
     };
 
-    const handlePathSubmit = (e) => {
+    const handlePathSubmit = async (e) => {
         if (e && e.preventDefault) {
             e.preventDefault();
         }
-        
+
         setError('');
         if (pathInput.trim() === '') {
-            navigate('/files');
+			navigate('/files');
         } else {
-            const cleanPath = pathInput.replace(/^\/+|\/+$/g, '');
-            navigate(`/files/${cleanPath}`);
+			const cleanPath = pathInput.replace(/^\/+|\/+$/g, '');
+			const token = AuthService.getToken();
+			const exists = FileService.exists(cleanPath,token);
+			if(exists)
+                navigate(`/files/${cleanPath}`);
         }
     };
-
+	
     const handlePathInputKeyDown = (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             handlePathSubmit();
         }
     };
-
     const handleFileUpload = async (event) => {
         const file = event.target.files[0];
         if (!file) return;
@@ -296,11 +299,9 @@ const FilesPage = () => {
 									onChange={handlePathInputChange}
 									onKeyDown={handlePathInputKeyDown}
 									placeholder="Введите путь (например: documents/images)"
-									className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 								/>
 								<button
 									type="submit"
-									className="px-4 py-2 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700"
 								>
 									Перейти
 								</button>

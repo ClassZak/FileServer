@@ -6,6 +6,10 @@
     border-collapse: collapse;
 }
 
+table.file-table{
+    color: #242424;
+}
+
 .file-table thead {
     background-color: #f7fafc;
 }
