@@ -12,10 +12,11 @@
     z-index: 1000;
     backdrop-filter: blur(2px);
     animation: fadeIn 0.2s ease-out;
+    color: #777;
 }
 
 .modal-content {
-    background-color: white;
+    background-color: #242424;
     border-radius: 0.5rem;
     padding: 1.5rem;
     width: 100%;
@@ -46,6 +47,12 @@
     }
 }
 
+.justify-end{
+    justify-content: space-between;
+}
+.flex{
+    display: flex;
+}
 /* Скрываем скроллбар для модального окна, но оставляем возможность прокрутки */
 .modal-content::-webkit-scrollbar {
     width: 6px;
@@ -63,4 +70,12 @@
 
 .modal-content::-webkit-scrollbar-thumb:hover {
     background: #555;
+}
+
+/*Кнопки*/
+.modal-content button{
+    border-radius: 5px;
+    border-color: var(--accent-gold);
+    background-color: #7a7a7a;
+    padding: 5px;
 }

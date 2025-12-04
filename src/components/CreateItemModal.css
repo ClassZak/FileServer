@@ -10,6 +10,9 @@
     align-items: center;
     z-index: 1000;
 }
+.modal-content *{
+    color: #333;
+}
 
 .modal-content {
     background: white;
