@@ -3,7 +3,7 @@
 	min-height: calc(100vh - 200px); /* Минимальная высота минус хедер и футер */
 	flex: 1 0 auto; /* Ключевое изменение: растягивается, но не сжимается */
 	margin: 0 auto;
-	padding: 5rem 0 3rem; /* Уменьшен верхний отступ, увеличен нижний */
+	padding: 5rem 0 5rem; /* Уменьшен верхний отступ, увеличен нижний */
 	background-color: var(--primary-accent);
 	isolation: isolate;
 	box-sizing: border-box;
@@ -18,7 +18,7 @@
 
 /* Убираем общий margin для всех детей */
 .MainContent > * {
-	margin: 1.5rem; /* Только нижний отступ */
+	margin: 1.5rem;
 }
 
 .MainContent > h2,

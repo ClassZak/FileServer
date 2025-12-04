@@ -1,6 +1,5 @@
 /* AccountPage.css */
 .account-container {
-    width: 100%;
     padding: 2rem;
 }
 
@@ -12,7 +11,7 @@
 }
 
 .account-card {
-    background: rgba(255, 255, 255, 0.1);
+    background: #242424;
     backdrop-filter: blur(10px);
     border-radius: 12px;
     padding: 2rem;
@@ -81,4 +80,8 @@
     to {
         transform: rotate(360deg);
     }
+}
+
+.MainContent > .account-card  {
+	margin: 1.5rem;
 }
