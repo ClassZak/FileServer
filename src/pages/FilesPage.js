@@ -115,7 +115,7 @@ const FilesPage = () => {
         } else {
 			const cleanPath = pathInput.replace(/^\/+|\/+$/g, '');
 			const token = AuthService.getToken();
-			const exists = FileService.exists(cleanPath,token);
+			const exists = await FileService.exists(cleanPath,token);
 			if(exists)
                 navigate(`/files/${cleanPath}`);
         }
