@@ -49,6 +49,20 @@ class FileController(private val fileSystemService: FileSystemService) {
 		}
 	}
 	
+	@GetMapping("/exists")
+	fun existsFileOrDirectory(@RequestParam path: String = "") : ResponseEntity<Any> {
+		try {
+			val exists = fileSystemService.pathExistsPub(path)
+			return if (exists)
+				ResponseEntity.ok(mapOf("exists" to true))
+			else
+				ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf("exists" to false))
+		} catch (e: Exception) {
+			logger.error("Ошибка при поиске файла или папки", e)
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf("exists" to false))
+		}
+	}
+	
 	@PostMapping("/upload")
 	fun uploadFile(
 		@RequestParam path: String = "",

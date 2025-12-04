@@ -43,7 +43,8 @@ class FileSystemService {
 	
 	private fun getSafePath(requestedPath: String): Path {
 		val normalized = Paths.get(requestedPath).normalize()
-		val resolved = safeRootPath.resolve(normalized).normalize()
+		val safe = sanitizeFileName(normalized.toString())
+		val resolved = safeRootPath.resolve(safe).normalize()
 		
 		if (!resolved.startsWith(safeRootPath)) {
 			throw SecurityException("Доступ за пределы корневой директории запрещен")
@@ -338,10 +339,32 @@ class FileSystemService {
 	}
 	
 	private fun sanitizeFileName(fileName: String): String {
-		return fileName.replace(Regex("[<>:\"/\\\\|?*]"), "_")
+		return fileName.replace(Regex("[<>:\"/\\\\|?*]"), "_").replace("..","")
 	}
 	
-	fun pathExists(path: String): Boolean {
+	private fun safeExists(path: String): Boolean {
+		try {
+			val sanitizedPath = sanitizeDirectoryPath(path)
+			val resolved = safeRootPath.resolve(path)
+			return File(resolved.toString()).exists()
+		} catch (e: SecurityException) {
+			return false  // Нет прав доступа
+		} catch (e: Exception) {
+			return false  // Другие ошибки
+		}
+	}
+	private fun sanitizeDirectoryPath(path: String, allowAbsolute: Boolean = false): String {
+		return path.replace(Regex("[<>:\"\\\\|?*]"), "_")
+			.replace(Regex("/{2,}"), "/")
+			.replace(Regex("${if (!allowAbsolute) "^/" else ""}/$"), "") // Условно убираем начальный слеш
+			.replace(Regex("(\\.\\./|\\./)"), "")
+			.ifEmpty { "" }
+	}
+	
+	public fun pathExistsPub(path: String): Boolean{
+		return safeExists(path)
+	}
+	private fun pathExists(path: String): Boolean {
 		return try {
 			getSafePath(path).toFile().exists()
 		} catch (e: SecurityException) {
