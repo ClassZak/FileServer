@@ -8,8 +8,8 @@ USE FileServer2;
 -- -----------------------------------------------------
 CREATE TABLE `User` (
 	Id				INT AUTO_INCREMENT PRIMARY KEY,
+	Surname		 VARCHAR(45) NOT NULL,
 	`Name`			VARCHAR(45) NOT NULL,
-	Surname         VARCHAR(45) NOT NULL,
 	Patronymic		VARCHAR(45) NOT NULL,
 	Email			VARCHAR(60) NOT NULL,
 	PasswordHash	CHAR(60) NOT NULL ,
@@ -101,8 +101,8 @@ CREATE TABLE WorkHistory(
 	WorkTime			DATETIME NOT NULL,
 	Path				NVARCHAR(4096) NOT NULL,
 	IdOperationType		INT NOT NULL,
-    IdUser				INT NOT NULL,
+	IdUser				INT NOT NULL,
 
-    FOREIGN KEY (IdOperationType)	REFERENCES `OperationType`(Id),
-    FOREIGN KEY (IdUser)			REFERENCES `User`(Id)
+	FOREIGN KEY (IdOperationType)	REFERENCES `OperationType`(Id),
+	FOREIGN KEY (IdUser)			REFERENCES `User`(Id)
 )
