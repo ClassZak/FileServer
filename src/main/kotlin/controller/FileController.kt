@@ -20,291 +20,143 @@ import java.io.FileInputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import org.springframework.web.bind.annotation.*
+import java.io.File
 
 @RestController
 @RequestMapping("/api/files")
-class FileController(
-	private val fileSystemService: FileSystemService
-) {
+class FileController(private val fileSystemService: FileSystemService) {
 	
 	private val logger = LoggerFactory.getLogger(FileController::class.java)
 	
-	/**
-	 * Получить содержимое директории
-	 */
 	@GetMapping("/list")
-	fun listDirectory(
-		@RequestParam(defaultValue = "") path: String
-	): ResponseEntity<FileSystemResponse> {
+	fun listDirectory(@RequestParam path: String = ""): ResponseEntity<Any> {
 		return try {
 			val (files, folders) = fileSystemService.listDirectory(path)
-			val totalSize = files.sumOf { it.size } + folders.sumOf { it.size }
-			val readableTotalSize = formatSize(totalSize)
-			
-			val parentPath = if (path.isNotEmpty()) {
-				Paths.get(path).parent?.toString() ?: ""
-			} else {
-				null
-			}
-			
-			val response = FileSystemResponse(
-				path = path,
-				parentPath = parentPath,
-				files = files,
-				folders = folders,
-				totalFiles = files.size,
-				totalFolders = folders.size,
-				totalSize = readableTotalSize
-			)
-			
-			ResponseEntity.ok(response)
+			ResponseEntity.ok(mapOf("files" to files, "folders" to folders))
+		} catch (e: IllegalArgumentException) {
+			// Директория не существует
+			ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				.body(mapOf("error" to (e.message ?: "Директория не найдена")))
+		} catch (e: SecurityException) {
+			// Нет прав доступа
+			ResponseEntity.status(HttpStatus.FORBIDDEN)
+				.body(mapOf("error" to (e.message ?: "У вас нет прав доступа к этой директории")))
 		} catch (e: Exception) {
-			logger.error("Ошибка при получении списка файлов для пути: $path", e)
-			ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
+			logger.error("Ошибка при получении списка файлов", e)
+			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(mapOf("error" to "Внутренняя ошибка сервера"))
 		}
 	}
 	
-	/**
-	 * Загрузить файл
-	 */
 	@PostMapping("/upload")
 	fun uploadFile(
-		@RequestParam("file") file: MultipartFile,
-		@RequestParam(defaultValue = "") path: String
-	): ResponseEntity<FileUploadResponse> {
+		@RequestParam path: String = "",
+		@RequestParam("file") file: MultipartFile
+	): ResponseEntity<Any> {
 		return try {
-			if (file.isEmpty) {
-				return ResponseEntity.badRequest().body(
-					FileUploadResponse(
-						success = false,
-						message = "Файл пустой"
-					)
-				)
-			}
-			
 			val fileInfo = fileSystemService.uploadFile(path, file)
-			
-			ResponseEntity.ok(
-				FileUploadResponse(
-					success = true,
-					message = "Файл успешно загружен",
-					file = fileInfo
-				)
-			)
+			ResponseEntity.ok(fileInfo)
+		} catch (e: IllegalArgumentException) {
+			ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				.body(mapOf("error" to (e.message ?: "Ошибка при загрузке файла")))
+		} catch (e: SecurityException) {
+			ResponseEntity.status(HttpStatus.FORBIDDEN)
+				.body(mapOf("error" to (e.message ?: "Нет прав доступа для загрузки файла")))
 		} catch (e: Exception) {
-			logger.error("Ошибка при загрузке файла в путь: $path", e)
-			ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-				FileUploadResponse(
-					success = false,
-					message = e.message ?: "Ошибка при загрузке файла"
-				)
-			)
+			logger.error("Ошибка при загрузке файла", e)
+			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(mapOf("error" to "Ошибка при загрузке файла"))
 		}
 	}
 	
-	/**
-	 * Создать папку
-	 */
 	@PostMapping("/create-folder")
-	fun createFolder(@RequestBody request: CreateFolderRequest): ResponseEntity<Any> {
+	fun createFolder(@RequestBody request: Map<String, String>): ResponseEntity<Any> {
+		val path = request["path"] ?: ""
+		val folderName = request["folderName"] ?: ""
+		
 		return try {
-			if (request.folderName.isBlank()) {
-				return ResponseEntity.badRequest().body(
-					mapOf("error" to "Имя папки не может быть пустым")
-				)
-			}
-			
-			val folderInfo = fileSystemService.createFolder(request.path, request.folderName)
-			
-			ResponseEntity.ok(
-				mapOf(
-					"success" to true,
-					"message" to "Папка успешно создана",
-					"folder" to folderInfo
-				)
-			)
+			val folderInfo = fileSystemService.createFolder(path, folderName)
+			ResponseEntity.ok(folderInfo)
+		} catch (e: IllegalArgumentException) {
+			ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				.body(mapOf("error" to (e.message ?: "Ошибка при создании папки")))
+		} catch (e: SecurityException) {
+			ResponseEntity.status(HttpStatus.FORBIDDEN)
+				.body(mapOf("error" to (e.message ?: "Нет прав доступа для создания папки")))
 		} catch (e: Exception) {
-			logger.error("Ошибка при создании папки: ${request.folderName} в пути: ${request.path}", e)
-			ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-				mapOf(
-					"error" to (e.message ?: "Ошибка при создании папки"),
-					"success" to false
-				)
-			)
+			logger.error("Ошибка при создании папки", e)
+			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(mapOf("error" to "Ошибка при создании папки"))
 		}
 	}
 	
-	/**
-	 * Удалить файл или папку
-	 */
 	@DeleteMapping("/delete")
-	fun delete(@RequestBody request: DeleteRequest): ResponseEntity<Any> {
+	fun deleteFile(@RequestBody request: Map<String, String>): ResponseEntity<Any> {
+		val path = request["path"] ?: ""
+		
 		return try {
-			val deleted = fileSystemService.delete(request.path)
-			
-			if (deleted) {
-				ResponseEntity.ok(
-					mapOf(
-						"success" to true,
-						"message" to "Файл или папка успешно удалены"
-					)
-				)
+			val success = fileSystemService.delete(path)
+			if (success) {
+				ResponseEntity.ok(mapOf("message" to "Удалено успешно"))
 			} else {
-				ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-					mapOf(
-						"error" to "Не удалось удалить файл или папку",
-						"success" to false
-					)
-				)
+				ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(mapOf("error" to "Не удалось удалить файл/папку"))
 			}
+		} catch (e: IllegalArgumentException) {
+			ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				.body(mapOf("error" to (e.message ?: "Файл или папка не найдены")))
+		} catch (e: SecurityException) {
+			ResponseEntity.status(HttpStatus.FORBIDDEN)
+				.body(mapOf("error" to (e.message ?: "Нет прав доступа для удаления")))
 		} catch (e: Exception) {
-			logger.error("Ошибка при удалении: ${request.path}", e)
-			ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-				mapOf(
-					"error" to (e.message ?: "Ошибка при удалении"),
-					"success" to false
-				)
-			)
+			logger.error("Ошибка при удалении", e)
+			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(mapOf("error" to "Ошибка при удалении"))
 		}
 	}
 	
-	/**
-	 * Скачать файл
-	 */
 	@GetMapping("/download")
-	fun downloadFile(
-		@RequestParam path: String,
-		response: HttpServletResponse
-	) {
-		try {
-			val (file, contentType) = fileSystemService.downloadFile(path)
-			
-			response.contentType = contentType
-			response.setHeader(
-				HttpHeaders.CONTENT_DISPOSITION,
-				"attachment; filename=\"${file.name}\""
-			)
-			response.setHeader(HttpHeaders.CONTENT_LENGTH, file.length().toString())
-			
-			Files.copy(file.toPath(), response.outputStream)
-			response.outputStream.flush()
-		} catch (e: Exception) {
-			logger.error("Ошибка при скачивании файла: $path", e)
-			response.status = HttpServletResponse.SC_NOT_FOUND
-			response.writer.write("Файл не найден")
-		}
-	}
-	
-	/**
-	 * Просмотр файла (для текстовых файлов, изображений и т.д.)
-	 */
-	@GetMapping("/view")
-	fun viewFile(@RequestParam path: String): ResponseEntity<InputStreamResource> {
+	fun downloadFile(@RequestParam path: String): ResponseEntity<Any> {
 		return try {
 			val (file, contentType) = fileSystemService.downloadFile(path)
 			
 			val resource = FileSystemResource(file)
 			
-			val headers = HttpHeaders().apply {
-				add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"${file.name}\"")
-				add(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate")
-				add(HttpHeaders.PRAGMA, "no-cache")
-				add(HttpHeaders.EXPIRES, "0")
-			}
-			
 			ResponseEntity.ok()
-				.headers(headers)
-				.contentLength(file.length())
 				.contentType(MediaType.parseMediaType(contentType))
-				.body(InputStreamResource(FileInputStream(file)))
+				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${file.name}\"")
+				.body(resource)
+		} catch (e: IllegalArgumentException) {
+			ResponseEntity.status(HttpStatus.NOT_FOUND)
+				.body(mapOf("error" to (e.message ?: "Файл не найден")))
+		} catch (e: SecurityException) {
+			ResponseEntity.status(HttpStatus.FORBIDDEN)
+				.body(mapOf("error" to (e.message ?: "Нет прав доступа для скачивания файла")))
 		} catch (e: Exception) {
-			logger.error("Ошибка при просмотре файла: $path", e)
-			ResponseEntity.notFound().build()
+			logger.error("Ошибка при скачивании файла", e)
+			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(mapOf("error" to "Ошибка при скачивании файла"))
 		}
 	}
 	
-	/**
-	 * Получить информацию о файле/папке
-	 */
-	@GetMapping("/info")
-	fun getFileInfo(@RequestParam path: String): ResponseEntity<Any> {
-		return try {
-			val info = fileSystemService.getFileInfo(path)
-			ResponseEntity.ok(
-				mapOf(
-					"success" to true,
-					"data" to info
-				)
-			)
-		} catch (e: Exception) {
-			logger.error("Ошибка при получении информации: $path", e)
-			ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-				mapOf(
-					"error" to (e.message ?: "Файл или папка не найдены"),
-					"success" to false
-				)
-			)
-		}
-	}
-	
-	/**
-	 * Проверить существование пути
-	 */
-	@GetMapping("/exists")
-	fun pathExists(@RequestParam path: String): ResponseEntity<Any> {
-		return try {
-			val exists = fileSystemService.pathExists(path)
-			ResponseEntity.ok(
-				mapOf(
-					"exists" to exists,
-					"path" to path
-				)
-			)
-		} catch (e: Exception) {
-			ResponseEntity.ok(
-				mapOf(
-					"exists" to false,
-					"path" to path,
-					"error" to e.message
-				)
-			)
-		}
-	}
-	
-	/**
-	 * Получить корневую директорию
-	 */
-	@GetMapping("/root")
-	fun getRootDirectory(): ResponseEntity<Any> {
-		return try {
-			ResponseEntity.ok(
-				mapOf(
-					"rootDirectory" to fileSystemService.listDirectory("")
-				)
-			)
-		} catch (e: Exception) {
-			logger.error("Ошибка при получении корневой директории", e)
-			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-				mapOf("error" to "Ошибка при получении корневой директории")
-			)
-		}
-	}
-	
-	/**
-	 * Форматирование размера (дублируем логику сервиса для контроллера)
-	 */
-	private fun formatSize(size: Long): String {
-		if (size <= 0) return "0 B"
+	@ExceptionHandler(Exception::class)
+	fun handleGlobalException(ex: Exception): ResponseEntity<Map<String, String>> {
+		logger.error("Необработанная ошибка", ex)
 		
-		val units = arrayOf("B", "KB", "MB", "GB", "TB")
-		var currentSize = size.toDouble()
-		var unitIndex = 0
-		
-		while (currentSize >= 1024 && unitIndex < units.size - 1) {
-			currentSize /= 1024
-			unitIndex++
+		return when (ex) {
+			is IllegalArgumentException -> {
+				ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body(mapOf("error" to (ex.message ?: "Некорректный запрос")))
+			}
+			is SecurityException -> {
+				ResponseEntity.status(HttpStatus.FORBIDDEN)
+					.body(mapOf("error" to (ex.message ?: "Доступ запрещен")))
+			}
+			else -> {
+				ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(mapOf("error" to "Внутренняя ошибка сервера"))
+			}
 		}
-		
-		return "%.2f %s".format(currentSize, units[unitIndex])
 	}
 }

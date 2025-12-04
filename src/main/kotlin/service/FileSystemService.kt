@@ -17,6 +17,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.text.SimpleDateFormat
 import java.util.*
 
+
 @Service
 class FileSystemService {
 	
@@ -32,7 +33,6 @@ class FileSystemService {
 	fun init() {
 		safeRootPath = Paths.get(rootDirectory).normalize().toAbsolutePath()
 		
-		// Создаем корневую директорию если не существует
 		if (!Files.exists(safeRootPath)) {
 			Files.createDirectories(safeRootPath)
 			logger.info("Создана корневая директория: $safeRootPath")
@@ -41,14 +41,10 @@ class FileSystemService {
 		logger.info("Файловый сервис инициализирован. Корневая директория: $safeRootPath")
 	}
 	
-	/**
-	 * Проверка и нормализация пути для безопасности
-	 */
 	private fun getSafePath(requestedPath: String): Path {
 		val normalized = Paths.get(requestedPath).normalize()
 		val resolved = safeRootPath.resolve(normalized).normalize()
 		
-		// Проверяем, что путь не выходит за пределы корневой директории
 		if (!resolved.startsWith(safeRootPath)) {
 			throw SecurityException("Доступ за пределы корневой директории запрещен")
 		}
@@ -62,41 +58,48 @@ class FileSystemService {
 	fun listDirectory(path: String): Pair<List<FileInfo>, List<FolderInfo>> {
 		val directory = getSafePath(path).toFile()
 		
+		// Проверяем существование директории
 		if (!directory.exists()) {
-			throw IllegalArgumentException("Директория не существует: ${directory.absolutePath}")
+			throw IllegalArgumentException("Директория не найдена: ${directory.absolutePath}")
 		}
 		
+		// Проверяем, что это директория
 		if (!directory.isDirectory) {
-			throw IllegalArgumentException("Путь не является директорией: ${directory.absolutePath}")
+			throw IllegalArgumentException("Указанный путь не является директорией: ${directory.absolutePath}")
+		}
+		
+		// Проверяем права доступа
+		if (!directory.canRead()) {
+			throw SecurityException("У вас нет прав доступа к директории: ${directory.absolutePath}")
 		}
 		
 		val filesList = mutableListOf<FileInfo>()
 		val foldersList = mutableListOf<FolderInfo>()
 		
-		directory.listFiles()?.forEach { file ->
-			try {
-				if (file.isFile) {
-					filesList.add(createFileInfo(file, path))
-				} else if (file.isDirectory) {
-					foldersList.add(createFolderInfo(file, path))
+		try {
+			directory.listFiles()?.forEach { file ->
+				try {
+					if (file.isFile) {
+						filesList.add(createFileInfo(file, path))
+					} else if (file.isDirectory) {
+						foldersList.add(createFolderInfo(file, path))
+					}
+				} catch (e: SecurityException) {
+					logger.warn("Нет доступа к файлу/папке: ${file.name}")
+				} catch (e: Exception) {
+					logger.error("Ошибка при обработке ${file.name}: ${e.message}")
 				}
-			} catch (e: SecurityException) {
-				logger.warn("Нет доступа к файлу: ${file.name}")
-			} catch (e: Exception) {
-				logger.error("Ошибка при обработке ${file.name}: ${e.message}")
 			}
+		} catch (e: SecurityException) {
+			throw SecurityException("У вас нет прав на чтение содержимого директории: ${directory.absolutePath}")
 		}
 		
-		// Сортировка: сначала папки, потом файлы, по алфавиту
 		foldersList.sortBy { it.name.lowercase() }
 		filesList.sortBy { it.name.lowercase() }
 		
 		return Pair(filesList, foldersList)
 	}
 	
-	/**
-	 * Создать информацию о файле
-	 */
 	private fun createFileInfo(file: File, basePath: String): FileInfo {
 		val path = file.toPath()
 		val attributes = Files.readAttributes(path, BasicFileAttributes::class.java)
@@ -112,9 +115,6 @@ class FileSystemService {
 		)
 	}
 	
-	/**
-	 * Создать информацию о папке
-	 */
 	private fun createFolderInfo(folder: File, basePath: String): FolderInfo {
 		val path = folder.toPath()
 		val attributes = Files.readAttributes(path, BasicFileAttributes::class.java)
@@ -130,9 +130,6 @@ class FileSystemService {
 		)
 	}
 	
-	/**
-	 * Рекурсивный расчет размера папки и количества элементов
-	 */
 	private fun calculateFolderSizeAndCount(folder: File): Pair<Long, Int> {
 		var totalSize = 0L
 		var totalCount = 0
@@ -145,7 +142,7 @@ class FileSystemService {
 				} else if (file.isDirectory) {
 					val (subSize, subCount) = calculateFolderSizeAndCount(file)
 					totalSize += subSize
-					totalCount += subCount + 1 // +1 за саму папку
+					totalCount += subCount + 1
 				}
 			} catch (e: SecurityException) {
 				// Игнорируем файлы без доступа
@@ -155,9 +152,6 @@ class FileSystemService {
 		return Pair(totalSize, totalCount)
 	}
 	
-	/**
-	 * Получить расширение файла
-	 */
 	private fun getFileExtension(file: File): String {
 		val fileName = file.name
 		val dotIndex = fileName.lastIndexOf('.')
@@ -168,9 +162,6 @@ class FileSystemService {
 		}
 	}
 	
-	/**
-	 * Форматирование размера в читабельный вид
-	 */
 	private fun formatSize(size: Long): String {
 		if (size <= 0) return "0 B"
 		
@@ -186,29 +177,28 @@ class FileSystemService {
 		return "%.2f %s".format(Locale.US, currentSize, units[unitIndex])
 	}
 	
-	/**
-	 * Загрузить файл
-	 */
 	fun uploadFile(path: String, file: MultipartFile): FileInfo {
 		val targetDir = getSafePath(path).toFile()
 		
 		if (!targetDir.exists()) {
-			throw IllegalArgumentException("Целевая директория не существует: $path")
+			throw IllegalArgumentException("Целевая директория не найдена: $path")
 		}
 		
 		if (!targetDir.isDirectory) {
 			throw IllegalArgumentException("Целевой путь не является директорией: $path")
 		}
 		
+		if (!targetDir.canWrite()) {
+			throw SecurityException("У вас нет прав на запись в директорию: $path")
+		}
+		
 		val fileName = sanitizeFileName(file.originalFilename ?: "unnamed")
 		val targetFile = File(targetDir, fileName)
 		
-		// Проверяем, не существует ли уже файл с таким именем
 		if (targetFile.exists()) {
 			throw IllegalArgumentException("Файл с именем '$fileName' уже существует")
 		}
 		
-		// Копируем файл
 		file.transferTo(targetFile)
 		
 		logger.info("Файл загружен: ${targetFile.absolutePath}")
@@ -216,18 +206,19 @@ class FileSystemService {
 		return createFileInfo(targetFile, path)
 	}
 	
-	/**
-	 * Создать новую папку
-	 */
 	fun createFolder(path: String, folderName: String): FolderInfo {
 		val parentDir = getSafePath(path).toFile()
 		
 		if (!parentDir.exists()) {
-			throw IllegalArgumentException("Родительская директория не существует: $path")
+			throw IllegalArgumentException("Родительская директория не найдена: $path")
 		}
 		
 		if (!parentDir.isDirectory) {
 			throw IllegalArgumentException("Родительский путь не является директорией: $path")
+		}
+		
+		if (!parentDir.canWrite()) {
+			throw SecurityException("У вас нет прав на создание папки в директории: $path")
 		}
 		
 		val sanitizedName = sanitizeFileName(folderName)
@@ -247,17 +238,19 @@ class FileSystemService {
 		return createFolderInfo(newFolder, path)
 	}
 	
-	/**
-	 * Удалить файл или папку
-	 */
 	fun delete(path: String): Boolean {
 		val target = getSafePath(path).toFile()
 		
 		if (!target.exists()) {
-			throw IllegalArgumentException("Файл или папка не существует: $path")
+			throw IllegalArgumentException("Файл или папка не найдены: $path")
 		}
 		
-		// Для папки удаляем рекурсивно
+		// Проверяем права на удаление
+		val parentDir = target.parentFile
+		if (parentDir != null && !parentDir.canWrite()) {
+			throw SecurityException("У вас нет прав на удаление в этой директории")
+		}
+		
 		val deleted = if (target.isDirectory) {
 			deleteRecursively(target)
 		} else {
@@ -273,9 +266,6 @@ class FileSystemService {
 		return deleted
 	}
 	
-	/**
-	 * Рекурсивное удаление папки
-	 */
 	private fun deleteRecursively(file: File): Boolean {
 		if (file.isDirectory) {
 			file.listFiles()?.forEach { child ->
@@ -285,26 +275,24 @@ class FileSystemService {
 		return file.delete()
 	}
 	
-	/**
-	 * Скачать файл
-	 */
 	fun downloadFile(path: String): Pair<File, String> {
 		val file = getSafePath(path).toFile()
 		
 		if (!file.exists()) {
-			throw IllegalArgumentException("Файл не существует: $path")
+			throw IllegalArgumentException("Файл не найден: $path")
 		}
 		
 		if (file.isDirectory) {
 			throw IllegalArgumentException("Невозможно скачать директорию: $path")
 		}
 		
+		if (!file.canRead()) {
+			throw SecurityException("У вас нет прав на чтение файла: $path")
+		}
+		
 		return Pair(file, getContentType(file))
 	}
 	
-	/**
-	 * Получить MIME-тип файла
-	 */
 	private fun getContentType(file: File): String {
 		val fileName = file.name.lowercase()
 		
@@ -317,21 +305,18 @@ class FileSystemService {
 			fileName.endsWith(".json") -> "application/json"
 			fileName.endsWith(".xml") -> "application/xml"
 			
-			// Изображения
 			fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") -> "image/jpeg"
 			fileName.endsWith(".png") -> "image/png"
 			fileName.endsWith(".gif") -> "image/gif"
 			fileName.endsWith(".bmp") -> "image/bmp"
 			fileName.endsWith(".svg") -> "image/svg+xml"
 			
-			// Архивы
 			fileName.endsWith(".zip") -> "application/zip"
 			fileName.endsWith(".rar") -> "application/x-rar-compressed"
 			fileName.endsWith(".7z") -> "application/x-7z-compressed"
 			fileName.endsWith(".tar") -> "application/x-tar"
 			fileName.endsWith(".gz") -> "application/gzip"
 			
-			// Документы
 			fileName.endsWith(".doc") -> "application/msword"
 			fileName.endsWith(".docx") -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 			fileName.endsWith(".xls") -> "application/vnd.ms-excel"
@@ -339,13 +324,11 @@ class FileSystemService {
 			fileName.endsWith(".ppt") -> "application/vnd.ms-powerpoint"
 			fileName.endsWith(".pptx") -> "application/vnd.openxmlformats-officedocument.presentationml.presentation"
 			
-			// Видео
 			fileName.endsWith(".mp4") -> "video/mp4"
 			fileName.endsWith(".avi") -> "video/x-msvideo"
 			fileName.endsWith(".mov") -> "video/quicktime"
 			fileName.endsWith(".mkv") -> "video/x-matroska"
 			
-			// Аудио
 			fileName.endsWith(".mp3") -> "audio/mpeg"
 			fileName.endsWith(".wav") -> "audio/wav"
 			fileName.endsWith(".ogg") -> "audio/ogg"
@@ -354,16 +337,10 @@ class FileSystemService {
 		}
 	}
 	
-	/**
-	 * Очистка имени файла от опасных символов
-	 */
 	private fun sanitizeFileName(fileName: String): String {
 		return fileName.replace(Regex("[<>:\"/\\\\|?*]"), "_")
 	}
 	
-	/**
-	 * Проверить существование пути
-	 */
 	fun pathExists(path: String): Boolean {
 		return try {
 			getSafePath(path).toFile().exists()
@@ -372,14 +349,11 @@ class FileSystemService {
 		}
 	}
 	
-	/**
-	 * Получить информацию о файле/папке
-	 */
 	fun getFileInfo(path: String): Any {
 		val file = getSafePath(path).toFile()
 		
 		if (!file.exists()) {
-			throw IllegalArgumentException("Файл или папка не существует: $path")
+			throw IllegalArgumentException("Файл или папка не найдены: $path")
 		}
 		
 		return if (file.isFile) {
