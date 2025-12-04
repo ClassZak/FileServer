@@ -21,7 +21,7 @@ CREATE TABLE `User` (
 CREATE TABLE Administrator(
 	Id		INT AUTO_INCREMENT PRIMARY KEY,
 	IdUser	INT NOT NULL,
-
+	
 	FOREIGN KEY (IdUser) REFERENCES `User`(Id)
 );
 -- -----------------------------------------------------
@@ -31,7 +31,7 @@ CREATE TABLE `Group` (
 	Id			INT AUTO_INCREMENT PRIMARY KEY,
 	`Name`		NVARCHAR(64) UNIQUE NOT NULL,
 	IdCreator	INT NOT NULL,
-
+	
 	FOREIGN KEY (IdCreator) REFERENCES `User`(Id)
 );
 -- -----------------------------------------------------
@@ -40,7 +40,7 @@ CREATE TABLE `Group` (
 CREATE TABLE GroupMember (
 	IdGroup	INT NOT NULL,
 	IdUser	INT NOT NULL,
-
+	
 	PRIMARY KEY (IdGroup, IdUser),
 	FOREIGN KEY (IdGroup) REFERENCES `Group`(Id),
 	FOREIGN KEY (IdUser) REFERENCES `User`(Id)
@@ -54,11 +54,11 @@ CREATE TABLE DirectoryMetadata (
 	IdUser		INT,
 	IdGroup		INT,
 	`Mode`		SMALLINT UNSIGNED NOT NULL,
-
+	
 	FOREIGN KEY (IdUser)	REFERENCES `User`(Id),
 	FOREIGN KEY (IdGroup)	REFERENCES `Group`(Id),
 	INDEX path_index (path(768)), -- Префиксный индекс для длинных путей
-
+	
 	CONSTRAINT CHK_DirectoryMetadata_is_used_for_subject
 	CHECK (IdGroup != NULL OR IdUser != NULL)
 );
@@ -71,11 +71,11 @@ CREATE TABLE FileMetadata (
 	IdUser		INT,
 	IdGroup		INT,
 	`Mode`		SMALLINT UNSIGNED NOT NULL,
-
+	
 	FOREIGN KEY (IdUser)	REFERENCES `User`(Id),
 	FOREIGN KEY (IdGroup)	REFERENCES `Group`(Id),
 	INDEX path_index (path(768)), -- Префиксный индекс для длинных путей
-
+	
 	CONSTRAINT CHK_FileMetadata_is_used_for_subject
 	CHECK (IdGroup != NULL OR IdUser != NULL)
 );
@@ -84,7 +84,7 @@ CREATE TABLE FileMetadata (
 -- -----------------------------------------------------
 CREATE TABLE DeletedFile(
 	IdFileMetaData		INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
-	WorkTime	DATETIME NOT NULL,
+	WorkTime			DATETIME NOT NULL
 );
 -- -----------------------------------------------------
 -- Тип операции
@@ -102,7 +102,7 @@ CREATE TABLE WorkHistory(
 	Path				NVARCHAR(4096) NOT NULL,
 	IdOperationType		INT NOT NULL,
 	IdUser				INT NOT NULL,
-
+	
 	FOREIGN KEY (IdOperationType)	REFERENCES `OperationType`(Id),
 	FOREIGN KEY (IdUser)			REFERENCES `User`(Id)
 )
