@@ -1,21 +1,35 @@
+// pages/FilesPage.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Header from "../parts/Header";
 import MainContent from "../components/MainContent";
 import Footer from "../parts/Footer";
 import AuthService from "../services/AuthService";
+import { useParams, useNavigate } from 'react-router-dom';
+
+// Импортируем новые компоненты
+import Breadcrumbs from '../components/Breadcrumbs';
+import ErrorMessage from '../components/ErrorMessage';
+import FileTable from '../components/FileTable';
+import FolderGrid from '../components/FolderGrid';
+import CreateFolderModal from '../components/CreateFolderModal';
+import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 
 const FilesPage = () => {
-    const [currentPath, setCurrentPath] = useState('');
+    const { '*': pathParam } = useParams();
+    const navigate = useNavigate();
+    
     const [files, setFiles] = useState([]);
     const [folders, setFolders] = useState([]);
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState('');
     const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
-    const [newFolderName, setNewFolderName] = useState('');
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
+    const [pathInput, setPathInput] = useState('');
+
+    const currentPath = pathParam || '';
 
     // Загрузка списка файлов
     const loadDirectory = async (path = '') => {
@@ -30,36 +44,88 @@ const FilesPage = () => {
             
             setFiles(response.data.files || []);
             setFolders(response.data.folders || []);
-            setCurrentPath(response.data.path || '');
+            setPathInput(path || '');
         } catch (err) {
-            setError('Ошибка при загрузке файлов');
+            const errorData = err.response?.data;
+            
+            if (errorData?.error) {
+                setError(errorData.error);
+            } else if (err.response?.status === 400) {
+                setError('Директория не найдена');
+            } else if (err.response?.status === 403) {
+                setError('У вас нет прав доступа к этой директории');
+            } else if (err.response?.status === 401) {
+                setError('Требуется авторизация');
+                navigate('/login');
+                return;
+            } else if (err.response?.status === 404) {
+                setError('Директория не найдена');
+            } else {
+                setError('Ошибка при загрузке файлов');
+            }
+            
             console.error('Load directory error:', err);
+            
+            setFiles([]);
+            setFolders([]);
         } finally {
             setLoading(false);
         }
     };
 
-    // Инициализация
     useEffect(() => {
-        loadDirectory();
-    }, []);
+        loadDirectory(currentPath);
+    }, [currentPath]);
 
-    // Навигация по папкам
+    useEffect(() => {
+        setPathInput(currentPath || '');
+    }, [currentPath]);
+
     const navigateToFolder = (folderPath) => {
-        loadDirectory(folderPath);
+        setError('');
+        navigate(`/files/${folderPath}`);
     };
 
-    // Назад
     const navigateUp = () => {
         if (currentPath) {
+            setError('');
             const parts = currentPath.split('/');
             parts.pop();
             const parentPath = parts.join('/');
-            loadDirectory(parentPath);
+            navigate(`/files/${parentPath}`);
         }
     };
 
-    // Загрузка файла
+    const navigateToRoot = () => {
+        setError('');
+        navigate('/files');
+    };
+
+    const handlePathInputChange = (e) => {
+        setPathInput(e.target.value);
+    };
+
+    const handlePathSubmit = (e) => {
+        if (e && e.preventDefault) {
+            e.preventDefault();
+        }
+        
+        setError('');
+        if (pathInput.trim() === '') {
+            navigate('/files');
+        } else {
+            const cleanPath = pathInput.replace(/^\/+|\/+$/g, '');
+            navigate(`/files/${cleanPath}`);
+        }
+    };
+
+    const handlePathInputKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handlePathSubmit();
+        }
+    };
+
     const handleFileUpload = async (event) => {
         const file = event.target.files[0];
         if (!file) return;
@@ -79,35 +145,33 @@ const FilesPage = () => {
                 }
             });
             
-            // Обновляем список
             loadDirectory(currentPath);
         } catch (err) {
-            setError('Ошибка при загрузке файла');
+            const errorData = err.response?.data;
+            
+            if (errorData?.error) {
+                setError(errorData.error);
+            } else if (err.response?.status === 403) {
+                setError('У вас нет прав на загрузку файлов в эту директорию');
+            } else if (err.response?.status === 400) {
+                setError('Ошибка при загрузке файла: ' + (errorData?.error || 'неизвестная ошибка'));
+            } else {
+                setError('Ошибка при загрузке файла');
+            }
+            
             console.error('Upload error:', err);
         } finally {
             setUploading(false);
-            event.target.value = ''; // Сброс input
+            event.target.value = '';
         }
     };
 
-    // Открыть модалку создания папки
-    const openCreateFolderModal = () => {
-        setNewFolderName('');
-        setShowCreateFolderModal(true);
-    };
-
-    // Создание папки
-    const createFolder = async () => {
-        if (!newFolderName.trim()) {
-            setError('Имя папки не может быть пустым');
-            return;
-        }
-        
+    const handleCreateFolder = async (folderName) => {
         try {
             const token = AuthService.getToken();
             await axios.post('/api/files/create-folder', {
                 path: currentPath,
-                folderName: newFolderName.trim()
+                folderName: folderName.trim()
             }, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -115,18 +179,25 @@ const FilesPage = () => {
             setShowCreateFolderModal(false);
             loadDirectory(currentPath);
         } catch (err) {
-            setError(err.response?.data?.error || 'Ошибка при создании папки');
+            const errorData = err.response?.data;
+            
+            if (errorData?.error) {
+                setError(errorData.error);
+            } else if (err.response?.status === 403) {
+                setError('У вас нет прав на создание папок в этой директории');
+            } else {
+                setError('Ошибка при создании папки');
+            }
+            
             console.error('Create folder error:', err);
         }
     };
 
-    // Подготовка к удалению
     const prepareDelete = (path, name) => {
         setItemToDelete({ path, name });
         setShowDeleteModal(true);
     };
 
-    // Удаление
     const handleDelete = async () => {
         if (!itemToDelete) return;
         
@@ -141,12 +212,22 @@ const FilesPage = () => {
             setItemToDelete(null);
             loadDirectory(currentPath);
         } catch (err) {
-            setError('Ошибка при удалении');
+            const errorData = err.response?.data;
+            
+            if (errorData?.error) {
+                setError(errorData.error);
+            } else if (err.response?.status === 403) {
+                setError('У вас нет прав на удаление');
+            } else if (err.response?.status === 404) {
+                setError('Файл или папка не найдены');
+            } else {
+                setError('Ошибка при удалении');
+            }
+            
             console.error('Delete error:', err);
         }
     };
 
-    // Скачивание
     const handleDownload = async (path, name) => {
         try {
             const token = AuthService.getToken();
@@ -155,7 +236,21 @@ const FilesPage = () => {
                 responseType: 'blob'
             });
             
-            // Создаем ссылку для скачивания
+            const contentType = response.headers['content-type'];
+            if (contentType && contentType.includes('application/json')) {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    try {
+                        const errorData = JSON.parse(reader.result);
+                        setError(errorData.error || 'Ошибка при скачивании файла');
+                    } catch (e) {
+                        setError('Ошибка при скачивании файла');
+                    }
+                };
+                reader.readAsText(response.data);
+                return;
+            }
+            
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
@@ -165,7 +260,18 @@ const FilesPage = () => {
             link.remove();
             window.URL.revokeObjectURL(url);
         } catch (err) {
-            setError('Ошибка при скачивании файла');
+            const errorData = err.response?.data;
+            
+            if (errorData?.error) {
+                setError(errorData.error);
+            } else if (err.response?.status === 403) {
+                setError('У вас нет прав на скачивание этого файла');
+            } else if (err.response?.status === 404) {
+                setError('Файл не найден');
+            } else {
+                setError('Ошибка при скачивании файла');
+            }
+            
             console.error('Download error:', err);
         }
     };
@@ -175,206 +281,136 @@ const FilesPage = () => {
             <Header />
             <MainContent>
                 <div className="container mx-auto px-4 py-8">
-                    <h1 className="text-3xl font-bold mb-6">Файловый менеджер</h1>
-                    
-                    {/* Панель навигации */}
-                    <div className="mb-6 flex items-center space-x-4">
-                        <button
-                            onClick={navigateUp}
-                            disabled={!currentPath}
-                            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-                        >
-                            Назад
-                        </button>
-                        
-                        <span className="text-gray-600">
-                            Текущий путь: {currentPath || '/'}
-                        </span>
-                        
-                        <button
-                            onClick={openCreateFolderModal}
-                            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                        >
-                            Создать папку
-                        </button>
-                        
-                        <label className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer">
-                            {uploading ? 'Загрузка...' : 'Загрузить файл'}
-                            <input
-                                type="file"
-                                className="hidden"
-                                onChange={handleFileUpload}
-                                disabled={uploading}
-                            />
-                        </label>
+                    <div className="mb-6">
+                        <h1 className="text-3xl font-bold mb-2">Файловый менеджер</h1>
+                        <Breadcrumbs 
+                            currentPath={currentPath} 
+                            onNavigate={navigateToFolder} 
+                        />
                     </div>
                     
-                    {/* Сообщения об ошибках */}
-                    {error && (
-                        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                            {error}
+                    {/* Панель навигации */}
+                    <div className="mb-6 bg-gray-50 p-4 rounded-lg">
+                        <div className="flex flex-col md:flex-row md:items-center space-y-3 md:space-y-0 md:space-x-4">
+                            <div className="flex-1">
+                                <form onSubmit={handlePathSubmit} className="flex">
+                                    <input
+                                        type="text"
+                                        value={pathInput}
+                                        onChange={handlePathInputChange}
+                                        onKeyDown={handlePathInputKeyDown}
+                                        placeholder="Введите путь (например: documents/images)"
+                                        className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700"
+                                    >
+                                        Перейти
+                                    </button>
+                                </form>
+                            </div>
+                            
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    onClick={navigateUp}
+                                    disabled={!currentPath}
+                                    className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+                                    type="button"
+                                >
+                                    Назад
+                                </button>
+                                
+                                <button
+                                    onClick={() => setShowCreateFolderModal(true)}
+                                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                                    type="button"
+                                >
+                                    Создать папку
+                                </button>
+                                
+                                <label className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer">
+                                    {uploading ? 'Загрузка...' : 'Загрузить файл'}
+                                    <input
+                                        type="file"
+                                        className="hidden"
+                                        onChange={handleFileUpload}
+                                        disabled={uploading}
+                                    />
+                                </label>
+                            </div>
                         </div>
-                    )}
+                        
+                        <div className="mt-2 text-sm text-gray-600">
+                            <span className="font-medium">Текущий путь:</span> {currentPath || '/'}
+                        </div>
+                    </div>
+                    
+                    {/* Сообщение об ошибке */}
+                    <ErrorMessage 
+                        message={error}
+                        onClose={() => setError('')}
+                        showNavigation={true}
+                        onNavigateToRoot={navigateToRoot}
+                        onNavigateUp={navigateUp}
+                        showUpButton={!!currentPath}
+                    />
                     
                     {/* Загрузка */}
                     {loading && (
                         <div className="text-center py-8">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+                            <p className="mt-2 text-gray-600">Загрузка файлов...</p>
                         </div>
                     )}
                     
-                    {/* Список папок */}
-                    <div className="mb-8">
-                        <h2 className="text-xl font-semibold mb-4">Папки</h2>
-                        {folders.length === 0 ? (
-                            <p className="text-gray-500">Папок нет</p>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {folders.map(folder => (
-                                    <div key={folder.path} className="border rounded-lg p-4 hover:bg-gray-50">
-                                        <div className="flex justify-between items-center">
-                                            <button
-                                                onClick={() => navigateToFolder(folder.path)}
-                                                className="text-blue-600 hover:text-blue-800 font-medium"
-                                            >
-                                                📁 {folder.name}
-                                            </button>
-                                            <button
-                                                onClick={() => prepareDelete(folder.path, folder.name)}
-                                                className="text-red-500 hover:text-red-700"
-                                            >
-                                                Удалить
-                                            </button>
-                                        </div>
-                                        <div className="mt-2 text-sm text-gray-600">
-                                            <div>Элементов: {folder.itemCount}</div>
-                                            <div>Размер: {folder.readableSize}</div>
-                                            <div>Изменен: {new Date(folder.lastModified).toLocaleString()}</div>
-                                        </div>
-                                    </div>
-                                ))}
+                    {/* Список папок и файлов */}
+                    {!loading && (
+                        <>
+                            <div className="mb-8">
+                                <h2 className="text-xl font-semibold mb-4 flex items-center">
+                                    <span className="mr-2">📁</span> Папки ({folders.length})
+                                </h2>
+                                <FolderGrid 
+                                    folders={folders}
+                                    onNavigate={navigateToFolder}
+                                    onDelete={prepareDelete}
+                                />
                             </div>
-                        )}
-                    </div>
+                            
+                            <div>
+                                <h2 className="text-xl font-semibold mb-4 flex items-center">
+                                    <span className="mr-2">📄</span> Файлы ({files.length})
+                                </h2>
+                                <FileTable 
+                                    files={files}
+                                    onDownload={handleDownload}
+                                    onDelete={prepareDelete}
+                                />
+                            </div>
+                        </>
+                    )}
                     
-                    {/* Список файлов */}
-                    <div>
-                        <h2 className="text-xl font-semibold mb-4">Файлы</h2>
-                        {files.length === 0 ? (
-                            <p className="text-gray-500">Файлов нет</p>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full bg-white border">
-                                    <thead>
-                                        <tr className="bg-gray-100">
-                                            <th className="py-2 px-4 border text-left">Имя</th>
-                                            <th className="py-2 px-4 border text-left">Размер</th>
-                                            <th className="py-2 px-4 border text-left">Тип</th>
-                                            <th className="py-2 px-4 border text-left">Изменен</th>
-                                            <th className="py-2 px-4 border text-left">Действия</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {files.map(file => (
-                                            <tr key={file.path} className="hover:bg-gray-50">
-                                                <td className="py-2 px-4 border">
-                                                    <span className="font-medium">{file.name}</span>
-                                                </td>
-                                                <td className="py-2 px-4 border">{file.readableSize}</td>
-                                                <td className="py-2 px-4 border">
-                                                    <span className="px-2 py-1 bg-gray-200 rounded text-xs">
-                                                        {file.extension || 'файл'}
-                                                    </span>
-                                                </td>
-                                                <td className="py-2 px-4 border">
-                                                    {new Date(file.lastModified).toLocaleString()}
-                                                </td>
-                                                <td className="py-2 px-4 border">
-                                                    <div className="flex space-x-2">
-                                                        <button
-                                                            onClick={() => handleDownload(file.path, file.name)}
-                                                            className="text-blue-500 hover:text-blue-700"
-                                                        >
-                                                            Скачать
-                                                        </button>
-                                                        <button
-                                                            onClick={() => prepareDelete(file.path, file.name)}
-                                                            className="text-red-500 hover:text-red-700"
-                                                        >
-                                                            Удалить
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
+                    {/* Модальные окна */}
+                    <CreateFolderModal 
+                        isOpen={showCreateFolderModal}
+                        onClose={() => setShowCreateFolderModal(false)}
+                        currentPath={currentPath}
+                        onCreate={handleCreateFolder}
+                    />
+                    
+                    <DeleteConfirmationModal 
+                        isOpen={showDeleteModal}
+                        onClose={() => {
+                            setShowDeleteModal(false);
+                            setItemToDelete(null);
+                        }}
+                        itemName={itemToDelete?.name}
+                        onConfirm={handleDelete}
+                    />
                 </div>
             </MainContent>
             <Footer />
-            
-            {/* Модальное окно создания папки */}
-            {showCreateFolderModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                        <h3 className="text-xl font-semibold mb-4">Создать новую папку</h3>
-                        <input
-                            type="text"
-                            value={newFolderName}
-                            onChange={(e) => setNewFolderName(e.target.value)}
-                            placeholder="Введите имя папки"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md mb-4"
-                            autoFocus
-                        />
-                        <div className="flex justify-end space-x-3">
-                            <button
-                                onClick={() => setShowCreateFolderModal(false)}
-                                className="px-4 py-2 text-gray-600 hover:text-gray-800"
-                            >
-                                Отмена
-                            </button>
-                            <button
-                                onClick={createFolder}
-                                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                            >
-                                Создать
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            
-            {/* Модальное окно подтверждения удаления */}
-            {showDeleteModal && itemToDelete && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                        <h3 className="text-xl font-semibold mb-4">Подтверждение удаления</h3>
-                        <p className="mb-6">
-                            Вы уверены, что хотите удалить <span className="font-semibold">"{itemToDelete.name}"</span>?
-                        </p>
-                        <div className="flex justify-end space-x-3">
-                            <button
-                                onClick={() => {
-                                    setShowDeleteModal(false);
-                                    setItemToDelete(null);
-                                }}
-                                className="px-4 py-2 text-gray-600 hover:text-gray-800"
-                            >
-                                Отмена
-                            </button>
-                            <button
-                                onClick={handleDelete}
-                                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                            >
-                                Удалить
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

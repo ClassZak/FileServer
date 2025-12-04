@@ -41,7 +41,7 @@ export default function App() {
 							</ProtectedRoute>
 						} />
 						
-						<Route path="/files" element={
+						<Route path="/files*" element={
 							<ProtectedRoute>
 								<FilesPage />
 							</ProtectedRoute>
