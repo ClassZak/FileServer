@@ -7,6 +7,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.zak.dto.CreateUserRequest
+import org.zak.dto.LoginBySNPRequest
 import org.zak.dto.LoginRequest
 import org.zak.dto.UserResponse
 import org.zak.entity.User
@@ -27,6 +28,25 @@ class UserService(
 			user.email,
 			user.passwordHash,
 			listOf(SimpleGrantedAuthority("ROLE_USER"))
+		)
+	}
+	
+	
+	fun authenticateBySNP(request: LoginBySNPRequest): User? {
+		val user = userRepository.findBySurnameAndNameAndPatronymic(
+			request.surname,
+			request.name,
+			request.patronymic
+		)
+		
+		return user?.takeIf {
+			passwordEncoder.matches(request.password, it.passwordHash)
+		}
+	}
+	
+	fun findBySNP(surname: String, name: String, patronymic: String): User? {
+		return userRepository.findBySurnameAndNameAndPatronymic(
+			surname, name, patronymic
 		)
 	}
 	

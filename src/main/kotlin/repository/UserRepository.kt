@@ -6,6 +6,11 @@ import org.zak.entity.User
 
 @Repository
 interface UserRepository : JpaRepository<User, Long> {
+	fun findBySurnameAndNameAndPatronymic(
+		surname: String,
+		name: String,
+		patronymic: String
+	): User?
 	fun findByEmail(email: String) : User?
 	fun existsByEmail(email: String) : Boolean
 }

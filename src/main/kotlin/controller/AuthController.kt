@@ -8,6 +8,7 @@ import org.zak.service.UserService
 import org.zak.util.JwtUtil
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.userdetails.UserDetails
+import org.zak.dto.LoginBySNPRequest
 import org.zak.dto.UserResponse
 
 @RestController
@@ -59,6 +60,44 @@ class AuthController(
 				.body(mapOf("error" to (e.message ?: "Unknown error")))
 		}
 	}
+	
+	@PostMapping("/login-by-snp")
+	fun loginByFio(@RequestBody request: LoginBySNPRequest): ResponseEntity<Any> {
+		logger.info("Login attempt by SNP: ${request.surname} ${request.name} ${request.patronymic}")
+		
+		try {
+			val user = userService.authenticateBySNP(request)
+			
+			if (user == null) {
+				logger.warn("Authentication failed by SNP")
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+					.body(mapOf(
+						"error" to "Invalid credentials",
+						"message" to "Пользователь не найден или неверный пароль"
+					))
+			}
+			
+			val userDetails = userService.loadUserByUsername(user.email)
+			val token = jwtUtil.generateToken(userDetails)
+			val refreshToken = jwtUtil.generateRefreshToken(userDetails)
+			
+			logger.info("Login successful by FIO, userId: ${user.id}")
+			
+			return ResponseEntity.ok(
+				AuthResponse(
+					token = token,
+					refreshToken = refreshToken,
+					user = userService.toUserResponse(user)
+				)
+			)
+			
+		} catch (e: Exception) {
+			logger.error("Login by SNP error", e)
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(mapOf("error" to (e.message ?: "Unknown error")))
+		}
+	}
+	
 	
 	@GetMapping("/verify")
 	fun verifyToken(@RequestHeader("Authorization") authHeader: String): ResponseEntity<VerifyResponse> {
@@ -166,8 +205,6 @@ data class VerifyResponse(
 	val user: UserResponse?,
 	val valid: Boolean
 )
-
-
 
 
 
