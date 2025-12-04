@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from "../parts/Header";
 import MainContent from "../components/MainContent";
-import Footer from "../parts/Footer";
 import AuthService from "../services/AuthService";
+import '../styles/AccountPage.css'
 
 const AccountPage = () => {
 	const [user, setUser] = useState(null);
@@ -54,31 +53,27 @@ const AccountPage = () => {
 	}
 
 	return (
-		<div>
-			<Header />
-			<MainContent>
-				<div className="min-h-screen bg-gray-100 py-12 px-4">
-					<h1 className="text-3xl font-bold mb-6">Личный кабинет</h1>
-					<div className="bg-white rounded-lg shadow p-6">
-						<div className="mb-4">
-							<h2 className="text-xl font-semibold">Информация о пользователе</h2>
-							<p className="text-gray-600">Email: {user.email}</p>
-							<p className="text-gray-600">Имя: {user.name}</p>
-							<p className="text-gray-600">Фамилия: {user.surname}</p>
-							<p className="text-gray-600">Отчество: {user.patronymic || 'Не указано'}</p>
-						</div>
-						
-						<button
-							onClick={handleLogout}
-							className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
-						>
-							Выйти
-						</button>
+		<MainContent>
+			<div className="min-h-screen bg-gray-100 py-12 px-4">
+				<h1 className="text-3xl font-bold mb-6">Личный кабинет</h1>
+				<div className="bg-white rounded-lg shadow p-6">
+					<div className="mb-4">
+						<h2 className="text-xl font-semibold">Информация о пользователе</h2>
+						<p className="text-gray-600">Email: {user.email}</p>
+						<p className="text-gray-600">Имя: {user.name}</p>
+						<p className="text-gray-600">Фамилия: {user.surname}</p>
+						<p className="text-gray-600">Отчество: {user.patronymic || 'Не указано'}</p>
 					</div>
+					
+					<button
+						onClick={handleLogout}
+						className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+					>
+						Выйти
+					</button>
 				</div>
-			</MainContent>
-			<Footer />
-		</div>
+			</div>
+		</MainContent>
 	);
 };
 

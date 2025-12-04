@@ -7,6 +7,7 @@ import AboutPage from "./pages/AboutPage";
 import LoginPage from "./pages/LoginPage";
 import AccountPage from "./pages/AccountPage";
 import Header from "./parts/Header";
+import Footer from './parts/Footer';
 import FilesPage from './pages/FilesPage';
 
 function Container({ children }) {
@@ -50,6 +51,7 @@ export default function App() {
 					</Routes>
 				</Router>
 			</AuthProvider>
+			<Footer />
 		</div>
 	);
 }

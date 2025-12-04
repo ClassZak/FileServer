@@ -1,9 +1,7 @@
 // pages/FilesPage.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import Header from "../parts/Header";
 import MainContent from "../components/MainContent";
-import Footer from "../parts/Footer";
 import AuthService from "../services/AuthService";
 import { useParams, useNavigate } from 'react-router-dom';
 
@@ -277,141 +275,137 @@ const FilesPage = () => {
     };
 
     return (
-        <div>
-            <Header />
-            <MainContent>
-                <div className="container mx-auto px-4 py-8">
-                    <div className="mb-6">
-                        <h1 className="text-3xl font-bold mb-2">Файловый менеджер</h1>
-                        <Breadcrumbs 
-                            currentPath={currentPath} 
-                            onNavigate={navigateToFolder} 
-                        />
-                    </div>
-                    
-                    {/* Панель навигации */}
-                    <div className="mb-6 bg-gray-50 p-4 rounded-lg">
-                        <div className="flex flex-col md:flex-row md:items-center space-y-3 md:space-y-0 md:space-x-4">
-                            <div className="flex-1">
-                                <form onSubmit={handlePathSubmit} className="flex">
-                                    <input
-                                        type="text"
-                                        value={pathInput}
-                                        onChange={handlePathInputChange}
-                                        onKeyDown={handlePathInputKeyDown}
-                                        placeholder="Введите путь (например: documents/images)"
-                                        className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    />
-                                    <button
-                                        type="submit"
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700"
-                                    >
-                                        Перейти
-                                    </button>
-                                </form>
-                            </div>
-                            
-                            <div className="flex flex-wrap gap-2">
-                                <button
-                                    onClick={navigateUp}
-                                    disabled={!currentPath}
-                                    className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-                                    type="button"
-                                >
-                                    Назад
-                                </button>
-                                
-                                <button
-                                    onClick={() => setShowCreateFolderModal(true)}
-                                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                                    type="button"
-                                >
-                                    Создать папку
-                                </button>
-                                
-                                <label className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer">
-                                    {uploading ? 'Загрузка...' : 'Загрузить файл'}
-                                    <input
-                                        type="file"
-                                        className="hidden"
-                                        onChange={handleFileUpload}
-                                        disabled={uploading}
-                                    />
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div className="mt-2 text-sm text-gray-600">
-                            <span className="font-medium">Текущий путь:</span> {currentPath || '/'}
-                        </div>
-                    </div>
-                    
-                    {/* Сообщение об ошибке */}
-                    <ErrorMessage 
-                        message={error}
-                        onClose={() => setError('')}
-                        showNavigation={true}
-                        onNavigateToRoot={navigateToRoot}
-                        onNavigateUp={navigateUp}
-                        showUpButton={!!currentPath}
-                    />
-                    
-                    {/* Загрузка */}
-                    {loading && (
-                        <div className="text-center py-8">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-                            <p className="mt-2 text-gray-600">Загрузка файлов...</p>
-                        </div>
-                    )}
-                    
-                    {/* Список папок и файлов */}
-                    {!loading && (
-                        <>
-                            <div className="mb-8">
-                                <h2 className="text-xl font-semibold mb-4 flex items-center">
-                                    <span className="mr-2">📁</span> Папки ({folders.length})
-                                </h2>
-                                <FolderGrid 
-                                    folders={folders}
-                                    onNavigate={navigateToFolder}
-                                    onDelete={prepareDelete}
-                                />
-                            </div>
-                            
-                            <div>
-                                <h2 className="text-xl font-semibold mb-4 flex items-center">
-                                    <span className="mr-2">📄</span> Файлы ({files.length})
-                                </h2>
-                                <FileTable 
-                                    files={files}
-                                    onDownload={handleDownload}
-                                    onDelete={prepareDelete}
-                                />
-                            </div>
-                        </>
-                    )}
-                    
-                    {/* Модальные окна */}
-                    <CreateFolderModal 
-                        isOpen={showCreateFolderModal}
-                        onClose={() => setShowCreateFolderModal(false)}
-                        currentPath={currentPath}
-                        onCreate={handleCreateFolder}
-                    />
-                    
-                    <DeleteConfirmationModal 
-                        isOpen={showDeleteModal}
-                        onClose={() => {
-                            setShowDeleteModal(false);
-                            setItemToDelete(null);
-                        }}
-                        itemName={itemToDelete?.name}
-                        onConfirm={handleDelete}
-                    />
-                </div>
-            </MainContent>
-            <Footer />
-        </div>
+		<MainContent>
+			<div className="container mx-auto px-4 py-8">
+				<div className="mb-6">
+					<h1 className="text-3xl font-bold mb-2">Файловый менеджер</h1>
+					<Breadcrumbs 
+						currentPath={currentPath} 
+						onNavigate={navigateToFolder} 
+					/>
+				</div>
+				
+				{/* Панель навигации */}
+				<div className="mb-6 bg-gray-50 p-4 rounded-lg">
+					<div className="flex flex-col md:flex-row md:items-center space-y-3 md:space-y-0 md:space-x-4">
+						<div className="flex-1">
+							<form onSubmit={handlePathSubmit} className="flex">
+								<input
+									type="text"
+									value={pathInput}
+									onChange={handlePathInputChange}
+									onKeyDown={handlePathInputKeyDown}
+									placeholder="Введите путь (например: documents/images)"
+									className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+								/>
+								<button
+									type="submit"
+									className="px-4 py-2 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700"
+								>
+									Перейти
+								</button>
+							</form>
+						</div>
+						
+						<div className="flex flex-wrap gap-2">
+							<button
+								onClick={navigateUp}
+								disabled={!currentPath}
+								className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+								type="button"
+							>
+								Назад
+							</button>
+							
+							<button
+								onClick={() => setShowCreateFolderModal(true)}
+								className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+								type="button"
+							>
+								Создать папку
+							</button>
+							
+							<label className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer">
+								{uploading ? 'Загрузка...' : 'Загрузить файл'}
+								<input
+									type="file"
+									className="hidden"
+									onChange={handleFileUpload}
+									disabled={uploading}
+								/>
+							</label>
+						</div>
+					</div>
+					
+					<div className="mt-2 text-sm text-gray-600">
+						<span className="font-medium">Текущий путь:</span> {currentPath || '/'}
+					</div>
+				</div>
+				
+				{/* Сообщение об ошибке */}
+				<ErrorMessage 
+					message={error}
+					onClose={() => setError('')}
+					showNavigation={true}
+					onNavigateToRoot={navigateToRoot}
+					onNavigateUp={navigateUp}
+					showUpButton={!!currentPath}
+				/>
+				
+				{/* Загрузка */}
+				{loading && (
+					<div className="text-center py-8">
+						<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+						<p className="mt-2 text-gray-600">Загрузка файлов...</p>
+					</div>
+				)}
+				
+				{/* Список папок и файлов */}
+				{!loading && (
+					<>
+						<div className="mb-8">
+							<h2 className="text-xl font-semibold mb-4 flex items-center">
+								<span className="mr-2">📁</span> Папки ({folders.length})
+							</h2>
+							<FolderGrid 
+								folders={folders}
+								onNavigate={navigateToFolder}
+								onDelete={prepareDelete}
+							/>
+						</div>
+						
+						<div>
+							<h2 className="text-xl font-semibold mb-4 flex items-center">
+								<span className="mr-2">📄</span> Файлы ({files.length})
+							</h2>
+							<FileTable 
+								files={files}
+								onDownload={handleDownload}
+								onDelete={prepareDelete}
+							/>
+						</div>
+					</>
+				)}
+				
+				{/* Модальные окна */}
+				<CreateFolderModal 
+					isOpen={showCreateFolderModal}
+					onClose={() => setShowCreateFolderModal(false)}
+					currentPath={currentPath}
+					onCreate={handleCreateFolder}
+				/>
+				
+				<DeleteConfirmationModal 
+					isOpen={showDeleteModal}
+					onClose={() => {
+						setShowDeleteModal(false);
+						setItemToDelete(null);
+					}}
+					itemName={itemToDelete?.name}
+					onConfirm={handleDelete}
+				/>
+			</div>
+		</MainContent>
     );
 };
 
