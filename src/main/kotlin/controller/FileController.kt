@@ -84,6 +84,38 @@ class FileController(private val fileSystemService: FileSystemService) {
 		}
 	}
 	
+	@GetMapping("/search")
+	fun searchFilesAndFolders(
+		@RequestParam q: String,
+		@RequestParam(required = false, defaultValue = "") path: String
+	): ResponseEntity<Any> {
+		return try {
+			if (q.isBlank()) {
+				return ResponseEntity.badRequest()
+					.body(mapOf("error" to "Поисковый запрос не может быть пустым"))
+			}
+			
+			val (files, folders) = fileSystemService.searchFilesAndFolders(q, path)
+			ResponseEntity.ok(mapOf(
+				"files" to files,
+				"folders" to folders,
+				"query" to q,
+				"path" to path,
+				"totalResults" to (files.size + folders.size)
+			))
+		} catch (e: IllegalArgumentException) {
+			ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				.body(mapOf("error" to (e.message ?: "Ошибка при поиске")))
+		} catch (e: SecurityException) {
+			ResponseEntity.status(HttpStatus.FORBIDDEN)
+				.body(mapOf("error" to (e.message ?: "Нет прав доступа для поиска")))
+		} catch (e: Exception) {
+			logger.error("Ошибка при поиске файлов", e)
+			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(mapOf("error" to "Внутренняя ошибка сервера при поиске"))
+		}
+	}
+	
 	@PostMapping("/create-folder")
 	fun createFolder(@RequestBody request: Map<String, String>): ResponseEntity<Any> {
 		val path = request["path"] ?: ""

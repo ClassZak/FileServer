@@ -294,6 +294,62 @@ class FileSystemService {
 		return Pair(file, getContentType(file))
 	}
 	
+	
+	
+	
+	fun searchFilesAndFolders(query: String, basePath: String = ""): Pair<List<FileInfo>, List<FolderInfo>> {
+		val directory = getSafePath(basePath).toFile()
+		
+		if (!directory.exists()) {
+			throw IllegalArgumentException("Директория не найдена: ${directory.absolutePath}")
+		}
+		
+		if (!directory.isDirectory) {
+			throw IllegalArgumentException("Путь не является директорией: ${directory.absolutePath}")
+		}
+		
+		val filesList = mutableListOf<FileInfo>()
+		val foldersList = mutableListOf<FolderInfo>()
+		
+		// Рекурсивный поиск
+		fun searchRecursively(currentDir: File) {
+			currentDir.listFiles()?.forEach { file ->
+				try {
+					// Проверяем, соответствует ли имя файла/папки запросу
+					val matchesQuery = file.name.contains(query, ignoreCase = true)
+					
+					if (matchesQuery) {
+						if (file.isFile) {
+							filesList.add(createFileInfo(file, basePath))
+						} else if (file.isDirectory) {
+							foldersList.add(createFolderInfo(file, basePath))
+						}
+					}
+					
+					// Рекурсивно ищем в подпапках
+					if (file.isDirectory) {
+						searchRecursively(file)
+					}
+				} catch (e: SecurityException) {
+					logger.warn("Нет доступа к файлу/папке: ${file.name}")
+				} catch (e: Exception) {
+					logger.error("Ошибка при обработке ${file.name}: ${e.message}")
+				}
+			}
+		}
+		
+		searchRecursively(directory)
+		
+		// Сортировка результатов
+		foldersList.sortBy { it.name.lowercase() }
+		filesList.sortBy { it.name.lowercase() }
+		
+		return Pair(filesList, foldersList)
+	}
+	
+	
+	
+	
 	private fun getContentType(file: File): String {
 		val fileName = file.name.lowercase()
 		
