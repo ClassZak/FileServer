@@ -1,11 +1,12 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"; // Добавляем этот импорт!
 import { Magnifyingglass } from '../assets/img';
-import { FileService } from '../services/FileService';
-import AuthService from '../services/AuthService';
+import AuthService from '../services/AuthService'; // FileService больше не нужен здесь
 import '../css_classes/image-button.css';
 
 function FileSearch({ currentPath = '' }) {
     const [searching, setSearching] = useState(false);
+    const navigate = useNavigate(); // Хук для навигации
     
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -26,30 +27,16 @@ function FileSearch({ currentPath = '' }) {
         setSearching(true);
         
         try {
-            // ВАРИАНТ 1: Прямой поиск с выводом в консоль
-            const results = await FileService.find(query, currentPath, token);
+            // Вместо выполнения поиска здесь, ПЕРЕНАПРАВЛЯЕМ на /files
+            const params = new URLSearchParams();
+            params.append('q', query); // параметр поиска
             
-            console.log('=== РЕЗУЛЬТАТЫ ПОИСКА ===');
-            console.log('Запрос:', query);
-            console.log('Путь поиска:', currentPath || '(корень)');
-            console.log('Найдено папок:', results.folders.length);
-            console.log('Найдено файлов:', results.files.length);
-            console.log('Общее количество:', results.totalResults);
+            if (currentPath) {
+                params.append('searchPath', currentPath); // путь, где искать
+            }
             
-            console.log('\n=== ПАПКИ ===');
-            results.folders.forEach(folder => {
-                console.log(`📁 ${folder.name} (${folder.readableSize}, ${folder.itemCount} элементов)`);
-            });
-            
-            console.log('\n=== ФАЙЛЫ ===');
-            results.files.forEach(file => {
-                console.log(`📄 ${file.name} (${file.readableSize}, ${file.extension || 'без расширения'})`);
-            });
-            
-            console.log('=== КОНЕЦ РЕЗУЛЬТАТОВ ===');
-            
-            // Можно показать уведомление пользователю
-            alert(`Найдено ${results.totalResults} результатов по запросу "${query}"`);
+            // Перенаправляем на /files с параметрами поиска
+            navigate(`/files?${params.toString()}`);
             
         } catch (error) {
             console.error('Ошибка поиска:', error);

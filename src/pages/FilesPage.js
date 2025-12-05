@@ -6,8 +6,9 @@ import AuthService from "../services/AuthService";
 import { FileService } from '../services/FileService';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
-import { FileSearch } from '../components/FileSearch'
+import FileSearch from '../components/FileSearch'
 
+import '../styles/SearchResults.css'
 // Импортируем новые компоненты
 import Breadcrumbs from '../components/Breadcrumbs';
 import ErrorMessage from '../components/ErrorMessage';
@@ -348,8 +349,177 @@ const FilesPage = () => {
                 </div>
 
                 {/* Рендерим результаты поиска здесь */}
-                <div className="search-results">
-                    {/* ... код для отображения результатов поиска ... */}
+                 <div className="search-results">
+                    {searchLoading ? (
+                        <div className="text-center py-8">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+                            <p className="mt-2 text-gray-600">Выполняется поиск...</p>
+                        </div>
+                    ) : error ? (
+                        <ErrorMessage 
+                            message={error}
+                            onClose={() => setError('')}
+                            showNavigation={true}
+                            onNavigateToRoot={navigateToRoot}
+                            onNavigateUp={navigateUp}
+                            showUpButton={!!searchPath}
+                        />
+                    ) : searchResults ? (
+                        <>
+                            <div className="mb-6">
+                                <h2 className="text-2xl font-bold mb-2">
+                                    Результаты поиска
+                                </h2>
+                                <div className="text-gray-600 mb-4">
+                                    <p>По запросу <span className="font-medium">"{searchQuery}"</span></p>
+                                    <p>В папке: <span className="font-medium">{searchPath || 'корневая'}</span></p>
+                                    <p>Найдено результатов: <span className="font-medium">{searchResults.totalResults}</span></p>
+                                </div>
+                            </div>
+                            
+                            {searchResults.totalResults > 0 ? (
+                                <>
+                                    {searchResults.folders && searchResults.folders.length > 0 && (
+                                        <div className="mb-8">
+                                            <h3 className="text-xl font-semibold mb-4 flex items-center">
+                                                <span className="mr-2">📁</span> 
+                                                Найденные папки ({searchResults.folders.length})
+                                            </h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                {searchResults.folders.map((folder, index) => {
+                                                    // Собираем полный путь папки
+                                                    const folderFullPath = folder.fullPath || 
+                                                                          (searchPath ? `${searchPath}/${folder.name}` : folder.name);
+                                                    
+                                                    return (
+                                                        <div 
+                                                            key={`folder-${index}`}
+                                                            className="bg-white p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-shadow cursor-pointer"
+                                                            onClick={() => {
+                                                                // Переходим в найденную папку
+                                                                navigate(`/files/${folderFullPath}`);
+                                                            }}
+                                                        >
+                                                            <div className="flex items-start">
+                                                                <div className="text-3xl mr-3">📁</div>
+                                                                <div className="flex-1">
+                                                                    <div className="font-medium text-gray-900 mb-1">
+                                                                        {folder.name}
+                                                                    </div>
+                                                                    <div className="text-sm text-gray-500 mb-1">
+                                                                        Полный путь: {folderFullPath}
+                                                                    </div>
+                                                                    <div className="text-sm text-gray-500">
+                                                                        {folder.readableSize || ''}
+                                                                        {folder.itemCount !== undefined && ` • ${folder.itemCount} элементов`}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+                                    
+                                    {searchResults.files && searchResults.files.length > 0 && (
+                                        <div className="mb-8">
+                                            <h3 className="text-xl font-semibold mb-4 flex items-center">
+                                                <span className="mr-2">📄</span> 
+                                                Найденные файлы ({searchResults.files.length})
+                                            </h3>
+                                            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                                                <table className="min-w-full divide-y divide-gray-200">
+                                                    <thead className="bg-gray-50">
+                                                        <tr>
+                                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Имя файла
+                                                            </th>
+                                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Полный путь
+                                                            </th>
+                                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Размер
+                                                            </th>
+                                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Расширение
+                                                            </th>
+                                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Действия
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="bg-white divide-y divide-gray-200">
+                                                        {searchResults.files.map((file, index) => {
+                                                            // Собираем полный путь файла
+                                                            const fileFullPath = file.fullPath || 
+                                                                               (searchPath ? `${searchPath}/${file.name}` : file.name);
+                                                            const fileExtension = file.extension || 
+                                                                                 (file.name.includes('.') ? file.name.split('.').pop() : '');
+                                                                
+                                                            return (
+                                                                <tr key={`file-${index}`} className="hover:bg-gray-50">
+                                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                                        <div className="flex items-center">
+                                                                            <div className="text-xl mr-2">📄</div>
+                                                                            <div className="font-medium text-gray-900">
+                                                                                {file.name}
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                                        {fileFullPath}
+                                                                    </td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                                        {file.readableSize || 'N/A'}
+                                                                    </td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                                        {fileExtension && fileExtension.toUpperCase()}
+                                                                    </td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                                        <button
+                                                                            onClick={() => handleDownload(fileFullPath, file.name)}
+                                                                            className="text-blue-600 hover:text-blue-900 mr-3"
+                                                                        >
+                                                                            Скачать
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => prepareDelete(fileFullPath, file.name)}
+                                                                            className="text-red-600 hover:text-red-900"
+                                                                        >
+                                                                            Удалить
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        })}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="text-center py-12 bg-gray-50 rounded-lg">
+                                    <div className="text-4xl mb-4">🔍</div>
+                                    <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                                        Ничего не найдено
+                                    </h3>
+                                    <p className="text-gray-500">
+                                        По запросу "{searchQuery}" в папке "{searchPath || 'корневая'}" ничего не найдено
+                                    </p>
+                                    <div className="mt-6">
+                                        <button
+                                            onClick={exitSearchMode}
+                                            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                        >
+                                            Вернуться к просмотру файлов
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    ) : null}
                 </div>
             </>
         ) : (
@@ -384,6 +554,7 @@ const FilesPage = () => {
                         </div>
                         
                         <div className="flex flex-wrap gap-2">
+                            <FileSearch currentPath={currentPath} />
                             <button
                                 onClick={navigateUp}
                                 disabled={!currentPath}
