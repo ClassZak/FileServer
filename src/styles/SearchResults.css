@@ -11,7 +11,3 @@
 .search-results table th {
     font-weight: 600;
 }
-
-.search-results table tr:hover {
-    background-color: #f9fafb;
-}
