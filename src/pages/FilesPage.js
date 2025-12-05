@@ -6,7 +6,7 @@ import AuthService from "../services/AuthService";
 import { FileService } from '../services/FileService';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
-import { FileSearch } from '../components/FilesSearch'
+import { FileSearch } from '../components/FileSearch'
 
 // Импортируем новые компоненты
 import Breadcrumbs from '../components/Breadcrumbs';

@@ -1,5 +1,5 @@
 import React from "react";
-import FileSearch from "../components/FilesSearch";
+import FileSearch from "../components/FileSearch";
 import './header.css'
 
 function Header(){
