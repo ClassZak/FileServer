@@ -20,9 +20,54 @@ const getFileIcon = (extension) => {
 };
 
 const FileTable = ({ files, onDownload, onDelete }) => {
-    if (files.length === 0) {
-        return <p className="text-gray-500 italic">Файлов нет</p>;
-    }
+    const FileRow = function (file) {
+        if (file === null || file === undefined)
+            file = {empty:true}
+
+        return <tr key={file.empty ? '-' : file.path}>
+            <td>
+                <div className="flex items-center">
+                    <span className="mr-2 text-lg">
+                        {file.empty ? '' : getFileIcon(file.empty ? '-' : file.extension)}
+                    </span>
+                    <span className="font-medium truncate max-w-xs">
+                        {file.empty ? '-' : file.name}
+                    </span>
+                </div>
+            </td>
+            <td>{file.empty ? '-' : file.readableSize}</td>
+            <td>
+                <span className="file-type-badge">
+                    {file.empty ? '-' : (file.extension || 'файл')}
+                </span>
+            </td>
+            <td>
+                {file.empty ? '-' : new Date(file.lastModified).toLocaleDateString()}
+            </td>
+            <td>
+                {file.empty ? '-' :
+                    <div className="flex space-x-2">
+                        <button
+                            onClick={() => onDownload(file.path, file.name)}
+                            className="file-action-button file-action-button--download"
+                            title="Скачать"
+                            type="button"
+                            >
+                            📥
+                        </button>
+                        <button
+                            onClick={() => onDelete(file.path, file.name)}
+                            className="file-action-button file-action-button--delete"
+                            title="Удалить"
+                            type="button"
+                            >
+                            🗑️
+                        </button>
+                    </div>
+                }
+            </td>
+        </tr>
+    };
 
     return (
         <div className="overflow-x-auto">
@@ -37,49 +82,11 @@ const FileTable = ({ files, onDownload, onDelete }) => {
                     </tr>
                 </thead>
                 <tbody>
-                    {files.map(file => (
-                        <tr key={file.path}>
-                            <td>
-                                <div className="flex items-center">
-                                    <span className="mr-2 text-lg">
-                                        {getFileIcon(file.extension)}
-                                    </span>
-                                    <span className="font-medium truncate max-w-xs">
-                                        {file.name}
-                                    </span>
-                                </div>
-                            </td>
-                            <td>{file.readableSize}</td>
-                            <td>
-                                <span className="file-type-badge">
-                                    {file.extension || 'файл'}
-                                </span>
-                            </td>
-                            <td>
-                                {new Date(file.lastModified).toLocaleDateString()}
-                            </td>
-                            <td>
-                                <div className="flex space-x-2">
-                                    <button
-                                        onClick={() => onDownload(file.path, file.name)}
-                                        className="file-action-button file-action-button--download"
-                                        title="Скачать"
-                                        type="button"
-                                    >
-                                        📥
-                                    </button>
-                                    <button
-                                        onClick={() => onDelete(file.path, file.name)}
-                                        className="file-action-button file-action-button--delete"
-                                        title="Удалить"
-                                        type="button"
-                                    >
-                                        🗑️
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    ))}
+                    {
+                        files.length ? (
+                        files.map(file => FileRow(file))) :
+                        (FileRow())
+                    }
                 </tbody>
             </table>
         </div>

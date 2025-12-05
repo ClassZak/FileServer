@@ -631,7 +631,7 @@ const FilesPage = () => {
             </h2>
             
             {/* ТАБЛИЦА ПАПОК ВМЕСТО FOLDERGRID */}
-            {folders.length > 0 ? (
+           
                 <table className="file-table">
                     <thead>
                         <tr>
@@ -679,9 +679,7 @@ const FilesPage = () => {
                         ))}
                     </tbody>
                 </table>
-            ) : (
-                <p className="text-gray-400 italic">Папок нет</p>
-            )}
+            
         </div>
         
         <div>
