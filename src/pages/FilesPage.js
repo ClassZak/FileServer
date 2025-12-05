@@ -385,119 +385,138 @@ const FilesPage = () => {
                                                 <span className="mr-2">📁</span> 
                                                 Найденные папки ({searchResults.folders.length})
                                             </h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                {searchResults.folders.map((folder, index) => {
-                                                    // Собираем полный путь папки
-                                                    const folderFullPath = folder.fullPath || 
-                                                                          (searchPath ? `${searchPath}/${folder.name}` : folder.name);
-                                                    
-                                                    return (
-                                                        <div 
-                                                            key={`folder-${index}`}
-                                                            className="bg-white p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-shadow cursor-pointer"
-                                                            onClick={() => {
-                                                                // Переходим в найденную папку
-                                                                navigate(`/files/${folderFullPath}`);
-                                                            }}
-                                                        >
-                                                            <div className="flex items-start">
-                                                                <div className="text-3xl mr-3">📁</div>
-                                                                <div className="flex-1">
-                                                                    <div className="font-medium text-gray-900 mb-1">
-                                                                        {folder.name}
-                                                                    </div>
-                                                                    <div className="text-sm text-gray-500 mb-1">
-                                                                        Полный путь: {folderFullPath}
-                                                                    </div>
-                                                                    <div className="text-sm text-gray-500">
-                                                                        {folder.readableSize || ''}
-                                                                        {folder.itemCount !== undefined && ` • ${folder.itemCount} элементов`}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
+                                            {searchResults.folders && searchResults.folders.length > 0 && (
+    <div className="mb-8">
+        
+        {/* ТАБЛИЦА ПАПОК В РЕЖИМЕ ПОИСКА */}
+        <table className="file-table">
+            <thead>
+                <tr>
+                    <th>Имя папки</th>
+                    <th>Полный путь</th>
+                    <th>Размер</th>
+                    <th>Элементов</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {searchResults.folders.map((folder, index) => {
+                    const folderFullPath = folder.fullPath || 
+                                          (searchPath ? `${searchPath}/${folder.name}` : folder.name);
+                    
+                    return (
+                        <tr key={`folder-${index}`}>
+                            <td>
+                                <div 
+                                    className="flex items-center cursor-pointer hover:text-blue-400"
+                                    onClick={() => navigate(`/files/${folderFullPath}`)}
+                                >
+                                    <div className="mr-3 text-xl">📁</div>
+                                    <div className="font-medium">
+                                        {folder.name}
+                                    </div>
+                                </div>
+                            </td>
+                            <td className="text-sm text-gray-400">
+                                {folderFullPath}
+                            </td>
+                            <td>{folder.readableSize || ''}</td>
+                            <td>{folder.itemCount !== undefined ? `${folder.itemCount} элементов` : ''}</td>
+                            <td>
+                                <div className="flex space-x-2">
+                                    <button
+                                        onClick={() => navigate(`/files/${folderFullPath}`)}
+                                        className="file-action-button file-action-button--download"
+                                    >
+                                        Открыть
+                                    </button>
+                                    <button
+                                        onClick={() => prepareDelete(folderFullPath, folder.name)}
+                                        className="file-action-button file-action-button--delete"
+                                    >
+                                        Удалить
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    );
+                })}
+            </tbody>
+        </table>
+    </div>
+)}
                                         </div>
                                     )}
                                     
                                     {searchResults.files && searchResults.files.length > 0 && (
-                                        <div className="mb-8">
-                                            <h3 className="text-xl font-semibold mb-4 flex items-center">
-                                                <span className="mr-2">📄</span> 
-                                                Найденные файлы ({searchResults.files.length})
-                                            </h3>
-                                            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                                                <table className="min-w-full divide-y divide-gray-200">
-                                                    <thead className="bg-gray-50">
-                                                        <tr>
-                                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                                Имя файла
-                                                            </th>
-                                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                                Полный путь
-                                                            </th>
-                                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                                Размер
-                                                            </th>
-                                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                                Расширение
-                                                            </th>
-                                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                                Действия
-                                                            </th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="bg-white divide-y divide-gray-200">
-                                                        {searchResults.files.map((file, index) => {
-                                                            // Собираем полный путь файла
-                                                            const fileFullPath = file.fullPath || 
-                                                                               (searchPath ? `${searchPath}/${file.name}` : file.name);
-                                                            const fileExtension = file.extension || 
-                                                                                 (file.name.includes('.') ? file.name.split('.').pop() : '');
-                                                                
-                                                            return (
-                                                                <tr key={`file-${index}`} className="hover:bg-gray-50">
-                                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                                        <div className="flex items-center">
-                                                                            <div className="text-xl mr-2">📄</div>
-                                                                            <div className="font-medium text-gray-900">
-                                                                                {file.name}
-                                                                            </div>
-                                                                        </div>
-                                                                    </td>
-                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                                        {fileFullPath}
-                                                                    </td>
-                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                                        {file.readableSize || 'N/A'}
-                                                                    </td>
-                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                                        {fileExtension && fileExtension.toUpperCase()}
-                                                                    </td>
-                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                                        <button
-                                                                            onClick={() => handleDownload(fileFullPath, file.name)}
-                                                                            className="text-blue-600 hover:text-blue-900 mr-3"
-                                                                        >
-                                                                            Скачать
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => prepareDelete(fileFullPath, file.name)}
-                                                                            className="text-red-600 hover:text-red-900"
-                                                                        >
-                                                                            Удалить
-                                                                        </button>
-                                                                    </td>
-                                                                </tr>
-                                                            );
-                                                        })}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    )}
+    <div className="mb-8">
+        <h3 className="text-xl font-semibold mb-4 flex items-center">
+            <span className="mr-2">📄</span> 
+            Найденные файлы ({searchResults.files.length})
+        </h3>
+        
+        {/* ТАБЛИЦА ФАЙЛОВ В РЕЖИМЕ ПОИСКА */}
+        <table className="file-table">
+            <thead>
+                <tr>
+                    <th>Имя файла</th>
+                    <th>Полный путь</th>
+                    <th>Размер</th>
+                    <th>Расширение</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {searchResults.files.map((file, index) => {
+                    const fileFullPath = file.fullPath || 
+                                       (searchPath ? `${searchPath}/${file.name}` : file.name);
+                    const fileExtension = file.extension || 
+                                         (file.name.includes('.') ? file.name.split('.').pop() : '');
+                        
+                    return (
+                        <tr key={`file-${index}`}>
+                            <td>
+                                <div className="flex items-center">
+                                    <div className="text-xl mr-3">📄</div>
+                                    <div className="font-medium">
+                                        {file.name}
+                                    </div>
+                                </div>
+                            </td>
+                            <td className="text-sm text-gray-400">
+                                {fileFullPath}
+                            </td>
+                            <td>{file.readableSize || 'N/A'}</td>
+                            <td>
+                                {fileExtension ? (
+                                    <span className="px-2 py-1 bg-gray-800 rounded text-xs">
+                                        {fileExtension.toUpperCase()}
+                                    </span>
+                                ) : '-'}
+                            </td>
+                            <td>
+                                <div className="flex space-x-2">
+                                    <button
+                                        onClick={() => handleDownload(fileFullPath, file.name)}
+                                        className="file-action-button file-action-button--download"
+                                    >
+                                        Скачать
+                                    </button>
+                                    <button
+                                        onClick={() => prepareDelete(fileFullPath, file.name)}
+                                        className="file-action-button file-action-button--delete"
+                                    >
+                                        Удалить
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    );
+                })}
+            </tbody>
+        </table>
+    </div>
+)}
                                 </>
                             ) : (
                                 <div className="text-center py-12 bg-gray-50 rounded-lg">
