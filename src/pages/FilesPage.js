@@ -13,7 +13,7 @@ import '../styles/SearchResults.css'
 import Breadcrumbs from '../components/Breadcrumbs';
 import ErrorMessage from '../components/ErrorMessage';
 import FileTable from '../components/FileTable';
-import FolderGrid from '../components/FolderGrid';
+import FolderTable from '../components/FolderTable';
 import CreateFolderModal from '../components/CreateFolderModal';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 
@@ -419,7 +419,7 @@ const FilesPage = () => {
                                                             {folderFullPath}
                                                         </td>
                                                         <td>{folder.readableSize || ''}</td>
-                                                        <td>{folder.itemCount !== undefined ? `${folder.itemCount} элементов` : ''}</td>
+                                                        <td>{folder.itemCount !== undefined ? `${folder.itemCount} элемент(ов)` : ''}</td>
                                                         <td>
                                                             <div className="flex space-x-2">
                                                                 <button
@@ -625,73 +625,16 @@ const FilesPage = () => {
                 {/* Список папок и файлов */}
                 {!loading && (
     <>
-        <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
-                <span className="mr-2">📁</span> Папки ({folders.length})
-            </h2>
-            
-            {/* ТАБЛИЦА ПАПОК ВМЕСТО FOLDERGRID */}
-           
-                <table className="file-table">
-                    <thead>
-                        <tr>
-                            <th>Имя папки</th>
-                            <th>Размер</th>
-                            <th>Элементов</th>
-                            <th>Дата изменения</th>
-                            <th>Действия</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {folders.map(folder => (
-                            <tr key={folder.path}>
-                                <td>
-                                    <div 
-                                        className="flex items-center cursor-pointer hover:text-blue-400"
-                                        onClick={() => navigateToFolder(folder.path)}
-                                    >
-                                        <div className="mr-3 text-xl">📁</div>
-                                        <div className="font-medium">
-                                            {folder.name}
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>{folder.readableSize}</td>
-                                <td>{folder.itemCount || 0} элементов</td>
-                                <td>{folder.modifiedDate || '-'}</td>
-                                <td>
-                                    <div className="flex space-x-2">
-                                        <button
-                                            onClick={() => navigateToFolder(folder.path)}
-                                            className="file-action-button file-action-button--download"
-                                        >
-                                            Открыть
-                                        </button>
-                                        <button
-                                            onClick={() => prepareDelete(folder.path, folder.name)}
-                                            className="file-action-button file-action-button--delete"
-                                        >
-                                            Удалить
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            
-        </div>
-        
-        <div>
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
-                <span className="mr-2">📄</span> Файлы ({files.length})
-            </h2>
-            <FileTable 
-                files={files}
-                onDownload={handleDownload}
-                onDelete={prepareDelete}
-            />
-        </div>
+        <FolderTable 
+            folders={folders}
+            navigateToFolder={navigateToFolder}
+            prepareDelete={prepareDelete}
+        />
+        <FileTable 
+            files={files}
+            onDownload={handleDownload}
+            onDelete={prepareDelete}
+        />
     </>
 )}
                 

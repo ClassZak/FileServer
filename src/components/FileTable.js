@@ -70,25 +70,30 @@ const FileTable = ({ files, onDownload, onDelete }) => {
     };
 
     return (
-        <div className="overflow-x-auto">
-            <table className="file-table">
-                <thead>
-                    <tr>
-                        <th>Имя</th>
-                        <th>Размер</th>
-                        <th>Тип</th>
-                        <th>Изменен</th>
-                        <th>Действия</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {
-                        files.length ? (
-                        files.map(file => FileRow(file))) :
-                        (FileRow())
-                    }
-                </tbody>
-            </table>
+         <div>
+            <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <span className="mr-2">📄</span> Файлы ({files.length})
+            </h2>
+            <div className="overflow-x-auto">
+                <table className="file-table">
+                    <thead>
+                        <tr>
+                            <th>Имя</th>
+                            <th>Размер</th>
+                            <th>Тип</th>
+                            <th>Изменен</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {
+                            files.length ? (
+                            files.map(file => FileRow(file))) :
+                            (FileRow())
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 };
