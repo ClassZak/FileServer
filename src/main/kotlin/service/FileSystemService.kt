@@ -276,8 +276,12 @@ class FileSystemService {
 		return file.delete()
 	}
 	
+	fun getSafeFilePath(path: String) : Path{
+		return safeRootPath.resolve(sanitizeDirectoryPath(path))
+	}
+	
 	fun downloadFile(path: String): Pair<File, String> {
-		val file = getSafePath(path).toFile()
+		val file = getSafeFilePath(path).toFile()
 		
 		if (!file.exists()) {
 			throw IllegalArgumentException("Файл не найден: $path")
