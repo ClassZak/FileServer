@@ -1,17 +1,17 @@
 /* styles/FileTable.css */
 .file-table {
     min-width: 100%;
-    background-color: white;
-    border: 1px solid #e2e8f0;
+    background-color: #242424;
+    border: 1px solid #333;
     border-collapse: collapse;
 }
 
 table.file-table{
-    color: #242424;
+    color: #edf2f7;
 }
 
 .file-table thead {
-    background-color: #f7fafc;
+    background-color: #1a1a1a;
 }
 
 .file-table th {
@@ -19,12 +19,12 @@ table.file-table{
     text-align: left;
     font-weight: 600;
     color: #4a5568;
-    border-bottom: 2px solid #e2e8f0;
+    border-bottom: 2px solid #333;
 }
 
 .file-table td {
     padding: 0.75rem 1rem;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid #333;
     vertical-align: middle;
 }
 
@@ -33,12 +33,12 @@ table.file-table{
 }
 
 .file-table tbody tr:hover {
-    background-color: #f7fafc;
+    background-color: #484848;
 }
 
 .file-type-badge {
     padding: 0.25rem 0.5rem;
-    background-color: #edf2f7;
+    background-color: #2a2a2a;
     border-radius: 0.25rem;
     font-size: 0.75rem;
     font-weight: 500;
