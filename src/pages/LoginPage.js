@@ -66,7 +66,7 @@ const LoginPage = () => {
                 const authResult = await AuthService.checkAuth();
                 
                 if (authResult.authenticated) {
-                    navigate(from, { replace: true });
+                    navigate(decodeURIComponent(from));
                 } else {
                     setError('Ошибка авторизации после входа');
                 }
