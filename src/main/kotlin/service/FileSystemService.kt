@@ -8,11 +8,9 @@ import org.springframework.web.multipart.MultipartFile
 import org.zak.dto.file.FileInfo
 import org.zak.dto.file.FolderInfo
 import java.io.File
-import java.io.FileInputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
 import java.text.SimpleDateFormat
 import java.util.*
@@ -22,7 +20,6 @@ import java.util.*
 class FileSystemService {
 	
 	private val logger = LoggerFactory.getLogger(FileSystemService::class.java)
-	private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 	
 	@Value("\${file-server.root-directory:./files}")
 	private lateinit var rootDirectory: String
@@ -57,7 +54,7 @@ class FileSystemService {
 	 * Получить содержимое директории
 	 */
 	fun listDirectory(path: String): Pair<List<FileInfo>, List<FolderInfo>> {
-		val directory = getSafePath(path).toFile()
+		val directory = getSafeFullPathForClientResolved(path).toFile()
 		
 		// Проверяем существование директории
 		if (!directory.exists()) {
@@ -105,10 +102,11 @@ class FileSystemService {
 		val path = file.toPath()
 		val attributes = Files.readAttributes(path, BasicFileAttributes::class.java)
 		val size = file.length()
+		val fullPath = getSafeFullPathForClient(Paths.get(basePath, file.path).toString().replace("\\", "/"))
 		
 		return FileInfo(
 			name = file.name,
-			path = Paths.get(basePath, file.name).toString().replace("\\", "/"),
+			fullPath = fullPath.toString(),
 			lastModified = Date(attributes.lastModifiedTime().toMillis()),
 			size = size,
 			extension = getFileExtension(file),
@@ -120,10 +118,11 @@ class FileSystemService {
 		val path = folder.toPath()
 		val attributes = Files.readAttributes(path, BasicFileAttributes::class.java)
 		val (size, itemCount) = calculateFolderSizeAndCount(folder)
+		val fullPath = getSafeFullPathForClient(Paths.get(basePath, folder.name).toString().replace("\\", "/"))
 		
 		return FolderInfo(
 			name = folder.name,
-			path = Paths.get(basePath, folder.name).toString().replace("\\", "/"),
+			fullPath = fullPath,
 			lastModified = Date(attributes.lastModifiedTime().toMillis()),
 			size = size,
 			readableSize = formatSize(size),
@@ -278,6 +277,31 @@ class FileSystemService {
 	
 	fun getSafeFilePath(path: String) : Path{
 		return safeRootPath.resolve(sanitizeDirectoryPath(path))
+	}
+	fun getSafeFullPathForClient(path: String): String {
+		// Если путь уже относительный, оставляем как есть
+		if (!path.startsWith(safeRootPath.toString())) {
+			return sanitizeDirectoryPath(path)
+		}
+		
+		// Обрезаем путь до безопасного относительного пути
+		val relativePath = safeRootPath.relativize(Paths.get(path)).toString()
+		return sanitizeDirectoryPath(relativePath)
+	}
+	fun getSafeFullPathForClientResolved(path: String): Path{
+		return safeRootPath.resolve(getSafeFullPathForClient(path))
+	}
+	fun getRelativePathForClient(fullPath: String, currentDir: String): String {
+		val fullPathObj = Paths.get(fullPath).normalize()
+		val currentDirObj = Paths.get(currentDir).normalize()
+		
+		return try {
+			// Получаем относительный путь от текущей директории
+			currentDirObj.relativize(fullPathObj).toString().replace("\\", "/")
+		} catch (e: IllegalArgumentException) {
+			// Если пути несовместимы, возвращаем только имя файла/папки
+			fullPathObj.fileName?.toString() ?: ""
+		}
 	}
 	
 	fun downloadFile(path: String): Pair<File, String> {

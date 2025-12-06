@@ -5,7 +5,7 @@ import java.util.*
 
 data class FileInfo(
 	val name: String,
-	val path: String,
+	val fullPath: String,
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	val lastModified: Date,
 	val size: Long,
