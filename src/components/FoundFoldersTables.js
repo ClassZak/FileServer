@@ -2,7 +2,7 @@
 import React from 'react';
 import '../styles/FileTable.css';
 
-const FolderTable = ({ folders, navigateToFolder, prepareDelete }) => {
+const FoundFoldersTable = ({ folders, navigateToFolder, prepareDelete, searchPath }) => {
 	const FolderRow = function (folder) {
 		if (folder === null || folder === undefined)
 			folder = {empty:true}
@@ -19,6 +19,7 @@ const FolderTable = ({ folders, navigateToFolder, prepareDelete }) => {
 					</div>
 				</div>
 			</td>
+			<td>{folder.empty ? '-' : folder.fullPath}</td>
 			<td>{folder.empty ? '-' : folder.readableSize}</td>
 			<td>{folder.empty ? '-' : (`${folder.itemCount || 0} элементов`)}</td>
 			<td>{folder.empty ? '-' : (folder.modifiedDate || '-')}</td>
@@ -46,12 +47,13 @@ const FolderTable = ({ folders, navigateToFolder, prepareDelete }) => {
 	return (
 		<div className="mb-8">
 			<h2 className="text-xl font-semibold mb-4 flex items-center">
-                <span className="mr-2">📁</span> Папки ({folders.length})
-            </h2>
+				<span className="mr-2">📁</span> Папки ({folders.length})
+			</h2>
 			<table className="file-table">
 				<thead>
 					<tr>
 						<th>Имя папки</th>
+						<th>Полный путь</th>
 						<th>Размер</th>
 						<th>Элементов</th>
 						<th>Дата изменения</th>
@@ -70,4 +72,4 @@ const FolderTable = ({ folders, navigateToFolder, prepareDelete }) => {
 	);
 };
 
-export default FolderTable;
+export default FoundFoldersTable;

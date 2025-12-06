@@ -14,6 +14,8 @@ import Breadcrumbs from '../components/Breadcrumbs';
 import ErrorMessage from '../components/ErrorMessage';
 import FileTable from '../components/FileTable';
 import FolderTable from '../components/FolderTable';
+import FoundFilesTable from '../components/FoundFilesTable';
+import FoundFoldersTable from '../components/FoundFoldersTables';
 import CreateFolderModal from '../components/CreateFolderModal';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 
@@ -329,7 +331,7 @@ const FilesPage = () => {
         <MainContent>
     <div className="container mx-auto px-4 py-8">
         {isSearchMode ? (
-    // 1. РЕЖИМ ПОИСКА - новый код
+    // 1. РЕЖИМ ПОИСКА
     <>
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
             <div className="flex justify-between items-center">
@@ -379,139 +381,23 @@ const FilesPage = () => {
                     
                     {searchResults.totalResults > 0 ? (
                         <>
-                            {/* ПАПКИ В РЕЖИМЕ ПОИСКА - ТАБЛИЦА */}
+                            {/* ПАПКИ В РЕЖИМЕ ПОИСКА */}
                             {searchResults.folders && searchResults.folders.length > 0 && (
-                                <div className="mb-8">
-                                    <h3 className="text-xl font-semibold mb-4 flex items-center">
-                                        <span className="mr-2">📁</span> 
-                                        Найденные папки ({searchResults.folders.length})
-                                    </h3>
-                                    
-                                    <table className="file-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Имя папки</th>
-                                                <th>Полный путь</th>
-                                                <th>Размер</th>
-                                                <th>Элементов</th>
-                                                <th>Действия</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {searchResults.folders.map((folder, index) => {
-                                                const folderFullPath = folder.fullPath || 
-                                                                      (searchPath ? `${searchPath}/${folder.name}` : folder.name);
-                                                
-                                                return (
-                                                    <tr key={`folder-${index}`}>
-                                                        <td>
-                                                            <div 
-                                                                className="flex items-center cursor-pointer hover:text-blue-400"
-                                                                onClick={() => navigate(`/files/${folderFullPath}`)}
-                                                            >
-                                                                <div className="mr-3 text-xl">📁</div>
-                                                                <div className="font-medium">
-                                                                    {folder.name}
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td className="text-sm text-gray-400">
-                                                            {folderFullPath}
-                                                        </td>
-                                                        <td>{folder.readableSize || ''}</td>
-                                                        <td>{folder.itemCount !== undefined ? `${folder.itemCount} элемент(ов)` : ''}</td>
-                                                        <td>
-                                                            <div className="flex space-x-2">
-                                                                <button
-                                                                    onClick={() => navigate(`/files/${folderFullPath}`)}
-                                                                    className="file-action-button file-action-button--download"
-                                                                >
-                                                                    Открыть
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => prepareDelete(folderFullPath, folder.name)}
-                                                                    className="file-action-button file-action-button--delete"
-                                                                >
-                                                                    Удалить
-                                                                </button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                <FolderTable
+                                    folders={searchResults.folders}
+                                    navigateToFolder={navigateToFolder}
+                                    prepareDelete={prepareDelete}
+                                    searchPath={searchPath}
+                                />
                             )}
-                            
-                            {/* ФАЙЛЫ В РЕЖИМЕ ПОИСКА - ТАБЛИЦА */}
+                            {/* ФАЙЛЫ В РЕЖИМЕ ПОИСКА */}
                             {searchResults.files && searchResults.files.length > 0 && (
-                                <div className="mb-8">
-                                    <h3 className="text-xl font-semibold mb-4 flex items-center">
-                                        <span className="mr-2">📄</span> 
-                                        Найденные файлы ({searchResults.files.length})
-                                    </h3>
-                                    
-                                    <table className="file-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Имя файла</th>
-                                                <th>Полный путь</th>
-                                                <th>Размер</th>
-                                                <th>Расширение</th>
-                                                <th>Действия</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {searchResults.files.map((file, index) => {
-                                                const fileFullPath = file.fullPath || 
-                                                                   (searchPath ? `${searchPath}/${file.name}` : file.name);
-                                                const fileExtension = file.extension || 
-                                                                     (file.name.includes('.') ? file.name.split('.').pop() : '');
-                                                    
-                                                return (
-                                                    <tr key={`file-${index}`}>
-                                                        <td>
-                                                            <div className="flex items-center">
-                                                                <div className="text-xl mr-3">📄</div>
-                                                                <div className="font-medium">
-                                                                    {file.name}
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td className="text-sm text-gray-400">
-                                                            {fileFullPath}
-                                                        </td>
-                                                        <td>{file.readableSize || 'N/A'}</td>
-                                                        <td>
-                                                            {fileExtension ? (
-                                                                <span className="px-2 py-1 bg-gray-800 rounded text-xs">
-                                                                    {fileExtension.toUpperCase()}
-                                                                </span>
-                                                            ) : '-'}
-                                                        </td>
-                                                        <td>
-                                                            <div className="flex space-x-2">
-                                                                <button
-                                                                    onClick={() => handleDownload(fileFullPath, file.name)}
-                                                                    className="file-action-button file-action-button--download"
-                                                                >
-                                                                    Скачать
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => prepareDelete(fileFullPath, file.name)}
-                                                                    className="file-action-button file-action-button--delete"
-                                                                >
-                                                                    Удалить
-                                                                </button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                <FoundFilesTable
+                                    files={searchResults.files}
+                                    onDownload={handleDownload}
+                                    onDelete={prepareDelete}
+                                    searchPath={searchPath}
+                                />
                             )}
                         </>
                     ) : (
