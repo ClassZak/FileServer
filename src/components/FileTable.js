@@ -19,12 +19,12 @@ const getFileIcon = (extension) => {
     return icons[extension.toLowerCase()] || '📄';
 };
 
-const FileTable = ({ files, onDownload, onDelete }) => {
+const FileTable = ({ files, onDownload, onDelete, title = 'Файлы' }) => {
     const FileRow = function (file) {
         if (file === null || file === undefined)
             file = {empty:true}
 
-        return <tr key={file.empty ? '-' : file.path}>
+        return <tr key={file.empty ? '-' : `file-${file.path}`}>
             <td>
                 <div className="flex items-center">
                     <span className="mr-2 text-lg">
@@ -72,7 +72,7 @@ const FileTable = ({ files, onDownload, onDelete }) => {
     return (
          <div>
             <h2 className="text-xl font-semibold mb-4 flex items-center">
-                <span className="mr-2">📄</span> Файлы ({files.length})
+                <span className="mr-2">📄</span> {title} ({files.length})
             </h2>
             <div className="overflow-x-auto">
                 <table className="file-table">

@@ -4,7 +4,7 @@ import './footer.css'
 function Footer(){
 	return (
 		<footer>
-			<h2>Конакты</h2>
+			<h2>Контакты</h2>
 			<a href="https://github.com/ClassZak" rel="noreferrer" target="_blank">ClassZak</a>
 			
 			<div>

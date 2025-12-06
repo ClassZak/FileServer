@@ -2,29 +2,12 @@
 import React from 'react';
 import '../styles/FileTable.css';
 
-const getFolderIcon = (extension) => {
-	const icons = {
-		pdf: '📕',
-		txt: '📝',
-		doc: '📘', docx: '📘',
-		xls: '📗', xlsx: '📗',
-		ppt: '📙', pptx: '📙',
-		jpg: '🖼️', jpeg: '🖼️', png: '🖼️', gif: '🖼️', bmp: '🖼️',
-		mp3: '🎵', wav: '🎵', ogg: '🎵',
-		mp4: '🎬', avi: '🎬', mkv: '🎬',
-		zip: '📦', rar: '📦', '7z': '📦', tar: '📦',
-		js: '📜', json: '📜', html: '🌐', css: '🎨',
-	};
-	
-	return icons[extension.toLowerCase()] || '📄';
-};
-
-const FolderTable = ({ folders, navigateToFolder, prepareDelete }) => {
+const FolderTable = ({ folders, navigateToFolder, prepareDelete, title = 'Папки' }) => {
 	const FolderRow = function (folder) {
 		if (folder === null || folder === undefined)
 			folder = {empty:true}
 
-		return <tr key={folder.empty ? '-' : folder.path}>
+		return <tr key={folder.empty ? '-' : `folder-${folder.path}`}>
 			<td>
 				<div 
 					className="flex items-center cursor-pointer hover:text-blue-400"
@@ -63,7 +46,7 @@ const FolderTable = ({ folders, navigateToFolder, prepareDelete }) => {
 	return (
 		<div className="mb-8">
 			<h2 className="text-xl font-semibold mb-4 flex items-center">
-                <span className="mr-2">📁</span> Папки ({folders.length})
+                <span className="mr-2">📁</span> {title} ({folders.length})
             </h2>
 			<table className="file-table">
 				<thead>
