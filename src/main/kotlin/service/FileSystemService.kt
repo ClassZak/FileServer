@@ -12,7 +12,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.attribute.BasicFileAttributes
-import java.text.SimpleDateFormat
 import java.util.*
 
 
@@ -106,7 +105,7 @@ class FileSystemService {
 		
 		return FileInfo(
 			name = file.name,
-			fullPath = fullPath.toString(),
+			fullPath = fullPath,
 			lastModified = Date(attributes.lastModifiedTime().toMillis()),
 			size = size,
 			extension = getFileExtension(file),
@@ -291,18 +290,6 @@ class FileSystemService {
 	fun getSafeFullPathForClientResolved(path: String): Path{
 		return safeRootPath.resolve(getSafeFullPathForClient(path))
 	}
-	fun getRelativePathForClient(fullPath: String, currentDir: String): String {
-		val fullPathObj = Paths.get(fullPath).normalize()
-		val currentDirObj = Paths.get(currentDir).normalize()
-		
-		return try {
-			// Получаем относительный путь от текущей директории
-			currentDirObj.relativize(fullPathObj).toString().replace("\\", "/")
-		} catch (e: IllegalArgumentException) {
-			// Если пути несовместимы, возвращаем только имя файла/папки
-			fullPathObj.fileName?.toString() ?: ""
-		}
-	}
 	
 	fun downloadFile(path: String): Pair<File, String> {
 		val file = getSafeFilePath(path).toFile()
@@ -453,20 +440,6 @@ class FileSystemService {
 			getSafePath(path).toFile().exists()
 		} catch (e: SecurityException) {
 			false
-		}
-	}
-	
-	fun getFileInfo(path: String): Any {
-		val file = getSafePath(path).toFile()
-		
-		if (!file.exists()) {
-			throw IllegalArgumentException("Файл или папка не найдены: $path")
-		}
-		
-		return if (file.isFile) {
-			createFileInfo(file, file.parentFile?.name ?: "")
-		} else {
-			createFolderInfo(file, file.parentFile?.name ?: "")
 		}
 	}
 }
