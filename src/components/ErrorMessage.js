@@ -1,4 +1,3 @@
-// components/ErrorMessage.jsx
 import React from 'react';
 import '../styles/ErrorMessage.css';
 

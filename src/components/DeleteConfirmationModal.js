@@ -1,4 +1,3 @@
-// components/DeleteConfirmationModal.jsx
 import React from 'react';
 import Modal from './Modal';
 

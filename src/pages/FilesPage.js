@@ -1,4 +1,3 @@
-// pages/FilesPage.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import MainContent from "../components/MainContent";
