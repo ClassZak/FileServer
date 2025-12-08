@@ -101,7 +101,9 @@ class FileSystemService {
 		val path = file.toPath()
 		val attributes = Files.readAttributes(path, BasicFileAttributes::class.java)
 		val size = file.length()
-		val fullPath = getSafeFullPathForClient(Paths.get(basePath, file.path).toString().replace("\\", "/"))
+		var fullPath = getSafeFullPathForClient(Paths.get(basePath, file.path).toString())
+		if (fullPath.startsWith(rootDirectory))
+			fullPath = fullPath.substring(rootDirectory.length)
 		
 		return FileInfo(
 			name = file.name,
@@ -410,7 +412,7 @@ class FileSystemService {
 	}
 	
 	private fun sanitizeFileName(fileName: String): String {
-		return fileName.replace(Regex("[<>:\"/\\\\|?*]"), "_").replace("..","")
+		return fileName.replace(Regex("[<>:\"\\\\|?*]"), "_").replace("..","")
 	}
 	
 	private fun safeExists(path: String): Boolean {
