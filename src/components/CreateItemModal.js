@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './CreateItemModal.css';
+import '../styles/Modal.css';
 
 function CreateItemModal({ isOpen, onClose, onCreate, parentFolder }) {
     const [itemName, setItemName] = useState('');

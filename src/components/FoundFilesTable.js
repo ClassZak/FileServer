@@ -22,7 +22,9 @@ const getFileIcon = (extension) => {
 const FoundFilesTable = ({ files, onDownload, onDelete, searchPath }) => {
 	const FileRow = function (file) {
 		if (file === null || file === undefined)
-			file = {empty:true}
+            file = {empty:true}
+        else
+            console.log(file);
 		
 		const fileFullPath = file ? (file.fullPath || (searchPath ? `${searchPath}/${file.name}` : file.name)) : '';
 

@@ -23,8 +23,10 @@ const FileTable = ({ files, onDownload, onDelete }) => {
     const FileRow = function (file) {
         if (file === null || file === undefined)
             file = {empty:true}
+        else
+            console.log(file);
 
-        return <tr key={file.empty ? '-' : `file-${file.path}`}>
+        return <tr key={file.empty ? '-' : `file-${file.fullPath}`}>
             <td>
                 <div className="flex items-center">
                     <span className="mr-2 text-lg">
@@ -48,7 +50,7 @@ const FileTable = ({ files, onDownload, onDelete }) => {
                 {file.empty ? '-' :
                     <div className="flex space-x-2">
                         <button
-                            onClick={() => onDownload(file.path, file.name)}
+                            onClick={() => onDownload(file.fullPath, file.name)}
                             className="file-action-button file-action-button--download"
                             title="Скачать"
                             type="button"
@@ -56,7 +58,7 @@ const FileTable = ({ files, onDownload, onDelete }) => {
                             📥
                         </button>
                         <button
-                            onClick={() => onDelete(file.path, file.name)}
+                            onClick={() => onDelete(file.fullPath, file.name)}
                             className="file-action-button file-action-button--delete"
                             title="Удалить"
                             type="button"

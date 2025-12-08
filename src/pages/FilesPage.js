@@ -49,6 +49,15 @@ const FilesPage = () => {
     const [searchResults, setSearchResults] = useState(null);
     const [searchLoading, setSearchLoading] = useState(false);
 
+    const closeCreateFolderModal = React.useCallback(() => {
+        setShowCreateFolderModal(false);
+    }, []);
+
+    const closeDeleteModal = React.useCallback(() => {
+        setShowDeleteModal(false);
+        setItemToDelete(null);
+    }, []);
+
     // Добавить в useEffect:
     useEffect(() => {
         if (isSearchMode) {
@@ -328,11 +337,13 @@ const FilesPage = () => {
     };
 
     return (
+        <div>
+
         <MainContent>
     <div className="container mx-auto px-4 py-8">
         {isSearchMode ? (
-    // 1. РЕЖИМ ПОИСКА
-    <>
+            // 1. РЕЖИМ ПОИСКА
+            <>
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
             <div className="flex justify-between items-center">
                 <div>
@@ -359,12 +370,12 @@ const FilesPage = () => {
                 </div>
             ) : error ? (
                 <ErrorMessage 
-                    message={error}
-                    onClose={() => setError('')}
-                    showNavigation={true}
-                    onNavigateToRoot={navigateToRoot}
-                    onNavigateUp={navigateUp}
-                    showUpButton={!!searchPath}
+                message={error}
+                onClose={() => setError('')}
+                showNavigation={true}
+                onNavigateToRoot={navigateToRoot}
+                onNavigateUp={navigateUp}
+                showUpButton={!!searchPath}
                 />
             ) : searchResults ? (
                 <>
@@ -383,7 +394,7 @@ const FilesPage = () => {
                         <>
                             {/* ПАПКИ В РЕЖИМЕ ПОИСКА */}
                             {searchResults.folders && searchResults.folders.length > 0 && (
-                                <FolderTable
+                                <FoundFoldersTable
                                     folders={searchResults.folders}
                                     navigateToFolder={navigateToFolder}
                                     prepareDelete={prepareDelete}
@@ -413,7 +424,7 @@ const FilesPage = () => {
                                 <button
                                     onClick={exitSearchMode}
                                     className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                                >
+                                    >
                                     Вернуться к просмотру файлов
                                 </button>
                             </div>
@@ -424,14 +435,14 @@ const FilesPage = () => {
         </div>
     </>
 ) : (
-            // 2. ОБЫЧНЫЙ РЕЖИМ НАВИГАЦИИ
-            <>
+    // 2. ОБЫЧНЫЙ РЕЖИМ НАВИГАЦИИ
+    <>
                 <div className="mb-6">
                     <h1 className="text-3xl font-bold mb-2">Файловый менеджер</h1>
                     <Breadcrumbs 
                         currentPath={currentPath} 
                         onNavigate={navigateToFolder} 
-                    />
+                        />
                 </div>
                 
                 {/* Панель навигации */}
@@ -445,10 +456,10 @@ const FilesPage = () => {
                                     onChange={handlePathInputChange}
                                     onKeyDown={handlePathInputKeyDown}
                                     placeholder="Введите путь (например: documents/images)"
-                                />
+                                    />
                                 <button
                                     type="submit"
-                                >
+                                    >
                                     Перейти
                                 </button>
                             </form>
@@ -461,7 +472,7 @@ const FilesPage = () => {
                                 disabled={!currentPath}
                                 className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
                                 type="button"
-                            >
+                                >
                                 Назад
                             </button>
                             
@@ -480,7 +491,7 @@ const FilesPage = () => {
                                     className="hidden"
                                     onChange={handleFileUpload}
                                     disabled={uploading}
-                                />
+                                    />
                             </label>
                         </div>
                     </div>
@@ -498,7 +509,7 @@ const FilesPage = () => {
                     onNavigateToRoot={navigateToRoot}
                     onNavigateUp={navigateUp}
                     showUpButton={!!currentPath}
-                />
+                    />
                 
                 {/* Загрузка */}
                 {loading && (
@@ -510,12 +521,12 @@ const FilesPage = () => {
                 
                 {/* Список папок и файлов */}
                 {!loading && (
-    <>
+                    <>
         <FolderTable 
             folders={folders}
             navigateToFolder={navigateToFolder}
             prepareDelete={prepareDelete}
-        />
+            />
         <FileTable 
             files={files}
             onDownload={handleDownload}
@@ -524,27 +535,29 @@ const FilesPage = () => {
     </>
 )}
                 
-                {/* Модальные окна */}
-                <CreateFolderModal 
-                    isOpen={showCreateFolderModal}
-                    onClose={() => setShowCreateFolderModal(false)}
-                    currentPath={currentPath}
-                    onCreate={handleCreateFolder}
-                />
-                
-                <DeleteConfirmationModal 
-                    isOpen={showDeleteModal}
-                    onClose={() => {
-                        setShowDeleteModal(false);
-                        setItemToDelete(null);
-                    }}
-                    itemName={itemToDelete?.name}
-                    onConfirm={handleDelete}
-                />
             </>
         )}
     </div>
+        
 </MainContent>
+        {/* Модальные окна */}
+        <CreateFolderModal 
+            isOpen={showCreateFolderModal}
+            onClose={() => setShowCreateFolderModal(false)}
+            currentPath={currentPath}
+            onCreate={handleCreateFolder}
+        />
+        
+        <DeleteConfirmationModal 
+            isOpen={showDeleteModal}
+            onClose={() => {
+                setShowDeleteModal(false);
+                setItemToDelete(null);
+            }}
+            itemName={itemToDelete?.name}
+            onConfirm={handleDelete}
+        />
+        </div>
     );
 
 };

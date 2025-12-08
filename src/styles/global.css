@@ -1,9 +1,4 @@
 body.modal-open {
     overflow: hidden;
-    padding-right: var(--scrollbar-width);
-}
-
-/* Переменная для ширины скроллбара */
-:root {
-    --scrollbar-width: 0px;
+    /* padding-right: var(--scrollbar-width); */
 }

@@ -1,80 +1,111 @@
-// components/Modal.jsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import '../styles/Modal.css';
 import '../styles/global.css';
 
 const Modal = ({ isOpen, onClose, title, children, className = '' }) => {
+    const modalRef = useRef(null);
+    const previouslyFocusedElement = useRef(null);
+    
+    // Мемоизируем обработчик Escape
+    const handleKeyDown = useCallback((e) => {
+        if (e.key === 'Escape') {
+            onClose();
+        }
+        if (e.key === 'Tab') {
+            const focusableElements = modalRef.current?.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            );
+            
+            if (!focusableElements || focusableElements.length === 0) return;
+            
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+            
+            if (e.shiftKey) {
+                if (document.activeElement === firstElement) {
+                    lastElement.focus();
+                    e.preventDefault();
+                }
+            } else {
+                if (document.activeElement === lastElement) {
+                    firstElement.focus();
+                    e.preventDefault();
+                }
+            }
+        }
+    }, [onClose]);
+    
+    // Эффект для управления состоянием модального окна
     useEffect(() => {
         if (isOpen) {
+            // Сохраняем элемент, который был в фокусе до открытия модального окна
+            previouslyFocusedElement.current = document.activeElement;
+            
             // Рассчитываем ширину скроллбара
             const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
             document.documentElement.style.setProperty('--scrollbar-width', `${scrollbarWidth}px`);
+            
+            // Блокируем скролл
             document.body.classList.add('modal-open');
             
-            // Блокируем клавишу Tab для фокуса вне модального окна
-            const handleKeyDown = (e) => {
-                if (e.key === 'Escape') {
-                    onClose();
-                }
-                if (e.key === 'Tab') {
-                    const focusableElements = document.querySelectorAll(
-                        '.modal-content button, .modal-content input, .modal-content textarea, .modal-content select'
-                    );
-                    const firstElement = focusableElements[0];
-                    const lastElement = focusableElements[focusableElements.length - 1];
-                    
-                    if (e.shiftKey) {
-                        if (document.activeElement === firstElement) {
-                            lastElement.focus();
-                            e.preventDefault();
-                        }
-                    } else {
-                        if (document.activeElement === lastElement) {
-                            firstElement.focus();
-                            e.preventDefault();
-                        }
-                    }
-                }
-            };
-            
+            // Добавляем обработчик клавиш
             document.addEventListener('keydown', handleKeyDown);
             
-            // Фокусируемся на первом фокусируемом элементе при открытии
-            setTimeout(() => {
-                const focusableElements = document.querySelectorAll(
-                    '.modal-content button, .modal-content input, .modal-content textarea, .modal-content select'
-                );
-                if (focusableElements.length > 0) {
-                    focusableElements[0].focus();
-                }
-            }, 100);
+            // Фокус на модальном окне
+            const focusableElements = modalRef.current?.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            );
+            if (focusableElements && focusableElements.length > 0) {
+                focusableElements[0].focus();
+            } else {
+                modalRef.current?.focus();
+            }
             
             return () => {
+                // Восстанавливаем скролл
+                document.body.classList.remove('modal-open');
+                document.documentElement.style.removeProperty('--scrollbar-width');
+                
+                // Удаляем обработчик клавиш
                 document.removeEventListener('keydown', handleKeyDown);
+                
+                // Возвращаем фокус на предыдущий элемент
+                if (previouslyFocusedElement.current) {
+                    previouslyFocusedElement.current.focus();
+                }
             };
-        } else {
-            document.body.classList.remove('modal-open');
         }
-        
-        return () => {
-            document.body.classList.remove('modal-open');
-        };
-    }, [isOpen, onClose]);
-
+    }, [isOpen, handleKeyDown]); // Добавляем handleKeyDown в зависимости
+    
+    // Не рендерим, если не открыто
     if (!isOpen) return null;
-
-    // Закрытие по клику на оверлей
+    
     const handleOverlayClick = (e) => {
         if (e.target === e.currentTarget) {
             onClose();
         }
     };
-
+    
     return (
-        <div className="modal-overlay" onClick={handleOverlayClick}>
-            <div className={`modal-content ${className}`}>
+        <div 
+            className="modal-overlay" 
+            onClick={handleOverlayClick}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={title ? "modal-title" : undefined}
+        >
+            <div 
+                ref={modalRef}
+                className={`modal-content ${className}`}
+                tabIndex={-1}
+            >
                 {title && (
-                    <h3 className="text-xl font-semibold mb-4">{title}</h3>
+                    <h3 
+                        id="modal-title"
+                        className="text-xl font-semibold mb-4"
+                    >
+                        {title}
+                    </h3>
                 )}
                 {children}
             </div>
