@@ -52,7 +52,7 @@ class FileController(private val fileSystemService: FileSystemService) {
 	@GetMapping("/exists")
 	fun existsFileOrDirectory(@RequestParam path: String = "") : ResponseEntity<Any> {
 		try {
-			val exists = fileSystemService.pathExistsPub(path)
+			val exists = fileSystemService.pathExists(path)
 			return if (exists)
 				ResponseEntity.ok(mapOf("exists" to true))
 			else
