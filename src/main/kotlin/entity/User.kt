@@ -8,6 +8,7 @@ import java.time.LocalDateTime
 data class User(
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "Id")
 	var id: Int? = null,
 	
 	@Column(name = "Name", nullable = false, length = 45)

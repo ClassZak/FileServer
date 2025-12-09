@@ -7,16 +7,21 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.zak.dto.CreateUserRequest
+import org.zak.dto.CurrentUser
 import org.zak.dto.LoginBySNPRequest
 import org.zak.dto.LoginRequest
+import org.zak.dto.UpdatePasswordRequest
 import org.zak.dto.UserResponse
+import org.zak.dto.ValidationResult
 import org.zak.entity.User
+import org.zak.repository.AdministratorRepository
 import org.zak.repository.UserRepository
 import java.time.format.DateTimeFormatter
 
 @Service
 class UserService(
 	private val userRepository: UserRepository,
+	private val administratorRepository: AdministratorRepository,
 	private val passwordEncoder: PasswordEncoder
 ) : UserDetailsService {
 	
@@ -78,12 +83,94 @@ class UserService(
 		}
 	}
 	
+	fun hasPasswordUpdateAccess(currentUser: CurrentUser, email: String): Boolean{
+		if(currentUser.id == null)
+			throw NullPointerException("Необходим id у currentUser")
+		
+		return if(currentUser.email == email)
+			true
+		else
+			administratorRepository.existsByUserId(currentUser.id.toLong())
+	}
+	
+	fun validatePasswordChange(
+		currentUser: CurrentUser,
+		targetUserId: Long,
+		request: UpdatePasswordRequest
+	): ValidationResult {
+		if(currentUser.id == null)
+			throw NullPointerException("Необходим id у currentUser")
+		
+		// Если пользователь меняет свой пароль - проверяем старый пароль
+		if (currentUser.id.toLong() == targetUserId) {
+			val user: User? = userRepository.findById(targetUserId).orElse(null)
+			if (user == null)
+				return ValidationResult(
+					valid = false,
+					message = "Пользователь не найден"
+				)
+			
+			val passwordMatches = passwordEncoder.matches(
+				request.oldPassword,
+				user.passwordHash
+			)
+			
+			if (!passwordMatches) {
+				return ValidationResult(
+					valid = false,
+					message = "Неверный текущий пароль"
+				)
+			}
+			
+			return ValidationResult(valid = true, message = "OK")
+		}
+		
+		// 5.2. Если админ меняет чужой пароль - не проверяем старый пароль
+		// (но можно добавить проверку пароля админа, если нужно)
+		
+		// 5.3. Проверка, что новый пароль не совпадает со старым
+		if (request.oldPassword == request.newPassword) {
+			return ValidationResult(
+				valid = false,
+				message = "Новый пароль должен отличаться от старого"
+			)
+		}
+		
+		// 5.4. Проверка сложности нового пароля
+		if (!isPasswordStrong(request.newPassword)) {
+			return ValidationResult(
+				valid = false,
+				message = "Пароль должен содержать минимум 6 символов, включая буквы и цифры"
+			)
+		}
+		
+		return ValidationResult(valid = true, message = "OK")
+	}
+	
+	// Проверка сложности пароля
+	private fun isPasswordStrong(password: String): Boolean {
+		if (password.length < 6) return false
+		
+		// Минимум одна буква и одна цифра
+		val hasLetter = password.any { it.isLetter() }
+		val hasDigit = password.any { it.isDigit() }
+		
+		return hasLetter && hasDigit
+	}
+	
 	fun getUserByEmail(email: String): UserResponse? {
 		return userRepository.findByEmail(email)?.let { toUserResponse(it) }
+	}
+	fun getUserEntityByEmail(email: String): User?{
+		return userRepository.findByEmail(email)
 	}
 	
 	fun getUserById(id: Int): UserResponse? {
 		return userRepository.findById(id.toLong()).orElse(null)?.let { toUserResponse(it) }
+	}
+	
+	fun  getUserEntityById(id: Long) : User?{
+		return userRepository.findById(id).orElse(null)
 	}
 	
 	fun toUserResponse(user: User): UserResponse {

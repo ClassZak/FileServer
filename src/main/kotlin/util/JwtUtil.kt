@@ -5,6 +5,7 @@ import io.jsonwebtoken.security.Keys
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.stereotype.Component
+import org.zak.dto.CurrentUser
 import java.util.*
 import javax.crypto.SecretKey
 
@@ -93,5 +94,23 @@ class JwtUtil(
 	
 	fun isTokenExpired(token: String): Boolean {
 		return getClaimsFromToken(token).expiration.before(Date())
+	}
+	
+	
+	
+	fun extractJwtToken(authHeader: String): String {
+		return if (authHeader.startsWith("Bearer ")) {
+			authHeader.substring(7)
+		} else {
+			throw IllegalArgumentException("Неверный формат заголовка Authorization")
+		}
+	}
+	
+	private fun getCurrentUserEmailFromJwt(jwtToken: String): String {
+		if (!validateToken(jwtToken)) {
+			throw Exception("Недействительный токен")
+		}
+		
+		return extractUsername(jwtToken)
 	}
 }
