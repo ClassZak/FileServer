@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import Modal from './Modal';
+import { useState,useEffect } from "react";
+import Modal from './Modal'
 
 const ChangePasswordModal = ({
     isOpen,
@@ -88,8 +88,6 @@ const ChangePasswordModal = ({
             
             if (result && result.success) {
                 setSuccessMessage(result.message || 'Пароль успешно изменен');
-                resetForm();
-                onClose();
             } else {
                 // Обработка ошибок с сервера
                 setErrors({

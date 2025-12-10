@@ -168,8 +168,7 @@ class AuthService {
         }
         return defaultMessage;
     }
-
-    // ... остальные методы без изменений ...
+    
     static clearAuthData() {
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
@@ -178,9 +177,9 @@ class AuthService {
 
     static logout() {
         try {
-            axios.post('/api/auth/logout').catch(() => {});
-        } finally {
+            axios.post('/api/auth/logout');
             this.clearAuthData();
+        } finally {
         }
     }
 
@@ -201,6 +200,71 @@ class AuthService {
     static getUser() {
         const userStr = localStorage.getItem('user');
         return userStr ? JSON.parse(userStr) : null;
+    }
+
+
+    /**
+     * Изменение пароля пользователя
+     * @param {string} email - Email пользователя
+     * @param {string} authToken - Токен авторизации (например, "Bearer eyJhbGciOi...")
+     * @param {string} oldPassword - Текущий пароль
+     * @param {string} newPassword - Новый пароль
+     * @returns {Promise<Object>} - Результат операции
+     */
+    static async updatePassword(email, authToken, oldPassword, newPassword){
+        try {
+            const response = await axios.put(
+                `/api/users/update-password/${encodeURIComponent(email)}`, 
+                {
+                    'oldPassword': oldPassword, 
+                    'newPassword': newPassword
+                },
+                {
+                    headers:{
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            return response.data;
+        } catch (error){
+            console.error('Update password error:', error);
+            if (error.response) {
+                // Сервер ответил с ошибкой
+                const status = error.response.status;
+                const data = error.response.data;
+                
+                let message = data?.message || 'Ошибка сервера';
+                
+                if (status === 403) {
+                    message = data?.message || 'Недостаточно прав для изменения пароля';
+                } else if (status === 404) {
+                    message = data?.message || 'Пользователь не найден';
+                } else if (status === 401) {
+                    message = 'Требуется авторизация';
+                }
+                
+                return {
+                    success: false,
+                    message: message,
+                    status: status
+                };
+                
+            } else if (error.request) {
+                // Запрос был сделан, но ответа нет
+                return {
+                    success: false,
+                    message: 'Ошибка сети: не удалось получить ответ от сервера'
+                };
+            } else {
+                // Ошибка настройки запроса
+                return {
+                    success: false,
+                    message: error.message || 'Ошибка при отправке запроса'
+                };
+            }
+        }
     }
 }
 

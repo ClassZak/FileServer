@@ -1,6 +1,7 @@
 import axios from 'axios';
 import AuthService from './AuthService';
 
+
 export class FileService {
     static async exists(file, token) {
         try {
@@ -14,7 +15,6 @@ export class FileService {
         }
     }
     
-    // Метод для поиска файлов и папок (ВАРИАНТ 1)
     static async find(query, path = '', token) {
         try {
             const response = await axios.get(
