@@ -71,8 +71,10 @@ class UserController(
 		
 		val validationResult = userService.validatePasswordChange(currUser, editUser.id!!.toLong(), request)
 		
-		return if (validationResult.valid)
+		return if (validationResult.valid){
+			userService.updatePassword(editUser, request)
 			ResponseEntity.ok((PasswordUpdateResponse(success = true, message = "Пароль успешно изменен")))
+		}
 		else
 			ResponseEntity.ok((PasswordUpdateResponse(success = false, message = validationResult.message)))
 	}

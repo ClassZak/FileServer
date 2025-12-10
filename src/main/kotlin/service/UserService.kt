@@ -125,10 +125,9 @@ class UserService(
 			return ValidationResult(valid = true, message = "OK")
 		}
 		
-		// 5.2. Если админ меняет чужой пароль - не проверяем старый пароль
-		// (но можно добавить проверку пароля админа, если нужно)
+		// Если админ меняет чужой пароль - не проверяем старый пароль
 		
-		// 5.3. Проверка, что новый пароль не совпадает со старым
+		// Проверка, что новый пароль не совпадает со старым
 		if (request.oldPassword == request.newPassword) {
 			return ValidationResult(
 				valid = false,
@@ -136,7 +135,7 @@ class UserService(
 			)
 		}
 		
-		// 5.4. Проверка сложности нового пароля
+		// Проверка сложности нового пароля
 		if (!isPasswordStrong(request.newPassword)) {
 			return ValidationResult(
 				valid = false,
@@ -145,6 +144,45 @@ class UserService(
 		}
 		
 		return ValidationResult(valid = true, message = "OK")
+	}
+	
+	// Метод для обновления профиля
+	/*
+	fun updateProfile(userId: Long, request: UpdateProfileRequest): UserResponse {
+		val user = userRepository.findById(userId)
+			.orElseThrow { EntityNotFoundException("Пользователь не найден") }
+		
+		// Проверка email на уникальность (если email меняется)
+		if (user.email != request.email && userRepository.existsByEmail(request.email)) {
+			throw IllegalArgumentException("Email уже используется другим пользователем")
+		}
+		
+		user.apply {
+			surname = request.surname
+			name = request.name
+			patronymic = request.patronymic
+			email = request.email
+		}
+		
+		val savedUser = userRepository.save(user)
+		return convertToResponse(savedUser)
+	}*/
+	
+	// Методы для изменения пароля
+	fun updatePassword(userId: Long, request: UpdatePasswordRequest) {
+		val editUser = userRepository.findById(userId)
+			.orElseThrow { Exception("Пользователь не найден") }
+		
+		return updatePassword(editUser, request)
+	}
+	fun updatePassword(editUser: User, request: UpdatePasswordRequest){
+		// Проверка старого пароля
+		if (!passwordEncoder.matches(request.oldPassword, editUser.passwordHash)) {
+			throw IllegalArgumentException("Неверный текущий пароль")
+		}
+		
+		editUser.passwordHash = passwordEncoder.encode(request.newPassword)
+		userRepository.save(editUser)
 	}
 	
 	// Проверка сложности пароля
