@@ -61,7 +61,7 @@ class SecurityConfig {
 						"/scripts/**",
 						"/scripts/base_scripts/**",
 						"/error",
-						"/check-auth"
+						"/api/auth/check-auth"
 					).permitAll()
 					// API endpoints аутентификации
 					.requestMatchers("/api/auth/**").permitAll()

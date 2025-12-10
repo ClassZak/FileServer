@@ -101,11 +101,4 @@ class UserController(
 			userDetails = user
 		)
 	}
-	
-	/*@GetMapping("/{email}")
-	fun getUserByEmail(@PathVariable email: String): ResponseEntity<UserResponse> {
-		return userService.getUserByEmail(email)?.let {
-			ResponseEntity.ok(it)
-		} ?: ResponseEntity.notFound().build()
-	}*/
 }
