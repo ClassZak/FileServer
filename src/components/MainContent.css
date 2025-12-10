@@ -35,3 +35,16 @@
 	margin-bottom: 1rem;
 	line-height: 1.5;
 }
+
+div:has(> .MainContent) {
+	height: 100%;
+	background-color: var(--primary-accent);
+	width: 90%;
+	flex: 1 0 auto;
+	margin: 0 auto;
+}
+
+div > .MainContent{
+	width: 100%;
+	min-height: calc(100hv - 200px);
+}
