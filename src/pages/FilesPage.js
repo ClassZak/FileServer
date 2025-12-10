@@ -6,6 +6,7 @@ import { FileService } from '../services/FileService';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 import FileSearch from '../components/FileSearch'
+import FilesPageMenu from '../components/FilesPageMenu'
 
 import '../styles/SearchResults.css'
 // Импортируем новые компоненты
@@ -223,6 +224,10 @@ const FilesPage = () => {
             setUploading(false);
             event.target.value = '';
         }
+    };
+
+    const openCreateFolderModal = () => {
+        setShowCreateFolderModal(true);
     };
 
     const handleCreateFolder = async (folderName) => {
@@ -443,7 +448,13 @@ const FilesPage = () => {
                         onNavigate={navigateToFolder} 
                         />
                 </div>
-                
+                {/*
+                <FilesPageMenu
+                    currentPath={currentPath}
+                    openCreateFolderModal={openCreateFolderModal}
+                    loadDirectory={loadDirectory}
+                />
+                 */}
                 {/* Панель навигации */}
                 <div className="mb-6 bg-gray-50 p-4 rounded-lg">
                     <div className="flex flex-col md:flex-row md:items-center space-y-3 md:space-y-0 md:space-x-4">
