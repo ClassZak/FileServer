@@ -6,9 +6,9 @@ import { FileService } from '../services/FileService';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 import FileSearch from '../components/FileSearch'
-import FilesPageMenu from '../components/FilesPageMenu'
 
 import '../styles/SearchResults.css'
+import '../styles/FilesPage.css'
 // Импортируем новые компоненты
 import Breadcrumbs from '../components/Breadcrumbs';
 import ErrorMessage from '../components/ErrorMessage';
@@ -170,16 +170,16 @@ const FilesPage = () => {
 
         setError('');
         if (pathInput.trim() === '') {
-			navigate('/files');
+            navigate('/files');
         } else {
-			const cleanPath = pathInput.replace(/^\/+|\/+$/g, '');
-			const token = AuthService.getToken();
-			const exists = await FileService.exists(cleanPath,token);
-			if(exists)
+            const cleanPath = pathInput.replace(/^\/+|\/+$/g, '');
+            const token = AuthService.getToken();
+            const exists = await FileService.exists(cleanPath,token);
+            if(exists)
                 navigate(`/files/${cleanPath}`);
         }
     };
-	
+    
     const handlePathInputKeyDown = (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -342,234 +342,227 @@ const FilesPage = () => {
 
     return (
         <div>
-
-        <MainContent>
-    <div className="container mx-auto px-4 py-8">
-        {isSearchMode ? (
-            // 1. РЕЖИМ ПОИСКА
-            <>
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
-            <div className="flex justify-between items-center">
-                <div>
-                    <span className="font-medium">Режим поиска:</span>
-                    <span className="ml-2">
-                        "{searchQuery}" в {searchPath || 'корневой папке'}
-                    </span>
-                </div>
-                <button
-                    onClick={exitSearchMode}
-                    className="px-3 py-1 text-sm bg-white border border-blue-300 rounded hover:bg-blue-50"
-                >
-                    Выйти из поиска
-                </button>
-            </div>
-        </div>
-
-        {/* Рендерим результаты поиска здесь */}
-        <div className="search-results">
-            {searchLoading ? (
-                <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-                    <p className="mt-2 text-gray-600">Выполняется поиск...</p>
-                </div>
-            ) : error ? (
-                <ErrorMessage 
-                message={error}
-                onClose={() => setError('')}
-                showNavigation={true}
-                onNavigateToRoot={navigateToRoot}
-                onNavigateUp={navigateUp}
-                showUpButton={!!searchPath}
-                />
-            ) : searchResults ? (
-                <>
-                    <div className="mb-6">
-                        <h2 className="text-2xl font-bold mb-2">
-                            Результаты поиска
-                        </h2>
-                        <div className="text-gray-600 mb-4">
-                            <p>По запросу <span className="font-medium">"{searchQuery}"</span></p>
-                            <p>В папке: <span className="font-medium">{searchPath || 'корневая'}</span></p>
-                            <p>Найдено результатов: <span className="font-medium">{searchResults.totalResults}</span></p>
-                        </div>
-                    </div>
-                    
-                    {searchResults.totalResults > 0 ? (
+            <MainContent>
+                <div className="files-page-container">
+                    {isSearchMode ? (
+                        // 1. РЕЖИМ ПОИСКА
                         <>
-                            {/* ПАПКИ В РЕЖИМЕ ПОИСКА */}
-                            {searchResults.folders && searchResults.folders.length > 0 && (
-                                <FoundFoldersTable
-                                    folders={searchResults.folders}
-                                    navigateToFolder={navigateToFolder}
-                                    prepareDelete={prepareDelete}
-                                    searchPath={searchPath}
-                                />
-                            )}
-                            {/* ФАЙЛЫ В РЕЖИМЕ ПОИСКА */}
-                            {searchResults.files && searchResults.files.length > 0 && (
-                                <FoundFilesTable
-                                    files={searchResults.files}
-                                    onDownload={handleDownload}
-                                    onDelete={prepareDelete}
-                                    searchPath={searchPath}
-                                />
-                            )}
+                            <div className="search-mode-panel">
+                                <div className="flex">
+                                    <div className="search-mode-info">
+                                        <span className="search-mode-label">Режим поиска:</span>
+                                        <span className="search-mode-query">
+                                            "{searchQuery}" в {searchPath || 'корневой папке'}
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={exitSearchMode}
+                                        className="search-mode-exit-button"
+                                    >
+                                        Выйти из поиска
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Рендерим результаты поиска здесь */}
+                            <div className="search-results">
+                                {searchLoading ? (
+                                    <div className="search-loading">
+                                        <div className="loading-spinner"></div>
+                                        <p>Выполняется поиск...</p>
+                                    </div>
+                                ) : error ? (
+                                    <ErrorMessage 
+                                        message={error}
+                                        onClose={() => setError('')}
+                                        showNavigation={true}
+                                        onNavigateToRoot={navigateToRoot}
+                                        onNavigateUp={navigateUp}
+                                        showUpButton={!!searchPath}
+                                    />
+                                ) : searchResults ? (
+                                    <>
+                                        <div className="search-results-header">
+                                            <h2 className="search-results-title">
+                                                Результаты поиска
+                                            </h2>
+                                            <div className="search-results-stats">
+                                                <p>По запросу <span className="highlight">"{searchQuery}"</span></p>
+                                                <p>В папке: <span className="highlight">{searchPath || 'корневая'}</span></p>
+                                                <p>Найдено результатов: <span className="highlight">{searchResults.totalResults}</span></p>
+                                            </div>
+                                        </div>
+                                        
+                                        {searchResults.totalResults > 0 ? (
+                                            <>
+                                                {/* ПАПКИ В РЕЖИМЕ ПОИСКА */}
+                                                {searchResults.folders && searchResults.folders.length > 0 && (
+                                                    <FoundFoldersTable
+                                                        folders={searchResults.folders}
+                                                        navigateToFolder={navigateToFolder}
+                                                        prepareDelete={prepareDelete}
+                                                        searchPath={searchPath}
+                                                    />
+                                                )}
+                                                {/* ФАЙЛЫ В РЕЖИМЕ ПОИСКА */}
+                                                {searchResults.files && searchResults.files.length > 0 && (
+                                                    <FoundFilesTable
+                                                        files={searchResults.files}
+                                                        onDownload={handleDownload}
+                                                        onDelete={prepareDelete}
+                                                        searchPath={searchPath}
+                                                    />
+                                                )}
+                                            </>
+                                        ) : (
+                                            <div className="no-results">
+                                                <div className="no-results-icon">🔍</div>
+                                                <h3 className="no-results-title">
+                                                    Ничего не найдено
+                                                </h3>
+                                                <p className="no-results-description">
+                                                    По запросу "{searchQuery}" в папке "{searchPath || 'корневая'}" ничего не найдено
+                                                </p>
+                                                <div className="no-results-actions">
+                                                    <button
+                                                        onClick={exitSearchMode}
+                                                        className="return-button"
+                                                    >
+                                                        Вернуться к просмотру файлов
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                ) : null}
+                            </div>
                         </>
                     ) : (
-                        <div className="text-center py-12 bg-gray-50 rounded-lg">
-                            <div className="text-4xl mb-4">🔍</div>
-                            <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                                Ничего не найдено
-                            </h3>
-                            <p className="text-gray-500">
-                                По запросу "{searchQuery}" в папке "{searchPath || 'корневая'}" ничего не найдено
-                            </p>
-                            <div className="mt-6">
-                                <button
-                                    onClick={exitSearchMode}
-                                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                                    >
-                                    Вернуться к просмотру файлов
-                                </button>
+                        // 2. ОБЫЧНЫЙ РЕЖИМ НАВИГАЦИИ
+                        <>
+                            <div className="files-header">
+                                <h1 className="files-title">Файловый менеджер</h1>
+                                <Breadcrumbs 
+                                    currentPath={currentPath} 
+                                    onNavigate={navigateToFolder} 
+                                />
                             </div>
-                        </div>
+                            
+                            {/* Панель навигации */}
+                            <div className="navigation-panel">
+                                <div className="navigation-row">
+                                    <div className="path-input-container">
+                                        <form onSubmit={handlePathSubmit} className="path-form">
+                                            <input
+                                                type="text"
+                                                value={pathInput}
+                                                onChange={handlePathInputChange}
+                                                onKeyDown={handlePathInputKeyDown}
+                                                placeholder="Введите путь (например: documents/images)"
+                                                className="path-input"
+                                            />
+                                            <button
+                                                type="submit"
+                                                className="path-submit-button"
+                                            >
+                                                Перейти
+                                            </button>
+                                        </form>
+                                    </div>
+                                    
+                                    <div className="navigation-actions">
+                                        <FileSearch currentPath={currentPath} />
+                                        <button
+                                            onClick={navigateUp}
+                                            disabled={!currentPath}
+                                            className="nav-button back-button"
+                                            type="button"
+                                        >
+                                            Назад
+                                        </button>
+                                        
+                                        <button
+                                            onClick={() => setShowCreateFolderModal(true)}
+                                            className="nav-button create-button"
+                                            type="button"
+                                        >
+                                            Создать папку
+                                        </button>
+                                        
+                                        <label className="nav-button upload-button">
+                                            {uploading ? 'Загрузка...' : 'Загрузить файл'}
+                                            <input
+                                                type="file"
+                                                className="file-input"
+                                                onChange={handleFileUpload}
+                                                disabled={uploading}
+                                            />
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div className="current-path-info">
+                                    <span className="current-path-label">Текущий путь:</span> {currentPath || '/'}
+                                </div>
+                            </div>
+                            
+                            {/* Сообщение об ошибке */}
+                            <ErrorMessage 
+                                message={error}
+                                onClose={() => setError('')}
+                                showNavigation={true}
+                                onNavigateToRoot={navigateToRoot}
+                                onNavigateUp={navigateUp}
+                                showUpButton={!!currentPath}
+                            />
+                            
+                            {/* Загрузка */}
+                            {loading && (
+                                <div className="loading-container">
+                                    <div className="loading-spinner"></div>
+                                    <p className="loading-text">Загрузка файлов...</p>
+                                </div>
+                            )}
+                            
+                            {/* Список папок и файлов */}
+                            {!loading && (
+                                <>
+                                    <FolderTable 
+                                        folders={folders}
+                                        navigateToFolder={navigateToFolder}
+                                        prepareDelete={prepareDelete}
+                                    />
+                                    <FileTable 
+                                        files={files}
+                                        onDownload={handleDownload}
+                                        onDelete={prepareDelete}
+                                    />
+                                </>
+                            )}
+                        </>
                     )}
-                </>
-            ) : null}
-        </div>
-    </>
-) : (
-    // 2. ОБЫЧНЫЙ РЕЖИМ НАВИГАЦИИ
-    <>
-                <div className="mb-6">
-                    <h1 className="text-3xl font-bold mb-2">Файловый менеджер</h1>
-                    <Breadcrumbs 
-                        currentPath={currentPath} 
-                        onNavigate={navigateToFolder} 
-                        />
                 </div>
-                {/*
-                <FilesPageMenu
-                    currentPath={currentPath}
-                    openCreateFolderModal={openCreateFolderModal}
-                    loadDirectory={loadDirectory}
-                />
-                 */}
-                {/* Панель навигации */}
-                <div className="mb-6 bg-gray-50 p-4 rounded-lg">
-                    <div className="flex flex-col md:flex-row md:items-center space-y-3 md:space-y-0 md:space-x-4">
-                        <div className="flex-1">
-                            <form onSubmit={handlePathSubmit} className="flex">
-                                <input
-                                    type="text"
-                                    value={pathInput}
-                                    onChange={handlePathInputChange}
-                                    onKeyDown={handlePathInputKeyDown}
-                                    placeholder="Введите путь (например: documents/images)"
-                                    />
-                                <button
-                                    type="submit"
-                                    >
-                                    Перейти
-                                </button>
-                            </form>
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-2">
-                            <FileSearch currentPath={currentPath} />
-                            <button
-                                onClick={navigateUp}
-                                disabled={!currentPath}
-                                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-                                type="button"
-                                >
-                                Назад
-                            </button>
-                            
-                            <button
-                                onClick={() => setShowCreateFolderModal(true)}
-                                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                                type="button"
-                            >
-                                Создать папку
-                            </button>
-                            
-                            <label className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer">
-                                {uploading ? 'Загрузка...' : 'Загрузить файл'}
-                                <input
-                                    type="file"
-                                    className="hidden"
-                                    onChange={handleFileUpload}
-                                    disabled={uploading}
-                                    />
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div className="mt-2 text-sm text-gray-600">
-                        <span className="font-medium">Текущий путь:</span> {currentPath || '/'}
-                    </div>
-                </div>
-                
-                {/* Сообщение об ошибке */}
-                <ErrorMessage 
-                    message={error}
-                    onClose={() => setError('')}
-                    showNavigation={true}
-                    onNavigateToRoot={navigateToRoot}
-                    onNavigateUp={navigateUp}
-                    showUpButton={!!currentPath}
-                    />
-                
-                {/* Загрузка */}
-                {loading && (
-                    <div className="text-center py-8">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-                        <p className="mt-2 text-gray-600">Загрузка файлов...</p>
-                    </div>
-                )}
-                
-                {/* Список папок и файлов */}
-                {!loading && (
-                    <>
-        <FolderTable 
-            folders={folders}
-            navigateToFolder={navigateToFolder}
-            prepareDelete={prepareDelete}
+            </MainContent>
+            
+            {/* Модальные окна */}
+            <CreateFolderModal 
+                isOpen={showCreateFolderModal}
+                onClose={() => setShowCreateFolderModal(false)}
+                currentPath={currentPath}
+                onCreate={handleCreateFolder}
             />
-        <FileTable 
-            files={files}
-            onDownload={handleDownload}
-            onDelete={prepareDelete}
-        />
-    </>
-)}
-                
-            </>
-        )}
-    </div>
-        
-</MainContent>
-        {/* Модальные окна */}
-        <CreateFolderModal 
-            isOpen={showCreateFolderModal}
-            onClose={() => setShowCreateFolderModal(false)}
-            currentPath={currentPath}
-            onCreate={handleCreateFolder}
-        />
-        
-        <DeleteConfirmationModal 
-            isOpen={showDeleteModal}
-            onClose={() => {
-                setShowDeleteModal(false);
-                setItemToDelete(null);
-            }}
-            itemName={itemToDelete?.name}
-            onConfirm={handleDelete}
-        />
+            
+            <DeleteConfirmationModal 
+                isOpen={showDeleteModal}
+                onClose={() => {
+                    setShowDeleteModal(false);
+                    setItemToDelete(null);
+                }}
+                itemName={itemToDelete?.name}
+                onConfirm={handleDelete}
+            />
         </div>
     );
-
 };
 
 export default FilesPage;
