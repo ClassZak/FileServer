@@ -18,60 +18,59 @@ const getFileIcon = (extension) => {
 	return icons[extension.toLowerCase()] || '📄';
 };
 
-const FoundFilesTable = ({ files, onDownload, onDelete, searchPath }) => {
-	const FileRow = function (file) {
-		if (file === null || file === undefined)
-            file = {empty:true}
-        else
-            console.log(file);
-		
-		const fileFullPath = file ? (file.fullPath || (searchPath ? `${searchPath}/${file.name}` : file.name)) : '';
+function FileRow(onDownload, onDelete, searchPath, file) {
+	if (file === null || file === undefined)
+		console.log(file);
+	
+	const fileFullPath = file ?
+	(file.fullPath || (searchPath ? `${searchPath}/${file.name}` : file.name)) : '';
 
-		return <tr key={file.empty ? '-' : `file-${file.path}`}>
-			<td>
-				<div className="flex items-center">
-					<span className="mr-2 text-lg">
-						{file.empty ? '' : getFileIcon(file.empty ? '-' : file.extension)}
-					</span>
-					<span className="font-medium truncate max-w-xs">
-						{file.empty ? '-' : file.name}
-					</span>
-				</div>
-			</td>
-			<td>{file.empty ? '-' : file.fullPath}</td>
-			<td>{file.empty ? '-' : file.readableSize}</td>
-			<td>
-				<span className="file-type-badge">
-					{file.empty ? '-' : (file.extension || 'файл')}
+	return <tr key={!file ? '-' : `file-${fileFullPath}`}>
+		<td>
+			<div className="flex items-center">
+				<span className="mr-2 text-lg">
+					{!file ? '' : getFileIcon(file.extension)}
 				</span>
-			</td>
-			<td>
-				{file.empty ? '-' : new Date(file.lastModified).toLocaleDateString()}
-			</td>
-			<td>
-				{file.empty ? '-' :
-					<div className="flex space-x-2">
-						<button
-							onClick={() => onDownload(fileFullPath, file.name)}
-							className="file-action-button file-action-button--download"
-							title="Скачать"
-							type="button"
-						>
-							📥
-						</button>
-						<button
-							onClick={() => onDelete(file.path, file.name)}
-							className="file-action-button file-action-button--delete"
-							title="Удалить"
-							type="button"
-						>
-							🗑️
-						</button>
-					</div>
-				}
-			</td>
-		</tr>
-	};
+				<span className="font-medium truncate max-w-xs">
+					{!file ? '-' : file.name}
+				</span>
+			</div>
+		</td>
+		<td>{!file ? '-' : file.fullPath}</td>
+		<td>{!file ? '-' : file.readableSize}</td>
+		<td>
+			<span className="file-type-badge">
+				{!file ? '-' : (file.extension || 'файл')}
+			</span>
+		</td>
+		<td>
+			{!file ? '-' : new Date(file.lastModified).toLocaleDateString()}
+		</td>
+		<td>
+			{!file ? '-' :
+				<div className="flex space-x-2">
+					<button
+						onClick={() => onDownload(fileFullPath, file.name)}
+						className="file-action-button file-action-button--download"
+						title="Скачать"
+						type="button"
+					>
+						📥
+					</button>
+					<button
+						onClick={() => onDelete(fileFullPath, file.name)}
+						className="file-action-button file-action-button--delete"
+						title="Удалить"
+						type="button"
+					>
+						🗑️
+					</button>
+				</div>
+			}
+		</td>
+	</tr>
+};
+const FoundFilesTable = ({ files, onDownload, onDelete, searchPath }) => {
 
 	return (
 		 <div>
@@ -92,8 +91,8 @@ const FoundFilesTable = ({ files, onDownload, onDelete, searchPath }) => {
 					</thead>
 					<tbody>
 						{
-							files.length ? (
-							files.map(file => FileRow(file))) :
+							files && files.length ? (
+							files.map(file => FileRow(onDownload, onDelete, searchPath, file))) :
 							(FileRow())
 						}
 					</tbody>

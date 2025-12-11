@@ -18,56 +18,58 @@ const getFileIcon = (extension) => {
     return icons[extension.toLowerCase()] || '📄';
 };
 
-const FileTable = ({ files, onDownload, onDelete }) => {
-    const FileRow = function (file) {
-        if (file === null || file === undefined)
-            file = {empty:true}
-        else
+function FileRow(onDownload, onDelete, file){
+    if (file === null || file === undefined)
             console.log(file);
 
-        return <tr key={file.empty ? '-' : `file-${file.fullPath}`}>
-            <td>
-                <div className="flex items-center">
-                    <span className="mr-2 text-lg">
-                        {file.empty ? '' : getFileIcon(file.empty ? '-' : file.extension)}
-                    </span>
-                    <span className="font-medium truncate max-w-xs">
-                        {file.empty ? '-' : file.name}
-                    </span>
-                </div>
-            </td>
-            <td>{file.empty ? '-' : file.readableSize}</td>
-            <td>
-                <span className="file-type-badge">
-                    {file.empty ? '-' : (file.extension || 'файл')}
+    return <tr key={!file ? '-' : `file-${file.fullPath}`}>
+        <td>
+            <div className="flex items-center">
+                <span className="mr-2 text-lg">
+                    {!file ? '' : getFileIcon(file.extension)}
                 </span>
-            </td>
-            <td>
-                {file.empty ? '-' : new Date(file.lastModified).toLocaleDateString()}
-            </td>
-            <td>
-                {file.empty ? '-' :
-                    <div className="flex space-x-2">
-                        <button
-                            onClick={() => onDownload(file.fullPath, file.name)}
-                            className="file-action-button file-action-button--download"
-                            title="Скачать"
-                            type="button"
-                        >
-                            📥
-                        </button>
-                        <button
-                            onClick={() => onDelete(file.fullPath, file.name)}
-                            className="file-action-button file-action-button--delete"
-                            title="Удалить"
-                            type="button"
-                        >
-                            🗑️
-                        </button>
-                    </div>
-                }
-            </td>
-        </tr>
+                <span className="font-medium truncate max-w-xs">
+                    {!file ? '-' : file.name}
+                </span>
+            </div>
+        </td>
+        <td>{!file ? '-' : file.readableSize}</td>
+        <td>
+            <span className="file-type-badge">
+                {!file ? '-' : (file.extension || 'файл')}
+            </span>
+        </td>
+        <td>
+            {!file ? '-' : new Date(file.lastModified).toLocaleDateString()}
+        </td>
+        <td>
+            {!file ? '-' :
+                <div className="flex space-x-2">
+                    <button
+                        onClick={() => onDownload(file.fullPath, file.name)}
+                        className="file-action-button file-action-button--download"
+                        title="Скачать"
+                        type="button"
+                    >
+                        📥
+                    </button>
+                    <button
+                        onClick={() => onDelete(file.fullPath, file.name)}
+                        className="file-action-button file-action-button--delete"
+                        title="Удалить"
+                        type="button"
+                    >
+                        🗑️
+                    </button>
+                </div>
+            }
+        </td>
+    </tr>
+}
+
+const FileTable = ({ files, onDownload, onDelete }) => {
+     {
+        
     };
 
     return (
@@ -89,7 +91,7 @@ const FileTable = ({ files, onDownload, onDelete }) => {
                     <tbody>
                         {
                             files.length ? (
-                            files.map(file => FileRow(file))) :
+                            files.map(file => FileRow(onDownload, onDelete, file))) :
                             (FileRow())
                         }
                     </tbody>
