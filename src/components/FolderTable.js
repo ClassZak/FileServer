@@ -8,12 +8,9 @@ const FolderTable = ({ folders, navigateToFolder, prepareDelete }) => {
 
 		return <tr key={folder.empty ? '-' : `folder-${folder.fullPath}`}>
 			<td>
-				<div 
-					className="flex items-center cursor-pointer hover:text-blue-400"
-					onClick={folder.empty ? ()=>{} : () => navigateToFolder(folder.fullPath)}
-				>
-					<div className="mr-3 text-xl">{folder.empty ? '' : '📁' }</div>
-					<div className="font-medium">
+				<div className='flex'>
+					<div>{folder.empty ? '' : '📁' }</div>
+					<div>
 						{folder.empty ? '-' : folder.name}
 					</div>
 				</div>
@@ -23,7 +20,7 @@ const FolderTable = ({ folders, navigateToFolder, prepareDelete }) => {
 			<td>{folder.empty ? '-' : (folder.modifiedDate || '-')}</td>
 			<td>
 				{folder.empty ? '-' :
-						<div className="flex space-x-2">
+						<div className="flex">
 							<button
 								onClick={() => navigateToFolder(folder.fullPath)}
 								className="file-action-button file-action-button--download"
