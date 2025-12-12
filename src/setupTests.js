@@ -3,3 +3,23 @@
 // expect(element).toHaveTextContent(/react/i)
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom';
+
+
+import '@testing-library/jest-dom';
+
+// Мокаем axios глобально
+jest.mock('axios', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+    delete: jest.fn(),
+    create: jest.fn(() => ({
+      get: jest.fn(),
+      post: jest.fn(),
+      put: jest.fn(),
+      delete: jest.fn()
+    }))
+  }
+}));
