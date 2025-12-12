@@ -442,14 +442,17 @@ const FilesPage = () => {
                         <>
                             <div className="files-header">
                                 <h1 className="files-title">Файловый менеджер</h1>
-                                <Breadcrumbs 
-                                    currentPath={currentPath} 
-                                    onNavigate={navigateToFolder} 
-                                />
                             </div>
                             
                             {/* Панель навигации */}
                             <div className="navigation-panel">
+                                <div className='search-panel'>
+                                    <FileSearch currentPath={currentPath} />
+                                </div>
+                                <Breadcrumbs 
+                                    currentPath={currentPath} 
+                                    onNavigate={navigateToFolder} 
+                                />
                                 <div className="navigation-row">
                                     <div className="path-input-container">
                                         <form onSubmit={handlePathSubmit} className="path-form">
@@ -471,7 +474,6 @@ const FilesPage = () => {
                                     </div>
                                     
                                     <div className="navigation-actions">
-                                        <FileSearch currentPath={currentPath} />
                                         <button
                                             onClick={navigateUp}
                                             disabled={!currentPath}

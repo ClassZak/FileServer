@@ -1,4 +1,5 @@
 import React from 'react';
+import '../styles/FilesPage.css'
 
 const Breadcrumbs = ({ currentPath, onNavigate }) => {
     if (!currentPath) return null;
@@ -6,11 +7,10 @@ const Breadcrumbs = ({ currentPath, onNavigate }) => {
     const parts = currentPath.split('/').filter(Boolean);
     
     return (
-        <div className="flex items-center space-x-1 text-sm">
+        <div className='path-panel'>
             <button
                 onClick={() => onNavigate('')}
-                className="text-blue-600 hover:text-blue-800"
-                type="button"
+                className="nav-button"
             >
                 Корень
             </button>
@@ -27,8 +27,7 @@ const Breadcrumbs = ({ currentPath, onNavigate }) => {
                         ) : (
                             <button
                                 onClick={() => onNavigate(pathToHere)}
-                                className="text-blue-600 hover:text-blue-800"
-                                type="button"
+                                className="nav-button"
                             >
                                 {part}
                             </button>

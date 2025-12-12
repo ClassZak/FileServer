@@ -3,7 +3,7 @@
 	color: #edf2f7;
 }
 
-/* Стили для обычного режима */
+/* Default mode style */
 .files-header {
 	margin-bottom: 24px;
 }
@@ -14,6 +14,43 @@
 	margin-bottom: 8px;
 	color: #edf2f7;
 }
+
+
+.search-panel .search-form{
+	display: flex;
+	width: 100%;
+	margin: 10px auto;
+	align-items: center;
+	display: flex;
+	gap: 5px;
+	width: 100%;
+}
+
+.search-panel .search-form input[type="text"] {
+	flex-grow: 1;
+	padding: 5px;
+	border: 1px solid #ccc;
+	border-radius: 0px;
+	width: inherit;
+	min-width: 20px;
+	width: 100%;
+}
+
+.search-panel{
+	margin: 10px auto;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.path-panel{
+	background-color: #242424;
+	/*border: 1px solid #333;
+	border-radius: 4px;
+	padding: 16px;*/
+	margin-bottom: 24px;
+}
+
 
 .navigation-panel {
 	background-color: #242424;
@@ -91,6 +128,8 @@
 	cursor: pointer;
 	font-size: 14px;
 	transition: background-color 0.2s;
+	background-color: #2a2a2a;
+	color: #edf2f7;
 }
 
 .back-button {
@@ -98,7 +137,7 @@
 	color: #edf2f7;
 }
 
-.back-button:hover:not(:disabled) {
+.nav-button:hover:not(:disabled) {
 	background-color: #484848;
 }
 
@@ -140,7 +179,7 @@
 	font-weight: 600;
 }
 
-/* Стили для режима поиска */
+/* Search mode style */
 .search-mode-panel {
 	background-color: #242424;
 	border: 1px solid #333;
