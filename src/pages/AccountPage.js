@@ -95,8 +95,8 @@ function AccountPage() {
 					<h2>Информация о пользователе</h2>
 					<div className="account-info">
 						<p><strong>Email:</strong> {user.email}</p>
-						<p><strong>Имя:</strong> {user.name}</p>
 						<p><strong>Фамилия:</strong> {user.surname}</p>
+						<p><strong>Имя:</strong> {user.name}</p>
 						<p><strong>Отчество:</strong> {user.patronymic || 'Не указано'}</p>
 					</div>
 					<button onClick={setIsPasswordModalOpen} className="logout-button">
