@@ -1,7 +1,7 @@
 import React from 'react';
 import '../styles/FilesPage.css'
 
-const Breadcrumbs = ({ currentPath, onNavigate }) => {
+const Breadcrumbs = ({ currentPath, onNavigate, navigateUp }) => {
     if (!currentPath) return null;
     
     const parts = currentPath.split('/').filter(Boolean);
@@ -35,6 +35,13 @@ const Breadcrumbs = ({ currentPath, onNavigate }) => {
                     </React.Fragment>
                 );
             })}
+            <button
+                onClick={navigateUp}
+                disabled={!currentPath}
+                className="nav-button back-button"
+            >
+                Назад
+            </button>
         </div>
     );
 };

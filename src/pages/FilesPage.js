@@ -452,6 +452,7 @@ const FilesPage = () => {
                                 <Breadcrumbs 
                                     currentPath={currentPath} 
                                     onNavigate={navigateToFolder} 
+                                    navigateUp={navigateUp}
                                 />
                                 <div className="navigation-row">
                                     <div className="path-input-container">
@@ -483,29 +484,29 @@ const FilesPage = () => {
                                             Назад
                                         </button>
                                         
-                                        <button
-                                            onClick={() => setShowCreateFolderModal(true)}
-                                            className="nav-button create-button"
-                                            type="button"
-                                        >
-                                            Создать папку
-                                        </button>
-                                        
-                                        <label className="nav-button upload-button">
-                                            {uploading ? 'Загрузка...' : 'Загрузить файл'}
-                                            <input
-                                                type="file"
-                                                className="file-input"
-                                                onChange={handleFileUpload}
-                                                disabled={uploading}
-                                            />
-                                        </label>
                                     </div>
                                 </div>
-                                
-                                <div className="current-path-info">
-                                    <span className="current-path-label">Текущий путь:</span> {currentPath || '/'}
+                                <span className="current-path-label">Текущий путь:</span> {currentPath || '/'}
+                                <div className='flex' style={{gap:'10px', marginTop:'10px'}}>
+                                    <button
+                                        onClick={() => setShowCreateFolderModal(true)}
+                                        className="nav-button create-button"
+                                        type="button"
+                                    >
+                                        Создать папку
+                                    </button>
+                                    
+                                    <label className="nav-button upload-button">
+                                        {uploading ? 'Загрузка...' : 'Загрузить файл'}
+                                        <input
+                                            type="file"
+                                            className="file-input"
+                                            onChange={handleFileUpload}
+                                            disabled={uploading}
+                                        />
+                                    </label>
                                 </div>
+                                
                             </div>
                             
                             {/* Сообщение об ошибке */}

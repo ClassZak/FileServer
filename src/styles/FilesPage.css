@@ -4,14 +4,8 @@
 }
 
 /* Default mode style */
-.files-header {
-	margin-bottom: 24px;
-}
 
 .files-title {
-	font-size: 28px;
-	font-weight: bold;
-	margin-bottom: 8px;
 	color: #edf2f7;
 }
 
@@ -37,7 +31,6 @@
 }
 
 .search-panel{
-	margin: 10px auto;
 	display: flex;
 	align-items: center;
 	gap: 10px;
@@ -45,10 +38,12 @@
 
 .path-panel{
 	background-color: #242424;
-	/*border: 1px solid #333;
-	border-radius: 4px;
-	padding: 16px;*/
-	margin-bottom: 24px;
+	margin-bottom: 10px;
+}
+
+.path-panel .back-button{
+	display:block;
+	margin-top:4px;
 }
 
 
@@ -177,6 +172,7 @@
 
 .current-path-label {
 	font-weight: 600;
+	margin-left: 5px;
 }
 
 /* Search mode style */
