@@ -10,6 +10,7 @@ import Header from "./parts/Header";
 import Footer from './parts/Footer';
 import FilesPage from './pages/FilesPage';
 import './App.css'; // Создадим этот файл
+import UsersPage from './pages/UsersPage';
 
 
 function App() {
@@ -27,6 +28,12 @@ function App() {
 							<Route path="/account" element={
 								<ProtectedRoute>
 									<AccountPage />
+								</ProtectedRoute>
+							} />
+
+							<Route path='/users/*' element={
+								<ProtectedRoute>
+									<UsersPage />
 								</ProtectedRoute>
 							} />
 							

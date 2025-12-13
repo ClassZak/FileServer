@@ -12,7 +12,7 @@ class UserService{
 	 * @param {string} authToken Authorization token for admin role checking
 	 * @returns {Promise<Object>} Object with "error" or "success" key
 	 */
-	static async newUser(user, authToken) {
+	static async createUser(user, authToken) {
 		try{
 			const config = {
 				headers: { Authorization: authToken }
@@ -22,9 +22,9 @@ class UserService{
 
 			return response.data;
 		} catch (error) {
-			// Process 401 for UserController
+			// Process 403 for UserController
 			if(error.response && (error.response.status === 403))
-				return error.response.status;
+				return error.response.data;
 			// Other errors throw next
 			throw error;
 		}
@@ -50,7 +50,7 @@ class UserService{
 		} catch (error) {
 			// Process 403 and 404 for UserController
 			if(error.response && (error.response.status === 403 || error.response.status === 404))
-				return error.response.status;
+				return error.response.data;
 			// Other errors throw next
 			throw error;
 		}
@@ -75,7 +75,7 @@ class UserService{
 		} catch (error) {
 			// Process 403 and 404 for UserController
 			if(error.response && (error.response.status === 403 || error.response.status === 404))
-				return error.response.status;
+				return error.response.data;
 			// Other errors throw next
 			throw error;
 		}
@@ -100,12 +100,12 @@ class UserService{
 		} catch (error) {
 			// Process 403 and 404 for UserController
 			if(error.response && (error.response.status === 403 || error.response.status === 404))
-				return error.response.status;
+				return error.response.data;
 			// Other errors throw next
 			throw error;
 		}
 	}
-	
+
 }
 
 export default UserService;

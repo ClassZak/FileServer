@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 
-const CreateFolderModal = ({ 
+function CreateFolderModal({ 
     isOpen, 
     onClose, 
     currentPath, 
     onCreate 
-}) => {
+}) {
     const [folderName, setFolderName] = useState('');
     const [submitting, setSubmitting] = useState(false);
 

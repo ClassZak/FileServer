@@ -12,18 +12,15 @@ class AdminService{
 	 */
 	static async isAdmin(authToken){
 		try {
-			const config = {
-				headers: { Authorization: authToken }
-			};
-			
-			const response = await axios.get('/api/admin/is-admin', config);
+			const response = await axios.get('/api/admin/is-admin',{ 
+				headers: { 'Authorization': `Bearer ${authToken}` }
+			});
 			
 			return response.data;
 		} catch (error) {
 			// Process 401 and 404 errors for AdministratorController
-			if (error.response && (error.response.status === 401 || error.response.status === 404)) {
+			if (error.response && (error.response.status === 401 || error.response.status === 404))
 				return error.response.data;
-			}
 			// Other errors throw next
 			throw error;
 		}

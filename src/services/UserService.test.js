@@ -27,7 +27,7 @@ describe('UserService', () => {
 		jest.clearAllMocks();
 	});
 	
-	describe('newUser', () => {
+	describe('createUser', () => {
 		it('успешно создает пользователя и возвращает данные', async () => {
 			// Arrange
 			const mockResponse = {
@@ -37,7 +37,7 @@ describe('UserService', () => {
 			axios.post.mockResolvedValue(mockResponse);
 
 			// Act
-			const result = await UserService.newUser(mockUser, mockAuthToken);
+			const result = await UserService.createUser(mockUser, mockAuthToken);
 
 			// Assert
 			expect(axios.post).toHaveBeenCalledWith(
@@ -50,7 +50,7 @@ describe('UserService', () => {
 			expect(result).toEqual({ success: true });
 		});
 
-		it('возвращает статус 403 при отсутствии прав администратора', async () => {
+		it('возвращает сообщение об ошибке при отсутствии прав администратора', async () => {
 			// Arrange
 			const errorResponse = {
 				response: {
@@ -61,10 +61,10 @@ describe('UserService', () => {
 			axios.post.mockRejectedValue(errorResponse);
 
 			// Act
-			const result = await UserService.newUser(mockUser, mockAuthToken);
+			const result = await UserService.createUser(mockUser, mockAuthToken);
 
 			// Assert
-			expect(result).toBe(403);
+			expect(result).toStrictEqual({'error': 'You are not admin!'});
 		});
 
 		it('пробрасывает ошибку при других кодах ошибок', async () => {
@@ -78,7 +78,7 @@ describe('UserService', () => {
 			axios.post.mockRejectedValue(errorResponse);
 
 			// Act & Assert
-			await expect(UserService.newUser(mockUser, mockAuthToken))
+			await expect(UserService.createUser(mockUser, mockAuthToken))
 				.rejects.toEqual(errorResponse);
 		});
 	});
@@ -107,7 +107,7 @@ describe('UserService', () => {
 			expect(result).toEqual({ user: mockUserResponse });
 		});
 
-		it('возвращает статус 403 при отсутствии прав администратора', async () => {
+		it('возвращает сообщение об ошибке при отсутствии прав администратора', async () => {
 			// Arrange
 			const errorResponse = {
 				response: {
@@ -121,10 +121,10 @@ describe('UserService', () => {
 			const result = await UserService.readUser(mockAuthToken, userEmail);
 
 			// Assert
-			expect(result).toBe(403);
+			expect(result).toStrictEqual({'error': 'You are not admin!'});
 		});
 
-		it('возвращает статус 404 при отсутствии пользователя', async () => {
+		it('возвращает сообщение об ошибке при отсутствии прав администратора', async () => {
 			// Arrange
 			const errorResponse = {
 				response: {
@@ -138,7 +138,7 @@ describe('UserService', () => {
 			const result = await UserService.readUser(mockAuthToken, userEmail);
 
 			// Assert
-			expect(result).toBe(404);
+			expect(result).toStrictEqual({'error': 'User not found'});
 		});
 
 		it('корректно кодирует email в URL', async () => {
@@ -182,7 +182,7 @@ describe('UserService', () => {
 			expect(result).toEqual({ success: true });
 		});
 
-		it('возвращает статус 403 при отсутствии прав администратора', async () => {
+		it('возвращает сообщение об ошибке при отсутствии прав администратора', async () => {
 			// Arrange
 			const errorResponse = {
 				response: {
@@ -196,10 +196,10 @@ describe('UserService', () => {
 			const result = await UserService.updateUser(mockAuthToken, mockUser);
 
 			// Assert
-			expect(result).toBe(403);
+			expect(result).toStrictEqual({'error': 'You are not admin!'});
 		});
 
-		it('возвращает статус 404 при отсутствии пользователя', async () => {
+		it('возвращает сообщение об ошибке при отсутствии пользователя', async () => {
 			// Arrange
 			const errorResponse = {
 				response: {
@@ -213,7 +213,7 @@ describe('UserService', () => {
 			const result = await UserService.updateUser(mockAuthToken, mockUser);
 
 			// Assert
-			expect(result).toBe(404);
+			expect(result).toStrictEqual({'error': 'User not found'});
 		});
 
 		it('пробрасывает ошибку при других кодах ошибок', async () => {
@@ -268,7 +268,7 @@ describe('UserService', () => {
 			const result = await UserService.deleteUser(mockAuthToken, mockUser);
 
 			// Assert
-			expect(result).toBe(403);
+			expect(result).toStrictEqual({'error': 'You are not admin!'});
 		});
 
 		it('возвращает статус 404 при отсутствии пользователя', async () => {
@@ -285,7 +285,7 @@ describe('UserService', () => {
 			const result = await UserService.deleteUser(mockAuthToken, mockUser);
 
 			// Assert
-			expect(result).toBe(404);
+			expect(result).toStrictEqual({'error': 'User not found'});
 		});
 
 		it('пробрасывает ошибку при других кодах ошибок', async () => {
@@ -315,7 +315,7 @@ describe('UserService', () => {
 			axios.get.mockResolvedValue(mockResponse);
 
 			// Act & Assert для каждого метода
-			await UserService.newUser(mockUser, customToken);
+			await UserService.createUser(mockUser, customToken);
 			expect(axios.post).toHaveBeenCalledWith(
 				expect.any(String),
 				expect.any(Object),
@@ -336,7 +336,7 @@ describe('UserService', () => {
 			axios.get.mockRejectedValue(networkError);
 
 			// Act & Assert для каждого метода
-			await expect(UserService.newUser(mockUser, mockAuthToken))
+			await expect(UserService.createUser(mockUser, mockAuthToken))
 				.rejects.toThrow('Network Error');
 			
 			await expect(UserService.readUser(mockAuthToken, 'test@example.com'))
@@ -349,7 +349,7 @@ describe('UserService', () => {
 			axios.post.mockRejectedValue(errorWithoutResponse);
 
 			// Act & Assert
-			await expect(UserService.newUser(mockUser, mockAuthToken))
+			await expect(UserService.createUser(mockUser, mockAuthToken))
 				.rejects.toThrow('Some error');
 		});
 
@@ -362,7 +362,7 @@ describe('UserService', () => {
 			axios.post.mockResolvedValue(emptyResponse);
 
 			// Act
-			const result = await UserService.newUser(mockUser, mockAuthToken);
+			const result = await UserService.createUser(mockUser, mockAuthToken);
 
 			// Assert
 			expect(result).toEqual({});
