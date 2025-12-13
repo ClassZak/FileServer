@@ -12,9 +12,7 @@ class AdminService{
 	 */
 	static async isAdmin(authToken){
 		try {
-			const response = await axios.get('/api/admin/is-admin',{ 
-				headers: { 'Authorization': `Bearer ${authToken}` }
-			});
+			const response = await axios.get('/api/admin/is-admin',AdminService.createConfig(authToken));
 			
 			return response.data;
 		} catch (error) {
@@ -23,6 +21,16 @@ class AdminService{
 				return error.response.data;
 			// Other errors throw next
 			throw error;
+		}
+	}
+	/**
+	 * Function to create configuration for request
+	 * @param {string} authToken 
+	 * @returns {Object} Configuration object with headers: {'Authorization': `Bear ...`}
+	 */
+	static createConfig(authToken) {
+		return { 
+			headers: { 'Authorization': `Bearer ${authToken}` }
 		}
 	}
 }

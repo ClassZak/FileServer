@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
-import User from '../entity/User';
 
 function CreateUserModal({
 	isOpen,
@@ -8,88 +7,129 @@ function CreateUserModal({
 	onConfirm
 }) {
 	const [submitting, setSubmitting] = useState(false);
+	const [formData, setFormData] = useState({
+		surname: '',
+		name: '',
+		patronymic: '',
+		email: '',
+		password: ''
+	});
 
-	let user = new User();
+	const handleInputChange = (e) => {
+		const { name, value } = e.target;
+		const fieldName = name.replace('user.', '');
+		setFormData(prev => ({
+			...prev,
+			[fieldName]: value
+		}));
+	};
 
 	const handleSubmit = async (e) => {
-		if (e && e.preventDefault) {
-			e.preventDefault();
-		}
+		e.preventDefault();
 		
-		if (submitting) return; // Stop resending
+		if (submitting) return;
 		
 		setSubmitting(true);
 		try {
-			await onConfirm(user);
+			await onConfirm(formData);
+		} catch (error) {
+			console.error(error);
 		} finally {
 			setSubmitting(false);
 		}
 	};
 
+	const handleClose = () => {
+		setFormData({
+			surname: '',
+			name: '',
+			patronymic: '',
+			email: '',
+			password: ''
+		});
+		onClose();
+	};
+
 	return (
 		<Modal
 			isOpen={isOpen}
-			onClose={onClose}
+			onClose={handleClose}
 			title={'Создать нового пользователя'}
 		>
 			<form onSubmit={handleSubmit}>
-				<label for="user.surname">Фамилия</label>
+				<label htmlFor="user.surname">Фамилия</label>
 				<input
+					id="user.surname"
 					name="user.surname"
 					type="text"
-					value={user.surname}
+					value={formData.surname}
+					onChange={handleInputChange}
 					placeholder="Фамилия"
-					autoFocus
 					disabled={submitting}
-				/>
-				<label for="user.name">Имя</label>
-				<input
-					name="user.name"
-					type="text"
-					value={user.name}
-					placeholder="Имя"
-					autoFocus
-					disabled={submitting}
-				/>
-				<label for="user.patronymic">Отчество</label>
-				<input
-					name="user.patronymic"
-					type="text"
-					value={user.patronymic}
-					placeholder="Отчество"
-					autoFocus
-					disabled={submitting}
-				/>
-				<label for="user.email">Почта</label>
-				<input
-					name="user.email"
-					type="email"
-					value={user.email}
-					placeholder="Почта"
-					autoFocus
-					disabled={submitting}
-				/>
-				<label for="user.password">Пароль</label>
-				<input
-					name="user.password"
-					type="password"
-					value={user.password}
-					placeholder="Пароль"
-					autoFocus
-					disabled={submitting}
+					required
 				/>
 				
+				<label htmlFor="user.name">Имя</label>
+				<input
+					id="user.name"
+					name="user.name"
+					type="text"
+					value={formData.name}
+					onChange={handleInputChange}
+					placeholder="Имя"
+					disabled={submitting}
+					required
+				/>
+				
+				<label htmlFor="user.patronymic">Отчество</label>
+				<input
+					id="user.patronymic"
+					name="user.patronymic"
+					type="text"
+					value={formData.patronymic}
+					onChange={handleInputChange}
+					placeholder="Отчество"
+					disabled={submitting}
+					required
+				/>
+				
+				<label htmlFor="user.email">Почта</label>
+				<input
+					id="user.email"
+					name="user.email"
+					type="email"
+					value={formData.email}
+					onChange={handleInputChange}
+					placeholder="Почта"
+					disabled={submitting}
+					required
+				/>
+				
+				<label htmlFor="user.password">Пароль</label>
+				<input
+					id="user.password"
+					name="user.password"
+					type="password"
+					value={formData.password}
+					onChange={handleInputChange}
+					placeholder="Пароль"
+					disabled={submitting}
+					required
+				/>
 
-				<div style={{ display: 'flex' }}>
+				<div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
 					<button
 						type="button"
-						onClick={onClose}
+						onClick={handleClose}
 						disabled={submitting}
+						style={{ flex: 1 }}
 					>
 						Отмена
 					</button>
 					<button
 						type="submit"
+						disabled={submitting}
+						style={{ flex: 1 }}
 					>
 						{submitting ? 'Создание...' : 'Создать'}
 					</button>

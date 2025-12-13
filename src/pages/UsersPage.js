@@ -13,7 +13,7 @@ function UsersPage(){
 	const [showCreateUserModal, setShowCreateUserModal] = useState(false);
 	const { '*': pathParam } = useParams();
 	const [error, setError] = useState('');
-	 const navigate = useNavigate();
+	const navigate = useNavigate();
 
 	
 	const checkAuth = async () => {
@@ -23,7 +23,7 @@ function UsersPage(){
 	}
 	useEffect(() => {
 		checkAuth();
-	});
+	}, []);
 
 	
 
@@ -47,11 +47,14 @@ function UsersPage(){
 	return (
 		<div>
 			<MainContent>
-				<h1>Траллалелло-тра-ла-ла-ла</h1>				
+				<h1>Траллалелло-тра-ла-ла-ла</h1>
+				<button onClick={()=>setShowCreateUserModal(true)}>
+					Создать пользователя
+				</button>
 			</MainContent>
 			<CreateUserModal
 				isOpen={showCreateUserModal}
-				onClose={() => {setShowCreateUserModal(false)}}
+				onClose={() => {setShowCreateUserModal(false); setError('');}}
 				onConfirm={onConfirmCreateUser}
 			/>
 		</div>

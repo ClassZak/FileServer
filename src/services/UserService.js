@@ -14,11 +14,9 @@ class UserService{
 	 */
 	static async createUser(user, authToken) {
 		try{
-			const config = {
-				headers: { Authorization: authToken }
-			};
-
-			const response = await axios.post('/api/users/new', user, config);
+			const response = await axios.post(
+				'/api/users/new', user, UserService.createConfig(authToken)
+			);
 
 			return response.data;
 		} catch (error) {
@@ -40,11 +38,9 @@ class UserService{
 	 */
 	static async readUser(authToken, userEmail){
 		try{
-			const config = {
-				headers: { Authorization: authToken }
-			};
-
-			const response = await axios.get(`/api/user/${encodeURI(userEmail)}`, config);
+			const response = await axios.get(
+				`/api/user/${encodeURI(userEmail)}`, UserService.createConfig(authToken)
+			);
 
 			return response.data;
 		} catch (error) {
@@ -65,11 +61,9 @@ class UserService{
 	 */
 	static async updateUser(authToken, user){
 		try{
-			const config = {
-				headers: { Authorization: authToken }
-			};
-
-			const response = await axios.get(`/api/update/${encodeURI(user.email)}`, config);
+			const response = await axios.get(
+				`/api/update/${encodeURI(user.email)}`, UserService.createConfig(authToken)
+			);
 
 			return response.data;
 		} catch (error) {
@@ -90,11 +84,9 @@ class UserService{
 	 */
 	static async deleteUser(authToken, user){
 		try{
-			const config = {
-				headers: { Authorization: authToken }
-			};
-
-			const response = await axios.get(`/api/delete/${encodeURI(user.email)}`, config);
+			const response = await axios.get(
+				`/api/delete/${encodeURI(user.email)}`, UserService.createConfig(authToken)
+			);
 
 			return response.data;
 		} catch (error) {
@@ -106,6 +98,19 @@ class UserService{
 		}
 	}
 
+
+
+
+	/**
+	 * Function to create configuration for request
+	 * @param {string} authToken 
+	 * @returns {Object} Configuration object with headers: {'Authorization': `Bear ...`}
+	 */
+	static createConfig(authToken) {
+		return { 
+			headers: { 'Authorization': `Bearer ${authToken}` }
+		}
+	}
 }
 
 export default UserService;
