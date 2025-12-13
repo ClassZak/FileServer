@@ -7,8 +7,8 @@ import axios from "axios";
 class AdminService{
 	/**
 	 * Checking is user administrator or not
-	 * @param {string} authToken - Authorization token for admin role checking
-	 * @returns {Promise<Object>} - Operation result
+	 * @param {string} authToken Authorization token for admin role checking
+	 * @returns {Promise<Object>} Operation result
 	 */
 	static async isAdmin(authToken){
 		try {
