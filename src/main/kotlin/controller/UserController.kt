@@ -1,6 +1,5 @@
 package org.zak.controller
 
-
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
@@ -10,7 +9,10 @@ import org.zak.dto.CurrentUser
 import org.zak.dto.LoginRequest
 import org.zak.dto.PasswordUpdateResponse
 import org.zak.dto.UpdatePasswordRequest
+import org.zak.dto.UpdateUserRequest
 import org.zak.dto.UserResponse
+import org.zak.entity.User
+import org.zak.org.zak.service.AdministratorService
 import org.zak.repository.AdministratorRepository
 import org.zak.service.UserService
 import org.zak.util.JwtUtil
@@ -19,13 +21,12 @@ import org.zak.util.JwtUtil
 @RequestMapping("/api/users")
 class UserController(
 	private val userService: UserService,
-	private val administratorRepository: AdministratorRepository,
-	//private val adminService:
+	private val administratorService: AdministratorService,
 	private val jwtUtil: JwtUtil
 ) {
 	
 	@PostMapping("/register")
-	fun register(@RequestBody request: CreateUserRequest): ResponseEntity<UserResponse> {
+	fun register(@RequestBody request: CreateUserRequest): ResponseEntity<User> {
 		return try {
 			val user = userService.createUser(request)
 			ResponseEntity(user, HttpStatus.CREATED)
@@ -43,11 +44,119 @@ class UserController(
 		)
 		
 		if (isAuthenticated!=null) {
-			 return ResponseEntity.ok(response) as ResponseEntity<Map<String, Any>>
+			return ResponseEntity.ok(response) as ResponseEntity<Map<String, Any>>
 		} else {
-			 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response) as ResponseEntity<Map<String, Any>>
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response) as ResponseEntity<Map<String, Any>>
 		}
 	}
+	
+	
+	@PostMapping("/new")
+	@PreAuthorize("isAuthenticated()")
+	fun new(
+		@RequestBody request: CreateUserRequest,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Map<String, Any>> {
+		val jwtToken = jwtUtil.extractJwtToken(authHeader)
+		val currUser = getCurrentUserFromJwt(jwtToken)
+		
+		val isAdmin = administratorService.isAdmin(currUser.id!!.toLong())
+		if (!isAdmin)
+			return ResponseEntity
+				.status(HttpStatus.FORBIDDEN)
+				.body(mapOf("error" to "You are not admin!"))
+		
+		return try {
+			userService.createUser(request)
+			ResponseEntity.ok(mapOf("success" to true))
+		} catch (e: Exception) {
+			ResponseEntity.badRequest().body(mapOf("error" to e.message)) as ResponseEntity<Map<String, Any>>
+		}
+	}
+	
+	
+	@GetMapping("/user/{email}")
+	@PreAuthorize("isAuthenticated()")
+	fun read(
+		@PathVariable email: String,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Map<String, Any>> {
+		val jwtToken = jwtUtil.extractJwtToken(authHeader)
+		val currUser = getCurrentUserFromJwt(jwtToken)
+		
+		val isAdmin = administratorService.isAdmin(currUser.id!!.toLong())
+		if (!isAdmin)
+			return ResponseEntity
+				.status(HttpStatus.FORBIDDEN)
+				.body(mapOf("error" to "You are not admin!"))
+		
+		val user = userService.getUserEntityByEmail(email)
+			?: return ResponseEntity
+				.status(HttpStatus.NOT_FOUND)
+				.body(mapOf("error" to "User not found"))
+		
+		val response = userService.toUserResponse(user)
+		
+		return ResponseEntity.ok().body(mapOf("user" to response))
+	}
+	
+	
+	@PutMapping("/update/{email}")
+	@PreAuthorize("isAuthenticated()")
+	fun update(
+		@PathVariable email: String,
+		@RequestBody request: UpdateUserRequest,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Map<String, Any>> {
+		val jwtToken = jwtUtil.extractJwtToken(authHeader)
+		val currUser = getCurrentUserFromJwt(jwtToken)
+		
+		val isAdmin = administratorService.isAdmin(currUser.id!!.toLong())
+		if (!isAdmin)
+			return ResponseEntity
+				.status(HttpStatus.FORBIDDEN)
+				.body(mapOf("error" to "You are not admin!"))
+		
+		val editUser = userService.getUserEntityByEmail(email)
+			?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
+				.body(mapOf("error" to "Не найден пользователь для изменения"))
+		
+		return try {
+			userService.updateUser(editUser.id!!.toLong(), request)
+			ResponseEntity.status(HttpStatus.CREATED).body(mapOf("success" to true))
+		} catch (e: Exception) {
+			ResponseEntity.badRequest().body(mapOf("error" to e.message)) as ResponseEntity<Map<String, Any>>
+		}
+	}
+	
+	
+	@DeleteMapping("/delete/{email}")
+	@PreAuthorize("isAuthenticated()")
+	fun delete(
+		@PathVariable email: String,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Map<String, Any>> {
+		val jwtToken = jwtUtil.extractJwtToken(authHeader)
+		val currUser = getCurrentUserFromJwt(jwtToken)
+		
+		val isAdmin = administratorService.isAdmin(currUser.id!!.toLong())
+		if (!isAdmin)
+			return ResponseEntity
+				.status(HttpStatus.FORBIDDEN)
+				.body(mapOf("error" to "You are not admin!"))
+		
+		val editUser = userService.getUserEntityByEmail(email)
+			?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
+				.body(mapOf("error" to "Не найден пользователь для изменения"))
+		
+		return try {
+			userService.deleteUser(editUser)
+			ResponseEntity.ok(mapOf("success" to true))
+		} catch (e: Exception) {
+			ResponseEntity.badRequest().body(mapOf("error" to e.message)) as ResponseEntity<Map<String, Any>>
+		}
+	}
+	
 	
 	@PutMapping("/update-password/{email}")
 	@PreAuthorize("isAuthenticated()")
@@ -64,7 +173,7 @@ class UserController(
 		
 		val editUser = userService.getUserEntityByEmail(email)
 			?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
-			.body(PasswordUpdateResponse(success = false, message = "Не найден пользователь с предоставленной почтой прав"))
+				.body(PasswordUpdateResponse(success = false, message = "Не найден пользователь с предоставленной почтой прав"))
 		
 		if (editUser.id == null)
 			throw NullPointerException("Ошибка получения id пользователя")
@@ -92,7 +201,7 @@ class UserController(
 		
 		val user = userService.getUserEntityById(userId.toLong())
 		
-		val isAdmin = administratorRepository.existsByUserId(userId.toLong())
+		val isAdmin = administratorService.isAdmin(userId.toLong())
 		
 		return CurrentUser(
 			id = userId,

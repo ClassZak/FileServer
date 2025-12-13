@@ -1,5 +1,6 @@
 package org.zak.service
 
+import jakarta.persistence.EntityNotFoundException
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
@@ -11,17 +12,18 @@ import org.zak.dto.CurrentUser
 import org.zak.dto.LoginBySNPRequest
 import org.zak.dto.LoginRequest
 import org.zak.dto.UpdatePasswordRequest
+import org.zak.dto.UpdateUserRequest
 import org.zak.dto.UserResponse
 import org.zak.dto.ValidationResult
 import org.zak.entity.User
-import org.zak.repository.AdministratorRepository
+import org.zak.org.zak.service.AdministratorService
 import org.zak.repository.UserRepository
 import java.time.format.DateTimeFormatter
 
 @Service
 class UserService(
 	private val userRepository: UserRepository,
-	private val administratorRepository: AdministratorRepository,
+	private val administratorService: AdministratorService,
 	private val passwordEncoder: PasswordEncoder
 ) : UserDetailsService {
 	
@@ -55,6 +57,7 @@ class UserService(
 		)
 	}
 	
+	/*
 	fun createUser(request: CreateUserRequest): UserResponse {
 		if (userRepository.existsByEmail(request.email)) {
 			throw IllegalArgumentException("Пользователь с email ${request.email} уже существует")
@@ -72,7 +75,7 @@ class UserService(
 		
 		val savedUser = userRepository.save(user)
 		return toUserResponse(savedUser)
-	}
+	}*/
 	
 	fun authenticate(request: LoginRequest): User? {
 		val user = userRepository.findByEmail(request.email)
@@ -90,7 +93,7 @@ class UserService(
 		return if(currentUser.email == email)
 			true
 		else
-			administratorRepository.existsByUserId(currentUser.id.toLong())
+			administratorService.isAdmin(currentUser.id.toLong())
 	}
 	
 	fun validatePasswordChange(
@@ -146,16 +149,33 @@ class UserService(
 		return ValidationResult(valid = true, message = "OK")
 	}
 	
+	fun createUser(request: CreateUserRequest): User{
+		if (userRepository.existsByEmail(request.email))
+			throw IllegalArgumentException("Пользователь с email ${request.email} уже существует")
+		
+		val passwordHash = passwordEncoder.encode(request.password)
+		var user = User(
+			surname = request.surname,
+			name = request.name,
+			patronymic = request.patronymic,
+			email = request.email,
+			passwordHash = passwordHash
+		)
+		
+		user = userRepository.save(user)
+		
+		return user
+	}
+	
 	// Метод для обновления профиля
-	/*
-	fun updateProfile(userId: Long, request: UpdateProfileRequest): UserResponse {
+	
+	fun updateUser(userId: Long, request: UpdateUserRequest): User {
 		val user = userRepository.findById(userId)
 			.orElseThrow { EntityNotFoundException("Пользователь не найден") }
 		
 		// Проверка email на уникальность (если email меняется)
-		if (user.email != request.email && userRepository.existsByEmail(request.email)) {
+		if (user.email != request.email && userRepository.existsByEmail(request.email))
 			throw IllegalArgumentException("Email уже используется другим пользователем")
-		}
 		
 		user.apply {
 			surname = request.surname
@@ -165,8 +185,12 @@ class UserService(
 		}
 		
 		val savedUser = userRepository.save(user)
-		return convertToResponse(savedUser)
-	}*/
+		return savedUser
+	}
+	
+	fun deleteUser(user: User){
+		userRepository.delete(user)
+	}
 	
 	// Методы для изменения пароля
 	fun updatePassword(userId: Long, request: UpdatePasswordRequest) {

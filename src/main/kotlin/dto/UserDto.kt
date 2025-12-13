@@ -4,8 +4,16 @@ import org.zak.entity.User
 import java.time.LocalDateTime
 
 data class CreateUserRequest(
-	val name: String,
 	val surname: String,
+	val name: String,
+	val patronymic: String,
+	val email: String,
+	val password: String
+)
+
+class UpdateUserRequest(
+	val surname: String,
+	val name: String,
 	val patronymic: String,
 	val email: String,
 	val password: String

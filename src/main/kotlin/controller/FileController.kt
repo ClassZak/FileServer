@@ -9,6 +9,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import org.zak.dto.file.CreateFolderRequest
@@ -30,7 +31,11 @@ class FileController(private val fileSystemService: FileSystemService) {
 	private val logger = LoggerFactory.getLogger(FileController::class.java)
 	
 	@GetMapping("/list")
-	fun listDirectory(@RequestParam path: String = ""): ResponseEntity<Any> {
+	@PreAuthorize("isAuthenticated()")
+	fun listDirectory(
+		@RequestParam path: String = "",
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Any> {
 		return try {
 			val (files, folders) = fileSystemService.listDirectory(path)
 			ResponseEntity.ok(mapOf("files" to files, "folders" to folders))

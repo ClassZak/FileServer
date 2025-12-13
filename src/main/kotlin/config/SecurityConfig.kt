@@ -67,7 +67,7 @@ class SecurityConfig {
 					.requestMatchers("/api/auth/**").permitAll()
 					.requestMatchers("/api/public/**").permitAll()
 					// Защищенные endpoints
-					.requestMatchers("/api/admin/**").hasRole("ADMIN")
+					.requestMatchers("/api/admin/**").authenticated()//.hasRole("ADMIN")
 					.requestMatchers("/api/users/**").authenticated()
 					.requestMatchers("/protected/**").authenticated()
 					.anyRequest().authenticated()
