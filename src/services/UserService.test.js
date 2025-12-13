@@ -5,7 +5,7 @@ import UserService from './UserService';
 jest.mock('axios');
 
 describe('UserService', () => {
-	const mockAuthToken = 'Bearer mock-jwt-token';
+	const mockAuthToken = 'mock-jwt-token';
 	const mockUser = {
 		surname: 'Doe',
 		name: 'John',
@@ -42,10 +42,7 @@ describe('UserService', () => {
 			// Assert
 			expect(axios.post).toHaveBeenCalledWith(
 				'/api/users/new',
-				mockUser,
-				{
-					headers: { Authorization: mockAuthToken }
-				}
+				mockUser, UserService.createConfig(mockAuthToken)
 			);
 			expect(result).toEqual({ success: true });
 		});
@@ -99,10 +96,7 @@ describe('UserService', () => {
 
 			// Assert
 			expect(axios.get).toHaveBeenCalledWith(
-				`/api/user/${encodeURI(userEmail)}`,
-				{
-					headers: { Authorization: mockAuthToken }
-				}
+				`/api/user/${encodeURI(userEmail)}`, UserService.createConfig(mockAuthToken)
 			);
 			expect(result).toEqual({ user: mockUserResponse });
 		});
@@ -174,10 +168,7 @@ describe('UserService', () => {
 
 			// Assert
 			expect(axios.get).toHaveBeenCalledWith(
-				`/api/update/${encodeURI(mockUser.email)}`,
-				{
-					headers: { Authorization: mockAuthToken }
-				}
+				`/api/update/${encodeURI(mockUser.email)}`, UserService.createConfig(mockAuthToken)
 			);
 			expect(result).toEqual({ success: true });
 		});
@@ -246,10 +237,7 @@ describe('UserService', () => {
 
 			// Assert
 			expect(axios.get).toHaveBeenCalledWith(
-				`/api/delete/${encodeURI(mockUser.email)}`,
-				{
-					headers: { Authorization: mockAuthToken }
-				}
+				`/api/delete/${encodeURI(mockUser.email)}`, UserService.createConfig(mockAuthToken)
 			);
 			expect(result).toEqual({ success: true });
 		});
@@ -307,7 +295,7 @@ describe('UserService', () => {
 	describe('Общие тесты', () => {
 		it('корректно формирует заголовки с токеном авторизации', async () => {
 			// Arrange
-			const customToken = 'Bearer custom-token-123';
+			const customToken = 'custom-token-123';
 			const mockResponse = { data: { success: true } };
 			
 			// Для каждого метода
@@ -319,13 +307,13 @@ describe('UserService', () => {
 			expect(axios.post).toHaveBeenCalledWith(
 				expect.any(String),
 				expect.any(Object),
-				{ headers: { Authorization: customToken } }
+				{ headers: { Authorization: `Bearer ${customToken}` } }
 			);
 
 			await UserService.readUser(customToken, 'test@example.com');
 			expect(axios.get).toHaveBeenCalledWith(
 				expect.any(String),
-				{ headers: { Authorization: customToken } }
+				{ headers: { Authorization: `Bearer ${customToken}` } }
 			);
 		});
 
