@@ -2,24 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 import MainContent from "../components/MainContent";
-import CreateUserModal from "../components/CreateUserModal";
-
 import AuthService from '../services/AuthService';
 import AdminService from '../services/AdminService';
 import UserService from "../services/UserService";
 
+import User from "../entity/User";
+import UserModelAdminResponse from '../entity/UserModelAdminResponse';
 
-import '../styles/FileTable.css';
+import UpdateUserModal from '../components/modal/user/UpdateUserModal';
+
+
+import '../styles/AccountPage.css';
 
 
 
 
-function UsersPage() {
-	const [showCreateUserModal, setShowCreateUserModal] = useState(false);
-	const [users, setUsers] = useState([]);
+function UserPage(){
+	const { '*': pathParam } = useParams();
+	const [showUpdateUserModal, setShowUpdateUserModal] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState('');
+	const [user, setUser] = useState({});
 	const navigate = useNavigate();
+
+
+	const currentUserEmail = pathParam || '';
 
 	const checkAuth = async () => {
 		try {
@@ -36,24 +43,24 @@ function UsersPage() {
 		}
 	};
 
-	const loadUsers = async () => {
+	const loadUser = async () => {
 		try {
 			setIsLoading(true);
 			const token = AuthService.getToken();
-			const response = await UserService.readAllUsers(token);
+			const response = await UserService.readUser(token, currentUserEmail);
 			
 			if (response.error) {
 				setError(response.error);
-				setUsers([]);
-			} else if (response.users) {
-				setUsers(response.users);
+				setUser({});
+			} else if (response.user) {
+				setUser(response.user);
 			} else {
-				setUsers([]);
+				setUser({});
 			}
 		} catch (error) {
-			console.error('Ошибка при загрузке пользователей:', error);
-			setError('Не удалось загрузить список пользователей');
-			setUsers([]);
+			console.error('Ошибка при загрузке пользователя:', error);
+			setError('Не удалось загрузить данные пользователя');
+			setUser({});
 		} finally {
 			setIsLoading(false);
 		}
@@ -61,76 +68,16 @@ function UsersPage() {
 
 	useEffect(() => {
 		const init = async () => {
+			if (currentUserEmail == '')
+				navigate('/users');
+
 			const isAdmin = await checkAuth();
 			if (isAdmin) {
-				await loadUsers();
+				await loadUser();
 			}
 		};
 		init();
 	}, []);
-
-	const navigateToUser = (email) => {
-		navigate(`/user/${encodeURIComponent(email)}`);
-	};
-
-	const UserRow = ({ user }) => {
-		return (
-			<tr key={`user-${user.email}`}>
-				<td>{user.surname}</td>
-				<td>{user.name}</td>
-				<td>{user.patronymic}</td>
-				<td>{user.email}</td>
-				<td>{user.createdAt}</td>
-				<td>
-					<button
-						onClick={() => navigateToUser(user.email)}
-						style={{ cursor: 'pointer', padding: '8px 16px' }}
-					>
-						Изменить данные
-					</button>
-				</td>
-			</tr>
-		);
-	};
-
-	const UserTable = ({ users }) => {
-		return (
-			<div>
-				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-					<h1>Пользователи</h1>
-					<button 
-						onClick={() => setShowCreateUserModal(true)}
-						style={{ padding: '10px 20px', cursor: 'pointer' }}
-					>
-						Создать пользователя
-					</button>
-				</div>
-				<table className='file-table'>
-					<thead>
-						<tr>
-							<th>Фамилия</th>
-							<th>Имя</th>
-							<th>Отчество</th>
-							<th>Почта</th>
-							<th>Дата создания</th>
-							<th>Действия</th>
-						</tr>
-					</thead>
-					<tbody>
-						{users && users.length > 0 ? (
-							users.map(user => <UserRow key={user.email} user={user} />)
-						) : (
-							<tr>
-								<td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>
-									Пользователи не найдены
-								</td>
-							</tr>
-						)}
-					</tbody>
-				</table>
-			</div>
-		);
-	};
 
 	const LoadingSpinner = () => {
 		return (
@@ -159,7 +106,7 @@ function UsersPage() {
 					fontWeight: '500',
 					color: '#333'
 				}}>
-					Загрузка пользователей
+					Загрузка данных пользователя
 					<span style={{
 						animation: 'dots 1.5s steps(4, end) infinite'
 					}}>...</span>
@@ -182,30 +129,49 @@ function UsersPage() {
 		);
 	};
 
-	const onConfirmCreateUser = async (user) => {
+	const onConfirmUpdateUser = async (user) => {
 		try {
 			const token = AuthService.getToken();
-			const response = await UserService.createUser(user, token);
+			const response = await UserService.updateUser(token, currentUserEmail, user);
 
 			if (response.error) {
 				setError(response.error);
 			} else if (!response.success) {
-				setError('Не удалось создать нового пользователя');
+				setError('Не удалось изменить данные пользователя');
 			} else {
-				// Обновляем список пользователей после успешного создания
-				await loadUsers();
+				// Refresh user data
+				if (user.email != currentUserEmail)
+					navigate(`/user/${encodeURIComponent(user.email)}`);
+				await loadUser();
 			}
 			
-			setShowCreateUserModal(false);
+			setShowUpdateUserModal(false);
 		} catch (error) {
 			console.error('Ошибка при создании пользователя:', error);
 			setError('Произошла ошибка при создании пользователя');
 		}
 	};
 
+	const UserCard = ({user}) => {
+		return (
+			<div className="account-card">
+				<h2>Информация о пользователе</h2>
+				<div className="account-info">
+					<p><strong>Email:</strong> {user.email}</p>
+					<p><strong>Фамилия:</strong> {user.surname}</p>
+					<p><strong>Имя:</strong> {user.name}</p>
+					<p><strong>Отчество:</strong> {user.patronymic}</p>
+					<p><strong>Создан:</strong> {user.createdAt}</p>
+				</div>
+			</div>
+		);
+	};
+
+
 	return (
 		<div>
 			<MainContent>
+				<h1 className="account-title">Данные пользователя</h1>
 				{isLoading ? (
 					<LoadingSpinner />
 				) : error ? (
@@ -219,7 +185,7 @@ function UsersPage() {
 					}}>
 						<p style={{ color: '#cc0000', marginBottom: '15px' }}>{error}</p>
 						<button 
-							onClick={loadUsers}
+							onClick={loadUser}
 							style={{
 								padding: '8px 16px',
 								backgroundColor: '#cc0000',
@@ -233,18 +199,26 @@ function UsersPage() {
 						</button>
 					</div>
 				) : (
-					<UserTable users={users} />
+					<div>
+						<UserCard user={user} />
+						<button
+							onClick={() => setShowUpdateUserModal(true)}
+							style={{ padding: '10px 20px', cursor: 'pointer' }}
+						>
+							Изменить данные
+						</button>
+					</div>
 				)}
 			</MainContent>
-			
-			<CreateUserModal
-				isOpen={showCreateUserModal}
-				onClose={() => { setShowCreateUserModal(false); setError(''); }}
-				onConfirm={onConfirmCreateUser}
+
+			<UpdateUserModal
+				isOpen={showUpdateUserModal}
+				onClose={() => { setShowUpdateUserModal(false); setError(''); }}
+				onConfirm={onConfirmUpdateUser}
 				error={error}
 			/>
 		</div>
 	);
 }
 
-export default UsersPage;
+export default UserPage;

@@ -1,15 +1,17 @@
-class User{
+class UserModelAdminResponse{
 	constructor(
 		surname,
 		name,
 		patronymic,
-		email
+		email,
+		createdAt,
 	){
 		this.surname		= surname || '';
 		this.name			= name || '';
 		this.patronymic		= patronymic || '';
 		this.email			= email || '';
+		this.createdAt		= createdAt || '';
 	}
 }
 
-export default User;
+export default UserModelAdminResponse;

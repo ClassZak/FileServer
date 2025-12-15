@@ -11,6 +11,7 @@ import Footer from './parts/Footer';
 import FilesPage from './pages/FilesPage';
 import './App.css'; // Создадим этот файл
 import UsersPage from './pages/UsersPage';
+import UserPage from './pages/UserPage';
 
 
 function App() {
@@ -31,9 +32,15 @@ function App() {
 								</ProtectedRoute>
 							} />
 
-							<Route path='/users/*' element={
+							<Route path='/users' element={
 								<ProtectedRoute>
 									<UsersPage />
+								</ProtectedRoute>
+							} />
+
+							<Route path='/user/*' element={
+								<ProtectedRoute>
+									<UserPage />
 								</ProtectedRoute>
 							} />
 							

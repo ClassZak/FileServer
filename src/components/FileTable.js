@@ -20,7 +20,7 @@ const getFileIcon = (extension) => {
 
 function FileRow(onDownload, onDelete, file){
     if (file === null || file === undefined)
-            console.log(file);
+        console.log(file);
 
     return <tr key={!file ? '-' : `file-${file.fullPath}`}>
         <td>
@@ -68,10 +68,6 @@ function FileRow(onDownload, onDelete, file){
 }
 
 const FileTable = ({ files, onDownload, onDelete }) => {
-     {
-        
-    };
-
     return (
          <div>
             <h2 className="text-xl font-semibold mb-4 flex items-center">

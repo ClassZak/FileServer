@@ -97,7 +97,7 @@ function AccountPage() {
 						<p><strong>Email:</strong> {user.email}</p>
 						<p><strong>Фамилия:</strong> {user.surname}</p>
 						<p><strong>Имя:</strong> {user.name}</p>
-						<p><strong>Отчество:</strong> {user.patronymic || 'Не указано'}</p>
+						<p><strong>Отчество:</strong> {user.patronymic}</p>
 					</div>
 					<button onClick={setIsPasswordModalOpen} className="logout-button">
 						Обновить пароль
