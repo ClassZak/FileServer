@@ -18,5 +18,9 @@ class AdministratorService(
 		return administratorRepository.existsByUserId(userId)
 	}
 	
+	fun exists(targetUserId: Long): Boolean {
+		return administratorRepository.existsByUserId(targetUserId)
+	}
+	
 }
 

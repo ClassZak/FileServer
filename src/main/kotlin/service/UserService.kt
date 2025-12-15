@@ -130,13 +130,14 @@ class UserService(
 		}
 		
 		// Если админ меняет чужой пароль - не проверяем старый пароль
-		
-		// Проверка, что новый пароль не совпадает со старым
-		if (request.oldPassword == request.newPassword) {
-			return ValidationResult(
-				valid = false,
-				message = "Новый пароль должен отличаться от старого"
-			)
+		if (!administratorService.exists(currentUser.id.toLong())){
+			// Проверка, что новый пароль не совпадает со старым
+			if (request.oldPassword == request.newPassword) {
+				return ValidationResult(
+					valid = false,
+					message = "Новый пароль должен отличаться от старого"
+				)
+			}
 		}
 		
 		// Проверка сложности нового пароля

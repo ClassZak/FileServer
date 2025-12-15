@@ -171,7 +171,7 @@ class UserController(
 		
 		val editUser = userService.getUserEntityByEmail(email)
 			?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
-				.body(PasswordUpdateResponse(success = false, message = "Не найден пользователь с предоставленной почтой прав"))
+				.body(PasswordUpdateResponse(success = false, message = "Не найден пользователь с предоставленной почтой для изменения пароля"))
 		
 		if (editUser.id == null)
 			throw NullPointerException("Ошибка получения id пользователя")
@@ -184,7 +184,7 @@ class UserController(
 				ResponseEntity.ok((PasswordUpdateResponse(success = true, message = "Пароль успешно изменен")))
 			}
 			else
-				ResponseEntity.ok((PasswordUpdateResponse(success = false, message = validationResult.message)))	
+				ResponseEntity.ok((PasswordUpdateResponse(success = false, message = validationResult.message)))
 		} catch (e: Exception) {
 			val errorMessage = e.message
 			return 	ResponseEntity.status(HttpStatus.NOT_FOUND)
