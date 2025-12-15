@@ -1,13 +1,13 @@
-import React from 'react';
-import Modal from './Modal';
+import React, { useState } from 'react';
+import Modal from '../../Modal';
 
-const DeleteConfirmationModal = ({ 
-    isOpen, 
-    onClose, 
-    itemName, 
-    onConfirm 
-}) => {
-    return (
+function DeleteUserPasswordModal({
+	isOpen,
+	onClose,
+	onConfirm,
+    email
+}) {
+	return (
         <Modal 
             isOpen={isOpen} 
             onClose={onClose}
@@ -15,7 +15,7 @@ const DeleteConfirmationModal = ({
         >
             <p>
                 Вы уверены, что хотите удалить 
-                <span>"{itemName}"</span>?
+                <span>{`Пользователя с почтой ${email}`}</span>?
             </p>
             <p>
                 Это действие нельзя отменить.
@@ -35,7 +35,7 @@ const DeleteConfirmationModal = ({
                 </button>
             </div>
         </Modal>
-    );
-};
+	);
+}
 
-export default DeleteConfirmationModal;
+export default DeleteUserPasswordModal;

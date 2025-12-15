@@ -8,8 +8,11 @@ import UserService from "../services/UserService";
 
 import User from "../entity/User";
 import UserModelAdminResponse from '../entity/UserModelAdminResponse';
+import UpdatePasswordRequest from '../entity/UpdatePasswordRequest';
 
 import UpdateUserModal from '../components/modal/user/UpdateUserModal';
+import UpdateUserPasswordModal from '../components/modal/user/UpdateUserPasswordModal';
+import DeleteUserModal from '../components/modal/user/DeleteUserModal';
 
 
 import '../styles/AccountPage.css';
@@ -20,6 +23,8 @@ import '../styles/AccountPage.css';
 function UserPage(){
 	const { '*': pathParam } = useParams();
 	const [showUpdateUserModal, setShowUpdateUserModal] = useState(false);
+	const [showUpdateUserPasswordModal, setShowUpdateUserPasswordModal] = useState(false);
+	const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState('');
 	const [user, setUser] = useState({});
@@ -68,7 +73,7 @@ function UserPage(){
 
 	useEffect(() => {
 		const init = async () => {
-			if (currentUserEmail == '')
+			if (currentUserEmail === '')
 				navigate('/users');
 
 			const isAdmin = await checkAuth();
@@ -140,15 +145,59 @@ function UserPage(){
 				setError('Не удалось изменить данные пользователя');
 			} else {
 				// Refresh user data
-				if (user.email != currentUserEmail)
+				if (user.email !== currentUserEmail)
 					navigate(`/user/${encodeURIComponent(user.email)}`);
 				await loadUser();
 			}
 			
 			setShowUpdateUserModal(false);
 		} catch (error) {
-			console.error('Ошибка при создании пользователя:', error);
-			setError('Произошла ошибка при создании пользователя');
+			console.error('Ошибка при изменении данных пользователя:', error);
+			setError('Произошла ошибка при изменении данных пользователя');
+		}
+	};
+	/**
+	 * Function for password update after confirm
+	 * @param {Object} formData Object for update the password
+	 */
+	const onConfirmUpdateUserPassword = async (formData) => {
+		try {
+			const token = AuthService.getToken();
+			const updatePasswordRequest = new UpdatePasswordRequest('', formData.password);
+			const response = await UserService.updateUserPassword(
+				token, currentUserEmail, updatePasswordRequest
+			);
+
+			if (response.error) {
+				setError(response.error);
+			} else if (!response.success) {
+				setError('Не удалось изменить пароль пользователя');
+			}
+			
+			setShowUpdateUserPasswordModal(false);
+		} catch (error) {
+			console.error('Ошибка при изменении пароля пользователя:', error);
+			setError('Произошла ошибка при изменении пароля пользователя');
+		}
+	};
+	const onConfirmDeleteUser = async () => {
+		try {
+			const token = AuthService.getToken();
+			const response = await UserService.deleteUser(token, new User('','','',currentUserEmail));
+
+			if (response.error) {
+				setError(response.error);
+			} else if (!response.success) {
+				setError('Не удалось удалить пользователя');
+			} else {
+				// Redirect to users
+				navigate(`/users`);
+			}
+			
+			setShowUpdateUserModal(false);
+		} catch (error) {
+			console.error('Ошибка при удалении пользователя:', error);
+			setError('Произошла ошибка при удалении пользователя');
 		}
 	};
 
@@ -207,6 +256,18 @@ function UserPage(){
 						>
 							Изменить данные
 						</button>
+						<button
+							onClick={() => setShowUpdateUserPasswordModal(true)}
+							style={{ padding: '10px 20px', cursor: 'pointer' }}
+						>
+							Изменить пароль
+						</button>
+						<button
+							onClick={() => setShowDeleteUserModal(true)}
+							style={{ padding: '10px 20px', cursor: 'pointer' }}
+						>
+							Удалить пользователя
+						</button>
 					</div>
 				)}
 			</MainContent>
@@ -215,6 +276,18 @@ function UserPage(){
 				isOpen={showUpdateUserModal}
 				onClose={() => { setShowUpdateUserModal(false); setError(''); }}
 				onConfirm={onConfirmUpdateUser}
+				error={error}
+			/>
+			<UpdateUserPasswordModal
+				isOpen={showUpdateUserPasswordModal}
+				onClose={() => { setShowUpdateUserPasswordModal(false); setError(''); }}
+				onConfirm={onConfirmUpdateUserPassword}
+				error={error}
+			/>
+			<DeleteUserModal
+				isOpen={showDeleteUserModal}
+				onClose={() => { setShowDeleteUserModal(false); setError(''); }}
+				onConfirm={onConfirmDeleteUser}
 				error={error}
 			/>
 		</div>

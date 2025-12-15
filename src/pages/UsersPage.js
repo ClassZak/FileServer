@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 import MainContent from "../components/MainContent";
-import CreateUserModal from "../components/CreateUserModal";
+import CreateUserModal from '../components/modal/user/CreateUserModal';
 
 import AuthService from '../services/AuthService';
 import AdminService from '../services/AdminService';
