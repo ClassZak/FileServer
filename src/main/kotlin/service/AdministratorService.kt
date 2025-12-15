@@ -1,4 +1,4 @@
-package org.zak.org.zak.service
+package org.zak.service
 
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service

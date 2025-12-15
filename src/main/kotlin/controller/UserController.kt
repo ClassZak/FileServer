@@ -10,10 +10,8 @@ import org.zak.dto.LoginRequest
 import org.zak.dto.PasswordUpdateResponse
 import org.zak.dto.UpdatePasswordRequest
 import org.zak.dto.UpdateUserRequest
-import org.zak.dto.UserResponse
 import org.zak.entity.User
-import org.zak.org.zak.service.AdministratorService
-import org.zak.repository.AdministratorRepository
+import org.zak.service.AdministratorService
 import org.zak.service.UserService
 import org.zak.util.JwtUtil
 
@@ -64,7 +62,7 @@ class UserController(
 		if (!isAdmin)
 			return ResponseEntity
 				.status(HttpStatus.FORBIDDEN)
-				.body(mapOf("error" to "You are not admin!"))
+				.body(mapOf("error" to "Вы не являетесь админом"))
 		
 		return try {
 			userService.createUser(request)
@@ -88,12 +86,12 @@ class UserController(
 		if (!isAdmin)
 			return ResponseEntity
 				.status(HttpStatus.FORBIDDEN)
-				.body(mapOf("error" to "You are not admin!"))
+				.body(mapOf("error" to "Вы не являетесь админом"))
 		
 		val user = userService.getUserEntityByEmail(email)
 			?: return ResponseEntity
 				.status(HttpStatus.NOT_FOUND)
-				.body(mapOf("error" to "User not found"))
+				.body(mapOf("error" to "Пользователь не найден"))
 		
 		val response = userService.toUserResponse(user)
 		
@@ -115,7 +113,7 @@ class UserController(
 		if (!isAdmin)
 			return ResponseEntity
 				.status(HttpStatus.FORBIDDEN)
-				.body(mapOf("error" to "You are not admin!"))
+				.body(mapOf("error" to "Вы не являетесь админом"))
 		
 		val editUser = userService.getUserEntityByEmail(email)
 			?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -123,7 +121,7 @@ class UserController(
 		
 		return try {
 			userService.updateUser(editUser.id!!.toLong(), request)
-			ResponseEntity.status(HttpStatus.CREATED).body(mapOf("success" to true))
+			ResponseEntity.ok().body(mapOf("success" to true))
 		} catch (e: Exception) {
 			ResponseEntity.badRequest().body(mapOf("error" to e.message)) as ResponseEntity<Map<String, Any>>
 		}
@@ -143,7 +141,7 @@ class UserController(
 		if (!isAdmin)
 			return ResponseEntity
 				.status(HttpStatus.FORBIDDEN)
-				.body(mapOf("error" to "You are not admin!"))
+				.body(mapOf("error" to "Вы не являетесь админом"))
 		
 		val editUser = userService.getUserEntityByEmail(email)
 			?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -180,13 +178,43 @@ class UserController(
 		
 		val validationResult = userService.validatePasswordChange(currUser, editUser.id!!.toLong(), request)
 		
-		return if (validationResult.valid){
-			userService.updatePassword(editUser, request)
-			ResponseEntity.ok((PasswordUpdateResponse(success = true, message = "Пароль успешно изменен")))
+		try {
+			return if (validationResult.valid){
+				userService.updatePassword(currUser, editUser, request)
+				ResponseEntity.ok((PasswordUpdateResponse(success = true, message = "Пароль успешно изменен")))
+			}
+			else
+				ResponseEntity.ok((PasswordUpdateResponse(success = false, message = validationResult.message)))	
+		} catch (e: Exception) {
+			val errorMessage = e.message
+			return 	ResponseEntity.status(HttpStatus.NOT_FOUND)
+				.body(PasswordUpdateResponse(success = false, message = errorMessage!!))
 		}
-		else
-			ResponseEntity.ok((PasswordUpdateResponse(success = false, message = validationResult.message)))
 	}
+	
+	
+	
+	
+	@GetMapping("/users")
+	@PreAuthorize("isAuthenticated()")
+	fun readAll(
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Map<String, Any>> {
+		val jwtToken = jwtUtil.extractJwtToken(authHeader)
+		val currUser = getCurrentUserFromJwt(jwtToken)
+		
+		val isAdmin = administratorService.isAdmin(currUser.id!!.toLong())
+		if (!isAdmin)
+			return ResponseEntity
+				.status(HttpStatus.FORBIDDEN)
+				.body(mapOf("error" to "Вы не являетесь админом"))
+		
+		val users = userService.getAllUserForAdmin()
+		
+		return ResponseEntity.ok().body(mapOf("users" to users))
+	}
+	
+	
 	
 	private fun getCurrentUserFromJwt(jwtToken: String): CurrentUser {
 		// Валидация токена

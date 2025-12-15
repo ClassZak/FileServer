@@ -13,10 +13,11 @@ import org.zak.dto.LoginBySNPRequest
 import org.zak.dto.LoginRequest
 import org.zak.dto.UpdatePasswordRequest
 import org.zak.dto.UpdateUserRequest
+import org.zak.dto.UserModelAdminResponse
+import org.zak.dto.UserModelResponse
 import org.zak.dto.UserResponse
 import org.zak.dto.ValidationResult
 import org.zak.entity.User
-import org.zak.org.zak.service.AdministratorService
 import org.zak.repository.UserRepository
 import java.time.format.DateTimeFormatter
 
@@ -193,16 +194,18 @@ class UserService(
 	}
 	
 	// Методы для изменения пароля
-	fun updatePassword(userId: Long, request: UpdatePasswordRequest) {
+	fun updatePassword(currentUser: CurrentUser, userId: Long, request: UpdatePasswordRequest) {
 		val editUser = userRepository.findById(userId)
 			.orElseThrow { Exception("Пользователь не найден") }
 		
-		return updatePassword(editUser, request)
+		return updatePassword(currentUser, editUser, request)
 	}
-	fun updatePassword(editUser: User, request: UpdatePasswordRequest){
+	fun updatePassword(currentUser: CurrentUser, editUser: User, request: UpdatePasswordRequest){
 		// Проверка старого пароля
-		if (!passwordEncoder.matches(request.oldPassword, editUser.passwordHash)) {
-			throw IllegalArgumentException("Неверный текущий пароль")
+		if (!administratorService.isAdmin(currentUser.id!!.toLong())){
+			if (!passwordEncoder.matches(request.oldPassword, editUser.passwordHash)) {
+				throw IllegalArgumentException("Неверный текущий пароль")
+			}
 		}
 		
 		editUser.passwordHash = passwordEncoder.encode(request.newPassword)
@@ -231,8 +234,16 @@ class UserService(
 		return userRepository.findById(id.toLong()).orElse(null)?.let { toUserResponse(it) }
 	}
 	
-	fun  getUserEntityById(id: Long) : User?{
+	fun getUserEntityById(id: Long) : User?{
 		return userRepository.findById(id).orElse(null)
+	}
+	
+	fun getAllUserEntities(): List<User>{
+		return userRepository.findAll()
+	}
+	
+	fun getAllUserForAdmin(): List<UserModelAdminResponse>{
+		return toUserModelAdminResponseList(getAllUserEntities())
 	}
 	
 	fun toUserResponse(user: User): UserResponse {
@@ -244,5 +255,35 @@ class UserService(
 			email = user.email,
 			createdAt = user.createdAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
 		)
+	}
+	
+	fun toUserModelResponse(user: User): UserModelResponse {
+		return UserModelResponse(
+			name = user.name,
+			surname = user.surname,
+			patronymic = user.patronymic,
+			email = user.email
+		)
+	}
+	
+	fun toUserModelAdminResponse(user: User): UserModelAdminResponse {
+		return UserModelAdminResponse(
+			name = user.name,
+			surname = user.surname,
+			patronymic = user.patronymic,
+			email = user.email,
+			createdAt = user.createdAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+		)
+	}
+	fun toUserModelAdminResponseList(users: List<User>): List<UserModelAdminResponse> {
+		return users.map { user ->
+			UserModelAdminResponse(
+				name = user.name,
+				surname = user.surname,
+				patronymic = user.patronymic,
+				email = user.email,
+				createdAt = user.createdAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+			)
+		}
 	}
 }

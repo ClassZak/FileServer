@@ -25,7 +25,7 @@ class SecurityConfig {
 	fun corsConfigurationSource(): CorsConfigurationSource {
 		val configuration = CorsConfiguration()
 		configuration.allowedOrigins = listOf(
-			"http://localhost:3000",  // React
+			"http://localhost:3000",  // React app
 			"http://localhost:8080"
 		)
 		configuration.allowedMethods = listOf("*")
@@ -33,7 +33,7 @@ class SecurityConfig {
 		configuration.allowCredentials = true
 		
 		val source = UrlBasedCorsConfigurationSource()
-		source.registerCorsConfiguration("/**", configuration)  // ← ВАЖНО: /**
+		source.registerCorsConfiguration("/**", configuration)  // Important: /**
 		return source
 	}
 	@Bean

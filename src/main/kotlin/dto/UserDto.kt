@@ -15,8 +15,22 @@ class UpdateUserRequest(
 	val surname: String,
 	val name: String,
 	val patronymic: String,
+	val email: String
+)
+
+class UserModelResponse(
+	val surname: String,
+	val name: String,
+	val patronymic: String,
+	val email: String
+)
+
+class UserModelAdminResponse(
+	val surname: String,
+	val name: String,
+	val patronymic: String,
 	val email: String,
-	val password: String
+	val createdAt: String
 )
 
 data class UserResponse(
