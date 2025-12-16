@@ -41,8 +41,7 @@ class AuthController(
 			val userDetails = userService.loadUserByUsername(user.email)
 			// ✅ Используем токен с userId в claims
 			val token = jwtUtil.generateToken(userDetails, mapOf("userId" to user.id!!))
-			// ✅ Теперь этот метод существует с двумя параметрами
-			val refreshToken = jwtUtil.generateRefreshToken(userDetails, user.id!!.toInt())
+			val refreshToken = jwtUtil.generateRefreshToken(userDetails, user.id!!)
 			
 			logger.info("Login successful for email: ${request.email}, userId: ${user.id}")
 			
@@ -78,8 +77,9 @@ class AuthController(
 			}
 			
 			val userDetails = userService.loadUserByUsername(user.email)
-			val token = jwtUtil.generateToken(userDetails)
-			val refreshToken = jwtUtil.generateRefreshToken(userDetails)
+			// ✅ Используем токен с userId в claims
+			val token = jwtUtil.generateToken(userDetails, mapOf("userId" to user.id!!))
+			val refreshToken = jwtUtil.generateRefreshToken(userDetails, user.id!!)
 			
 			logger.info("Login successful by FIO, userId: ${user.id}")
 			
@@ -94,7 +94,7 @@ class AuthController(
 		} catch (e: Exception) {
 			logger.error("Login by SNP error", e)
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-				.body(mapOf("error" to (e.message ?: "Unknown error")))
+				.body(mapOf("error" to (e.message ?: "Внутрення ошибка сервера")))
 		}
 	}
 	
