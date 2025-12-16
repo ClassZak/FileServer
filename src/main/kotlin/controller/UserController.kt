@@ -120,7 +120,7 @@ class UserController(
 				.body(mapOf("error" to "Не найден пользователь для изменения"))
 		
 		return try {
-			userService.updateUser(editUser.id!!.toLong(), request)
+			userService.updateUser(editUser.id!!, request)
 			ResponseEntity.ok().body(mapOf("success" to true))
 		} catch (e: Exception) {
 			ResponseEntity.badRequest().body(mapOf("error" to e.message)) as ResponseEntity<Map<String, Any>>
@@ -176,7 +176,7 @@ class UserController(
 		if (editUser.id == null)
 			throw NullPointerException("Ошибка получения id пользователя")
 		
-		val validationResult = userService.validatePasswordChange(currUser, editUser.id!!.toLong(), request)
+		val validationResult = userService.validatePasswordChange(currUser, editUser.id!!, request)
 		
 		try {
 			return if (validationResult.valid){
@@ -227,7 +227,7 @@ class UserController(
 		
 		val email = jwtUtil.extractUsername(jwtToken)
 		
-		val user = userService.getUserEntityById(userId.toLong())
+		val user = userService.getUserEntityById(userId)
 		
 		val isAdmin = administratorService.isAdmin(userId)
 		

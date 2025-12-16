@@ -99,14 +99,14 @@ class UserService(
 	
 	fun validatePasswordChange(
 		currentUser: CurrentUser,
-		targetUserId: Long,
+		targetUserId: Int,
 		request: UpdatePasswordRequest
 	): ValidationResult {
 		if(currentUser.id == null)
 			throw NullPointerException("Необходим id у currentUser")
 		
 		// Если пользователь меняет свой пароль - проверяем старый пароль
-		if (currentUser.id.toLong() == targetUserId) {
+		if (currentUser.id == targetUserId) {
 			val user: User? = userRepository.findById(targetUserId).orElse(null)
 			if (user == null)
 				return ValidationResult(
@@ -171,7 +171,7 @@ class UserService(
 	
 	// Метод для обновления профиля
 	
-	fun updateUser(userId: Long, request: UpdateUserRequest): User {
+	fun updateUser(userId: Int, request: UpdateUserRequest): User {
 		val user = userRepository.findById(userId)
 			.orElseThrow { EntityNotFoundException("Пользователь не найден") }
 		
@@ -195,7 +195,7 @@ class UserService(
 	}
 	
 	// Методы для изменения пароля
-	fun updatePassword(currentUser: CurrentUser, userId: Long, request: UpdatePasswordRequest) {
+	fun updatePassword(currentUser: CurrentUser, userId: Int, request: UpdatePasswordRequest) {
 		val editUser = userRepository.findById(userId)
 			.orElseThrow { Exception("Пользователь не найден") }
 		
@@ -232,10 +232,10 @@ class UserService(
 	}
 	
 	fun getUserById(id: Int): UserResponse? {
-		return userRepository.findById(id.toLong()).orElse(null)?.let { toUserResponse(it) }
+		return userRepository.findById(id).orElse(null)?.let { toUserResponse(it) }
 	}
 	
-	fun getUserEntityById(id: Long) : User?{
+	fun getUserEntityById(id: Int) : User?{
 		return userRepository.findById(id).orElse(null)
 	}
 	

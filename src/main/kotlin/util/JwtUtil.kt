@@ -46,7 +46,7 @@ class JwtUtil(
 			.compact()
 	}
 	
-	// ✅ ДОБАВЬТЕ ЭТОТ МЕТОД для генерации refresh token с userId
+	// метод для генерации refresh token с userId
 	fun generateRefreshToken(userDetails: UserDetails, userId: Int): String {
 		return Jwts.builder()
 			.setSubject(userDetails.username)
