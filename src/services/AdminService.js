@@ -8,7 +8,7 @@ class AdminService{
 	/**
 	 * Checking is user administrator or not
 	 * @param {string} authToken Authorization token for admin role checking
-	 * @returns {Promise<Object>} Operation result
+	 * @returns {Promise<Object>} Operation result with isAdmin key
 	 */
 	static async isAdmin(authToken){
 		try {
