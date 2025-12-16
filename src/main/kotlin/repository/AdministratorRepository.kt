@@ -9,13 +9,13 @@ import org.zak.entity.User
 
 
 @Repository
-interface AdministratorRepository : JpaRepository<User, Long> {
+interface AdministratorRepository : JpaRepository<Administrator, Int> {
 	@Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM Administrator a WHERE a.user.id = :userId")
-	fun existsByUserId(@Param("userId") userId: Long): Boolean
+	fun existsByUserId(@Param("userId") userId: Int): Boolean
 	
 	@Query("SELECT a FROM Administrator a WHERE a.user.id = :userId")
-	fun findByUserIdJpql(@Param("userId") userId: Long): Administrator?
+	fun findByUserId(@Param("userId") userId: Int): Administrator?
 	
 	@Query("SELECT a FROM Administrator a WHERE a.user.email = :email")
-	fun findByUserEmailJpql(@Param("email") email: String): Administrator?
+	fun findByUserEmail(@Param("email") email: String): Administrator?
 }

@@ -58,7 +58,7 @@ class UserController(
 		val jwtToken = jwtUtil.extractJwtToken(authHeader)
 		val currUser = getCurrentUserFromJwt(jwtToken)
 		
-		val isAdmin = administratorService.isAdmin(currUser.id!!.toLong())
+		val isAdmin = administratorService.isAdmin(currUser.id!!)
 		if (!isAdmin)
 			return ResponseEntity
 				.status(HttpStatus.FORBIDDEN)
@@ -82,7 +82,7 @@ class UserController(
 		val jwtToken = jwtUtil.extractJwtToken(authHeader)
 		val currUser = getCurrentUserFromJwt(jwtToken)
 		
-		val isAdmin = administratorService.isAdmin(currUser.id!!.toLong())
+		val isAdmin = administratorService.isAdmin(currUser.id!!)
 		if (!isAdmin)
 			return ResponseEntity
 				.status(HttpStatus.FORBIDDEN)
@@ -109,7 +109,7 @@ class UserController(
 		val jwtToken = jwtUtil.extractJwtToken(authHeader)
 		val currUser = getCurrentUserFromJwt(jwtToken)
 		
-		val isAdmin = administratorService.isAdmin(currUser.id!!.toLong())
+		val isAdmin = administratorService.isAdmin(currUser.id!!)
 		if (!isAdmin)
 			return ResponseEntity
 				.status(HttpStatus.FORBIDDEN)
@@ -137,7 +137,7 @@ class UserController(
 		val jwtToken = jwtUtil.extractJwtToken(authHeader)
 		val currUser = getCurrentUserFromJwt(jwtToken)
 		
-		val isAdmin = administratorService.isAdmin(currUser.id!!.toLong())
+		val isAdmin = administratorService.isAdmin(currUser.id!!)
 		if (!isAdmin)
 			return ResponseEntity
 				.status(HttpStatus.FORBIDDEN)
@@ -203,7 +203,7 @@ class UserController(
 		val jwtToken = jwtUtil.extractJwtToken(authHeader)
 		val currUser = getCurrentUserFromJwt(jwtToken)
 		
-		val isAdmin = administratorService.isAdmin(currUser.id!!.toLong())
+		val isAdmin = administratorService.isAdmin(currUser.id!!)
 		if (!isAdmin)
 			return ResponseEntity
 				.status(HttpStatus.FORBIDDEN)
@@ -229,7 +229,7 @@ class UserController(
 		
 		val user = userService.getUserEntityById(userId.toLong())
 		
-		val isAdmin = administratorService.isAdmin(userId.toLong())
+		val isAdmin = administratorService.isAdmin(userId)
 		
 		return CurrentUser(
 			id = userId,

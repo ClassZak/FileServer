@@ -84,7 +84,9 @@ CREATE TABLE FileMetadata (
 -- -----------------------------------------------------
 CREATE TABLE DeletedFile(
 	IdFileMetaData		INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
-	WorkTime			DATETIME NOT NULL
+	WorkTime			DATETIME NOT NULL,
+	
+	FOREIGN KEY			(IdFileMetaData) REFERENCES FileMetadata(Id)	
 );
 -- -----------------------------------------------------
 -- Тип операции

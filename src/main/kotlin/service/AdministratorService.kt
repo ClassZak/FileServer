@@ -14,11 +14,11 @@ class AdministratorService(
 	private val jwtUtil: JwtUtil
 ) {
 	
-	fun isAdmin(userId: Long): Boolean {
+	fun isAdmin(userId: Int): Boolean {
 		return administratorRepository.existsByUserId(userId)
 	}
 	
-	fun exists(targetUserId: Long): Boolean {
+	fun exists(targetUserId: Int): Boolean {
 		return administratorRepository.existsByUserId(targetUserId)
 	}
 	

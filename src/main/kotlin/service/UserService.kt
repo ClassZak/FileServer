@@ -94,7 +94,7 @@ class UserService(
 		return if(currentUser.email == email)
 			true
 		else
-			administratorService.isAdmin(currentUser.id.toLong())
+			administratorService.isAdmin(currentUser.id)
 	}
 	
 	fun validatePasswordChange(
@@ -130,7 +130,7 @@ class UserService(
 		}
 		
 		// Если админ меняет чужой пароль - не проверяем старый пароль
-		if (!administratorService.exists(currentUser.id.toLong())){
+		if (!administratorService.exists(currentUser.id)){
 			// Проверка, что новый пароль не совпадает со старым
 			if (request.oldPassword == request.newPassword) {
 				return ValidationResult(
@@ -203,7 +203,7 @@ class UserService(
 	}
 	fun updatePassword(currentUser: CurrentUser, editUser: User, request: UpdatePasswordRequest){
 		// Проверка старого пароля
-		if (!administratorService.isAdmin(currentUser.id!!.toLong())){
+		if (!administratorService.isAdmin(currentUser.id!!)){
 			if (!passwordEncoder.matches(request.oldPassword, editUser.passwordHash)) {
 				throw IllegalArgumentException("Неверный текущий пароль")
 			}

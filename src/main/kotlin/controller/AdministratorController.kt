@@ -37,7 +37,7 @@ class AdministratorController(
 				.body(mapOf("error" to "Internal server error"))
 		}
 		
-		val isAdmin = administratorService.isAdmin(userId.toLong())
+		val isAdmin = administratorService.isAdmin(userId)
 		val body = mapOf("isAdmin" to isAdmin)
 		
 		return if (isAdmin)
