@@ -19,4 +19,4 @@ class WorkHistory(
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "IdOperationType", nullable = false)
 	var operationType: OperationType
-) : BaseEntity<Int>()
+) : BaseEntity<Long>()

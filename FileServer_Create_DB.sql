@@ -8,7 +8,7 @@ USE FileServer2;
 -- -----------------------------------------------------
 CREATE TABLE `User` (
 	Id				INT AUTO_INCREMENT PRIMARY KEY,
-	Surname		 VARCHAR(45) NOT NULL,
+	Surname			VARCHAR(45) NOT NULL,
 	`Name`			VARCHAR(45) NOT NULL,
 	Patronymic		VARCHAR(45) NOT NULL,
 	Email			VARCHAR(60) NOT NULL,
@@ -83,7 +83,7 @@ CREATE TABLE FileMetadata (
 -- Удалённый файл
 -- -----------------------------------------------------
 CREATE TABLE DeletedFile(
-	IdFileMetaData		INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
+	IdFileMetaData		BIGINT AUTO_INCREMENT NOT NULL PRIMARY KEY,
 	WorkTime			DATETIME NOT NULL,
 	
 	FOREIGN KEY			(IdFileMetaData) REFERENCES FileMetadata(Id)	
@@ -99,7 +99,7 @@ CREATE TABLE OperationType(
 -- История работы
 -- -----------------------------------------------------
 CREATE TABLE WorkHistory(
-	Id					INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
+	Id					BIGINT AUTO_INCREMENT NOT NULL PRIMARY KEY,
 	WorkTime			DATETIME NOT NULL,
 	Path				NVARCHAR(4096) NOT NULL,
 	IdOperationType		INT NOT NULL,
