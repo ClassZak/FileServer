@@ -58,26 +58,6 @@ class UserService(
 		)
 	}
 	
-	/*
-	fun createUser(request: CreateUserRequest): UserResponse {
-		if (userRepository.existsByEmail(request.email)) {
-			throw IllegalArgumentException("Пользователь с email ${request.email} уже существует")
-		}
-		
-		val hashedPassword = passwordEncoder.encode(request.password)
-		
-		val user = User(
-			name = request.name,
-			surname = request.surname,
-			patronymic = request.patronymic,
-			email = request.email,
-			passwordHash = hashedPassword
-		)
-		
-		val savedUser = userRepository.save(user)
-		return toUserResponse(savedUser)
-	}*/
-	
 	fun authenticate(request: LoginRequest): User? {
 		val user = userRepository.findByEmail(request.email)
 		return if (user != null && passwordEncoder.matches(request.password, user.passwordHash)) {
