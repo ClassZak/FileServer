@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import jakarta.persistence.EntityNotFoundException
+import org.springframework.web.bind.annotation.*
 
 /**
  * Контроллер для управления группами пользователей.
@@ -37,7 +38,18 @@ class GroupController(
 ) {
 	
 	/**
-	 * Получить все группы (только для администраторов)
+	 * Получить список групп текущего пользователя (только основные данные без участников)
+	 */
+	@GetMapping("/my")
+	@PreAuthorize("isAuthenticated()")
+	fun getMyGroups(@RequestHeader("Authorization") authHeader: String): ResponseEntity<Map<String, Any>> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		val groups = groupService.getUserGroups(currentUser.id!!)
+		return successResponse(mapOf("groups" to groups))
+	}
+	
+	/**
+	 * Получить все группы (только для администраторов, без участников)
 	 */
 	@GetMapping
 	@PreAuthorize("isAuthenticated()")
@@ -48,42 +60,26 @@ class GroupController(
 			return errorResponse(HttpStatus.FORBIDDEN, "Требуются права администратора")
 		}
 		
-		val groups = groupService.getAllGroups()
+		val groups = groupService.getAllGroupsForAdmin()
 		return successResponse(mapOf("groups" to groups))
 	}
 	
 	/**
-	 * Получить группы текущего пользователя
+	 * Получить детальную информацию о группе с участниками
+	 * Если пользователь не имеет доступа, возвращается 404
 	 */
-	@GetMapping("/my")
+	@GetMapping("/name/{groupName}/full")
 	@PreAuthorize("isAuthenticated()")
-	fun getMyGroups(@RequestHeader("Authorization") authHeader: String): ResponseEntity<Map<String, Any>> {
-		val currentUser = getCurrentUserFromJwt(authHeader)
-		val groups = groupService.getGroupsByUser(currentUser.id!!)
-		return successResponse(mapOf("groups" to groups))
-	}
-	
-	/**
-	 * Получить информацию о группе по имени
-	 */
-	@GetMapping("/name/{groupName}")
-	@PreAuthorize("isAuthenticated()")
-	fun getGroupByName(
+	fun getGroupFullDetails(
 		@PathVariable groupName: String,
 		@RequestHeader("Authorization") authHeader: String
 	): ResponseEntity<Map<String, Any>> {
 		val currentUser = getCurrentUserFromJwt(authHeader)
-		val group = groupService.read(groupName) ?: return errorResponse(
-			HttpStatus.NOT_FOUND,
-			"Группа '$groupName' не найдена"
-		)
 		
-		// Проверка прав доступа
-		if (!currentUser.isAdmin && !groupService.isUserMemberOfGroup(currentUser.id!!, groupName)) {
-			return errorResponse(HttpStatus.FORBIDDEN, "Вы не состоите в группе '$groupName'")
-		}
+		val groupDetails = groupService.getGroupFullDetails(groupName, currentUser.id!!)
+			?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
 		
-		return successResponse(mapOf("group" to group))
+		return successResponse(mapOf("group" to groupDetails))
 	}
 	
 	/**
@@ -101,8 +97,12 @@ class GroupController(
 			return errorResponse(HttpStatus.FORBIDDEN, "Требуются права администратора")
 		}
 		
+		
 		return try {
-			val group = groupService.create(request.name, currentUser.id!!)
+			val userCreator = userService.getUserEntityByEmail(request.creatorEmail)
+				?: throw EntityNotFoundException()
+			
+			val group = groupService.create(request.name, userCreator.id!!)
 			ResponseEntity.status(HttpStatus.CREATED).body(mapOf("group" to group))
 		} catch (e: IllegalArgumentException) {
 			errorResponse(HttpStatus.BAD_REQUEST, e.message ?: "Ошибка создания группы")
@@ -163,30 +163,6 @@ class GroupController(
 		} catch (e: Exception) {
 			errorResponse(HttpStatus.BAD_REQUEST, e.message ?: "Ошибка удаления группы")
 		}
-	}
-	
-	/**
-	 * Получить участников группы по имени группы
-	 */
-	@GetMapping("/name/{groupName}/users")
-	@PreAuthorize("isAuthenticated()")
-	fun getGroupUsersByName(
-		@PathVariable groupName: String,
-		@RequestHeader("Authorization") authHeader: String
-	): ResponseEntity<Map<String, Any>> {
-		val currentUser = getCurrentUserFromJwt(authHeader)
-		val group = groupService.read(groupName) ?: return errorResponse(
-			HttpStatus.NOT_FOUND,
-			"Группа '$groupName' не найдена"
-		)
-		
-		// Проверка прав доступа
-		if (!currentUser.isAdmin && !groupService.isUserMemberOfGroup(currentUser.id!!, groupName)) {
-			return errorResponse(HttpStatus.FORBIDDEN, "Вы не состоите в группе '$groupName'")
-		}
-		
-		val users = groupService.getUsers(group)
-		return successResponse(mapOf("users" to users, "groupName" to groupName))
 	}
 	
 	/**
@@ -289,6 +265,25 @@ class GroupController(
 		return successResponse(mapOf("groups" to groups, "pattern" to namePattern))
 	}
 	
+	/**
+	 * Проверить доступ к группе (для предварительной проверки на клиенте)
+	 */
+	@GetMapping("/name/{groupName}/check-access")
+	@PreAuthorize("isAuthenticated()")
+	fun checkGroupAccess(
+		@PathVariable groupName: String,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Map<String, Any>> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		
+		val hasAccess = groupService.checkUserAccess(groupName, currentUser.id!!)
+		
+		return successResponse(mapOf(
+			"hasAccess" to hasAccess,
+			"groupName" to groupName
+		))
+	}
+	
 	// Вспомогательные методы
 	
 	private fun getCurrentUserFromJwt(authHeader: String): CurrentUser {
@@ -333,7 +328,7 @@ class GroupController(
 /**
  * DTO для создания группы
  */
-data class CreateGroupRequest(val name: String)
+data class CreateGroupRequest(val name: String, val creatorEmail: String)
 
 /**
  * DTO для обновления группы по имени

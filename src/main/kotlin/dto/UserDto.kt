@@ -18,6 +18,13 @@ class UpdateUserRequest(
 	val email: String
 )
 
+/**
+ * DTO для передачи информации о пользователе на клиент
+ * @param surname Фамилия
+ * @param name Имя
+ * @param patronymic Отчество
+ * @param email Email
+ */
 class UserModelResponse(
 	val surname: String,
 	val name: String,

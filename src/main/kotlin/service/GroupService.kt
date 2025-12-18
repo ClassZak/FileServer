@@ -3,6 +3,9 @@ package org.zak.service
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
 import org.zak.controller.CounterController
+import org.zak.dto.GroupBasicInfoDto
+import org.zak.dto.GroupDetailsDto
+import org.zak.dto.UserModelResponse
 import org.zak.entity.Group
 import org.zak.entity.User
 import org.zak.repository.GroupRepository
@@ -20,103 +23,174 @@ import org.zak.repository.UserRepository
 @Service
 class GroupService(
 	private val userRepository: UserRepository,
+	private val administratorService: AdministratorService,
 	private val groupRepository: GroupRepository
 ) {
 	private val logger = org.slf4j.LoggerFactory.getLogger(GroupService::class.java)
-	fun create(name: String, creatorId: Int): Group{
-		val user = userRepository.findById(creatorId).orElse(null)
-		return create(name, user)
-	}
-	fun create(name: String, creator: User?): Group{
-		if (creator == null)
-			throw NullPointerException("Не найден пользователь для создания группы")
+	/**
+	 * Проверка доступа пользователя к группе.
+	 * Возвращает true если пользователь является участником или администратором
+	 *
+	 * Бизнес-логика вынесена из JPQL в сервис для лучшей читаемости и поддержки
+	 */
+	fun hasUserAccessToGroup(userId: Int, groupName: String): Boolean {
+		// Проверяем, является ли пользователь администратором
+		val isAdmin = administratorService.isAdmin(userId)
 		
-		val group = Group(
-			name = name,
-			creator = creator
+		// Если администратор - доступ есть
+		if (isAdmin) {
+			logger.debug("Пользователь ID=$userId является администратором - доступ к группе '$groupName' разрешен")
+			return true
+		}
+		
+		// Проверяем, состоит ли пользователь в группе
+		val isMember = groupRepository.isUserMemberOfGroupByName(userId, groupName)
+		
+		if (isMember) {
+			logger.debug("Пользователь ID=$userId является участником группы '$groupName'")
+		} else {
+			logger.debug("Пользователь ID=$userId не является участником группы '$groupName'")
+		}
+		
+		return isMember
+	}
+	
+	/**
+	 * Получение полной информации о группе с участниками
+	 * Если пользователь не имеет доступа, возвращает null
+	 */
+	fun getGroupFullDetails(groupName: String, userId: Int): GroupDetailsDto? {
+		logger.debug("Получение полной информации о группе '$groupName' для пользователя ID=$userId")
+		
+		// Проверка доступа
+		if (!hasUserAccessToGroup(userId, groupName)) {
+			logger.warn("Пользователь ID=$userId пытается получить доступ к группе '$groupName' без прав")
+			return null // Скрываем существование группы
+		}
+		
+		// Получаем группу с участниками и создателем
+		val group = groupRepository.findByNameWithMembersAndCreator(groupName) ?: return null
+		
+		// Преобразуем создателя в UserDto
+		val creatorDto = UserModelResponse(
+			surname = group.creator.surname,
+			name = group.creator.name,
+			patronymic = group.creator.patronymic,
+			email = group.creator.email
 		)
 		
-		if (groupRepository.findByName(name) != null)
-			throw NullPointerException("Группа с именем $name уже существует")
+		// Преобразуем участников в UserDto
+		val memberDtos = group.members.map { member ->
+			UserModelResponse(
+				surname = member.surname,
+				name = member.name,
+				patronymic = member.patronymic,
+				email = member.email
+			)
+		}
 		
-		group.members.add(creator)
-		return groupRepository.save(group)
+		return GroupDetailsDto(
+			name = group.name,
+			membersCount = group.members.size,
+			creator = creatorDto,
+			members = memberDtos
+		)
 	}
 	
-	
-	/*fun read(name: String): Group?{
-		val group = groupRepository.findByName(name)
-		return group
-	}*/
-	fun read(id: Int): Group?{
-		val group = groupRepository.findById(id).orElse(null)
-		return group
-	}
-	
-	
-	fun update(group: Group?, name: String, creator: User?){
-		if (creator == null)
-			throw NullPointerException("Не найден пользователь для назначения владельцем группы")
-		if (group == null)
-			throw NullPointerException("Неверная ссылка на группу")
-		
-		if (group.name != name && groupRepository.findByName(name) != null)
-			throw Exception("Группа с именем $name уже существует")
-		
-		group.name = name
-		group.creator = creator
-		
-		groupRepository.save(group)
-	}
-	fun update(groupId: Int, name: String, creatorId: Int){
-		val group = groupRepository.findById(groupId).orElse(null)
-		val creator = userRepository.findById(creatorId).orElse(null)
-		
-		return update(group, name, creator)
-	}
-	fun update(groupName: String, name: String, creatorId: Int){
-		val group = groupRepository.findByName(groupName)
-		val creator = userRepository.findById(creatorId).orElse(null)
-		
-		return update(group, name, creator)
-	}
-	
-	
-	fun delete(group: Group?){
-		if (group==null)
-			throw NullPointerException("Неверная ссылка на группу")
-		
-		groupRepository.delete(group)
-	}
 	/**
-	 * Получает все группы, в которых состоит пользователь.
-	 * Используется для отображения групп текущего пользователя.
+	 * Получение списка групп текущего пользователя
 	 */
-	fun getGroupsByUser(userId: Int): List<Group> = groupRepository.findByMemberId(userId)
-	fun getGroupsByUser(user: User?): List<Group> {
-		requireNotNull(user) { "Пользователь не указан" }
-		requireNotNull(user.id) { "У пользователя не определён ID" }
-		return getGroupsByUser(user.id!!)
+	fun getUserGroups(userId: Int): List<GroupBasicInfoDto> {
+		logger.debug("Получение списка групп пользователя ID=$userId")
+		return groupRepository.findUserGroupsAsDto(userId)
 	}
+	
 	/**
-	 * Получить все группы (только для администраторов)
+	 * Получение всех групп (только для администраторов)
 	 */
-	fun getAllGroups(): List<Group> = groupRepository.findAll()
+	fun getAllGroupsForAdmin(): List<GroupBasicInfoDto> {
+		logger.debug("Получение списка всех групп (администраторский доступ)")
+		return groupRepository.findAllGroupsAsDto()
+	}
+	
+	/**
+	 * Получение участников группы
+	 */
+	fun getGroupMembers(groupName: String, userId: Int): List<UserModelResponse>? {
+		logger.debug("Получение участников группы '$groupName' для пользователя ID=$userId")
+		
+		// Проверка доступа
+		if (!hasUserAccessToGroup(userId, groupName)) {
+			logger.warn("Пользователь ID=$userId пытается получить участников группы '$groupName' без прав")
+			return null
+		}
+		
+		return groupRepository.findGroupMembersAsDto(groupName)
+	}
+	
+	/**
+	 * Проверка доступа пользователя к группе
+	 * Упрощенная версия для контроллера
+	 */
+	fun checkUserAccess(groupName: String, userId: Int): Boolean {
+		return hasUserAccessToGroup(userId, groupName)
+	}
+	
+	/**
+	 * Проверка, состоит ли пользователь в группе (без учета админских прав)
+	 */
+	fun isUserMemberOfGroup(userId: Int, groupName: String): Boolean {
+		return groupRepository.isUserMemberOfGroupByName(userId, groupName)
+	}
 	
 	/**
 	 * Поиск групп по шаблону имени
 	 */
-	fun searchGroupsByName(pattern: String): List<Group> {
-		logger.info("Поиск групп по шаблону: $pattern")
-		// Используем LIKE для поиска по части имени
-		return groupRepository.findByNameContainingIgnoreCase(pattern)
+	fun searchGroupsByName(pattern: String): List<GroupBasicInfoDto> {
+		logger.debug("Поиск групп по шаблону: $pattern")
+		val groups = groupRepository.findByNameContainingIgnoreCase(pattern)
+		return groups.map { group ->
+			GroupBasicInfoDto(
+				name = group.name,
+				membersCount = group.members.size,
+				creatorEmail = group.creator.email
+			)
+		}
+	}
+	
+	/**
+	 * Чтение группы (базовый метод)
+	 */
+	fun read(name: String): Group? = groupRepository.findByName(name)
+	
+	/**
+	 * Создание группы
+	 */
+	fun create(name: String, creatorId: Int): Group {
+		val user = userRepository.findById(creatorId).orElseThrow {
+			EntityNotFoundException("Пользователь с ID $creatorId не найден")
+		}
+		return create(name, user)
+	}
+	
+	fun create(name: String, creator: User?): Group {
+		requireNotNull(creator) { "Не найден пользователь для создания группы" }
+		
+		logger.info("Создание группы '$name' пользователем ${creator.email}")
+		
+		// Проверка уникальности имени группы
+		if (groupRepository.existsByName(name)) {
+			throw IllegalArgumentException("Группа с именем '$name' уже существует")
+		}
+		
+		val group = Group(name = name, creator = creator)
+		group.members.add(creator) // Создатель автоматически становится участником
+		
+		return groupRepository.save(group)
 	}
 	
 	/**
 	 * Обновление группы по имени
-	 * @param currentName текущее имя группы
-	 * @param newName новое имя группы
-	 * @param creatorEmail email нового создателя
 	 */
 	fun update(currentName: String, newName: String, creatorEmail: String) {
 		logger.info("Обновление группы '$currentName' -> '$newName', новый создатель: $creatorEmail")
@@ -128,7 +202,7 @@ class GroupService(
 		EntityNotFoundException("Пользователь с email '$creatorEmail' не найден")
 		
 		// Проверка уникальности нового имени
-		if (currentName != newName && groupRepository.findByName(newName) != null) {
+		if (currentName != newName && groupRepository.existsByName(newName)) {
 			throw IllegalArgumentException("Группа с именем '$newName' уже существует")
 		}
 		
@@ -142,6 +216,15 @@ class GroupService(
 		groupRepository.save(group)
 		
 		logger.info("Группа успешно обновлена: '$currentName' -> '$newName'")
+	}
+	
+	/**
+	 * Удаление группы
+	 */
+	fun delete(group: Group?) {
+		requireNotNull(group) { "Группа для удаления не указана" }
+		logger.info("Удаление группы '${group.name}' (ID: ${group.id})")
+		groupRepository.delete(group)
 	}
 	
 	/**
@@ -196,32 +279,12 @@ class GroupService(
 	}
 	
 	/**
-	 * Проверка членства пользователя в группе по имени группы
+	 * Получение участников группы (старый метод для совместимости)
 	 */
-	fun isUserMemberOfGroup(userId: Int, groupName: String): Boolean {
-		val group = groupRepository.findByName(groupName) ?: return false
-		
-		// Используем существующий метод репозитория
-		return groupRepository.isUserMemberOfGroup(group.id!!, userId)
-	}
-	
-	/**
-	 * Получить пользователя по email (вспомогательный метод)
-	 */
-	fun getUserByEmail(email: String): User? = userRepository.findByEmail(email)
-	
-	/**
-	 * Получить группу по имени (основной метод для контроллера)
-	 */
-	fun read(groupName: String): Group? = groupRepository.findByName(groupName)
-	
 	fun getUsers(group: Group?): List<User> {
-		if (group==null)
-			throw NullPointerException("Неверная ссылка на группу")
-		if (group.id==null)
-			throw NullPointerException("Неверный Id у группы")
+		requireNotNull(group) { "Группа не указана" }
+		requireNotNull(group.id) { "У группы не определён ID" }
 		
-		val users = groupRepository.findUsersInGroup(group.id!!)
-		return users
+		return groupRepository.findUsersInGroup(group.id!!)
 	}
 }
