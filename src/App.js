@@ -12,6 +12,7 @@ import FilesPage from './pages/FilesPage';
 import './App.css'; // Создадим этот файл
 import UsersPage from './pages/UsersPage';
 import UserPage from './pages/UserPage';
+import GroupsPage from './pages/GroupsPage';
 
 
 function App() {
@@ -44,6 +45,14 @@ function App() {
 								</ProtectedRoute>
 							} />
 							
+
+							<Route path='/groups' element={
+								<ProtectedRoute>
+									<GroupsPage />
+								</ProtectedRoute>
+							} />
+
+
 							<Route path="/files/*" element={
 								<ProtectedRoute>
 									<FilesPage />

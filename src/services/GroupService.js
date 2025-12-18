@@ -1,29 +1,8 @@
 import axios from "axios";
 import User from "../entity/User";
-
-/**
- * Model for group basic information (for lists)
- */
-class GroupBasicInfo {
-	constructor(name, membersCount, creatorEmail) {
-		this.name = name || '';
-		this.membersCount = membersCount || 0;
-		this.creatorEmail = creatorEmail || '';
-	}
-}
-
-/**
- * Model for detailed group information (for group page)
- */
-class GroupDetails {
-	constructor(name, membersCount, creator, members = [], createdAt = null) {
-		this.name = name || '';
-		this.membersCount = membersCount || 0;
-		this.creator = creator || new User();
-		this.members = members || [];
-		this.createdAt = createdAt ? new Date(createdAt) : null;
-	}
-}
+import { GroupBasicInfo } from "../entity/GroupBasicInfo";
+import { GroupDetails } from "../entity/GroupDetails";
+import { GroupCreateModel } from "../entity/GroupCreateModel";
 
 /**
  * Service for working with groups via API
@@ -152,14 +131,14 @@ class GroupService {
 	 * Create new group (admin only)
 	 * 
 	 * @param {string} authToken JWT token
-	 * @param {string} groupName Group name
+	 * @param {GroupCreateModel} groupCreateModel Group data for creation
 	 * @returns {Promise<Object>} Object with "error" or "success" key
 	 */
-	static async createGroup(authToken, groupName) {
+	static async createGroup(authToken, groupCreateModel) {
 		try {
 			const response = await axios.post(
 				'/api/groups',
-				{ name: groupName },
+				groupCreateModel,
 				this.createConfig(authToken)
 			);
 			

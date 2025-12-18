@@ -4,18 +4,24 @@ import MainContent from '../components/MainContent';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import AuthService from '../services/AuthService';
 import AdminService from '../services/AdminService';
+import GroupService from '../services/GroupService';
 
 import LoadingSpinner from '../components/LoadingSpinner';
 
 import '../styles/AccountPage.css';
 
+
 function AccountPage() {
 	const [user, setUser] = useState(null);
+	const [groups, setGroups] = useState(null);
 	const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-	const [isLoading, setIsLoading] = useState(true);
+	let [isLoading, setIsLoading] = useState(true);
+	let [isLoadingUser, setIsLoadingUser] = useState(true);
+	let [isLoadingGroups, setIsLoadingGroups] = useState(true);
 	const [isAdmin, setIsAdmin] = useState(false);
+	const [error, setError] = useState('')
 	const navigate = useNavigate();
-
+	
 	useEffect(() => {
 		const checkAuthAndLoadUser = async () => {
 			try {
@@ -25,7 +31,7 @@ function AccountPage() {
 					setUser(result.user);
 					if (result.user) {
 						AuthService.setUser(result.user);
-						setIsLoading(false);
+						setIsLoadingUser(false);
 					}
 				} else {
 					navigate('/login');
@@ -33,9 +39,13 @@ function AccountPage() {
 			} catch (error) {
 				console.error('Ошибка проверки авторизации:', error);
 				navigate('/login');
+			} finally {
+				setIsLoadingUser(false);
+				isLoadingUser=false;
+				setIsLoading(prev => prev && isLoadingGroups);
 			}
 		};
-
+		
 		const checkIsAdmin = async () => {
 			try {
 				const result = await AdminService.isAdmin(AuthService.getToken());
@@ -45,9 +55,33 @@ function AccountPage() {
 			}
 		}
 
+
+		const loadGroups = async () => {
+			try{
+				const result = await GroupService.getMyGroups(AuthService.getToken());
+				if (result.error){
+					setError(result.error);
+					return;
+				}
+
+				setGroups(result);
+				console.log(result);
+			} catch (error){
+				setError(error);
+			} finally {
+				setIsLoadingGroups(false);
+				isLoadingGroups=false;
+				setIsLoading(prev => isLoadingUser && prev);
+			}
+		}
+		
 		checkAuthAndLoadUser();
 		checkIsAdmin();
+		loadGroups();
 	}, [navigate]);
+	
+	
+
 
 	const handleLogout = () => {
 		AuthService.logout();
@@ -84,7 +118,7 @@ function AccountPage() {
 		return token || '';
 	};
 
-    if (!user && !isLoading) {
+    if (!user && !isLoadingUser) {
         return null;
     }
 
@@ -105,7 +139,10 @@ function AccountPage() {
 									<p><strong>Имя:</strong> {user.name}</p>
 									<p><strong>Отчество:</strong> {user.patronymic}</p>
 								</div>
-								<button onClick={setIsPasswordModalOpen} className="logout-button">
+								<button
+									onClick={()=>{setIsPasswordModalOpen(true)}} 
+									className="logout-button"
+								>
 									Обновить пароль
 								</button>
 							</div>
