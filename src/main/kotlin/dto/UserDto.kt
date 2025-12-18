@@ -37,7 +37,7 @@ class UserModelAdminResponse(
 	val name: String,
 	val patronymic: String,
 	val email: String,
-	val createdAt: String
+	val createdAt: LocalDateTime
 )
 
 data class UserResponse(

@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 
 /**
  * DTO для детальной информации о группе.
- * Содержит основную информацию и участников (загружаются сразу или асинхронно)
+ * Содержит основную информацию и участников
  */
 data class GroupDetailsDto(
 	val name: String,
@@ -14,6 +14,18 @@ data class GroupDetailsDto(
 	val creator: UserModelResponse,
 	val members: List<UserModelResponse> = emptyList()
 )
+
+/**
+ * DTO для детальной информации о группе.
+ * Содержит основную информацию и участников
+ */
+data class GroupDetailsDtoAdmin(
+	val name: String,
+	val membersCount: Int,
+	val creator: UserModelAdminResponse,
+	val members: List<UserModelAdminResponse> = emptyList()
+)
+
 
 
 /**

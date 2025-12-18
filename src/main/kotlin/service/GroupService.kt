@@ -2,9 +2,10 @@ package org.zak.service
 
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.stereotype.Service
-import org.zak.controller.CounterController
 import org.zak.dto.GroupBasicInfoDto
 import org.zak.dto.GroupDetailsDto
+import org.zak.dto.GroupDetailsDtoAdmin
+import org.zak.dto.UserModelAdminResponse
 import org.zak.dto.UserModelResponse
 import org.zak.entity.Group
 import org.zak.entity.User
@@ -90,6 +91,50 @@ class GroupService(
 		}
 		
 		return GroupDetailsDto(
+			name = group.name,
+			membersCount = group.members.size,
+			creator = creatorDto,
+			members = memberDtos
+		)
+	}
+	
+	/**
+	 * Получение полной информации о группе с участниками
+	 * Если пользователь не имеет доступа, возвращает null
+	 */
+	fun getGroupFullDetailsAdmin(groupName: String, userId: Int): GroupDetailsDtoAdmin? {
+		logger.debug("Получение полной информации о группе '$groupName' для пользователя ID=$userId")
+		
+		// Проверка доступа
+		if (!hasUserAccessToGroup(userId, groupName)) {
+			logger.warn("Пользователь ID=$userId пытается получить доступ к группе '$groupName' без прав")
+			return null // Скрываем существование группы
+		}
+		
+		// Получаем группу с участниками и создателем
+		val group = groupRepository.findByNameWithMembersAndCreator(groupName) ?: return null
+		
+		// Преобразуем создателя в UserDto
+		val creatorDto = UserModelAdminResponse(
+			surname = group.creator.surname,
+			name = group.creator.name,
+			patronymic = group.creator.patronymic,
+			email = group.creator.email,
+			createdAt = group.creator.createdAt
+		)
+		
+		// Преобразуем участников в UserDto
+		val memberDtos = group.members.map { member ->
+			UserModelAdminResponse(
+				surname = member.surname,
+				name = member.name,
+				patronymic = member.patronymic,
+				email = member.email,
+				createdAt = member.createdAt
+			)
+		}
+		
+		return GroupDetailsDtoAdmin(
 			name = group.name,
 			membersCount = group.members.size,
 			creator = creatorDto,

@@ -76,10 +76,17 @@ class GroupController(
 	): ResponseEntity<Map<String, Any>> {
 		val currentUser = getCurrentUserFromJwt(authHeader)
 		
-		val groupDetails = groupService.getGroupFullDetails(groupName, currentUser.id!!)
-			?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
-		
-		return successResponse(mapOf("group" to groupDetails))
+		if (currentUser.isAdmin){
+			val groupDetails = groupService.getGroupFullDetailsAdmin(groupName, currentUser.id!!)
+				?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+			
+			return successResponse(mapOf("group" to groupDetails))
+		} else {
+			val groupDetails = groupService.getGroupFullDetails(groupName, currentUser.id!!)
+				?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+			
+			return successResponse(mapOf("group" to groupDetails))
+		}
 	}
 	
 	/**

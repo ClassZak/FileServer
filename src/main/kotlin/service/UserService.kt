@@ -253,7 +253,7 @@ class UserService(
 			surname = user.surname,
 			patronymic = user.patronymic,
 			email = user.email,
-			createdAt = user.createdAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+			createdAt = user.createdAt
 		)
 	}
 	fun toUserModelAdminResponseList(users: List<User>): List<UserModelAdminResponse> {
@@ -263,7 +263,7 @@ class UserService(
 				surname = user.surname,
 				patronymic = user.patronymic,
 				email = user.email,
-				createdAt = user.createdAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+				createdAt = user.createdAt
 			)
 		}
 	}
