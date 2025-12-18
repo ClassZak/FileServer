@@ -7,9 +7,6 @@ import AdminService from '../services/AdminService';
 import UserService from "../services/UserService";
 import GroupService from '../services/GroupService';
 
-import UpdateUserModal from '../components/modal/user/UpdateUserModal';
-import UpdateUserPasswordModal from '../components/modal/user/UpdateUserPasswordModal';
-import DeleteUserModal from '../components/modal/user/DeleteUserModal';
 import CreateGroupModal from '../components/modal/group/CreateGroupModal';
 
 
@@ -95,36 +92,36 @@ function GroupsPage(){
 	};
 
 	// Загрузка пользователей при открытии модального окна
-    const handleOpenCreateModal = async () => {
-        try {
-            // Загрузите список пользователей (нужен отдельный метод в UserService)
-            const usersData = await UserService.getAllUsers(AuthService.getToken());
-            setUsers(usersData);
-            setShowCreateGroupModal(true);
-        } catch (error) {
-            console.error('Ошибка загрузки пользователей:', error);
-        }
-    };
+	const handleOpenCreateModal = async () => {
+		try {
+			// Загрузите список пользователей (нужен отдельный метод в UserService)
+			const usersData = await UserService.getAllUsers(AuthService.getToken());
+			setUsers(usersData);
+			setShowCreateGroupModal(true);
+		} catch (error) {
+			console.error('Ошибка загрузки пользователей:', error);
+		}
+	};
 
-    // Создание группы
-    const handleCreateGroup = async (groupData) => {
-        try {
-            const result = await GroupService.createGroup(AuthService.getToken(), new GroupCreateModel(groupData.name, groupData.creatorEmail));
-            
-            if (result.error) {
-                throw new Error(result.error);
-            }
-            
-            console.log('Группа создана:', result);
-            setShowCreateGroupModal(false);
-            
-            loadGroups();
-            
-        } catch (error) {
-            console.error('Ошибка создания группы:', error);
-            throw error;
-        }
-    };
+	// Создание группы
+	const handleCreateGroup = async (groupData) => {
+		try {
+			const result = await GroupService.createGroup(AuthService.getToken(), new GroupCreateModel(groupData.name, groupData.creatorEmail));
+			
+			if (result.error) {
+				throw new Error(result.error);
+			}
+			
+			console.log('Группа создана:', result);
+			setShowCreateGroupModal(false);
+			
+			loadGroups();
+			
+		} catch (error) {
+			console.error('Ошибка создания группы:', error);
+			throw error;
+		}
+	};
 
 	useEffect(() => {
 		const init = async () => {
@@ -136,10 +133,9 @@ function GroupsPage(){
 		};
 		init();
 	}, []);
-
-	// TODO: Create Group page
+	
 	const navigateToGroup = (name) => {
-		navigate(`/gruop/${encodeURIComponent(name)}`);
+		navigate(`/group/${encodeURIComponent(name)}`);
 	};
 
 const GroupRow = ({ group }) => {
@@ -233,12 +229,11 @@ const GroupRow = ({ group }) => {
 				)}
 			</MainContent>
 			<CreateGroupModal
-                isOpen={showCreateGroupModal}
-                onClose={() => setShowCreateGroupModal(false)}
-                onConfirm={handleCreateGroup}
-                users={users}
-                authToken={AuthService.getToken()}
-            />
+				isOpen={showCreateGroupModal}
+				onClose={() => setShowCreateGroupModal(false)}
+				onConfirm={handleCreateGroup}
+				users={users}
+			/>
 		</>
 	)
 }

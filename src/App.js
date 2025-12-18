@@ -13,6 +13,7 @@ import './App.css'; // Создадим этот файл
 import UsersPage from './pages/UsersPage';
 import UserPage from './pages/UserPage';
 import GroupsPage from './pages/GroupsPage';
+import GroupPage from './pages/GroupPage';
 
 
 function App() {
@@ -49,6 +50,12 @@ function App() {
 							<Route path='/groups' element={
 								<ProtectedRoute>
 									<GroupsPage />
+								</ProtectedRoute>
+							} />
+
+							<Route path='/group/*' element={
+								<ProtectedRoute>
+									<GroupPage />
 								</ProtectedRoute>
 							} />
 

@@ -54,8 +54,7 @@ describe("GroupService", () => {
 								patronymic: "Петрович",
 								email: "petrov@example.com"
 							}
-						],
-						createdAt: "2024-01-15T10:30:00"
+						]
 					}
 				}
 			};

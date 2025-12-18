@@ -1,5 +1,6 @@
 import axios from "axios";
 import User from "../entity/User";
+import UserModelAdminResponse from '../entity/UserModelAdminResponse'
 import { GroupBasicInfo } from "../entity/GroupBasicInfo";
 import { GroupDetails } from "../entity/GroupDetails";
 import { GroupCreateModel } from "../entity/GroupCreateModel";
@@ -50,8 +51,66 @@ class GroupService {
 					groupData.name,
 					groupData.membersCount,
 					creator,
-					members,
-					groupData.createdAt
+					members
+				)
+			};
+		} catch (error) {
+			// Handle 404 as "group doesn't exist or no access"
+			if (error.response && error.response.status === 404) {
+				return null;
+			}
+			
+			// Handle 403 as permission denied
+			if (error.response && error.response.status === 403) {
+				return { error: "Недостаточно прав" };
+			}
+			
+			throw error;
+		}
+	}
+	/**
+	 * Get detailed group information with members (for group page)
+	 * If user doesn't have access, returns null
+	 * 
+	 * @param {string} authToken JWT token
+	 * @param {string} groupName Group name
+	 * @returns {Promise<Object|null>} Object with "group" key or null if no access
+	 */
+	static async getGroupFullDetailsAdmin(authToken, groupName) {
+		try {
+			const response = await axios.get(
+				`/api/groups/name/${encodeURIComponent(groupName)}/full`,
+				this.createConfig(authToken)
+			);
+			
+			const groupData = response.data.group;
+			
+			// Transform creator
+			const creator = new UserModelAdminResponse(
+				groupData.creator.surname,
+				groupData.creator.name,
+				groupData.creator.patronymic,
+				groupData.creator.email,
+				groupData.creator.createdAt
+			);
+			
+			// Transform members
+			const members = groupData.members.map(member => 
+				new UserModelAdminResponse(
+					member.surname,
+					member.name,
+					member.patronymic,
+					member.email,
+					member.createdAt
+				)
+			);
+			
+			return {
+				group: new GroupDetails(
+					groupData.name,
+					groupData.membersCount,
+					creator,
+					members
 				)
 			};
 		} catch (error) {

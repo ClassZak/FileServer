@@ -18,8 +18,7 @@ describe('UserService', () => {
 		name: 'John',
 		surname: 'Doe',
 		patronymic: 'Smith',
-		email: 'john@example.com',
-		createdAt: '2024-01-15T10:30:00Z'
+		email: 'john@example.com'
 	};
 
 	const mockUsersResponse = {

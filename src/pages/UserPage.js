@@ -54,8 +54,9 @@ function UserPage(){
 	const loadUser = async () => {
 		try {
 			setIsLoading(true);
-			const token = AuthService.getToken();
-			const response = await UserService.readUser(token, currentUserEmail);
+			const response = await UserService.readUser(
+				AuthService.getToken(), currentUserEmail
+			);
 			
 			if (response.error) {
 				setError(response.error);
@@ -154,16 +155,16 @@ function UserPage(){
 		}
 	};
 
-	const UserCard = ({user}) => {
+	const UserCard = ({element}) => {
 		return (
 			<div className="account-card">
 				<h2>Информация о пользователе</h2>
 				<div className="account-info">
-					<p><strong>Email:</strong> {user.email}</p>
-					<p><strong>Фамилия:</strong> {user.surname}</p>
-					<p><strong>Имя:</strong> {user.name}</p>
-					<p><strong>Отчество:</strong> {user.patronymic}</p>
-					<p><strong>Создан:</strong> {user.createdAt}</p>
+					<p><strong>Email:</strong> {element.email}</p>
+					<p><strong>Фамилия:</strong> {element.surname}</p>
+					<p><strong>Имя:</strong> {element.name}</p>
+					<p><strong>Отчество:</strong> {element.patronymic}</p>
+					<p><strong>Создан:</strong> {element.createdAt}</p>
 				</div>
 			</div>
 		);

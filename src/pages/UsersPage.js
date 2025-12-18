@@ -98,40 +98,29 @@ function UsersPage() {
 
 	const UserTable = ({ users }) => {
 		return (
-			<div>
-				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-					<h1>Пользователи</h1>
-					<button 
-						onClick={() => setShowCreateUserModal(true)}
-						style={{ padding: '10px 20px', cursor: 'pointer' }}
-					>
-						Создать пользователя
-					</button>
-				</div>
-				<table className='file-table'>
-					<thead>
+			<table className='file-table'>
+				<thead>
+					<tr>
+						<th>Фамилия</th>
+						<th>Имя</th>
+						<th>Отчество</th>
+						<th>Почта</th>
+						<th>Дата создания</th>
+						<th>Действия</th>
+					</tr>
+				</thead>
+				<tbody>
+					{users && users.length > 0 ? (
+						users.map(user => <UserRow key={user.email} user={user} />)
+					) : (
 						<tr>
-							<th>Фамилия</th>
-							<th>Имя</th>
-							<th>Отчество</th>
-							<th>Почта</th>
-							<th>Дата создания</th>
-							<th>Действия</th>
+							<td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>
+								Пользователи не найдены
+							</td>
 						</tr>
-					</thead>
-					<tbody>
-						{users && users.length > 0 ? (
-							users.map(user => <UserRow key={user.email} user={user} />)
-						) : (
-							<tr>
-								<td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>
-									Пользователи не найдены
-								</td>
-							</tr>
-						)}
-					</tbody>
-				</table>
-			</div>
+					)}
+				</tbody>
+			</table>
 		);
 	};
 	
@@ -186,7 +175,18 @@ function UsersPage() {
 						</button>
 					</div>
 				) : (
-					<UserTable users={users} />
+					<>
+						<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+							<h1>Пользователи</h1>
+							<button 
+								onClick={() => setShowCreateUserModal(true)}
+								style={{ padding: '10px 20px', cursor: 'pointer' }}
+								>
+								Создать пользователя
+							</button>
+						</div>
+						<UserTable users={users} />
+					</>
 				)}
 			</MainContent>
 			
