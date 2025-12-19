@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 import MainContent from "../components/MainContent";
 import AuthService from '../services/AuthService';
 import AdminService from '../services/AdminService';
 import GroupService from '../services/GroupService';
+import UserService from '../services/UserService';
 
 
 import DeleteGroupModal from '../components/modal/group/DeleteGroupModal';
+import UpdateGroupModal from '../components/modal/group/UpdateGroupModal';
+import RemoveUserFromGroupModal from '../components/modal/group/RemoveUserFromGroupModal';
 
 
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -17,6 +20,8 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 import GroupBasicInfo from '../services/GroupService'
 import GroupDetails from '../services/GroupService'
+import { GroupUpdateModel } from '../entity/GroupUpdateModel';
+import User from '../entity/User';
 
 
 
@@ -24,13 +29,17 @@ import GroupDetails from '../services/GroupService'
 function GroupPage(){
 	const { '*': pathParam } = useParams();
 	const [showUpdateGroupModal, setShowUpdateGroupModal] = useState(false);
-	const [showUpdateGroupPasswordModal, setShowUpdateGroupPasswordModal] = useState(false);
 	const [showDeleteGroupModal, setShowDeleteGroupModal] = useState(false);
-	const [isLoading, setIsLoading] = useState(true);
+	const [showRemoveUserFromGroupModal, setShowRemoveUserFromGroupModal] = useState(false);
+	const [isLoadingGroup, setIsLoadingGroup] = useState(true);
 	const [isLoadingIsAdmin, setIsLoadingIsAdmin] = useState(true);
-	const [isAdmin, setIsAdmin] = useState(true);
+	const [isAdmin, setIsAdmin] = useState(false);
+	const [isLoadingUsers, setIsLoadingUsers] = useState(true);
 	const [error, setError] = useState('');
 	const [group, setGroup] = useState({});
+	const [users, setUsers] = useState([]);
+	// Object for add and remove from group. User class
+	const [userForModal, setUserForModal] = useState({});
 	const navigate = useNavigate();
 
 	const currentGroupName = pathParam || '';
@@ -54,10 +63,35 @@ function GroupPage(){
 		}
 	};
 
+
+	const loadUsers = async () => {
+		try {
+			setIsLoadingUsers(true);
+			setUsers([]);
+			const token = AuthService.getToken();
+			const response = await UserService.readAllUsers(token);
+			
+			if (response.error) {
+				setError(response.error);
+				setUsers([]);
+			} else if (response.users) {
+				setUsers(response.users);
+			}
+		} catch (error) {
+			console.error('Ошибка при загрузке пользователей:', error);
+			setError('Не удалось загрузить список пользователей');
+			setUsers([]);
+		} finally {
+			setIsLoadingUsers(false);
+		}
+	};
+	
+
+
 	const loadGroup = async () => {
 		try {
 			setGroup({});
-			setIsLoading(true);
+			setIsLoadingGroup(true);
 			while(isLoadingIsAdmin);
 
 			const result = isAdmin ? 
@@ -73,12 +107,12 @@ function GroupPage(){
 			else if(result.group)
 				setGroup(result.group)
 			else
-				setError(`Группа ${currentGroupName} не найдена`);
+				//setError(`Группа ${currentGroupName} не найдена`);
+				navigate('/groups')
 		} catch (error) {
-			setError('Не удалось загрузить данные пользователя');
-			setGroup({});
+			navigate('/groups')
 		} finally {
-			setIsLoading(false);
+			setIsLoadingGroup(false);
 		}
 	};
 
@@ -96,6 +130,8 @@ function GroupPage(){
 	useEffect(() => {
 		if (!isLoadingIsAdmin) {
 			loadGroup();
+			if (isAdmin)
+				loadUsers();
 		}
 	}, [isLoadingIsAdmin]);
 
@@ -114,13 +150,57 @@ function GroupPage(){
 			else
 				navigate(`/groups`);
 			
-			setShowUpdateGroupModal(false);
+			setShowDeleteGroupModal(false);
 		} catch (error) {
 			console.error('Ошибка при удалении группы:', error);
 			setError('Произошла ошибка при удалении группы');
 		}
 	};
 
+
+	/**
+	 * Function for group update handling
+	 * @param {GroupUpdateModel} formData Data for update group
+	 */
+	const onConfirmUpdateGroup = async (formData) => {
+		try {
+			const response = await GroupService.updateGroup(
+				AuthService.getToken(), currentGroupName, formData
+			)
+
+			if (response.error)
+				setError(response.error);
+			else
+				loadGroup();
+			
+			setShowUpdateGroupModal(false);
+		} catch (error) {
+			console.error('Ошибка при удалении группы:', error);
+			setError('Произошла ошибка при удалении группы');
+		}
+	}
+
+
+	/**
+	 * Function for renove user from group
+	 * uses userForModal User class
+	 */
+	const onConfirmRemoveUserFromGroup = async () => {
+		try {
+			const response = await GroupService.removeUserFromGroup(
+				AuthService.getToken(), currentGroupName, userForModal.email
+			);
+			if (response.error)
+				setError(response.error);
+			else
+				loadGroup();
+
+			setShowRemoveUserFromGroupModal(false);
+		} catch (error){
+			console.error('Ошибка при удалении пользователя из группы:', error);
+			setError('Произошла ошибка при удалении пользователя из группы');
+		}
+	}
 
 
 	const navigateToUser = (email) => {
@@ -144,7 +224,9 @@ function GroupPage(){
 					</button>
 					{/* TODO: Create modal for remove from group */}
 					<button
-						onClick={() => navigateToUser(element.email)}
+						onClick={()=>{
+							setUserForModal(element); setShowRemoveUserFromGroupModal(true);}
+						}
 						style={{ cursor: 'pointer', padding: '8px 16px' }}
 					>
 						Исключить из группы
@@ -256,7 +338,7 @@ function GroupPage(){
 	return (
 		<>
 			<MainContent>
-				{isLoading || isLoadingIsAdmin ? (
+				{isLoadingGroup || isLoadingIsAdmin || isLoadingUsers ? (
 					<LoadingSpinner title={'Загрузка данных группы'}/>
 				) : isAdmin ? (
 					<>
@@ -266,18 +348,41 @@ function GroupPage(){
 						>
 							Удалить группу
 						</button>
+						<button
+							onClick={() => setShowUpdateGroupModal(true)}
+						>
+							Обновить данные группы
+						</button>
 					</>
 				) : (
 					<GroupCard element={group} />
 				)}
 			</MainContent>
-			<DeleteGroupModal
-				isOpen={showDeleteGroupModal}
-				onClose={()=>{setShowDeleteGroupModal(false); setError('');}}
-				onConfirm={onConfirmDeleteGroup}
-				error={error}
-				name={currentGroupName}
-			/>
+			{!isLoadingGroup && !isLoadingIsAdmin && !isLoadingUsers ? (
+				<>
+					<DeleteGroupModal
+						isOpen={showDeleteGroupModal}
+						onClose={()=>{setShowDeleteGroupModal(false); setError('');}}
+						onConfirm={onConfirmDeleteGroup}
+						error={error}
+						name={currentGroupName}
+					/>
+					<UpdateGroupModal 
+						isOpen={showUpdateGroupModal}
+						onClose={()=>{setShowUpdateGroupModal(false); setError('');}}
+						onConfirm={onConfirmUpdateGroup}
+						users={users}
+						currentGroup={new GroupUpdateModel(group.name, group.creator.email)}
+					/>
+					<RemoveUserFromGroupModal
+						isOpen={showRemoveUserFromGroupModal}
+						onClose={()=>{setShowRemoveUserFromGroupModal(false); setError('');}}
+						onConfirm={onConfirmRemoveUserFromGroup}
+						name={currentGroupName}
+						user={userForModal}
+					/>
+				</>
+			) : <></>}
 		</>
 	);
 }

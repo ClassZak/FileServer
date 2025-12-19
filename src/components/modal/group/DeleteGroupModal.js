@@ -3,13 +3,11 @@ import Modal from '../Modal';
 
 
 /**
- * Модальное окно для удаления группы
- * 
+ * Modal window for group deleting
  * @param {Object} props
- * @param {boolean} props.isOpen - Открыто ли модальное окно
- * @param {function} props.onClose - Функция закрытия модального окна
- * @param {function} props.onConfirm - Функция подтверждения формы
- * @param {string} props.authToken - JWT токен для авторизации
+ * @param {boolean} props.isOpen - Is open window
+ * @param {function} props.onClose - Modal window closing function
+ * @param {function} props.onConfirm - Confirm form function
  */
 function DeleteGroupModal({
 	isOpen,
