@@ -138,7 +138,7 @@ function GroupsPage(){
 		navigate(`/group/${encodeURIComponent(name)}`);
 	};
 
-const GroupRow = ({ group }) => {
+	const GroupRow = ({ group }) => {
 		return (
 			<tr key={`group-${group.name}`}>
 				<td>{group.name}</td>

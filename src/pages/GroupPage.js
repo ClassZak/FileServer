@@ -27,6 +27,8 @@ function GroupPage(){
 	const [showUpdateGroupPasswordModal, setShowUpdateGroupPasswordModal] = useState(false);
 	const [showDeleteGroupModal, setShowDeleteGroupModal] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);
+	const [isLoadingIsAdmin, setIsLoadingIsAdmin] = useState(true);
+	const [isAdmin, setIsAdmin] = useState(true);
 	const [error, setError] = useState('');
 	const [group, setGroup] = useState({});
 	const navigate = useNavigate();
@@ -35,16 +37,20 @@ function GroupPage(){
 
 	const checkAuth = async () => {
 		try {
+			setIsLoadingIsAdmin(true);
 			const isAdminResponse = await AdminService.isAdmin(AuthService.getToken());
 			if (!isAdminResponse?.isAdmin) {
-				navigate(`/account`);
-				return false;
+				setIsAdmin(false);
+				setIsLoadingIsAdmin(false);
+				return;
 			}
-			return true;
+			setIsAdmin(true);
 		} catch (error) {
 			console.error('Ошибка проверки прав:', error);
 			setError('Ошибка проверки прав доступа');
-			return false;
+			setIsAdmin(false);
+		} finally {
+			setIsLoadingIsAdmin(false);
 		}
 	};
 
@@ -52,7 +58,8 @@ function GroupPage(){
 		try {
 			setGroup({});
 			setIsLoading(true);
-			const isAdmin = await checkAuth();
+			while(isLoadingIsAdmin);
+
 			const result = isAdmin ? 
 				await GroupService.getGroupFullDetailsAdmin(
 					AuthService.getToken(), currentGroupName
@@ -78,16 +85,20 @@ function GroupPage(){
 
 	useEffect(() => {
 		const init = async () => {
-			if (currentGroupName === '')
+			if (currentGroupName === '') {
 				navigate('/groups');
-
-			const isAdmin = await checkAuth();
-			if (isAdmin) {
-				await loadGroup();
+				return;
 			}
+			await checkAuth();
 		};
 		init();
 	}, []);
+	useEffect(() => {
+		if (!isLoadingIsAdmin) {
+			loadGroup();
+		}
+	}, [isLoadingIsAdmin]);
+
 
 
 
@@ -115,7 +126,7 @@ function GroupPage(){
 	const navigateToUser = (email) => {
 		navigate(`/user/${encodeURIComponent(email)}`);
 	};
-	const UserRow = ({ element }) => {
+	const UserRowAdmin = ({ element }) => {
 		console.log(element);
 		return (
 			<tr key={`user-${element.email}`}>
@@ -142,7 +153,7 @@ function GroupPage(){
 			</tr>
 		);
 	};
-	const UserTable = ({ users }) => {
+	const UserTableAdmin = ({ users }) => {
 		return (
 			<table className='file-table'>
 				<thead>
@@ -153,6 +164,58 @@ function GroupPage(){
 						<th>Почта</th>
 						<th>Дата создания</th>
 						<th>Действия</th>
+					</tr>
+				</thead>
+				<tbody>
+					{users && users.length > 0 ? (
+						users.map(element => {console.log(element);  return (<UserRowAdmin key={element.email} element={element} />);})
+					) : (
+						<tr>
+							<td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>
+								Пользователи не найдены
+							</td>
+						</tr>
+					)}
+				</tbody>
+			</table>
+		);
+	};
+	const GroupCardAdmin = ({element}) => {
+		return (
+			<>
+				<div className="account-card">
+					<h2>Информация о группе</h2>
+					<div className="account-info">
+						<p><strong>Название:</strong> {element.name}</p>
+						<p><strong>Количество участников:</strong> {element.membersCount}</p>
+						<p><strong>Создатель:</strong>{element.creator.toString()}</p>
+					</div>
+					<UserTableAdmin users={element.members} />
+				</div>
+				
+			</>
+		);
+	};
+	const UserRow = ({ element }) => {
+		console.log(element);
+		return (
+			<tr key={`user-${element.email}`}>
+				<td>{element.surname}</td>
+				<td>{element.name}</td>
+				<td>{element.patronymic}</td>
+				<td>{element.email}</td>
+			</tr>
+		);
+	};
+	const UserTable = ({ users }) => {
+		return (
+			<table className='file-table'>
+				<thead>
+					<tr>
+						<th>Фамилия</th>
+						<th>Имя</th>
+						<th>Отчество</th>
+						<th>Почта</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -179,6 +242,7 @@ function GroupPage(){
 						<p><strong>Количество участников:</strong> {element.membersCount}</p>
 						<p><strong>Создатель:</strong>{element.creator.toString()}</p>
 					</div>
+					<h2>Участники группы</h2>
 					<UserTable users={element.members} />
 				</div>
 				
@@ -191,19 +255,28 @@ function GroupPage(){
 
 	return (
 		<>
-
 			<MainContent>
-				{isLoading ? (
+				{isLoading || isLoadingIsAdmin ? (
 					<LoadingSpinner title={'Загрузка данных группы'}/>
-				) : 
+				) : isAdmin ? (
+					<>
+						<GroupCardAdmin element={group} />
+						<button
+							onClick={() => setShowDeleteGroupModal(true)}
+						>
+							Удалить группу
+						</button>
+					</>
+				) : (
 					<GroupCard element={group} />
-				}
+				)}
 			</MainContent>
 			<DeleteGroupModal
 				isOpen={showDeleteGroupModal}
 				onClose={()=>{setShowDeleteGroupModal(false); setError('');}}
 				onConfirm={onConfirmDeleteGroup}
 				error={error}
+				name={currentGroupName}
 			/>
 		</>
 	);

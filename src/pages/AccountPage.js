@@ -118,9 +118,59 @@ function AccountPage() {
 		return token || '';
 	};
 
-    if (!user && !isLoadingUser) {
-        return null;
-    }
+	if (!user && !isLoadingUser) {
+		return null;
+	}
+
+
+
+	const navigateToGroup = (name) => {
+		navigate(`/group/${encodeURIComponent(name)}`);
+	};
+	const GroupRow = ({ group }) => {
+		return (
+			<tr key={`group-${group.name}`}>
+				<td>{group.name}</td>
+				<td>{group.membersCount}</td>
+				<td>{group.creatorEmail}</td>
+				<td>
+					<button
+						onClick={() => navigateToGroup(group.name)}
+						style={{ cursor: 'pointer', padding: '8px 16px' }}
+					>
+						Изменить данные
+					</button>
+				</td>
+			</tr>
+		);
+	};
+	const GroupTable = ({ groups }) => {
+		return (
+			<div>
+				<table className='file-table'>
+					<thead>
+						<tr>
+							<th>Название</th>
+							<th>Число участников</th>
+							<th>Почта создателя</th>
+							<th>Действия</th>
+						</tr>
+					</thead>
+					<tbody>
+						{groups && groups.length > 0 ? (
+							groups.map(element => <GroupRow key={element.name} group={element} />)
+						) : (
+							<tr>
+								<td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>
+									Группы не найдены
+								</td>
+							</tr>
+						)}
+					</tbody>
+				</table>
+			</div>
+		);
+	};
 
 	return (
 		<div>
@@ -163,6 +213,12 @@ function AccountPage() {
 									</button>
 								</div>
 							): <></>}
+							{!isLoadingGroups ? (
+								<>
+									<h1>Ваши группы</h1>
+									<GroupTable groups={groups} />
+								</>
+							) : <></>}
 						</div>
 					</div>
 				)}

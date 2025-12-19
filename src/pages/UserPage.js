@@ -203,7 +203,7 @@ function UserPage(){
 					</div>
 				) : (
 					<div>
-						<UserCard user={user} />
+						<UserCard element={user} />
 						<button
 							onClick={() => setShowUpdateUserModal(true)}
 							style={{ padding: '10px 20px', cursor: 'pointer' }}
