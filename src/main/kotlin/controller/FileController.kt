@@ -17,16 +17,25 @@ import org.zak.dto.file.FileSystemResponse
 import org.zak.dto.file.FileUploadResponse
 import org.zak.dto.file.DeleteRequest
 import org.zak.service.FileSystemService
+import org.zak.service.UserService
 import java.io.FileInputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import org.springframework.web.bind.annotation.*
+import org.zak.dto.CurrentUser
+import org.zak.service.AdministratorService
+import org.zak.util.JwtUtil
 import java.io.File
 
 @RestController
 @RequestMapping("/api/files")
-class FileController(private val fileSystemService: FileSystemService) {
+class FileController(
+	private val fileSystemService: FileSystemService,
+	private val userService: UserService,
+	private val jwtUtil: JwtUtil,
+	private val administratorService: AdministratorService,
+) {
 	
 	private val logger = LoggerFactory.getLogger(FileController::class.java)
 	
@@ -36,6 +45,7 @@ class FileController(private val fileSystemService: FileSystemService) {
 		@RequestParam path: String = "",
 		@RequestHeader("Authorization") authHeader: String
 	): ResponseEntity<Any> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
 		return try {
 			val (files, folders) = fileSystemService.listDirectory(path)
 			ResponseEntity.ok(mapOf("files" to files, "folders" to folders))
@@ -210,4 +220,38 @@ class FileController(private val fileSystemService: FileSystemService) {
 			}
 		}
 	}
+	
+	
+	
+	
+	
+	private fun extractTokenFromHeader(authHeader: String): String {
+		return if (authHeader.startsWith("Bearer ")) {
+			authHeader.substring(7)
+		} else {
+			throw IllegalArgumentException("Неверный формат заголовка Authorization")
+		}
+	}
+	private fun getCurrentUserFromJwt(authHeader: String): CurrentUser {
+		val jwtToken = extractTokenFromHeader(authHeader)
+		
+		if (!jwtUtil.validateToken(jwtToken)) {
+			throw SecurityException("Недействительный токен")
+		}
+		
+		val userId = jwtUtil.extractUserId(jwtToken)
+			?: throw SecurityException("User ID не найден в токене")
+		
+		val email = jwtUtil.extractUsername(jwtToken)
+		val user = userService.getUserEntityById(userId)
+		val isAdmin = administratorService.isAdmin(userId)
+		
+		return CurrentUser(
+			id = userId,
+			email = email,
+			isAdmin = isAdmin,
+			userDetails = user
+		)
+	}
+	
 }
