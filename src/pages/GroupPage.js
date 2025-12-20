@@ -1,4 +1,4 @@
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 import MainContent from "../components/MainContent";
@@ -11,6 +11,7 @@ import UserService from '../services/UserService';
 import DeleteGroupModal from '../components/modal/group/DeleteGroupModal';
 import UpdateGroupModal from '../components/modal/group/UpdateGroupModal';
 import RemoveUserFromGroupModal from '../components/modal/group/RemoveUserFromGroupModal';
+import AddUserToGroupModal from '../components/modal/group/AddUserToGroupModal';
 
 
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -31,6 +32,7 @@ function GroupPage(){
 	const [showUpdateGroupModal, setShowUpdateGroupModal] = useState(false);
 	const [showDeleteGroupModal, setShowDeleteGroupModal] = useState(false);
 	const [showRemoveUserFromGroupModal, setShowRemoveUserFromGroupModal] = useState(false);
+	const [showAddUserToGroupModal, setShowAddUserToGroupModal] = useState(false);
 	const [isLoadingGroup, setIsLoadingGroup] = useState(true);
 	const [isLoadingIsAdmin, setIsLoadingIsAdmin] = useState(true);
 	const [isAdmin, setIsAdmin] = useState(false);
@@ -201,6 +203,27 @@ function GroupPage(){
 			setError('Произошла ошибка при удалении пользователя из группы');
 		}
 	}
+	/**
+	 * Function for adding user to group
+	 * @param {string} userEmail Email of user to add
+	 */
+	const onConfirmAddUserToGroup = async (userEmail) => {
+		try {
+			const response = await GroupService.addUserToGroup(
+				AuthService.getToken(), currentGroupName, userEmail
+			);
+			
+			if (response.error)
+				setError(response.error);
+			else
+				loadGroup();
+			
+			setShowAddUserToGroupModal(false);
+		} catch (error) {
+			console.error('Ошибка при добавлении пользователя в группу:', error);
+			setError('Произошла ошибка при добавлении пользователя в группу');
+		}
+	};
 
 
 	const navigateToUser = (email) => {
@@ -353,6 +376,11 @@ function GroupPage(){
 						>
 							Обновить данные группы
 						</button>
+						<button
+							onClick={() => setShowAddUserToGroupModal(true)}
+						>
+							Добавить пользователя в группу
+						</button>
 					</>
 				) : (
 					<GroupCard element={group} />
@@ -380,6 +408,13 @@ function GroupPage(){
 						onConfirm={onConfirmRemoveUserFromGroup}
 						name={currentGroupName}
 						user={userForModal}
+					/>
+					<AddUserToGroupModal
+						isOpen={showAddUserToGroupModal}
+						onClose={()=>{setShowAddUserToGroupModal(false); setError('');}}
+						onConfirm={onConfirmAddUserToGroup}
+						users={users}
+						groupName={currentGroupName}
 					/>
 				</>
 			) : <></>}
