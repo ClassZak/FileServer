@@ -3,8 +3,10 @@
 3) ✓ CRUD operations for User entity
 4) ✓ CRUD operations for Group entity
 5) ✓ Group page
-6) ✖ Add recently used files in Home page
-7) ✖ Access managment page
-8) ✖ Fix Files page menu search mode
-9) ✖ Fix all pages
-10) ✖ Full refactor
+6) ✖ Add deleted files page
+7) ✖ Add recently used files in Home page
+8) ✖ Add History page
+9) ✖ Access managment page
+10) ✖ Fix Files page menu search mode
+11) ✖ Fix all pages
+12) ✖ Full refactor
