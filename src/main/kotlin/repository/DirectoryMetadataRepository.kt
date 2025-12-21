@@ -5,14 +5,42 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import org.zak.entity.DirectoryMetadata
+import org.zak.entity.User
 
 @Repository
 interface DirectoryMetadataRepository : JpaRepository<DirectoryMetadata, Long> {
-	fun findByPath(path: String): DirectoryMetadata?
+	
+	// Для поиска конкретной директории пользователя по точному пути
+	@Query("""
+        SELECT d FROM DirectoryMetadata d
+        WHERE d.path = :path
+        AND (d.user.id = :userId OR d.group.id IN :userGroupIds)
+    """)
+	fun findByPathAndUserOrUserGroups(
+		@Param("path") path: String,
+		@Param("userId") userId: Int,
+		@Param("userGroupIds") userGroupIds: Collection<Int>
+	): List<DirectoryMetadata>
+	
+	// Для поиска всех директорий пользователя (по точному совпадению)
+	fun findByUserId(userId: Int): List<DirectoryMetadata>
+	
+	// Упрощенная версия без CASE в ORDER BY
+	@Query("""
+        SELECT d FROM DirectoryMetadata d
+        WHERE d.path = :path
+        AND (d.user.id = :userId OR d.group.id IN :userGroupIds)
+    """)
+	fun findByExactPathForUser(
+		@Param("path") path: String,
+		@Param("userId") userId: Int,
+		@Param("userGroupIds") userGroupIds: Collection<Int>
+	): List<DirectoryMetadata>
+	
+	fun findAllByPath(path: String): List<DirectoryMetadata>
+	
+	fun findAllByPathAndUser(path: String, user: User): List<DirectoryMetadata>
 	
 	@Query("SELECT d FROM DirectoryMetadata d WHERE d.path LIKE CONCAT(:prefix, '%')")
 	fun findByPathStartingWith(@Param("prefix") prefix: String): List<DirectoryMetadata>
-	
-	fun findByUserId(userId: Int): List<DirectoryMetadata>
-	fun findByGroupId(groupId: Int): List<DirectoryMetadata>
 }

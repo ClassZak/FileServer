@@ -332,4 +332,9 @@ class GroupService(
 		
 		return groupRepository.findUsersInGroup(group.id!!)
 	}
+	
+	/**
+	 * Проверка на существование группы
+	 */
+	fun existsByName(name: String): Boolean = groupRepository.existsByName(name)
 }

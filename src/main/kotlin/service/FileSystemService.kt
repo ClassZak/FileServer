@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
+import org.zak.dto.CurrentUser
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -48,7 +49,9 @@ enum class AccessType {
 class FileSystemService(
 	private val deletedFileRepository: DeletedFileRepository,
 	private val fileMetadataRepository: FileMetadataRepository,
-	private val directoryMetadataRepository: DirectoryMetadataRepository
+	private val directoryMetadataRepository: DirectoryMetadataRepository,
+	private val groupService: GroupService,
+	private val userService: UserService
 ) {
 	
 	@PersistenceContext
@@ -934,8 +937,41 @@ class FileSystemService(
 	private fun sanitizeFileName(fileName: String): String {
 		return fileName.replace(Regex("[<>:\"\\\\|?*]"), "_")
 	}
-	
-	fun checkAccessToCreate(idUser: Int, path: String) {
-		// TODO: Реализовать проверку прав на создание
+	fun extractGroupFromPath(pathString: String): String? {
+		val path = Paths.get(pathString).normalize()
+		val parts = path.toList()
+		
+		if (parts.size >= 2 && parts[0].toString() == groupsDir)
+			return parts[1].toString()
+		
+		return null
+	}
+	fun checkAccessToCreate(currentUser: CurrentUser, path: String): Boolean {
+		val realPath = Paths.get(path)
+		val realPathParts = realPath.toList()
+		if (realPath.startsWith(groupsDir)) {
+			val groupDirectory = extractGroupFromPath(path)
+				?: return false
+			
+			if (!groupService.existsByName(groupDirectory))
+				return false
+			
+			if (groupService.hasUserAccessToGroup(currentUser.id!!, groupDirectory)) {
+				if (currentUser.isAdmin)
+					return true
+				
+				//if (realPathParts.size == 2)
+				//	return true
+				val userRef = userService.getUserEntityById(currentUser.id) ?:
+					throw NullPointerException("Пользователь не найден для проверки прав")
+				
+				val directoriesMetadata = directoryMetadataRepository.findAllByPathAndUser(path, userRef)
+				
+				
+			} else
+				return false
+		}
+		
+		return false
 	}
 }
