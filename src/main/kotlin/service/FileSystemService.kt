@@ -8,6 +8,7 @@ import org.zak.repository.DirectoryMetadataRepository
 import org.zak.repository.FileMetadataRepository
 import jakarta.annotation.PostConstruct
 import jakarta.persistence.EntityManager
+import jakarta.persistence.EntityNotFoundException
 import jakarta.persistence.PersistenceContext
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -41,8 +42,15 @@ data class DeletedPathInfo(
 	val timestamp: Long
 )
 
-enum class AccessType {
-	READ, WRITE, DELETE, CREATE
+enum class AccessType(val value: Int) {
+	CREATE(1),
+	READ(2),
+	UPDATE(4),
+	DELETE(8),
+	ALL(CREATE.value or READ.value or UPDATE.value or DELETE.value);
+	
+	infix fun or(other: AccessType): Int = this.value or other.value
+	infix fun and(other: AccessType): Int = this.value and other.value
 }
 
 @Service
@@ -152,7 +160,7 @@ class FileSystemService(
 	): FileInfo {
 		// Проверка прав доступа для не-админов
 		if (!isAdmin) {
-			checkUserAccess(relativePath, userId, userGroups, AccessType.WRITE, false)
+			checkUserAccess(relativePath, userId, userGroups, AccessType.CREATE, false)
 		}
 		
 		return uploadFile(relativePath, file)
@@ -523,7 +531,7 @@ class FileSystemService(
 		if (!isAdmin) {
 			val targetPath = if (shouldUseRecovered) originalPath else parentPath?.toString() ?: ""
 			if (targetPath.isNotEmpty()) {
-				checkUserAccess(targetPath, restoreUserId, userGroups, AccessType.WRITE, false)
+				checkUserAccess(targetPath, restoreUserId, userGroups, AccessType.CREATE, false)
 			}
 		}
 		
@@ -946,32 +954,108 @@ class FileSystemService(
 		
 		return null
 	}
-	fun checkAccessToCreate(currentUser: CurrentUser, path: String): Boolean {
+	fun isRootDirectory(path: String): Boolean{
+		val safePath = getSafePath(path).toString()
+		return safePath == ""
+	}
+	fun isGroupsDirectory(path: String): Boolean{
+		val safePath = getSafePath(path).toString()
+		val safePathParts = Paths.get(safePath).toList()
+		
+		return if (safePathParts.size == 1)
+			safePathParts[0].toString() == groupsDir
+		else
+			false
+	}
+	fun isGroupDirectory(path: String): Boolean{
+		val safePath = getSafePath(path).toString()
+		val safePathParts = Paths.get(safePath).toList()
+		
+		if (safePathParts.size == 2){
+			safePathParts[0].toString() == groupsDir
+			return true
+		}
+		else
+			return false
+	}
+	fun checkAccessForDirectory(currentUser: CurrentUser, path: String): Int {
+		val safePath = getSafePath(path).toString()
 		val realPath = Paths.get(path)
 		val realPathParts = realPath.toList()
-		if (realPath.startsWith(groupsDir)) {
-			val groupDirectory = extractGroupFromPath(path)
-				?: return false
-			
-			if (!groupService.existsByName(groupDirectory))
-				return false
-			
-			if (groupService.hasUserAccessToGroup(currentUser.id!!, groupDirectory)) {
-				if (currentUser.isAdmin)
-					return true
-				
-				//if (realPathParts.size == 2)
-				//	return true
-				val userRef = userService.getUserEntityById(currentUser.id) ?:
-					throw NullPointerException("Пользователь не найден для проверки прав")
-				
-				val directoriesMetadata = directoryMetadataRepository.findAllByPathAndUser(path, userRef)
-				
-				
-			} else
-				return false
-		}
+		val user = userService.getUserEntityById(currentUser.id!!)
+			?: throw EntityNotFoundException("Не найден пользователь")
 		
-		return false
+		if (isRootDirectory(safePath))
+			return AccessType.ALL.value
+		if (isGroupsDirectory(safePath))
+			return 0
+		if (isGroupDirectory(realPath.toString())){
+			val groupName = extractGroupFromPath(safePath)
+				?: return 0
+			val group = groupService.findByName(groupName)
+				?: return 0
+			
+			if (currentUser.isAdmin)
+				return AccessType.ALL.value
+			
+			
+			
+			
+			var permissions = 0
+			
+			val realPathParts = realPath.toList()
+			var currentPath = ""
+			for (i in 1..realPathParts.size){
+				val part = realPathParts[i]
+				currentPath = if (currentPath.isEmpty()) part.toString() else "$currentPath/$part"
+				
+				val currentGroupPermissions = directoryMetadataRepository.findByPathAndGroup(currentPath, group)
+				val currentUserPermissions = directoryMetadataRepository.findByPathAndUser(currentPath, user)
+				
+				if (currentGroupPermissions != null)
+					permissions = currentGroupPermissions.mode
+				if (currentUserPermissions != null)
+					permissions = currentUserPermissions.mode
+			}
+			
+			
+			return permissions
+		} else {
+			if (currentUser.isAdmin)
+				return AccessType.ALL.value
+			
+			
+			
+			
+			var permissions = 0
+			
+			val realPathParts = realPath.toList()
+			var currentPath = ""
+			val groups = groupService.findByMemberId(currentUser.id)
+			var groupPermissions = 0
+			for (part in realPathParts){
+				currentPath = if (currentPath.isEmpty()) part.toString() else "$currentPath/$part"
+				
+				
+				
+				val currentGroupPermissions = groups.mapNotNull { it ->
+					directoryMetadataRepository.findByPathAndGroup(currentPath, it)
+				}
+				val currentUserPermissions = directoryMetadataRepository.findByPathAndUser(currentPath, user)
+				
+				
+				groupPermissions = currentGroupPermissions.fold(0) {
+					acc, item -> acc or item.mode
+				}
+				
+				
+				if (currentGroupPermissions.isNotEmpty())
+					permissions = groupPermissions
+				if (currentUserPermissions != null)
+					permissions = currentUserPermissions.mode
+			}
+			
+			return permissions
+		}
 	}
 }

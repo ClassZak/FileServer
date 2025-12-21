@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import org.zak.entity.DirectoryMetadata
+import org.zak.entity.Group
 import org.zak.entity.User
 
 @Repository
@@ -39,7 +40,16 @@ interface DirectoryMetadataRepository : JpaRepository<DirectoryMetadata, Long> {
 	
 	fun findAllByPath(path: String): List<DirectoryMetadata>
 	
+	fun findAllByGroupId(groupId: Int): List<DirectoryMetadata>
+	
+	fun findAllByPathAndGroup(path: String, group: Group): List<DirectoryMetadata>
+	
 	fun findAllByPathAndUser(path: String, user: User): List<DirectoryMetadata>
+	
+	
+	fun findByPathAndGroup(path: String, group: Group): DirectoryMetadata?
+	
+	fun findByPathAndUser(path: String, user: User): DirectoryMetadata?
 	
 	@Query("SELECT d FROM DirectoryMetadata d WHERE d.path LIKE CONCAT(:prefix, '%')")
 	fun findByPathStartingWith(@Param("prefix") prefix: String): List<DirectoryMetadata>

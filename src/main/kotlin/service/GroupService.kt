@@ -337,4 +337,12 @@ class GroupService(
 	 * Проверка на существование группы
 	 */
 	fun existsByName(name: String): Boolean = groupRepository.existsByName(name)
+	/**
+	 * Получение группы по названию
+	 */
+	fun findByName(name: String): Group? = groupRepository.findByName(name)
+	/**
+	 * Получение групп по Id пользователя
+	 */
+	fun findByMemberId(userId: Int): List<Group> = groupRepository.findByMemberId(userId)
 }
