@@ -1,6 +1,7 @@
 package org.zak.service
 
 import jakarta.persistence.EntityNotFoundException
+import org.slf4j.LoggerFactory
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
@@ -27,6 +28,7 @@ class UserService(
 	private val administratorService: AdministratorService,
 	private val passwordEncoder: PasswordEncoder
 ) : UserDetailsService {
+	private val logger = LoggerFactory.getLogger(UserService::class.java)
 	
 	override fun loadUserByUsername(email: String): UserDetails {
 		val user = userRepository.findByEmail(email)

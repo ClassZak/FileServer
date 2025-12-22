@@ -119,7 +119,7 @@ class FileSystemService(
 		}
 		
 		// Используем старый метод delete, но с проверкой на папку groups
-		return delete(relativePath, skipGroupsCheck = true)
+		return delete(relativePath)
 	}
 	
 	@Transactional(rollbackFor = [Exception::class])
@@ -260,12 +260,7 @@ class FileSystemService(
 	
 	// ================== МЕТОД ДЛЯ УДАЛЕНИЯ (С ПОДДЕРЖКОЙ ПРОВЕРКИ groups) ==================
 	
-	fun delete(relativePath: String, skipGroupsCheck: Boolean = false): Boolean {
-		// Проверка на удаление папки groups (если не пропущена проверка)
-		if (!skipGroupsCheck && relativePath == groupsDir) {
-			throw SecurityException("Папка групп неудаляема")
-		}
-		
+	fun delete(relativePath: String): Boolean {
 		val target = getSafePath(relativePath).toFile()
 		
 		if (!target.exists()) {
@@ -279,7 +274,36 @@ class FileSystemService(
 		}
 		
 		val deleted = if (target.isDirectory) {
-			deleteRecursivelySafe(target, skipGroupsCheck)
+			deleteRecursively(target)
+		} else {
+			target.delete()
+		}
+		
+		if (deleted) {
+			logger.info("Удалено: ${target.absolutePath}")
+		} else {
+			logger.warn("Не удалось удалить: ${target.absolutePath}")
+		}
+		
+		return deleted
+	}
+	fun deleteByPermissions(currentUser: CurrentUser, relativePath: String): Boolean {
+		val target = getSafePath(relativePath).toFile()
+		val permissionsForUser = checkAccessForDirectory(currentUser, relativePath)
+		val canDelete = (permissionsForUser and AccessType.DELETE.value) == AccessType.DELETE.value
+		
+		if (!target.exists()) {
+			throw IllegalArgumentException("Файл или папка не найдены: $relativePath")
+		}
+		
+		// Проверяем права на удаление
+		val parentDir = target.parentFile
+		if (parentDir != null && !parentDir.canWrite() || !canDelete) {
+			throw SecurityException("У вас нет прав на удаление в этой директории")
+		}
+		
+		val deleted = if (target.isDirectory) {
+			deleteRecursively(target)
 		} else {
 			target.delete()
 		}
@@ -673,6 +697,59 @@ class FileSystemService(
 		
 		return Pair(filesList, foldersList)
 	}
+	fun listDirectoryByPermissions(currentUser: CurrentUser, relativePath: String):
+			Pair<List<FileInfo>, List<FolderInfo>> {
+		val permissionsForUser = checkAccessForDirectory(currentUser, relativePath)
+		
+		
+		val directory = getSafePath(relativePath).toFile()
+		if (permissionsForUser and AccessType.READ.value != AccessType.READ.value) {
+			throw SecurityException("У вас нет прав доступа на чтения директории: ${directory.absolutePath}")
+		}
+		
+		if (!directory.exists()) {
+			throw IllegalArgumentException("Директория не найдена: ${directory.absolutePath}")
+		}
+		
+		if (!directory.isDirectory) {
+			throw IllegalArgumentException("Указанный путь не является директорией: ${directory.absolutePath}")
+		}
+		
+		if (!directory.canRead()) {
+			throw SecurityException("У вас нет прав доступа к директории: ${directory.absolutePath}")
+		}
+		
+		val filesList = mutableListOf<FileInfo>()
+		val foldersList = mutableListOf<FolderInfo>()
+		
+		var permissionForElement = 0
+		try {
+			directory.listFiles()?.forEach { file ->
+				try {
+					if (file.isFile) {
+						permissionForElement = checkAccessForFile(currentUser, file.path, file.name)
+						if (permissionForElement and AccessType.READ.value == AccessType.READ.value)
+							filesList.add(createFileInfo(file))
+					} else if (file.isDirectory) {
+						permissionForElement = checkAccessForDirectory(currentUser, file.path)
+						if (permissionForElement and AccessType.READ.value == AccessType.READ.value)
+							foldersList.add(createFolderInfo(file))
+					}
+				} catch (e: SecurityException) {
+					logger.warn("Нет доступа к файлу/папке: ${file.name}")
+				} catch (e: Exception) {
+					logger.error("Ошибка при обработке ${file.name}: ${e.message}")
+				}
+			}
+		} catch (e: SecurityException) {
+			throw SecurityException("У вас нет прав на чтение содержимого директории: ${directory.absolutePath}")
+		}
+		
+		foldersList.sortBy { it.name.lowercase() }
+		filesList.sortBy { it.name.lowercase() }
+		
+		return Pair(filesList, foldersList)
+	}
 	
 	private fun createFileInfo(file: File): FileInfo {
 		val path = file.toPath()
@@ -735,6 +812,38 @@ class FileSystemService(
 		return createFileInfo(targetFile)
 	}
 	
+	
+	fun uploadFileByPermissions(currentUser: CurrentUser, relativePath: String, file: MultipartFile): FileInfo {
+		val targetDir = getSafePath(relativePath).toFile()
+		val permissions = checkAccessForDirectory(currentUser, relativePath)
+		val canCreate = permissions and AccessType.CREATE.value == AccessType.CREATE.value
+		
+		if (!targetDir.exists()) {
+			throw IllegalArgumentException("Целевая директория не найдена: $relativePath")
+		}
+		
+		if (!targetDir.isDirectory) {
+			throw IllegalArgumentException("Целевой путь не является директорией: $relativePath")
+		}
+		
+		if (!canCreate || !targetDir.canWrite()) {
+			throw SecurityException("У вас нет прав на запись в директорию: $relativePath")
+		}
+		
+		val fileName = sanitizeFileName(file.originalFilename ?: "unnamed")
+		val targetFile = File(targetDir, fileName)
+		
+		if (targetFile.exists()) {
+			throw IllegalArgumentException("Файл с именем '$fileName' уже существует")
+		}
+		
+		file.transferTo(targetFile)
+		
+		logger.info("Файл загружен: ${targetFile.absolutePath}")
+		
+		return createFileInfo(targetFile)
+	}
+	
 	fun createFolder(relativePath: String, folderName: String): FolderInfo {
 		val parentDir = getSafePath(relativePath).toFile()
 		
@@ -767,6 +876,44 @@ class FileSystemService(
 		return createFolderInfo(newFolder)
 	}
 	
+	
+	fun createFolderByPermissions(currentUser: CurrentUser, relativePath: String, folderName: String): FolderInfo {
+		val parentDir = getSafePath(relativePath).toFile()
+		val permissions = checkAccessForDirectory(currentUser, relativePath)
+		val canCreate = permissions and AccessType.CREATE.value == AccessType.CREATE.value
+		
+		if (!parentDir.exists()) {
+			throw IllegalArgumentException("Родительская директория не найдена: $relativePath")
+		}
+		
+		if (!parentDir.isDirectory) {
+			throw IllegalArgumentException("Родительский путь не является директорией: $relativePath")
+		}
+		
+		if (!parentDir.canWrite() || !canCreate) {
+			throw SecurityException("У вас нет прав на создание папки в директории: $relativePath")
+		}
+		
+		val sanitizedName = sanitizeFileName(folderName)
+		val newFolder = File(parentDir, sanitizedName)
+		
+		if (newFolder.exists()) {
+			throw IllegalArgumentException("Папка с именем '$sanitizedName' уже существует")
+		}
+		
+		val created = newFolder.mkdirs()
+		if (!created) {
+			throw IllegalStateException("Не удалось создать папку: $sanitizedName")
+		}
+		
+		logger.info("Папка создана: ${newFolder.absolutePath}")
+		
+		return createFolderInfo(newFolder)
+	}
+	
+	
+	
+	
 	fun downloadFile(relativePath: String): Pair<File, String> {
 		val file = getSafePath(relativePath).toFile()
 		
@@ -784,6 +931,31 @@ class FileSystemService(
 		
 		return Pair(file, "text/plain")
 	}
+	
+	
+	fun downloadFileByPermissions(currentUser: CurrentUser, relativePath: String): Pair<File, String> {
+		val permissions = checkAccessForDirectory(currentUser, relativePath)
+		val canRead = permissions and AccessType.READ.value == AccessType.READ.value
+		
+		val file = getSafePath(relativePath).toFile()
+		
+		if (!file.exists()) {
+			throw IllegalArgumentException("Файл не найден: $relativePath")
+		}
+		
+		if (file.isDirectory) {
+			throw IllegalArgumentException("Невозможно скачать директорию: $relativePath")
+		}
+		
+		if (!file.canRead() || !canRead) {
+			throw SecurityException("У вас нет прав на чтение файла: $relativePath")
+		}
+		
+		return Pair(file, "text/plain")
+	}
+	
+	
+	
 	
 	fun searchFilesAndFolders(query: String, basePath: String = ""): Pair<List<FileInfo>, List<FolderInfo>> {
 		val directory = getSafePath(basePath).toFile()
@@ -831,9 +1003,85 @@ class FileSystemService(
 		return Pair(filesList, foldersList)
 	}
 	
+	
+	fun searchFilesAndFoldersByPermissions(currentUser: CurrentUser, query: String, basePath: String = ""): Pair<List<FileInfo>, List<FolderInfo>> {
+		val directory = getSafePath(basePath).toFile()
+		val permissionsForUser =
+			checkAccessForDirectory(currentUser, getSafePath(basePath).toString())
+		val canRead = permissionsForUser and AccessType.READ.value == AccessType.READ.value
+		
+		if (!directory.isDirectory)
+			throw IllegalArgumentException("Путь не является директорией: ${directory.absolutePath}")
+		if (!directory.exists())
+			throw IllegalArgumentException("Директория не найдена: ${directory.absolutePath}")
+		if (!canRead || !directory.canRead())
+			throw SecurityException(
+				"У вас нет прав на чтение в директорию: ${getSafePath(basePath)}"
+			)
+		
+		
+		
+		val filesList = mutableListOf<FileInfo>()
+		val foldersList = mutableListOf<FolderInfo>()
+		
+		var permissionForElement = 0
+		fun searchRecursively(currentDir: File) {
+			currentDir.listFiles()?.forEach { file ->
+				try {
+					val matchesQuery = file.name.contains(query, ignoreCase = true)
+					
+					if (matchesQuery) {
+						if (file.isFile) {
+							permissionForElement = checkAccessForFile(currentUser, file.path, file.name)
+							if (permissionForElement and AccessType.READ.value == AccessType.READ.value)
+								filesList.add(createFileInfo(file))
+						} else if (file.isDirectory) {
+							permissionForElement = checkAccessForDirectory(currentUser, file.path)
+							if (permissionForElement and AccessType.READ.value == AccessType.READ.value)
+								foldersList.add(createFolderInfo(file))
+						}
+					}
+					
+					if (file.isDirectory) {
+						searchRecursively(file)
+					}
+				} catch (e: SecurityException) {
+					logger.warn("Нет доступа к файлу/папке: ${file.name}")
+				} catch (e: Exception) {
+					logger.error("Ошибка при обработке ${file.name}: ${e.message}")
+				}
+			}
+		}
+		
+		searchRecursively(directory)
+		
+		foldersList.sortBy { it.name.lowercase() }
+		filesList.sortBy { it.name.lowercase() }
+		
+		return Pair(filesList, foldersList)
+	}
+	
 	fun pathExists(relativePath: String): Boolean {
 		return try {
 			getSafePath(relativePath).toFile().exists()
+		} catch (e: SecurityException) {
+			false
+		} catch (e: Exception) {
+			false
+		}
+	}
+	
+	fun pathExistsByPermissions(currentUser: CurrentUser, relativePath: String): Boolean {
+		return try {
+			val file = getSafePath(relativePath).toFile()
+			val permissions = if (file.isDirectory)
+				checkAccessForDirectory(currentUser, relativePath)
+			else
+				checkAccessForFile(currentUser, relativePath, file.name)
+			
+			val exists = (permissions and AccessType.READ.value == AccessType.READ.value) && file.exists()
+			
+			exists
 		} catch (e: SecurityException) {
 			false
 		} catch (e: Exception) {
@@ -955,11 +1203,11 @@ class FileSystemService(
 		return null
 	}
 	fun isRootDirectory(path: String): Boolean{
-		val safePath = getSafePath(path).toString()
+		val safePath = getRelativePath(getSafePath(path))
 		return safePath == ""
 	}
 	fun isGroupsDirectory(path: String): Boolean{
-		val safePath = getSafePath(path).toString()
+		val safePath = getRelativePath(getSafePath(path))
 		val safePathParts = Paths.get(safePath).toList()
 		
 		return if (safePathParts.size == 1)
@@ -968,7 +1216,7 @@ class FileSystemService(
 			false
 	}
 	fun isGroupDirectory(path: String): Boolean{
-		val safePath = getSafePath(path).toString()
+		val safePath = getRelativePath(getSafePath(path))
 		val safePathParts = Paths.get(safePath).toList()
 		
 		if (safePathParts.size == 2){
@@ -979,7 +1227,7 @@ class FileSystemService(
 			return false
 	}
 	fun checkAccessForDirectory(currentUser: CurrentUser, path: String): Int {
-		val safePath = getSafePath(path).toString()
+		val safePath = getRelativePath(getSafePath(path))
 		val realPath = Paths.get(path)
 		val realPathParts = realPath.toList()
 		val user = userService.getUserEntityById(currentUser.id!!)
@@ -991,7 +1239,8 @@ class FileSystemService(
 				return AccessType.ALL.value
 		
 		if (isGroupsDirectory(safePath))
-			return 0
+			// Для того чтобы была видима папка "groups"
+			return AccessType.READ.value
 		if (isGroupDirectory(realPath.toString())){
 			val groupName = extractGroupFromPath(safePath)
 				?: return 0
@@ -1010,7 +1259,7 @@ class FileSystemService(
 			var permissions = AccessType.ALL.value
 			
 			var currentPath = ""
-			for (i in 1..realPathParts.size){
+			for (i in 1..realPathParts.size-1){
 				val part = realPathParts[i]
 				currentPath = if (currentPath.isEmpty()) part.toString() else "$currentPath/$part"
 				
@@ -1065,7 +1314,7 @@ class FileSystemService(
 		}
 	}
 	fun checkAccessForFile(currentUser: CurrentUser, path: String, fileName: String): Int{
-		val safePath = getSafePath(path).toString()
+		val safePath = getRelativePath(getSafePath(path))
 		val directoryPermissions = checkAccessForDirectory(currentUser,safePath)
 		val safeFileName = sanitizeFileName(fileName.ifEmpty { "unnamed" })
 		val safeFullFilePath = Paths.get(safePath, safeFileName).toString()
