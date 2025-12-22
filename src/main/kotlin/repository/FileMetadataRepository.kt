@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import org.zak.entity.FileMetadata
+import org.zak.entity.Group
+import org.zak.entity.User
 
 @Repository
 interface FileMetadataRepository : JpaRepository<FileMetadata, Long> {
@@ -26,6 +28,11 @@ interface FileMetadataRepository : JpaRepository<FileMetadata, Long> {
 		@Param("userGroupIds") userGroupIds: List<Int>,
 		@Param("pathFilter") pathFilter: String
 	): List<FileMetadata>
+	
+	fun findByPathAndGroup(path: String, group: Group): FileMetadata?
+	
+	fun findByPathAndUser(path: String, user: User): FileMetadata?
+	
 	
 	fun existsByPathAndUserId(path: String, userId: Int): Boolean
 	fun existsByPathAndGroupId(path: String, groupId: Int): Boolean

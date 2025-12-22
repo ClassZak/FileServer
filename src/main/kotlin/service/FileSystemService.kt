@@ -985,8 +985,11 @@ class FileSystemService(
 		val user = userService.getUserEntityById(currentUser.id!!)
 			?: throw EntityNotFoundException("Не найден пользователь")
 		
+		// Проверка на работу в корневой папке для админа
 		if (isRootDirectory(safePath))
-			return AccessType.ALL.value
+			if (currentUser.isAdmin)
+				return AccessType.ALL.value
+		
 		if (isGroupsDirectory(safePath))
 			return 0
 		if (isGroupDirectory(realPath.toString())){
@@ -995,15 +998,15 @@ class FileSystemService(
 			val group = groupService.findByName(groupName)
 				?: return 0
 			
+			// Сразу проверяем групповую директорию на права админа
 			if (currentUser.isAdmin)
 				return AccessType.ALL.value
 			
 			
 			
+			// По умолчанию участники групп имеют полный доступ к директории группы
+			var permissions = AccessType.ALL.value
 			
-			var permissions = 0
-			
-			val realPathParts = realPath.toList()
 			var currentPath = ""
 			for (i in 1..realPathParts.size){
 				val part = realPathParts[i]
@@ -1021,15 +1024,16 @@ class FileSystemService(
 			
 			return permissions
 		} else {
+			// Сразу проверяем не групповую директорию на права админа
 			if (currentUser.isAdmin)
 				return AccessType.ALL.value
 			
 			
 			
-			
+			// По умолчанию пользователи не имеют доступ к директории, не яаляющейся директорией группы
 			var permissions = 0
 			
-			val realPathParts = realPath.toList()
+			
 			var currentPath = ""
 			val groups = groupService.findByMemberId(currentUser.id)
 			var groupPermissions = 0
@@ -1054,6 +1058,84 @@ class FileSystemService(
 				if (currentUserPermissions != null)
 					permissions = currentUserPermissions.mode
 			}
+			
+			return permissions
+		}
+	}
+	fun checkAccessForFile(currentUser: CurrentUser, path: String, fileName: String): Int{
+		val safePath = getSafePath(path).toString()
+		val directoryPermissions = checkAccessForDirectory(currentUser,safePath)
+		val safeFileName = sanitizeFileName(fileName.ifEmpty { "unnamed" })
+		val safeFullFilePath = Paths.get(safePath, safeFileName).toString()
+		val realPath = Paths.get(path)
+		val realPathParts = realPath.toList()
+		val user = userService.getUserEntityById(currentUser.id!!)
+			?: throw EntityNotFoundException("Не найден пользователь")
+		
+		
+		// Проверка на работу в корневой папке для админа
+		if (isRootDirectory(safePath))
+			if (currentUser.isAdmin)
+				return AccessType.ALL.value
+		
+		
+		if (isGroupsDirectory(safePath))
+			return 0
+		if (isGroupDirectory(safePath)){
+			val groupName = extractGroupFromPath(safePath)
+				?: return 0
+			val group = groupService.findByName(groupName)
+				?: return 0
+			
+			// Сразу проверяем групповую директорию на права админа
+			if (currentUser.isAdmin)
+				return AccessType.ALL.value
+			
+			
+			
+			
+			// Наследование прав от директории
+			var permissions = directoryPermissions
+			val currentGroupPermissions = directoryMetadataRepository.findByPathAndGroup(safeFullFilePath, group)
+			val currentUserPermissions = directoryMetadataRepository.findByPathAndUser(safeFullFilePath, user)
+			
+			
+			if (currentGroupPermissions != null)
+				permissions = currentGroupPermissions.mode
+			if (currentUserPermissions != null)
+				permissions = currentUserPermissions.mode
+			
+			return permissions
+		} else {
+			// Сразу проверяем не групповую директорию на права админа
+			if (currentUser.isAdmin)
+				return AccessType.ALL.value
+			
+			// Наследование прав от директории
+			var permissions = directoryPermissions
+			
+			
+			val groups = groupService.findByMemberId(currentUser.id)
+			var groupPermissions = 0
+			
+			
+			
+			
+			val currentGroupPermissions = groups.mapNotNull { it ->
+				fileMetadataRepository.findByPathAndGroup(safeFullFilePath, it)
+			}
+			val currentUserPermissions = fileMetadataRepository.findByPathAndUser(safeFullFilePath, user)
+			
+			
+			groupPermissions = currentGroupPermissions.fold(0) {
+				acc, item -> acc or item.mode
+			}
+			
+			
+			if (currentGroupPermissions.isNotEmpty())
+				permissions = groupPermissions
+			if (currentUserPermissions != null)
+				permissions = currentUserPermissions.mode
 			
 			return permissions
 		}
