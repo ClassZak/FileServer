@@ -1001,7 +1001,9 @@ class FileSystemService(
 			// Сразу проверяем групповую директорию на права админа
 			if (currentUser.isAdmin)
 				return AccessType.ALL.value
-			
+			// Не даём доступ другим группам
+			if (!groupService.hasUserAccessToGroup(currentUser.id, groupName))
+				return 0
 			
 			
 			// По умолчанию участники групп имеют полный доступ к директории группы
@@ -1090,7 +1092,9 @@ class FileSystemService(
 			// Сразу проверяем групповую директорию на права админа
 			if (currentUser.isAdmin)
 				return AccessType.ALL.value
-			
+			// Не даём доступ другим группам
+			if (!groupService.hasUserAccessToGroup(currentUser.id, groupName))
+				return 0
 			
 			
 			
