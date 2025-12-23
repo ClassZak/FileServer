@@ -1219,12 +1219,10 @@ class FileSystemService(
 		val safePath = getRelativePath(getSafePath(path))
 		val safePathParts = Paths.get(safePath).toList()
 		
-		if (safePathParts.size == 2){
+		return if (safePathParts.size >= 2){
 			safePathParts[0].toString() == groupsDir
-			return true
-		}
-		else
-			return false
+		} else
+			false
 	}
 	fun checkAccessForDirectory(currentUser: CurrentUser, path: String): Int {
 		val safePath = getRelativePath(getSafePath(path))
@@ -1258,8 +1256,8 @@ class FileSystemService(
 			// По умолчанию участники групп имеют полный доступ к директории группы
 			var permissions = AccessType.ALL.value
 			
-			var currentPath = ""
-			for (i in 1..realPathParts.size-1){
+			var currentPath = groupsDir
+			for (i in 1..<realPathParts.size){
 				val part = realPathParts[i]
 				currentPath = if (currentPath.isEmpty()) part.toString() else "$currentPath/$part"
 				

@@ -36,6 +36,15 @@ dependencies {
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	
+	// Testing
+	testImplementation(kotlin("test"))
+	// JUnit 5
+	testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
+	// Mockito core
+	testImplementation("org.mockito:mockito-core:5.8.0")
+	// Mockito for Kotlin (critical)
+	testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+	testImplementation("org.mockito:mockito-junit-jupiter:5.8.0")
 	
 	
 	// Security
@@ -65,5 +74,8 @@ kotlin {
 }
 
 tasks.withType<Test> {
+	useJUnitPlatform()
+}
+tasks.test {
 	useJUnitPlatform()
 }
