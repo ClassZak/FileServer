@@ -146,7 +146,7 @@ function UsersPage() {
 	};
 
 	return (
-		<div>
+		<>
 			<MainContent>
 				{isLoading ? (
 					<LoadingSpinner title={'Загрузка пользователей'}/>
@@ -175,7 +175,7 @@ function UsersPage() {
 						</button>
 					</div>
 				) : (
-					<>
+					<div>
 						<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
 							<h1>Пользователи</h1>
 							<button 
@@ -186,7 +186,7 @@ function UsersPage() {
 							</button>
 						</div>
 						<UserTable users={users} />
-					</>
+					</div>
 				)}
 			</MainContent>
 			
@@ -196,7 +196,7 @@ function UsersPage() {
 				onConfirm={onConfirmCreateUser}
 				error={error}
 			/>
-		</div>
+		</>
 	);
 }
 
