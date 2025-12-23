@@ -7,6 +7,9 @@
 7) ✖ Add recently used files in Home page
 8) ✖ Add History page
 9) ✖ Access managment page
-10) ✖ Fix Files page menu search mode
-11) ✖ Fix all pages
-12) ✖ Full refactor
+10) ✖ Set icons instead of symbols
+11) ✖ Rename global css variables
+12) ✖ Use "a" tag instead of "button"
+13) ✖ Fix Files page menu in search mode
+14) ✖ Fix all pages
+15) ✖ Full refactor
