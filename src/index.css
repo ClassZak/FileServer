@@ -1,12 +1,13 @@
 /* index.css */
 :root {
-    --primary-dark: #095256;
-    --primary-accent: #087F8C;
-    --secondary-green: #5AAA95;
-    --secondary-olive: #86A873;
-    --accent-gold: #BB9F06;
-    --text-light: #ffffff;
-    --text-muted: #e0e0e0;
+    --primary-dark: #293629;
+	--primary-accent: #242424;
+	--secondary-green: #181818;
+	--secondary-olive: #6a6a57;
+	--accent-gold: #dbdbdb;
+	--text-light: #dbdbdb;
+	--text-muted: #e0e0e0;
+    --side-background: #18181f;
 }
 
 /* Исправленный box-sizing */
@@ -22,7 +23,7 @@ html, body, #root {
 }
 
 html {
-    background: linear-gradient(220deg, var(--primary-dark), var(--secondary-green));
+    background: var(--side-background);
     background-attachment: fixed;
 }
 
@@ -73,4 +74,11 @@ a:hover {
 p a {
     text-decoration: underline;
     color: var(--text-muted);
+}
+
+
+/* Button style */
+button {
+	background-color: #dbdbdb;
+	border-radius: 5px;
 }

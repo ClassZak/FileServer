@@ -1,6 +1,6 @@
 header{
 	width: 100%;
-	background-color: var(--secondary-green);
+	background-color: var(--primary-dark);
 	position: fixed;
 	font-weight: bold;
 	z-index: 1000;
@@ -32,6 +32,7 @@ header form input[type="text"] {
 	border-radius: 0px;
 	width: inherit;
 	min-width: 20px;
+	background-color: #dbdbdb;
 }
 header nav{
 	display: flex;

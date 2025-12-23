@@ -1,6 +1,6 @@
-footer{
+footer {
 	background-color: var(--secondary-olive);
-	color: black;
+	/* color: black; */
 	padding-bottom:15px;
 	padding-top:10px;
 	position: relative;
@@ -9,6 +9,7 @@ footer{
 	width:90%;
 	font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
 }
+
 @media screen and (width< 300px) {
 	footer{
 		width: 100%;
@@ -33,7 +34,7 @@ footer .social+p{
 	text-align: center;
 }
 footer a {
-	color: #333;
+	/* color: #333; */
 	margin: 0 1px;
 	text-decoration: none;
 	text-align: center;
