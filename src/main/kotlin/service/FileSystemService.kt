@@ -261,7 +261,7 @@ class FileSystemService(
 		return parts.firstOrNull()
 	}
 	
-	// ================== МЕТОД ДЛЯ УДАЛЕНИЯ (С ПОДДЕРЖКОЙ ПРОВЕРКИ groups) ==================
+	// ================== МЕТОД ДЛЯ УДАЛЕНИЯ ==================
 	
 	fun delete(relativePath: String): Boolean {
 		val target = getSafePath(relativePath).toFile()
@@ -324,10 +324,10 @@ class FileSystemService(
 	 * Не удаляет файлы, а перемещает в удалённое
 	 */
 	fun deleteByPermissionsAndSaveCopy(currentUser: CurrentUser, relativePath: String): Boolean {
-		val target = getSafePath(relativePath).toFile()
+		val target =  getSafePath(relativePath).toFile()
 		val permissionsForUser = checkAccessForDirectory(currentUser, relativePath)
 		val canDelete = (permissionsForUser and AccessType.DELETE.value) == AccessType.DELETE.value
-		
+		// safeRootPath.resolve(relativePath).absolute()
 		if (!target.exists()) {
 			throw IllegalArgumentException("Файл или папка не найдены: $relativePath")
 		}
@@ -339,7 +339,7 @@ class FileSystemService(
 		}
 		
 		val deleted = if (target.isDirectory) {
-			deleteRecursivelyAndSaveCopy(target)
+			moveItem(target.absolutePath, Path(deletedFilesDir).toFile())
 		} else {
 			target.delete()
 		}
@@ -1240,14 +1240,6 @@ class FileSystemService(
 		if (file.isDirectory) {
 			file.listFiles()?.forEach { child ->
 				deleteRecursively(child)
-			}
-		}
-		return file.delete()
-	}
-	private fun deleteRecursivelyAndSaveCopy(file: File): Boolean {
-		if (file.isDirectory) {
-			file.listFiles()?.forEach { child ->
-				deleteRecursivelyAndSaveCopy(child)
 			}
 		}
 		return file.delete()

@@ -81,7 +81,8 @@ class FileController(
 	@PostMapping("/upload")
 	fun uploadFile(
 		@RequestParam path: String = "",
-		@RequestParam("file") file: MultipartFile
+		@RequestParam("file") file: MultipartFile,
+		@RequestHeader("Authorization") authHeader: String
 	): ResponseEntity<Any> {
 		return try {
 			val fileInfo = fileSystemService.uploadFile(path, file)
@@ -161,7 +162,7 @@ class FileController(
 		val currentUser = getCurrentUserFromJwt(authHeader)
 		
 		return try {
-			val success = fileSystemService.deleteByPermissions(currentUser, path)
+			val success = fileSystemService.deleteByPermissionsAndSaveCopy(currentUser, path)
 			if (success) {
 				ResponseEntity.ok(mapOf("message" to "Удалено успешно"))
 			} else {
