@@ -24,7 +24,9 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.*
+import javax.xml.transform.Source
 import kotlin.io.path.Path
+import kotlin.io.path.absolute
 
 data class DeletedFileInfo(
 	val id: Long,
@@ -43,6 +45,7 @@ data class DeletedPathInfo(
 )
 
 enum class AccessType(val value: Int) {
+	NONE(0),
 	CREATE(1),
 	READ(2),
 	UPDATE(4),
@@ -73,7 +76,7 @@ class FileSystemService(
 	@Value("\${file-server.root-directory:./files}")
 	private lateinit var rootDirectory: String
 	
-	@Value("\${file-server.root-directory-deleted:./deleted_files}")
+	@Value("\${file-server.root-directory:./deleted_files}")
 	private lateinit var rootDirectoryDeleted: String
 	
 	private lateinit var safeRootPath: Path
@@ -158,7 +161,7 @@ class FileSystemService(
 		userGroups: List<Int>,
 		isAdmin: Boolean = false
 	): FileInfo {
-		// Проверка прав доступа для не-админов
+		// Проверка прав доступа для не админов
 		if (!isAdmin) {
 			checkUserAccess(relativePath, userId, userGroups, AccessType.CREATE, false)
 		}
@@ -173,7 +176,7 @@ class FileSystemService(
 		userGroups: List<Int>,
 		isAdmin: Boolean = false
 	): FolderInfo {
-		// Проверка прав доступа для не-админов
+		// Проверка прав доступа для не админов
 		if (!isAdmin) {
 			checkUserAccess(relativePath, userId, userGroups, AccessType.CREATE, false)
 		}
@@ -317,12 +320,107 @@ class FileSystemService(
 		return deleted
 	}
 	
+	/**
+	 * Не удаляет файлы, а перемещает в удалённое
+	 */
+	fun deleteByPermissionsAndSaveCopy(currentUser: CurrentUser, relativePath: String): Boolean {
+		val target = getSafePath(relativePath).toFile()
+		val permissionsForUser = checkAccessForDirectory(currentUser, relativePath)
+		val canDelete = (permissionsForUser and AccessType.DELETE.value) == AccessType.DELETE.value
+		
+		if (!target.exists()) {
+			throw IllegalArgumentException("Файл или папка не найдены: $relativePath")
+		}
+		
+		// Проверяем права на удаление
+		val parentDir = target.parentFile
+		if (parentDir != null && !parentDir.canWrite() || !canDelete) {
+			throw SecurityException("У вас нет прав на удаление в этой директории")
+		}
+		
+		val deleted = if (target.isDirectory) {
+			deleteRecursivelyAndSaveCopy(target)
+		} else {
+			target.delete()
+		}
+		
+		if (deleted) {
+			logger.info("Удалено: ${target.absolutePath}")
+		} else {
+			logger.warn("Не удалось удалить: ${target.absolutePath}")
+		}
+		
+		return deleted
+	}
+	
+	/**
+	 * Функция перемещения элемента в удалённые (deleted_files)
+	 */
+	private fun moveItem(
+		sourcePath: String,
+		targetDir: File = Path(deletedFilesDir).absolute().toFile()): Boolean
+	{
+		val sourseBaseDir = Path(rootDirectory).absolute().toFile()
+		val sourceFile = File(sourcePath)
+		
+		if (!sourceFile.exists()) {
+			logger.error("❌ Источник не существует: $sourcePath")
+			return false
+		}
+		if(!sourceFile.canonicalPath.startsWith(sourseBaseDir.canonicalPath)) {
+			logger.error("⚠\uFE0F  Файл/папка находится вне базовой директории")
+			return false
+		}
+		
+		val relativePath = sourseBaseDir.toPath().relativize(sourceFile.toPath())
+		
+		if (!targetDir.exists())
+			targetDir.mkdirs()
+		
+		val targetPath = targetDir.toPath().resolve(relativePath)
+		
+		return try {
+			when {
+				sourceFile.isDirectory -> moveDirectory(sourceFile, targetPath.toFile())
+				sourceFile.isFile -> moveFile(sourceFile, targetPath.toFile())
+				else -> false
+			}
+		} catch (e: Exception) {
+			println("❌ Ошибка: ${e.message}")
+			false
+		}
+	}
+	private fun moveFile(source: File, target: File): Boolean {
+		// Создаем родительские директории
+		target.parentFile?.mkdirs()
+		
+		// Копируем и удаляем исходный файл
+		source.copyTo(target, overwrite = true)
+		return source.delete().also {
+			if (it) println("✅ Файл перемещен: ${source.name}")
+		}
+	}
+	private fun moveDirectory(source: File, target: File): Boolean {
+		if (target.exists()) {
+			println("⚠️  Целевая директория уже существует, объединяем содержимое")
+		}
+		
+		// Копируем все содержимое рекурсивно
+		source.copyRecursively(target, overwrite = true)
+		
+		// Удаляем исходную директорию
+		return source.deleteRecursively().also {
+			if (it) println("✅ Папка перемещена: ${source.name}")
+		}
+	}
+	
+	
 	private fun deleteRecursivelySafe(file: File, skipGroupsCheck: Boolean): Boolean {
 		if (file.isDirectory) {
 			// Проверяем, не пытаемся ли удалить папку внутри groups
 			val relativePath = getRelativePath(file.toPath())
 			if (!skipGroupsCheck && relativePath == groupsDir) {
-				throw SecurityException("Папка групп неудаляема")
+				throw SecurityException("Папка групп не удаляема")
 			}
 			
 			file.listFiles()?.forEach { child ->
@@ -1146,6 +1244,14 @@ class FileSystemService(
 		}
 		return file.delete()
 	}
+	private fun deleteRecursivelyAndSaveCopy(file: File): Boolean {
+		if (file.isDirectory) {
+			file.listFiles()?.forEach { child ->
+				deleteRecursivelyAndSaveCopy(child)
+			}
+		}
+		return file.delete()
+	}
 	
 	private fun getContentType(file: File): String {
 		val fileName = file.name.lowercase()
@@ -1226,7 +1332,7 @@ class FileSystemService(
 	}
 	fun checkAccessForDirectory(currentUser: CurrentUser, path: String): Int {
 		val safePath = getRelativePath(getSafePath(path))
-		val realPath = Paths.get(path)
+		val realPath = Paths.get(safePath)
 		val realPathParts = realPath.toList()
 		val user = userService.getUserEntityById(currentUser.id!!)
 			?: throw EntityNotFoundException("Не найден пользователь")
@@ -1241,16 +1347,16 @@ class FileSystemService(
 			return AccessType.READ.value
 		if (isGroupDirectory(realPath.toString())){
 			val groupName = extractGroupFromPath(safePath)
-				?: return 0
+				?: return AccessType.NONE.value
 			val group = groupService.findByName(groupName)
-				?: return 0
+				?: return AccessType.NONE.value
 			
 			// Сразу проверяем групповую директорию на права админа
 			if (currentUser.isAdmin)
 				return AccessType.ALL.value
 			// Не даём доступ другим группам
 			if (!groupService.hasUserAccessToGroup(currentUser.id, groupName))
-				return 0
+				return AccessType.NONE.value
 			
 			
 			// По умолчанию участники групп имеют полный доступ к директории группы
@@ -1279,13 +1385,13 @@ class FileSystemService(
 			
 			
 			
-			// По умолчанию пользователи не имеют доступ к директории, не яаляющейся директорией группы
-			var permissions = 0
+			// По умолчанию пользователи не имеют доступ к директории, не являющейся директорией группы
+			var permissions = AccessType.NONE.value
 			
 			
 			var currentPath = ""
 			val groups = groupService.findByMemberId(currentUser.id)
-			var groupPermissions = 0
+			var groupPermissions = AccessType.NONE.value
 			for (part in realPathParts){
 				currentPath = if (currentPath.isEmpty()) part.toString() else "$currentPath/$part"
 				
@@ -1316,7 +1422,7 @@ class FileSystemService(
 		val directoryPermissions = checkAccessForDirectory(currentUser,safePath)
 		val safeFileName = sanitizeFileName(fileName.ifEmpty { "unnamed" })
 		val safeFullFilePath = Paths.get(safePath, safeFileName).toString()
-		val realPath = Paths.get(path)
+		val realPath = Paths.get(safePath)
 		val realPathParts = realPath.toList()
 		val user = userService.getUserEntityById(currentUser.id!!)
 			?: throw EntityNotFoundException("Не найден пользователь")
@@ -1329,19 +1435,19 @@ class FileSystemService(
 		
 		
 		if (isGroupsDirectory(safePath))
-			return 0
+			return AccessType.NONE.value
 		if (isGroupDirectory(safePath)){
 			val groupName = extractGroupFromPath(safePath)
-				?: return 0
+				?: return AccessType.NONE.value
 			val group = groupService.findByName(groupName)
-				?: return 0
+				?: return AccessType.NONE.value
 			
 			// Сразу проверяем групповую директорию на права админа
 			if (currentUser.isAdmin)
 				return AccessType.ALL.value
 			// Не даём доступ другим группам
 			if (!groupService.hasUserAccessToGroup(currentUser.id, groupName))
-				return 0
+				return AccessType.NONE.value
 			
 			
 			
@@ -1367,7 +1473,7 @@ class FileSystemService(
 			
 			
 			val groups = groupService.findByMemberId(currentUser.id)
-			var groupPermissions = 0
+			var groupPermissions = AccessType.NONE.value
 			
 			
 			

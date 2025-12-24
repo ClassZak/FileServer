@@ -153,11 +153,15 @@ class FileController(
 	}
 	
 	@DeleteMapping("/delete")
-	fun deleteFile(@RequestBody request: Map<String, String>): ResponseEntity<Any> {
+	fun deleteFile(
+		@RequestBody request: Map<String, String>,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Any> {
 		val path = request["path"] ?: ""
+		val currentUser = getCurrentUserFromJwt(authHeader)
 		
 		return try {
-			val success = fileSystemService.delete(path)
+			val success = fileSystemService.deleteByPermissions(currentUser, path)
 			if (success) {
 				ResponseEntity.ok(mapOf("message" to "Удалено успешно"))
 			} else {
