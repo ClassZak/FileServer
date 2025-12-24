@@ -1,17 +1,16 @@
 import React from 'react';
 import '../styles/FileTable.css';
 
-const FoundFoldersTable = ({ folders, navigateToFolder, prepareDelete, searchPath }) => {
+import RedirectionButton from './element/RedirectionButton';
+
+const FoundFoldersTable = ({ folders, prepareDelete }) => {
 	const FolderRow = function (folder) {
 		if (folder === null || folder === undefined)
 			folder = {empty:true}
 
 		return <tr key={folder.empty ? '-' : `folder-${folder.fullPath}`}>
 			<td>
-				<div 
-					className="flex items-center cursor-pointer hover:text-blue-400"
-					onClick={folder.empty ? ()=>{} : () => navigateToFolder(folder.fullPath)}
-				>
+				<div className="flex items-center cursor-pointer hover:text-blue-400">
 					<div className="mr-3 text-xl">{folder.empty ? '' : '📁' }</div>
 					<div className="font-medium">
 						{folder.empty ? '-' : folder.name}
@@ -24,20 +23,19 @@ const FoundFoldersTable = ({ folders, navigateToFolder, prepareDelete, searchPat
 			<td>{folder.empty ? '-' : (folder.modifiedDate || '-')}</td>
 			<td>
 				{folder.empty ? '-' :
-						<div className="flex space-x-2">
-							<button
-								onClick={() => navigateToFolder(folder.fullPath)}
-								className="file-action-button file-action-button--download"
-							>
-								Открыть
-							</button>
-							<button
-								onClick={() => prepareDelete(folder.fullPath, folder.name)}
-								className="file-action-button file-action-button--delete"
-							>
-								Удалить
-							</button>
-						</div>
+					<div className="flex space-x-2">
+						<RedirectionButton
+							reference={`/files/${folder.fullPath}`}
+							title={'Открыть'}
+							className="file-action-button file-action-button--download"
+						/>
+						<button
+							onClick={() => prepareDelete(folder.fullPath, folder.name)}
+							className="file-action-button file-action-button--delete"
+						>
+							Удалить
+						</button>
+					</div>
 				}
 			</td>
 		</tr>

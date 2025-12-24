@@ -180,7 +180,7 @@ function UsersPage() {
 							<button 
 								onClick={() => setShowCreateUserModal(true)}
 								style={{ padding: '10px 20px', cursor: 'pointer' }}
-								>
+							>
 								Создать пользователя
 							</button>
 						</div>

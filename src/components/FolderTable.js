@@ -1,7 +1,11 @@
 import React from 'react';
 import '../styles/FileTable.css';
 
-const FolderTable = ({ folders, navigateToFolder, prepareDelete }) => {
+import RedirectionButton from './element/RedirectionButton';
+
+
+
+const FolderTable = ({ folders, prepareDelete }) => {
 	const FolderRow = function (folder) {
 		if (folder === null || folder === undefined)
 			folder = {empty:true}
@@ -20,13 +24,12 @@ const FolderTable = ({ folders, navigateToFolder, prepareDelete }) => {
 			<td>{folder.empty ? '-' : (folder.modifiedDate || '-')}</td>
 			<td>
 				{folder.empty ? '-' :
-						<div className="flex">
-							<button
-								onClick={() => navigateToFolder(folder.fullPath)}
+						<div className="flex"> 
+							<RedirectionButton
+								reference={`/files/${folder.fullPath}`}
+								title={'Открыть'}
 								className="file-action-button file-action-button--download"
-							>
-								Открыть
-							</button>
+							/>
 							<button
 								onClick={() => prepareDelete(folder.fullPath, folder.name)}
 								className="file-action-button file-action-button--delete"
