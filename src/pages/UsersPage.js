@@ -10,6 +10,7 @@ import UserService from "../services/UserService";
 
 
 import LoadingSpinner from '../components/LoadingSpinner'
+import RedirectionButton from '../components/element/RedirectionButton';
 
 
 import '../styles/FileTable.css';
@@ -72,8 +73,8 @@ function UsersPage() {
 		init();
 	}, []);
 
-	const navigateToUser = (email) => {
-		navigate(`/user/${encodeURIComponent(email)}`);
+	const createNavigateToUserHref = (email) => {
+		return `/user/${encodeURIComponent(email)}`;
 	};
 
 	const UserRow = ({ user }) => {
@@ -85,12 +86,10 @@ function UsersPage() {
 				<td>{user.email}</td>
 				<td>{user.createdAt}</td>
 				<td>
-					<button
-						onClick={() => navigateToUser(user.email)}
-						style={{ cursor: 'pointer', padding: '8px 16px' }}
-					>
-						Изменить данные
-					</button>
+					<RedirectionButton
+						reference={createNavigateToUserHref(user.email)}
+						title={'Изменить данные'}
+					/>
 				</td>
 			</tr>
 		);

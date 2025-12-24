@@ -15,6 +15,7 @@ import AddUserToGroupModal from '../components/modal/group/AddUserToGroupModal';
 
 
 import LoadingSpinner from '../components/LoadingSpinner';
+import RedirectionButton from '../components/element/RedirectionButton';
 
 
 
@@ -226,8 +227,8 @@ function GroupPage(){
 	};
 
 
-	const navigateToUser = (email) => {
-		navigate(`/user/${encodeURIComponent(email)}`);
+	const createNavigateToUserHref = (email) => {
+		return `/user/${encodeURIComponent(email)}`;
 	};
 	const UserRowAdmin = ({ element }) => {
 		console.log(element);
@@ -239,12 +240,10 @@ function GroupPage(){
 				<td>{element.email}</td>
 				<td>{element.createdAt}</td>
 				<td>
-					<button
-						onClick={() => navigateToUser(element.email)}
-						style={{ cursor: 'pointer', padding: '8px 16px' }}
-					>
-						Изменить данные
-					</button>
+					<RedirectionButton
+						reference={createNavigateToUserHref(element.email)} 
+						title={'Изменить данные'}
+					/>
 					{/* TODO: Create modal for remove from group */}
 					<button
 						onClick={()=>{

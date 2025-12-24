@@ -7,6 +7,7 @@ import AdminService from '../services/AdminService';
 import GroupService from '../services/GroupService';
 
 import LoadingSpinner from '../components/LoadingSpinner';
+import RedirectionButton from '../components/element/RedirectionButton';
 
 import '../styles/AccountPage.css';
 
@@ -124,8 +125,8 @@ function AccountPage() {
 
 
 
-	const navigateToGroup = (name) => {
-		navigate(`/group/${encodeURIComponent(name)}`);
+	const createNavigateToGroupHref = (name) => {
+		return `/group/${encodeURIComponent(name)}`;
 	};
 	const GroupRow = ({ group }) => {
 		return (
@@ -134,12 +135,7 @@ function AccountPage() {
 				<td>{group.membersCount}</td>
 				<td>{group.creatorEmail}</td>
 				<td>
-					<button
-						onClick={() => navigateToGroup(group.name)}
-						style={{ cursor: 'pointer', padding: '8px 16px' }}
-					>
-						Изменить данные
-					</button>
+					<RedirectionButton reference={createNavigateToGroupHref(group.name)} title={'Изменить данные'} />
 				</td>
 			</tr>
 		);
@@ -201,12 +197,8 @@ function AccountPage() {
 							</button>
 							{isAdmin ? (
 								<div>
-									<button onClick={()=>{navigate('/users')}} className="">
-										Пользователи
-									</button>
-									<button onClick={()=>{navigate('/groups')}} className="">
-										Группы
-									</button>
+									<RedirectionButton reference={'/users'} title={'Пользователи'} />
+									<RedirectionButton reference={'/groups'} title={'Группы'} />
 									{/*TODO: Create route to add himself to group*/}
 									<button onClick={()=>{navigate('/users')}} className="">
 										Вступить в группу

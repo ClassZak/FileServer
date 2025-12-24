@@ -11,6 +11,7 @@ import CreateGroupModal from '../components/modal/group/CreateGroupModal';
 
 
 import LoadingSpinner from '../components/LoadingSpinner';
+import RedirectionButton from '../components/element/RedirectionButton';
 
 
 import GroupBasicInfo from '../services/GroupService'
@@ -134,8 +135,8 @@ function GroupsPage(){
 		init();
 	}, []);
 	
-	const navigateToGroup = (name) => {
-		navigate(`/group/${encodeURIComponent(name)}`);
+	const createNavigateToGroupHref = (name) => {
+		return `/group/${encodeURIComponent(name)}`;
 	};
 
 	const GroupRow = ({ group }) => {
@@ -145,12 +146,10 @@ function GroupsPage(){
 				<td>{group.membersCount}</td>
 				<td>{group.creatorEmail}</td>
 				<td>
-					<button
-						onClick={() => navigateToGroup(group.name)}
-						style={{ cursor: 'pointer', padding: '8px 16px' }}
-					>
-						Изменить данные
-					</button>
+					<RedirectionButton 
+						reference={createNavigateToGroupHref(group.name)} 
+						title={'Изменить данные'}
+					/>
 				</td>
 			</tr>
 		);
