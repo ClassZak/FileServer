@@ -358,9 +358,10 @@ class FileSystemService(
 	 */
 	private fun moveItem(
 		sourcePath: String,
-		targetDir: File = Path(deletedFilesDir).absolute().toFile()): Boolean
+		targetDir: File = Path(deletedFilesDir).absolute().toFile(),
+		sourseBaseDir: File = Path(rootDirectory).absolute().toFile()
+	): Boolean
 	{
-		val sourseBaseDir = Path(rootDirectory).absolute().toFile()
 		val sourceFile = File(sourcePath)
 		
 		if (!sourceFile.exists()) {
@@ -401,9 +402,8 @@ class FileSystemService(
 		}
 	}
 	private fun moveDirectory(source: File, target: File): Boolean {
-		if (target.exists()) {
+		if (target.exists())
 			println("⚠️  Целевая директория уже существует, объединяем содержимое")
-		}
 		
 		// Копируем все содержимое рекурсивно
 		source.copyRecursively(target, overwrite = true)
