@@ -1,0 +1,28 @@
+/* Основной контент */
+main {
+	width: 90%;
+	height: 100%;
+	margin: 0 auto;
+	flex: 1;
+	padding: 4rem 0;
+	background-color: var(--primary-accent);
+	isolation: isolate; /* Создаем новый контекст наложения */
+}
+@media screen and (width< 300px) {
+	main {
+		width: 100%;
+	}
+}
+main > *{
+	margin: 30px;
+}
+main > h2,main > h3,main > h4,main > h5,main > h6 {
+	margin-bottom:5px;
+}
+main > p{
+	margin-top: 0px;
+	margin-bottom: 0px;
+}
+main p {
+	white-space: pre-wrap; /* Сохраняем переносы и печатаем табы*/
+}

@@ -1,0 +1,81 @@
+group = "org.zak"
+version = "0.0.1-SNAPSHOT"
+description = "Demo project for Spring Boot"
+
+
+plugins {
+	kotlin("jvm") version "1.9.25"
+	kotlin("plugin.spring") version "1.9.25"
+	kotlin("plugin.jpa") version "1.9.0"
+	id("org.springframework.boot") version "3.5.6"
+	id("io.spring.dependency-management") version "1.1.7"
+}
+
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+	implementation("org.jetbrains.kotlin:kotlin-reflect")
+	implementation("nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect")
+	
+	runtimeOnly("com.mysql:mysql-connector-j")
+	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+	
+	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+	
+	// Testing
+	testImplementation(kotlin("test"))
+	// JUnit 5
+	testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
+	// Mockito core
+	testImplementation("org.mockito:mockito-core:5.8.0")
+	// Mockito for Kotlin (critical)
+	testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+	testImplementation("org.mockito:mockito-junit-jupiter:5.8.0")
+	
+	
+	// Security
+	implementation("org.springframework.boot:spring-boot-starter-security")
+	implementation("org.springframework.boot:spring-boot-starter-validation")
+	implementation("io.jsonwebtoken:jjwt-api:0.11.5")
+	runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
+	runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
+	
+	implementation("org.bouncycastle:bcprov-jdk15on:1.70")
+	
+	implementation("org.mariadb.jdbc:mariadb-java-client:3.1.4")
+
+	// Lombok
+	compileOnly("org.projectlombok:lombok:1.18.28")
+	annotationProcessor("org.projectlombok:lombok:1.18.28")
+
+	// For Kotlin
+	implementation("org.jetbrains.kotlin:kotlin-reflect")
+	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+}
+
+kotlin {
+	compilerOptions {
+		freeCompilerArgs.addAll("-Xjsr305=strict")
+	}
+}
+
+tasks.withType<Test> {
+	useJUnitPlatform()
+}
+tasks.test {
+	useJUnitPlatform()
+}
