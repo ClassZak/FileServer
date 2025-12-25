@@ -139,6 +139,7 @@ class GroupController(
 		
 		return try {
 			groupService.update(groupName, request.newName, request.creatorEmail)
+			fileSystemService.moveGroupFolder(groupName, request.newName)
 			successResponse(mapOf("success" to true, "message" to "Группа обновлена"))
 		} catch (e: IllegalArgumentException) {
 			errorResponse(HttpStatus.BAD_REQUEST, e.message ?: "Ошибка обновления группы")

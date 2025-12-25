@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 import org.zak.dto.CurrentUser
 import java.io.File
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -28,6 +29,9 @@ import javax.xml.transform.Source
 import kotlin.io.path.createDirectories
 import kotlin.io.path.Path
 import kotlin.io.path.absolute
+import java.nio.file.*
+import java.nio.file.StandardCopyOption.REPLACE_EXISTING
+import kotlin.io.path.exists
 
 data class DeletedFileInfo(
 	val id: Long,
@@ -1033,7 +1037,33 @@ class FileSystemService(
 				.toFile().absolutePath
 		)
 	}
-	
+	/**
+	 * Функция для перемещения/переименования директории группы при изменении имени группы
+	 */
+	fun moveGroupFolder(oldGroupName: String, newGroupName: String): Boolean {
+		val safeOldName = sanitizeFileName(oldGroupName)
+		val safeNewName = sanitizeFileName(newGroupName)
+		
+		val oldGroupDir = safeRootPath.resolve(groupsDir).resolve(safeOldName)
+		val newGroupDir = safeRootPath.resolve(groupsDir).resolve(safeNewName)
+		
+		if (!Files.exists(oldGroupDir)) {
+			throw IllegalArgumentException("Не найдена старая папка группы: $oldGroupName")
+		}
+		if (Files.exists(newGroupDir)) {
+			throw IllegalArgumentException("Новая папка группы уже существует: $newGroupName")
+		}
+		
+		return try {
+			// Используем Files.move для переименования/перемещения
+			Files.move(oldGroupDir, newGroupDir, StandardCopyOption.REPLACE_EXISTING)
+			logger.info("Папка группы переименована из $oldGroupName в $newGroupName")
+			true
+		} catch (e: IOException) {
+			logger.error("Ошибка при переименовании папки группы: ${e.message}", e)
+			false
+		}
+	}
 	
 	
 	
