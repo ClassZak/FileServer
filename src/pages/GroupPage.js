@@ -105,17 +105,25 @@ function GroupPage(){
 					AuthService.getToken(), currentGroupName
 				);
 
+
+
+			if(result === null) {
+				navigate('/groups');
+				return;
+			}
 			if(result.error)
 				setError(result.error)
 			else if(result.group)
 				setGroup(result.group)
-			else
-				//setError(`Группа ${currentGroupName} не найдена`);
-				navigate('/groups')
-		} catch (error) {
-			navigate('/groups')
-		} finally {
+			else {
+				setIsLoadingGroup(false);
+				setIsLoadingGroup(false);
+				navigate('/groups');
+			}
 			setIsLoadingGroup(false);
+		} catch (error) {
+			setIsLoadingGroup(false);
+			navigate('/groups');
 		}
 	};
 
@@ -169,14 +177,15 @@ function GroupPage(){
 		try {
 			const response = await GroupService.updateGroup(
 				AuthService.getToken(), currentGroupName, formData
-			)
+			);
+
+			setShowUpdateGroupModal(false);
 
 			if (response.error)
 				setError(response.error);
 			else
 				loadGroup();
 			
-			setShowUpdateGroupModal(false);
 		} catch (error) {
 			console.error('Ошибка при удалении группы:', error);
 			setError('Произошла ошибка при удалении группы');
