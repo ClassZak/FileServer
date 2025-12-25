@@ -25,6 +25,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.*
 import javax.xml.transform.Source
+import kotlin.io.path.createDirectories
 import kotlin.io.path.Path
 import kotlin.io.path.absolute
 
@@ -325,7 +326,7 @@ class FileSystemService(
 	 */
 	fun deleteByPermissionsAndSaveCopy(currentUser: CurrentUser, relativePath: String): Boolean {
 		val target =  getSafePath(relativePath).toFile()
-		val permissionsForUser = checkAccessForDirectory(currentUser, relativePath)
+		val permissionsForUser = checkAccessForDirectory(currentUser, Path(relativePath).parent.toString())
 		val canDelete = (permissionsForUser and AccessType.DELETE.value) == AccessType.DELETE.value
 		// safeRootPath.resolve(relativePath).absolute()
 		if (!target.exists()) {
@@ -355,13 +356,15 @@ class FileSystemService(
 	
 	/**
 	 * Функция перемещения элемента в удалённые (deleted_files)
+	 * @param sourcePath Абсолютный путь файла
+	 * @param targetDir File место назначение
+	 * @param sourcePath Корневой File для перемещаемого объекта
 	 */
 	private fun moveItem(
 		sourcePath: String,
 		targetDir: File = Path(deletedFilesDir).absolute().toFile(),
 		sourseBaseDir: File = Path(rootDirectory).absolute().toFile()
-	): Boolean
-	{
+	): Boolean {
 		val sourceFile = File(sourcePath)
 		
 		if (!sourceFile.exists()) {
@@ -942,6 +945,7 @@ class FileSystemService(
 		return createFileInfo(targetFile)
 	}
 	
+	
 	fun createFolder(relativePath: String, folderName: String): FolderInfo {
 		val parentDir = getSafePath(relativePath).toFile()
 		
@@ -973,8 +977,6 @@ class FileSystemService(
 		
 		return createFolderInfo(newFolder)
 	}
-	
-	
 	fun createFolderByPermissions(currentUser: CurrentUser, relativePath: String, folderName: String): FolderInfo {
 		val parentDir = getSafePath(relativePath).toFile()
 		val permissions = checkAccessForDirectory(currentUser, relativePath)
@@ -1008,6 +1010,32 @@ class FileSystemService(
 		
 		return createFolderInfo(newFolder)
 	}
+	
+	
+	// ======================== МЕТОДЫ ДЛЯ ГРУППОВЫХ ПАПОК =========================================
+	/**
+	 * Функция для создания директории группы
+	 */
+	fun createGroupFolder(groupName: String){
+		val safeName = sanitizeFileName(groupName)
+		val directoryPath = Path(rootDirectory).resolve(Path(groupsDir).resolve(Path(safeName))).absolute()
+		
+		directoryPath.createDirectories()
+	}
+	/**
+	 * Функция для удаления директории группы
+	 */
+	fun deleteGroupFolder(groupName: String){
+		moveItem(
+			Path(rootDirectory)
+				.resolve(Path(groupsDir)
+					.resolve(Path(groupName)))
+				.toFile().absolutePath
+		)
+	}
+	
+	
+	
 	
 	
 	
@@ -1318,6 +1346,15 @@ class FileSystemService(
 		val safePathParts = Paths.get(safePath).toList()
 		
 		return if (safePathParts.size >= 2){
+			safePathParts[0].toString() == groupsDir
+		} else
+			false
+	}
+	fun isGroupBaseDirectory(path: String): Boolean{
+		val safePath = getRelativePath(getSafePath(path))
+		val safePathParts = Paths.get(safePath).toList()
+		
+		return if (safePathParts.size == 2){
 			safePathParts[0].toString() == groupsDir
 		} else
 			false

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.web.bind.annotation.*
+import org.zak.service.FileSystemService
 
 /**
  * Контроллер для управления группами пользователей.
@@ -34,7 +35,8 @@ class GroupController(
 	private val groupService: GroupService,
 	private val userService: UserService,
 	private val administratorService: AdministratorService,
-	private val jwtUtil: JwtUtil
+	private val jwtUtil: JwtUtil,
+	private val fileSystemService: FileSystemService
 ) {
 	
 	/**
@@ -110,6 +112,7 @@ class GroupController(
 				?: throw EntityNotFoundException()
 			
 			val group = groupService.create(request.name, userCreator.id!!)
+			fileSystemService.createGroupFolder(group.name)
 			ResponseEntity.status(HttpStatus.CREATED).body(mapOf("group" to group))
 		} catch (e: IllegalArgumentException) {
 			errorResponse(HttpStatus.BAD_REQUEST, e.message ?: "Ошибка создания группы")
@@ -166,6 +169,7 @@ class GroupController(
 		
 		return try {
 			groupService.delete(group)
+			fileSystemService.deleteGroupFolder(group.name)
 			successResponse(mapOf("success" to true, "message" to "Группа '$groupName' удалена"))
 		} catch (e: Exception) {
 			errorResponse(HttpStatus.BAD_REQUEST, e.message ?: "Ошибка удаления группы")
