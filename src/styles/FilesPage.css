@@ -1,0 +1,297 @@
+.files-page-container {
+	padding: 20px;
+	color: #edf2f7;
+}
+
+/* Default mode style */
+
+.files-title {
+	color: #edf2f7;
+}
+
+
+.search-panel .search-form{
+	display: flex;
+	width: 100%;
+	margin: 10px auto;
+	align-items: center;
+	display: flex;
+	gap: 5px;
+	width: 100%;
+}
+
+.search-panel .search-form input[type="text"] {
+	flex-grow: 1;
+	padding: 5px;
+	border: 1px solid #ccc;
+	border-radius: 0px;
+	width: inherit;
+	min-width: 20px;
+	width: 100%;
+}
+
+.search-panel{
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.path-panel{
+	background-color: #242424;
+	margin-bottom: 10px;
+}
+
+.path-panel .back-button{
+	display:block;
+	margin-top:4px;
+}
+
+
+.navigation-panel {
+	background-color: #242424;
+	border: 1px solid #333;
+	border-radius: 4px;
+	padding: 16px;
+	margin-bottom: 24px;
+}
+
+.navigation-row {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-bottom: 12px;
+}
+
+@media (min-width: 768px) {
+	.navigation-row {
+		flex-direction: row;
+		align-items: center;
+		gap: 16px;
+	}
+}
+
+.path-input-container {
+	flex: 1;
+}
+
+.path-form {
+	display: flex;
+}
+
+.path-input {
+	flex: 1;
+	padding: 8px 12px;
+	background-color: #1a1a1a;
+	border: 1px solid #333;
+	border-right: none;
+	border-radius: 4px 0 0 4px;
+	color: #edf2f7;
+	font-size: 14px;
+}
+
+.path-input:focus {
+	outline: none;
+	border-color: #2b6cb0;
+}
+
+.path-submit-button {
+	padding: 8px 16px;
+	background-color: #000e16;
+	color: #2b6cb0;
+	border: 1px solid #333;
+	border-left: none;
+	border-radius: 0 4px 4px 0;
+	cursor: pointer;
+	font-size: 14px;
+	transition: background-color 0.2s;
+}
+
+.path-submit-button:hover {
+	background-color: #90cdf4;
+}
+
+.navigation-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.nav-button {
+	padding: 8px 16px;
+	border-radius: 4px;
+	border: none;
+	cursor: pointer;
+	font-size: 14px;
+	transition: background-color 0.2s;
+	background-color: #2a2a2a;
+	color: #edf2f7;
+}
+
+.back-button {
+	background-color: #2a2a2a;
+	color: #edf2f7;
+}
+
+.nav-button:hover:not(:disabled) {
+	background-color: #484848;
+}
+
+.back-button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.create-button {
+	background-color: #2a2a2a;
+	color: #48bb78;
+}
+
+.create-button:hover {
+	background-color: #484848;
+}
+
+.upload-button {
+	background-color: #2a2a2a;
+	color: #4299e1;
+	cursor: pointer;
+	display: inline-block;
+}
+
+.upload-button:hover {
+	background-color: #484848;
+}
+
+.file-input {
+	display: none;
+}
+
+.current-path-info {
+	font-size: 14px;
+	color: #a0aec0;
+}
+
+.current-path-label {
+	font-weight: 600;
+	margin-left: 5px;
+}
+
+/* Search mode style */
+.search-mode-panel {
+	background-color: #242424;
+	border: 1px solid #333;
+	padding: 12px 16px;
+	border-radius: 4px;
+	margin-bottom: 24px;
+}
+
+.search-mode-info {
+	color: #edf2f7;
+}
+
+.search-mode-label {
+	font-weight: 600;
+}
+
+.search-mode-query {
+	margin-left: 8px;
+}
+
+.search-mode-exit-button {
+	padding: 6px 12px;
+	background-color: #000e16;
+	color: #2b6cb0;
+	border: 1px solid #333;
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 14px;
+	transition: background-color 0.2s;
+}
+
+.search-mode-exit-button:hover {
+	background-color: #90cdf4;
+}
+
+/* Общие стили */
+.loading-container,
+.search-loading {
+	text-align: center;
+	padding: 32px 0;
+}
+
+.loading-spinner {
+	display: inline-block;
+	width: 48px;
+	height: 48px;
+	border: 3px solid #333;
+	border-top: 3px solid #2b6cb0;
+	border-radius: 50%;
+	animation: spin 1s linear infinite;
+	margin-bottom: 16px;
+}
+
+.loading-text {
+	color: #a0aec0;
+}
+
+.search-results-header {
+	margin-bottom: 24px;
+}
+
+.search-results-title {
+	font-size: 24px;
+	font-weight: bold;
+	margin-bottom: 8px;
+	color: #edf2f7;
+}
+
+.search-results-stats {
+	color: #a0aec0;
+}
+
+.highlight {
+	font-weight: 600;
+}
+
+.no-results {
+	text-align: center;
+	padding: 48px 24px;
+	background-color: #242424;
+	border: 1px solid #333;
+	border-radius: 4px;
+}
+
+.no-results-icon {
+	font-size: 48px;
+	margin-bottom: 16px;
+}
+
+.no-results-title {
+	font-size: 20px;
+	font-weight: 600;
+	color: #edf2f7;
+	margin-bottom: 8px;
+}
+
+.no-results-description {
+	color: #a0aec0;
+	margin-bottom: 24px;
+}
+
+.return-button {
+	padding: 10px 20px;
+	background-color: #000e16;
+	color: #2b6cb0;
+	border: 1px solid #333;
+	border-radius: 4px;
+	cursor: pointer;
+	transition: background-color 0.2s;
+}
+
+.return-button:hover {
+	background-color: #90cdf4;
+}
+
+@keyframes spin {
+	0% { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
+}

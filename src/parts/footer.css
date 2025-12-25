@@ -1,0 +1,54 @@
+footer {
+	background-color: var(--secondary-olive);
+	/* color: black; */
+	padding-bottom:15px;
+	padding-top:10px;
+	position: relative;
+	margin:0 auto;
+	bottom: 0px;
+	width:90%;
+	font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
+}
+
+@media screen and (width< 300px) {
+	footer{
+		width: 100%;
+	}
+}
+footer > h2, 
+footer > h3,
+footer > h4,
+footer > h5,
+footer > h6
+{
+	padding-left: 0px;
+	margin-bottom: 20px;
+	text-align: center;
+}
+footer .contact p {
+	margin: 1px 0;
+	text-align: center;
+}
+footer .social+p{
+	margin-top: 1px;
+	text-align: center;
+}
+footer a {
+	/* color: #333; */
+	margin: 0 1px;
+	text-decoration: none;
+	text-align: center;
+}
+footer .social{
+	text-align: center;
+}
+footer .social > a:hover {
+	text-decoration: underline;
+}
+/* Описание проекта */
+footer p + h2{
+	margin-top: 20px;
+}
+footer ol{
+	margin-left: 5rem;
+}

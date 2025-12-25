@@ -1,0 +1,13 @@
+.search-results .highlight {
+    background-color: #fff3cd;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.search-results table {
+    font-size: 14px;
+}
+
+.search-results table th {
+    font-weight: 600;
+}

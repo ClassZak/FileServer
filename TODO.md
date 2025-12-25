@@ -1,18 +1,15 @@
-## Планируемые изменения
-
-1) ✓ Базовый сервис
-	- ✓ HTTPS
-	- ✓ Авторизация по JWT
-	- ✓ Регистрация
-2) ✖ Полное управление группами
-	- ✓ Выбор только определённых групп из всего списка
-	- ✓ Изменение логики создания группы: Создаётся группа, у которой один из участников является владельцем, а не один из пользователей
-	- ✖ CRUD операции для групп
-3) ✖ Фикс фронта
-	- ✖ Доработка регистрации.
-4) ✖ Управление доступом
-	- ✖ Добавление ролей
-	- ✖ Проверка файлового сервера
-5) ✖ Документация
-6) ✖ Скрытие владельцев групп и добавление закрытых и открытых групп (переменная публичности).
-7) ✖ UUID
+1) ✓ Delete redirection by clicking the folder from the table 
+2) ✓ Fix Files page menu
+3) ✓ CRUD operations for User entity
+4) ✓ CRUD operations for Group entity
+5) ✓ Group page
+6) ✖ Add deleted files page
+7) ✖ Add recently used files in Home page
+8) ✖ Add History page
+9) ✖ Access managment page
+10) ✖ Set icons instead of symbols
+11) ✖ Rename global css variables
+12) ✖ Use "a" tag instead of "button"
+13) ✖ Fix Files page menu in search mode
+14) ✖ Fix all pages
+15) ✖ Full refactor

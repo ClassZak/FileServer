@@ -1,0 +1,121 @@
+.permission-manager {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    color: #333;
+    margin: 20px 0;
+}
+
+.permission-manager h3 {
+    color: var(--primary-dark);
+    margin-bottom: 20px;
+}
+
+.add-permission {
+    margin-bottom: 30px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.subject-selector {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.subject-selector select,
+.subject-selector input {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.subject-selector button {
+    background: var(--primary-accent);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.permission-item {
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+    background: #fff;
+}
+
+.subject-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
+}
+
+.subject-type {
+    font-size: 1.2em;
+}
+
+.subject-name {
+    font-weight: bold;
+    flex-grow: 1;
+}
+
+.remove-btn {
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+    color: #ff4444;
+}
+
+.permission-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.permission-checkboxes label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px;
+}
+
+.permission-checkboxes label.disabled {
+    color: #999;
+    cursor: not-allowed;
+}
+
+.permission-checkboxes input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+}
+
+.permission-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.btn-save {
+    background: var(--secondary-green);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-cancel {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+}
