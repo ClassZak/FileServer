@@ -49,3 +49,7 @@ bin/
 
 ### The FileServer
 /files/
+/deleted_files/
+
+### Vim
+/.vim/
