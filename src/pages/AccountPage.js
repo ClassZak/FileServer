@@ -10,6 +10,10 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import RedirectionButton from '../components/element/RedirectionButton';
 
 import '../styles/AccountPage.css';
+import '../styles/blue-button.css';
+import '../styles/green-button.css';
+import '../styles/buttons-row.css';
+
 
 
 function AccountPage() {
@@ -135,7 +139,7 @@ function AccountPage() {
 				<td>{group.membersCount}</td>
 				<td>{group.creatorEmail}</td>
 				<td>
-					<RedirectionButton reference={createNavigateToGroupHref(group.name)} title={'Изменить данные'} />
+					<RedirectionButton reference={createNavigateToGroupHref(group.name)} title={'Изменить данные'} className='blue-button' />
 				</td>
 			</tr>
 		);
@@ -185,22 +189,24 @@ function AccountPage() {
 									<p><strong>Имя:</strong> {user.name}</p>
 									<p><strong>Отчество:</strong> {user.patronymic}</p>
 								</div>
-								<button
-									onClick={()=>{setIsPasswordModalOpen(true)}} 
-									className="logout-button"
-								>
-									Обновить пароль
-								</button>
+								<div className='buttons-row'>
+									<button
+										onClick={()=>{setIsPasswordModalOpen(true)}} 
+										className="logout-button"
+										>
+										Обновить пароль
+									</button>
+									<button onClick={handleLogout} className="logout-button">
+										Выйти
+									</button>
+								</div>
 							</div>
-							<button onClick={handleLogout} className="logout-button">
-								Выйти
-							</button>
 							{isAdmin ? (
-								<div>
-									<RedirectionButton reference={'/users'} title={'Пользователи'} />
-									<RedirectionButton reference={'/groups'} title={'Группы'} />
+								<div className='buttons-row'>
+									<RedirectionButton reference={'/users'} title={'Пользователи'}  className='blue-button' />
+									<RedirectionButton reference={'/groups'} title={'Группы'}  className='blue-button' />
 									{/*TODO: Create route to add himself to group*/}
-									<button onClick={()=>{navigate('/users')}} className="">
+									<button onClick={()=>{navigate('/users')}} className="green-button">
 										Вступить в группу
 									</button>
 								</div>

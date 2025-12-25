@@ -28,6 +28,18 @@ import User from '../entity/User';
 
 
 
+import '../styles/blue-button.css';
+import '../styles/red-button.css';
+import '../styles/green-button.css';
+import '../styles/orange-button.css';
+import '../styles/buttons-row.css';
+
+
+
+
+
+
+
 function GroupPage(){
 	const { '*': pathParam } = useParams();
 	const [showUpdateGroupModal, setShowUpdateGroupModal] = useState(false);
@@ -249,19 +261,23 @@ function GroupPage(){
 				<td>{element.email}</td>
 				<td>{element.createdAt}</td>
 				<td>
-					<RedirectionButton
-						reference={createNavigateToUserHref(element.email)} 
-						title={'Изменить данные'}
-					/>
 					{/* TODO: Create modal for remove from group */}
-					<button
-						onClick={()=>{
-							setUserForModal(element); setShowRemoveUserFromGroupModal(true);}
-						}
-						style={{ cursor: 'pointer', padding: '8px 16px' }}
-					>
-						Исключить из группы
-					</button>
+					<div className='buttons-row'>
+						<RedirectionButton
+							reference={createNavigateToUserHref(element.email)} 
+							title={'Изменить данные'}
+							className='blue-button'
+						/>
+						<button
+							onClick={()=>{
+								setUserForModal(element); setShowRemoveUserFromGroupModal(true);}
+							}
+							style={{ cursor: 'pointer', padding: '8px 16px' }}
+							className='red-button'
+						>
+							Исключить из группы
+						</button>
+					</div>
 				</td>
 			</tr>
 		);
@@ -374,21 +390,26 @@ function GroupPage(){
 				) : isAdmin ? (
 					<>
 						<GroupCardAdmin element={group} />
-						<button
-							onClick={() => setShowDeleteGroupModal(true)}
-						>
-							Удалить группу
-						</button>
-						<button
-							onClick={() => setShowUpdateGroupModal(true)}
-						>
-							Обновить данные группы
-						</button>
-						<button
-							onClick={() => setShowAddUserToGroupModal(true)}
-						>
-							Добавить пользователя в группу
-						</button>
+						<div className='buttons-row'>
+							<button
+								onClick={() => setShowDeleteGroupModal(true)}
+								className='red-button'
+								>
+								Удалить группу
+							</button>
+							<button
+								onClick={() => setShowUpdateGroupModal(true)}
+								className='orange-button'
+								>
+								Обновить данные группы
+							</button>
+							<button
+								onClick={() => setShowAddUserToGroupModal(true)}
+								className='green-button'
+							>
+								Добавить пользователя в группу
+							</button>
+						</div>
 					</>
 				) : (
 					<GroupCard element={group} />

@@ -19,6 +19,8 @@ import GroupDetails from '../services/GroupService'
 
 
 import '../styles/FileTable.css';
+import '../styles/blue-button.css';
+import '../styles/green-button.css';
 import { GroupCreateModel } from '../entity/GroupCreateModel';
 
 
@@ -149,6 +151,7 @@ function GroupsPage(){
 					<RedirectionButton 
 						reference={createNavigateToGroupHref(group.name)} 
 						title={'Изменить данные'}
+						className='blue-button'
 					/>
 				</td>
 			</tr>
@@ -159,10 +162,10 @@ function GroupsPage(){
 		return (
 			<div>
 				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-					<h1>Группы</h1>
 					<button 
 						onClick={() => setShowCreateGroupModal(true)}
 						style={{ padding: '10px 20px', cursor: 'pointer' }}
+						className='green-button'
 					>
 						Создать группу
 					</button>

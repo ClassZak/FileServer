@@ -14,6 +14,9 @@ import RedirectionButton from '../components/element/RedirectionButton';
 
 
 import '../styles/FileTable.css';
+import '../styles/blue-button.css';
+import '../styles/green-button.css';
+
 
 
 
@@ -89,6 +92,7 @@ function UsersPage() {
 					<RedirectionButton
 						reference={createNavigateToUserHref(user.email)}
 						title={'Изменить данные'}
+						className='blue-button'
 					/>
 				</td>
 			</tr>
@@ -147,6 +151,7 @@ function UsersPage() {
 	return (
 		<>
 			<MainContent>
+				<h1>Все пользователи</h1>
 				{isLoading ? (
 					<LoadingSpinner title={'Загрузка пользователей'}/>
 				) : error ? (
@@ -176,10 +181,10 @@ function UsersPage() {
 				) : (
 					<div>
 						<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-							<h1>Пользователи</h1>
 							<button 
 								onClick={() => setShowCreateUserModal(true)}
 								style={{ padding: '10px 20px', cursor: 'pointer' }}
+								className='green-button'
 							>
 								Создать пользователя
 							</button>

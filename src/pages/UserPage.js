@@ -19,6 +19,11 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 
 import '../styles/AccountPage.css';
+import '../styles/blue-button.css';
+import '../styles/red-button.css';
+import '../styles/orange-button.css';
+import '../styles/buttons-row.css';
+
 
 
 
@@ -204,24 +209,29 @@ function UserPage(){
 				) : (
 					<div>
 						<UserCard element={user} />
-						<button
-							onClick={() => setShowUpdateUserModal(true)}
-							style={{ padding: '10px 20px', cursor: 'pointer' }}
-						>
-							Изменить данные
-						</button>
-						<button
-							onClick={() => setShowUpdateUserPasswordModal(true)}
-							style={{ padding: '10px 20px', cursor: 'pointer' }}
-						>
-							Изменить пароль
-						</button>
-						<button
-							onClick={() => setShowDeleteUserModal(true)}
-							style={{ padding: '10px 20px', cursor: 'pointer' }}
-						>
-							Удалить пользователя
-						</button>
+						<div className='buttons-row'>
+							<button
+								onClick={() => setShowUpdateUserModal(true)}
+								style={{ padding: '10px 20px', cursor: 'pointer' }}
+								className='orange-button'
+								>
+								Изменить данные
+							</button>
+							<button
+								onClick={() => setShowUpdateUserPasswordModal(true)}
+								style={{ padding: '10px 20px', cursor: 'pointer' }}
+								className='orange-button'
+								>
+								Изменить пароль
+							</button>
+							<button
+								onClick={() => setShowDeleteUserModal(true)}
+								style={{ padding: '10px 20px', cursor: 'pointer' }}
+								className='red-button'
+								>
+								Удалить пользователя
+							</button>
+						</div>
 					</div>
 				)}
 			</MainContent>
