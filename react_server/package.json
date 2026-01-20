@@ -1,55 +1,48 @@
 {
   "name": "file_server2",
   "version": "0.1.0",
-  "proxy": "http://localhost:8888",
   "private": true,
   "dependencies": {
-    "@mui/icons-material": "7.3.5",
-    "@testing-library/dom": "10.4.1",
-    "@testing-library/jest-dom": "6.9.1",
-    "@testing-library/react": "16.3.0",
-    "@testing-library/user-event": "13.5.0",
+    "@angular/animations": "^17.3.0",
+    "@angular/common": "^17.3.0",
+    "@angular/compiler": "^17.3.0",
+    "@angular/core": "^17.3.0",
+    "@angular/forms": "^17.3.0",
+    "@angular/platform-browser": "^17.3.0",
+    "@angular/platform-browser-dynamic": "^17.3.0",
+    "@angular/router": "^17.3.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.14.3",
     "axios": "^1.13.2",
-    "concurrently": "9.2.1",
     "express": "4.21.2",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "react-icons": "5.5.0",
-    "react-router-dom": "7.9.6",
-    "react-scripts": "5.0.1",
-    "web-vitals": "2.1.4"
-  },
-  
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "test:watch": "react-scripts test --watch",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "concurrently": "9.2.1"
   },
   "devDependencies": {
+    "@angular-devkit/build-angular": "^17.3.0",
+    "@angular/cli": "^17.3.0",
+    "@angular/compiler-cli": "^17.3.0",
+    "@types/jasmine": "~5.1.0",
+    "@types/node": "^20.11.16",
+    "jasmine-core": "~5.1.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "typescript": "~5.3.0",
     "autoprefixer": "^10.4.22",
     "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.18",
-    "jest": "^29.0.0",
-    "@types/jest": "^29.0.0"
+    "tailwindcss": "^3.4.18"
+  },
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve --proxy-config proxy.conf.json",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "test:watch": "ng test --watch=true",
+    "build:ssr": "ng build && ng run file_server2:server",
+    "serve:ssr": "node dist/file_server2/server/server.mjs"
   }
 }
