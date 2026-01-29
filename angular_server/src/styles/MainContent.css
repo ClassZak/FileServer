@@ -1,0 +1,55 @@
+.MainContent {
+	width: 90%;
+	min-height: calc(100vh - 200px); /* Минимальная высота минус хедер и футер */
+	flex: 1 0 auto; /* Ключевое изменение: растягивается, но не сжимается */
+	margin: 0 auto;
+	padding: 5rem 0 5rem; /* Уменьшен верхний отступ, увеличен нижний */
+	background-color: var(--primary-accent);
+	isolation: isolate;
+	box-sizing: border-box;
+}
+
+@media screen and (max-width: 300px) {
+	.MainContent {
+		width: 100%;
+		padding: 1rem 0 2rem;
+	}
+}
+
+/* Убираем общий margin для всех детей */
+.MainContent > * {
+	margin: 1.5rem;
+}
+
+.MainContent > h2,
+.MainContent > h3,
+.MainContent > h4,
+.MainContent > h5,
+.MainContent > h6 {
+	margin-bottom: 0.75rem;
+	padding-left: 1rem;
+}
+
+.MainContent p {
+	white-space: pre-wrap;
+	margin-bottom: 1rem;
+	line-height: 1.5;
+}
+
+div:has(> .MainContent) {
+	height: 100%;
+	background-color: var(--primary-accent);
+	width: 90%;
+	flex: 1 0 auto;
+	margin: 0 auto;
+}
+
+/*div > .MainContent{
+	width: 100%;
+	min-height: calc(100hv - 200px);
+}*/
+
+* > .MainContent{
+	width: 100%;
+	min-height: calc(100hv - 200px);
+}
