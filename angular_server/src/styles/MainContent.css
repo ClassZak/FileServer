@@ -33,7 +33,7 @@
 .MainContent p {
 	white-space: pre-wrap;
 	margin-bottom: 1rem;
-	line-height: 1.5;
+	line-height: 1;
 }
 
 *:has(.MainContent) {

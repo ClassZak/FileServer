@@ -1,1 +1,18 @@
-<p>file-search works!</p>
+<form onSubmit={handleSubmit} class="search-form" id="files_search">
+	<input
+		name="q"
+		class="item"
+		placeholder="Поиск..."
+		type="text"
+		defaultValue=""
+		disabled={searching}
+	/>
+	<button 
+		type="submit" 
+		class="image-button"
+		disabled={searching}
+		title="Найти файлы и папки"
+	>
+		<img alt="search" src="/assets/img/magnifyingglass.png" />
+	</button>
+</form>

@@ -1,0 +1,46 @@
+app-file-search{
+	width: 100%;
+}
+app-app-header {
+	width: 100%;
+	background-color: var(--primary-dark);
+	background-color: var(--primary-dark);
+	position: fixed;
+	font-weight: bold;
+	z-index: 1000;
+	padding: 5px 0px 5px 0px
+}
+.header-content {
+	width: 90%;
+	margin: 10px auto;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+app-app-header > *{
+	display: inline;
+}
+app-app-header > form{
+	display: flex;
+	gap: 5px;
+	width: 100%;
+}
+.header-content nav{
+	display: flex;
+	align-items: center;
+	width: auto;
+	gap: 10px;
+}
+.header-content nav > *{
+	display: inline;
+}
+
+
+@media screen and (width< 500px) {
+	.header-content a {
+		font-size: 0.7rem;
+	}
+	.header-content input{
+		font-size: 0.7rem;
+	}
+}

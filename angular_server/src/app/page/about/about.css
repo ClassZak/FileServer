@@ -1,2 +1,4 @@
 @import url(../../../styles/MainContent.css);
 @import url(../../../styles/indented.css);
+@import url(../../app-header/app-header.css);
+@import url(../../file-search/file-search.css);
