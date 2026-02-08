@@ -105,7 +105,7 @@ export class AuthService {
 	 * Function to chech auth token
 	 * @returns CheckAuthResult
 	 */
-	public static async chechAuth(): Promise<CheckAuthResult>{
+	public static async checkAuth(): Promise<CheckAuthResult>{
 		try{
 			const token = this.getToken();
 			if (!token) {

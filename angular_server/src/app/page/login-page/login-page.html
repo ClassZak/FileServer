@@ -1,0 +1,77 @@
+<app-app-header></app-app-header>
+<main class="MainContent">
+	<div class="login-container">
+		<div class="login-wrapper">
+			<div class="login-card">
+				<h1 class="login-title">Авторизация</h1>
+				<div class="auth-switcher">
+					<button
+						type="button"
+						[class.active]="formType === 0"
+						(click)="formType = 0"
+					>
+						По Email
+					</button>
+					<button
+						type="button"
+						[class]="formType === 1 ? 'snp active' : 'snp'"
+						[disabled]="true"
+						(click)="formType = 1"
+					>
+						По ФИО
+					</button>
+				</div>
+				
+				<!-- Показ ошибки -->
+				<div *ngIf="error" class="error-message">
+					{{ error }}
+				</div>
+				
+				<form class="auth-form" (ngSubmit)="handleEmailLogin($event)">
+					<div class="auth-form-group">
+						<label for="email">Email адрес</label>
+						<input
+							id="email"
+							type="email"
+							required
+							placeholder="example@mail.ru"
+							[(ngModel)]="email"
+							name="email"
+						/>
+					</div>
+					<div class="auth-form-group">
+						<label for="password">Пароль</label>
+						<div class="password-container">
+							<input
+								id="password"
+								[type]="showPassword ? 'text' : 'password'"
+								required
+								placeholder="Введите пароль"
+								[(ngModel)]="password"
+								name="password"
+							/>
+							<button
+								type="button"
+								class="password-toggle"
+								(click)="togglePasswordVisibility()"
+							>
+								{{ showPassword ? 'Скрыть' : 'Показать' }}
+							</button>
+						</div>
+					</div>
+
+					<button
+						type="submit"
+						class="auth-submit-btn"
+					>
+						Войти через Email
+					</button>
+				</form>
+				<div class="auth-info">
+					<p>Для входа используйте email или ФИО с паролем</p>
+				</div>
+			</div>
+		</div>
+	</div>
+</main>
+<app-footer></app-footer>
