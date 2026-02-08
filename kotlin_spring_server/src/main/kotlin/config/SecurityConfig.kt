@@ -26,6 +26,7 @@ class SecurityConfig {
 		val configuration = CorsConfiguration()
 		configuration.allowedOrigins = listOf(
 			"http://localhost:3000",  // React app
+			"http://localhost:4200",  // Angular app
 			"http://localhost:8080"
 		)
 		configuration.allowedMethods = listOf("*")
