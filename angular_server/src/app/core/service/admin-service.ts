@@ -3,13 +3,13 @@ import axios, { AxiosError } from "axios";
 
 
 @Injectable({
-  providedIn: 'root',
+providedIn: 'root',
 })
 /**
  * Class for Adminstrator database entity
  */
 export class AdminService {
-  /**
+	/**
 	 * Checking is user administrator or not
 	 * @param {string} authToken Authorization token for admin role checking
 	 * @returns {Promise<Object>} Operation result with isAdmin key
