@@ -211,6 +211,19 @@ export class AuthService {
 
 
 
+	/**
+	 * Function for user logout
+	 */
+	static logout() {
+		try {
+			axios.post('/api/auth/logout');
+			this.clearAuthData();
+		} finally {
+		}
+	}
+
+
+
 
 
 

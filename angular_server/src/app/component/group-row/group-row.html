@@ -1,0 +1,11 @@
+<tr key="group-${this?.groupData?.name?}">
+	<td>{{groupData?.name}}</td>
+	<td>{{groupData?.membersCount}}</td>
+	<td>{{groupData?.creatorEmail}}</td>
+	@if (isAdmin){
+		<td>
+			<app-redirection-button [reference]="createNavigateToGroupHref(groupData?.name)">
+			</app-redirection-button>
+		</td>
+	}
+</tr>

@@ -1,40 +1,75 @@
 import { Component, OnInit } from '@angular/core';
-import { AppFooter } from '../../app-footer/app-footer'
+import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+
+// Компоненты
+import { AppFooter } from '../../app-footer/app-footer';
 import { AppHeader } from "../../app-header/app-header";
 import { LoadingSpinner } from "../../component/loading-spinner/loading-spinner";
-import { Router } from '@angular/router';
-import { CheckAuthResult, LoginResult } from '../../core/service/auth-service';
-import { User } from '../../core/model/user';
-import { AuthService } from '../../core/service/auth-service';
+import { RedirectionButton } from '../../component/redirection-button/redirection-button';
 
+// Сервисы и модели
+import { AuthService } from '../../core/service/auth-service';
+import { AdminService } from '../../core/service/admin-service';
+import { GroupService } from '../../core/service/group-service';
+import { User } from '../../core/model/user';
+
+interface Group {
+	name: string;
+	membersCount: number;
+	creatorEmail: string;
+}
 
 @Component({
-	selector: 'app-accout-page',
-	imports: [AppFooter, AppHeader, LoadingSpinner],
+	selector: 'app-account-page',
+	standalone: true,
+	imports: [
+		CommonModule,
+		AppFooter, 
+		AppHeader, 
+		LoadingSpinner,
+		RedirectionButton
+	],
 	templateUrl: './accout-page.html',
-	styleUrl: './accout-page.css',
+	styleUrl: './accout-page.css'
 })
-export class AccoutPage implements OnInit {
-	
+export class AccountPage implements OnInit {
 	isLoading: boolean = true;
+	isLoadingGroups: boolean = true;
 	isAuthenticated: boolean = false;
+	isAdmin: boolean = false;
+	isPasswordModalOpen: boolean = false;
+	user: User | undefined;
+	groups: Group[] = [];
 
-	constructor(private router: Router) {}
+	constructor(
+		private router: Router,
+		private adminService: AdminService,
+		private groupService: GroupService
+	) {}
 
 	async ngOnInit(): Promise<void> {
-		setTimeout(async () => {
+		try {
 			await this.checkAuthentication();
-		}, 1000);
+		} catch (error) {
+			console.error('Ошибка при загрузке страницы:', error);
+		}
 	}
 
 	private async checkAuthentication(): Promise<void> {
 		try {
-			const authResult: CheckAuthResult = await AuthService.checkAuth();
+			const authResult = await AuthService.checkAuth();
 			
 			if (authResult.authenticated) {
 				console.log('Аутентификация прошла успешно');
 				this.isAuthenticated = true;
-				// TODO: add account data component loading
+				this.user = authResult.user;
+				
+				// Загружаем дополнительную информацию
+				await Promise.all([
+					this.checkAdminStatus(),
+					this.loadGroups()
+				]);
 			} else {
 				console.log('Аутентификация не пройдена:', authResult.message);
 				this.router.navigate(['/login']);
@@ -45,5 +80,50 @@ export class AccoutPage implements OnInit {
 		} finally {
 			this.isLoading = false;
 		}
+	}
+
+	private async checkAdminStatus(): Promise<void> {
+		try {
+			const token = AuthService.getToken();
+			if(token == null)
+				throw "You have not a token";
+			this.isAdmin = await AdminService.isAdmin(token);
+		} catch (error) {
+			console.error('Ошибка при проверке статуса администратора:', error);
+		}
+	}
+
+	private async loadGroups(): Promise<void> {
+		try {
+			const token = AuthService.getToken();
+			return;
+			//const groupsResult = await this.groupService.getMyGroups(token);
+			
+			/*if (groupsResult.error) {
+				console.error('Ошибка загрузки групп:', groupsResult.error);
+			} else {
+				this.groups = groupsResult;
+			}*/
+		} catch (error) {
+			console.error('Ошибка при загрузке групп:', error);
+		} finally {
+			this.isLoadingGroups = false;
+		}
+	}
+
+	public handleLogout(): void {
+		AuthService.logout();
+		this.router.navigate(['/login']);
+	}
+
+	public setPasswordModalIsOpen(state: boolean): void {
+		this.isPasswordModalOpen = state;
+	}
+
+	public navigateToGroup(groupName: string): void {
+		this.router.navigate(['/group', encodeURIComponent(groupName)]);
+	}
+	public navigateToUsers(): void {
+		this.router.navigate(['/users']);
 	}
 }
