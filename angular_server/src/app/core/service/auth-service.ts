@@ -110,14 +110,23 @@ export class AuthService {
 			const token = this.getToken();
 			if (!token) {
 				return { 
-					authenticated: false,
+					authenticated: false, 
 					message: 'Токен отсутствует' 
 				};
-			} else {
-				return { 
+			}
+			const response = await axios.get('/api/auth/verify', {
+				headers: {
+					'Authorization': `Bearer ${token}`
+				}
+			});
+			if (response.data.valid && response.data.user) {
+				return {
 					authenticated: true,
-					message: 'Токен присутствует' 
+					user: response.data.user,
+					message: 'Токен действителен'
 				};
+			} else {
+				return await this.tryRefreshToken();
 			}
 		} catch(error: any) {
 			console.error('Check auth error:', error);
@@ -262,70 +271,70 @@ export class AuthService {
 
 
 	/**
-     * Изменение пароля пользователя
-     * @param {string} email - Email пользователя
-     * @param {string} authToken - Токен авторизации (например, "Bearer eyJhbGciOi...")
-     * @param {string} oldPassword - Текущий пароль
-     * @param {string} newPassword - Новый пароль
-     * @returns {Promise<Object>} - Результат операции
-     */
-    static async updatePassword(email: string, authToken: string, oldPassword: string, newPassword: string){
-        try {
-            const response = await axios.put(
-                `/api/users/update-password/${encodeURIComponent(email)}`, 
-                {
-                    'oldPassword': oldPassword, 
-                    'newPassword': newPassword
-                },
-                {
-                    headers:{
-                        'Authorization': `Bearer ${authToken}`,
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
+	 * Изменение пароля пользователя
+	 * @param {string} email - Email пользователя
+	 * @param {string} authToken - Токен авторизации (например, "Bearer eyJhbGciOi...")
+	 * @param {string} oldPassword - Текущий пароль
+	 * @param {string} newPassword - Новый пароль
+	 * @returns {Promise<Object>} - Результат операции
+	 */
+	static async updatePassword(email: string, authToken: string, oldPassword: string, newPassword: string){
+		try {
+			const response = await axios.put(
+				`/api/users/update-password/${encodeURIComponent(email)}`, 
+				{
+					'oldPassword': oldPassword, 
+					'newPassword': newPassword
+				},
+				{
+					headers:{
+						'Authorization': `Bearer ${authToken}`,
+						'Content-Type': 'application/json'
+					}
+				}
+			);
 
-            return response.data;
-        } catch (error){
+			return response.data;
+		} catch (error){
 			const axiosError = error as AxiosError<{
 				message?: string;
 				error?: string;
 			}>;
-            console.error('Update password error:', axiosError);
-            if (axiosError.response) {
-                // Сервер ответил с ошибкой
-                const status = axiosError.response.status;
-                const data = axiosError.response.data;
-                
-                let message = data?.message || 'Ошибка сервера';
-                
-                if (status === 403) {
-                    message = data?.message || 'Недостаточно прав для изменения пароля';
-                } else if (status === 404) {
-                    message = data?.message || 'Пользователь не найден';
-                } else if (status === 401) {
-                    message = 'Требуется авторизация';
-                }
-                
-                return {
-                    success: false,
-                    message: message,
-                    status: status
-                };
-                
-            } else if (axiosError.request) {
-                // Запрос был сделан, но ответа нет
-                return {
-                    success: false,
-                    message: 'Ошибка сети: не удалось получить ответ от сервера'
-                };
-            } else {
-                // Ошибка настройки запроса
-                return {
-                    success: false,
-                    message: axiosError.message || 'Ошибка при отправке запроса'
-                };
-            }
-        }
-    }
+			console.error('Update password error:', axiosError);
+			if (axiosError.response) {
+				// Сервер ответил с ошибкой
+				const status = axiosError.response.status;
+				const data = axiosError.response.data;
+				
+				let message = data?.message || 'Ошибка сервера';
+				
+				if (status === 403) {
+					message = data?.message || 'Недостаточно прав для изменения пароля';
+				} else if (status === 404) {
+					message = data?.message || 'Пользователь не найден';
+				} else if (status === 401) {
+					message = 'Требуется авторизация';
+				}
+				
+				return {
+					success: false,
+					message: message,
+					status: status
+				};
+				
+			} else if (axiosError.request) {
+				// Запрос был сделан, но ответа нет
+				return {
+					success: false,
+					message: 'Ошибка сети: не удалось получить ответ от сервера'
+				};
+			} else {
+				// Ошибка настройки запроса
+				return {
+					success: false,
+					message: axiosError.message || 'Ошибка при отправке запроса'
+				};
+			}
+		}
+	}
 }

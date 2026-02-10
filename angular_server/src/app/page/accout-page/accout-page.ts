@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
@@ -34,7 +34,7 @@ interface Group {
 	styleUrl: './accout-page.css'
 })
 export class AccountPage implements OnInit {
-	isLoading: boolean = true;
+	public isLoading: boolean = true;
 	isLoadingGroups: boolean = true;
 	isAuthenticated: boolean = false;
 	isAdmin: boolean = false;
@@ -43,7 +43,8 @@ export class AccountPage implements OnInit {
 	groups: Group[] = [];
 
 	constructor(
-		private router: Router
+		private router: Router,
+		private cdr: ChangeDetectorRef
 	) {}
 
 	async ngOnInit(): Promise<void> {
@@ -64,10 +65,8 @@ export class AccountPage implements OnInit {
 				this.user = authResult.user;
 				
 				// Загружаем дополнительную информацию
-				await Promise.all([
-					this.checkAdminStatus(),
-					this.loadGroups()
-				]);
+				await this.checkAdminStatus()
+				await this.loadGroups()
 			} else {
 				console.log('Аутентификация не пройдена:', authResult.message);
 				this.router.navigate(['/login']);
@@ -78,6 +77,7 @@ export class AccountPage implements OnInit {
 		} finally {
 			this.isLoading = false;
 		}
+		this.cdr.detectChanges();
 	}
 
 	private async checkAdminStatus(): Promise<void> {
@@ -94,14 +94,15 @@ export class AccountPage implements OnInit {
 	private async loadGroups(): Promise<void> {
 		try {
 			const token = AuthService.getToken();
-			return;
-			//const groupsResult = await this.groupService.getMyGroups(token);
+			if (!token)
+				throw Error('No token');
+			const groupsResult = await GroupService.getMyGroups(token);
 			
-			/*if (groupsResult.error) {
+			if (groupsResult.error) {
 				console.error('Ошибка загрузки групп:', groupsResult.error);
 			} else {
 				this.groups = groupsResult;
-			}*/
+			}
 		} catch (error) {
 			console.error('Ошибка при загрузке групп:', error);
 		} finally {
