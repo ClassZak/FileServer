@@ -2,3 +2,9 @@
 @import url(../../../styles/indented.css);
 @import url(../../app-header/app-header.css);
 @import url(../../file-search/file-search.css);
+
+
+@import url(../../../styles/AccountPage.css);
+@import url(../../../styles/blue-button.css);
+@import url(../../../styles/green-button.css);
+@import url(../../../styles/buttons-row.css);

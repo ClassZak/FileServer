@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AppHeader } from "../../app-header/app-header";
@@ -19,11 +19,18 @@ enum LoginFormType {
 export class LoginPage {
 	email: string = '';
 	password: string = '';
+	surname: string = '';
+	name: string = '';
+	patronymic: string = '';
 	error?: string;
 	showPassword: boolean = false;
 	formType: LoginFormType = LoginFormType.Email;
+	isSubmiting: boolean = false;
 
-	constructor(private router: Router) {}
+	constructor(
+		private router: Router,
+		private cdr: ChangeDetectorRef
+	) {}
 
 	async ngOnInit(): Promise<void> {
 		setTimeout(async () => {
@@ -33,12 +40,13 @@ export class LoginPage {
 
 	async handleEmailLogin(e: Event) {
 		e.preventDefault();
+		this.isSubmiting = true;
 		console.log('Login attempt with:', this.email, this.password);
 		
 		try {
 			const result = await AuthService.loginByEmail(this.email, this.password);
 			if (result.success) {
-				const authResult = await AuthService.checkAuth(); // Исправлена опечатка: checkAuth -> checkAuth
+				const authResult = await AuthService.checkAuth();
 				if (authResult.authenticated) {
 					this.router.navigate(['/account']);
 				} else {
@@ -50,7 +58,37 @@ export class LoginPage {
 		} catch (error) {
 			console.log('Login failed:', error);
 			this.error = 'Произошла ошибка при входе';
+		} finally {
+			this.isSubmiting = false;
 		}
+		this.cdr.detectChanges();
+	}
+	async handleSNPLogin(e: Event) {
+		this.isSubmiting = true;
+		e.preventDefault();
+		console.log('Login attempt with:',this.surname,this.name,this.patronymic,this.password);
+		
+		try {
+			const result = await AuthService.loginBySnp(
+				this.surname, this.name, this.patronymic, this.password
+			);
+			if (result.success) {
+				const authResult = await AuthService.checkAuth();
+				if (authResult.authenticated) {
+					this.router.navigate(['/account']);
+				} else {
+					this.error = 'Ошибка авторизации после входа';
+				}
+			} else {
+				this.error = 'Неверные учётные данные или пароль';
+			}
+		} catch (error) {
+			console.log('Login failed:', error);
+			this.error = 'Произошла ошибка при входе';
+		} finally {
+			this.isSubmiting = false;
+		}
+		this.cdr.detectChanges();
 	}
 
 	private async checkAuthentication(): Promise<void> {
