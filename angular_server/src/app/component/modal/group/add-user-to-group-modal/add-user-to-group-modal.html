@@ -1,0 +1,114 @@
+<app-modal
+  [isOpen]="isOpen" [title]="'Добавить пользователя в группу' + groupName"
+  (onClose)="closeModal()"
+>
+  <form (ngSubmit)="submitForm()" class="add-user-to-group-form">
+    @if (errors['server']) {
+      <div class="error-message">
+        {{ errors['server'] }}
+      </div>
+    }
+
+    <div class="form-group">
+      <label for="userSearch">Выберите пользователя для добавления *</label>
+      
+      <input
+        id="userSearch"
+        type="text"
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="onSearchChange()"
+        name="userSearch"
+        placeholder="Начните вводить email, фамилию или имя пользователя"
+        [disabled]="submitting"
+      />
+
+      @if (selectedUser && !searchQuery) {
+        <div class="selected-user">
+          <div class="selected-user-name">
+            Выбран: {{ selectedUser.surname }} {{ selectedUser.name }} {{ selectedUser.patronymic }}
+          </div>
+          <div class="selected-user-email">
+            {{ selectedUser.email }}
+          </div>
+          <button
+            type="button"
+            (click)="clearSelection()"
+            class="change-button"
+          >
+            Изменить
+          </button>
+        </div>
+      }
+
+      @if (searchQuery && filteredUsers.length > 0) {
+        <div class="user-list">
+          @for (user of filteredUsers; track user.email) {
+            <div
+              class="user-item"
+              (click)="selectUser(user.email)"
+            >
+              <div class="user-name">
+                {{ user.surname }} {{ user.name }} {{ user.patronymic }}
+              </div>
+              <div class="user-email">
+                {{ user.email }}
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      @if (searchQuery && filteredUsers.length === 0) {
+        <div class="no-users-message">
+          Пользователи не найдены
+        </div>
+      }
+
+      <input
+        type="hidden"
+        name="userEmail"
+        [value]="selectedUserEmail"
+        required
+      />
+
+      @if (errors['userEmail']) {
+        <div class="error-text">
+          {{ errors['userEmail'] }}
+        </div>
+      }
+    </div>
+
+    <div class="form-info">
+      <div class="info-title">
+        Информация:
+      </div>
+      <ul>
+        <li>Будут показаны только пользователи, которых еще нет в группе</li>
+      </ul>
+    </div>
+
+    <div class="form-actions">
+      <button
+        type="button"
+        (click)="closeModal()"
+        [disabled]="submitting"
+        class="cancel-button"
+      >
+        Отмена
+      </button>
+      <button
+        type="submit"
+        [disabled]="submitting"
+        [class.submitting]="submitting"
+        class="submit-button"
+      >
+        @if (submitting) {
+          <span class="spinner"></span>
+          Добавление...
+        } @else {
+          Добавить пользователя
+        }
+      </button>
+    </div>
+  </form>
+</app-modal>

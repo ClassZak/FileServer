@@ -43,9 +43,7 @@ export class AccountPage implements OnInit {
 	groups: Group[] = [];
 
 	constructor(
-		private router: Router,
-		private adminService: AdminService,
-		private groupService: GroupService
+		private router: Router
 	) {}
 
 	async ngOnInit(): Promise<void> {
