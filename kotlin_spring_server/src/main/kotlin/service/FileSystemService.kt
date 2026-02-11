@@ -804,8 +804,10 @@ class FileSystemService(
 	}
 	fun listDirectoryByPermissions(currentUser: CurrentUser, relativePath: String):
 			Pair<List<FileInfo>, List<FolderInfo>> {
-		val permissionsForUser = checkAccessForDirectory(currentUser, relativePath)
-		
+		val permissionsForUser =
+			if(relativePath!="") checkAccessForDirectory(currentUser, relativePath)
+		else
+			AccessType.READ.value;
 		
 		val directory = getSafePath(relativePath).toFile()
 		if (permissionsForUser and AccessType.READ.value != AccessType.READ.value) {
