@@ -1,0 +1,68 @@
+.file-table {
+	min-width: 100%;
+	background-color: #242424;
+	border: 1px solid #333;
+	border-collapse: collapse;
+}
+
+.file-table thead {
+	background-color: var(--secondary-olive);
+}
+
+.file-table th {
+	padding: 0.75rem 1rem;
+	text-align: left;
+	font-weight: 600;
+	border-bottom: 2px solid #333;
+}
+
+.file-table td {
+	padding: 0.75rem 1rem;
+	border-top: 1px solid #333;
+	vertical-align: middle;
+}
+
+.file-table tbody tr {
+	transition: background-color 0.2s;
+}
+
+.file-table tbody tr:hover {
+	background-color: #484848;
+}
+
+.file-type-badge {
+	padding: 0.25rem 0.5rem;
+	background-color: #2a2a2a;
+	border-radius: 0.25rem;
+	font-size: 0.75rem;
+	font-weight: 500;
+	color: #4a5568;
+}
+
+.file-action-button {
+	padding: 0.375rem 0.75rem;
+	border-radius: 0.25rem;
+	font-size: 0.875rem;
+	cursor: pointer;
+	border: none;
+	transition: background-color 0.2s;
+}
+
+.file-action-button--download {
+	background-color: #000e16;
+	color: #2b6cb0;
+}
+
+.file-action-button--download:hover {
+	background-color: #90cdf4;
+}
+
+.file-action-button--delete {
+	background-color: #dc143c;
+	color: #fafad2;
+}
+
+.file-action-button--delete:hover {
+	background-color: #fe365e;
+	color: #fdfdf5;
+}

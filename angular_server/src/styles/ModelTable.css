@@ -1,0 +1,26 @@
+.model-table {
+	min-width: 100%;
+	background-color: #242424;
+	border: 1px solid #333;
+	border-collapse: collapse;
+}
+
+.model-table thead {
+	background-color: var(--secondary-olive);
+}
+
+.model-table th {
+	padding: 0.75rem 1rem;
+	text-align: left;
+	font-weight: 600;
+	border-bottom: 2px solid #333;
+}
+
+
+.model-table tbody tr {
+	transition: background-color 0.2s;
+}
+
+.model-table tbody tr:hover {
+	background-color: #484848;
+}

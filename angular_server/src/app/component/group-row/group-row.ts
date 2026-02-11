@@ -3,7 +3,7 @@ import { GroupBasicInfo } from '../../core/model/group_basic_info';
 import { RedirectionButton } from '../redirection-button/redirection-button';
 
 @Component({
-	selector: 'app-group-row',
+	selector: 'tr[app-group-row]',
 	imports: [RedirectionButton],
 	templateUrl: './group-row.html',
 	styleUrl: './group-row.css',

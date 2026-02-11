@@ -2,13 +2,14 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
-// Компоненты
+// Components
 import { AppFooter } from '../../app-footer/app-footer';
 import { AppHeader } from "../../app-header/app-header";
 import { LoadingSpinner } from "../../component/loading-spinner/loading-spinner";
 import { RedirectionButton } from '../../component/redirection-button/redirection-button';
+import { GroupTable } from '../../component/group-table/group-table';
 
-// Сервисы и модели
+// Services and models
 import { AuthService } from '../../core/service/auth-service';
 import { AdminService } from '../../core/service/admin-service';
 import { GroupService } from '../../core/service/group-service';
@@ -28,7 +29,8 @@ interface Group {
 		AppFooter, 
 		AppHeader, 
 		LoadingSpinner,
-		RedirectionButton
+		RedirectionButton,
+		GroupTable
 	],
 	templateUrl: './accout-page.html',
 	styleUrl: './accout-page.css'
