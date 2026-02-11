@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { User } from '../model/user';
+import { CreateConfig } from './create-config';
 
 
 export interface LoginResult {
@@ -114,11 +115,7 @@ export class AuthService {
 					message: 'Токен отсутствует' 
 				};
 			}
-			const response = await axios.get('/api/auth/verify', {
-				headers: {
-					'Authorization': `Bearer ${token}`
-				}
-			});
+			const response = await axios.get('/api/auth/verify', CreateConfig.createAuthConfig(token));
 			if (response.data.valid && response.data.user) {
 				return {
 					authenticated: true,
@@ -163,11 +160,7 @@ export class AuthService {
 				localStorage.setItem('token', response.data.token);
 				localStorage.setItem('refreshToken', response.data.refreshToken);
 				
-				const userResponse = await axios.get('/api/auth/verify', {
-					headers: {
-						'Authorization': `Bearer ${response.data.token}`
-					}
-				});
+				const userResponse = await axios.get('/api/auth/verify', CreateConfig.createAuthConfig(response.data.token));
 				
 				return {
 					authenticated: true,
@@ -273,7 +266,7 @@ export class AuthService {
 	/**
 	 * Изменение пароля пользователя
 	 * @param {string} email - Email пользователя
-	 * @param {string} authToken - Токен авторизации (например, "Bearer eyJhbGciOi...")
+	 * @param {string} authToken - Токен авторизации (например, "eyJhbGciOi...")
 	 * @param {string} oldPassword - Текущий пароль
 	 * @param {string} newPassword - Новый пароль
 	 * @returns {Promise<Object>} - Результат операции

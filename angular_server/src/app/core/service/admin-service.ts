@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import axios, { AxiosError } from "axios";
+import { CreateConfig } from './create-config';
 
 
 @Injectable({
@@ -16,7 +17,7 @@ export class AdminService {
 	 */
 	public static async isAdmin(authToken: string): Promise<boolean>{
 		try {
-			const response = await axios.get('/api/admin/is-admin',AdminService.createConfig(authToken));
+			const response = await axios.get('/api/admin/is-admin',CreateConfig.createAuthConfig(authToken));
 			
 			return response.data.isAdmin;
 		} catch (error) {
@@ -29,17 +30,6 @@ export class AdminService {
 				return false;
 			// Other errors throw next
 			throw error;
-		}
-	}
-
-	/**
-	 * Function to create configuration for request
-	 * @param {string} authToken 
-	 * @returns {object} Configuration object with headers: {'Authorization': `Bear ...`}
-	 */
-	static createConfig(authToken: string): object {
-		return { 
-			headers: { 'Authorization': `Bearer ${authToken}` }
 		}
 	}
 }

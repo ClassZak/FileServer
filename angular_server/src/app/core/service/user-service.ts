@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { User } from '../model/user';
 import { UpdatePasswordRequest } from '../model/update-password';
 import axios, { AxiosError } from 'axios';
+import { CreateConfig } from './create-config';
 
 @Injectable({
 	providedIn: 'root',
@@ -20,7 +21,7 @@ export class UserService {
 	static async createUser(user:User, authToken:string) {
 		try {
 			const response = await axios.post(
-				'/api/users/new', user, UserService.createConfig(authToken)
+				'/api/users/new', user, CreateConfig.createAuthConfig(authToken)
 			);
 
 			return response.data;
@@ -48,7 +49,7 @@ export class UserService {
 	static async readUser(authToken:string, userEmail:string) {
 		try {
 			const response = await axios.get(
-				`/api/users/user/${encodeURI(userEmail)}`, UserService.createConfig(authToken)
+				`/api/users/user/${encodeURI(userEmail)}`, CreateConfig.createAuthConfig(authToken)
 			);
 
 			return response.data;
@@ -76,7 +77,7 @@ export class UserService {
 	static async updateUser(authToken:string, email:string, user:User) {
 		try {
 			const response = await axios.put(
-				`/api/users/update/${encodeURI(email)}`, user, UserService.createConfig(authToken)
+				`/api/users/update/${encodeURI(email)}`, user, CreateConfig.createAuthConfig(authToken)
 			);
 
 			return response.data;
@@ -103,7 +104,7 @@ export class UserService {
 	static async deleteUser(authToken:string, user:User) {
 		try {
 			const response = await axios.delete(
-				`/api/users/delete/${encodeURI(user.email)}`, UserService.createConfig(authToken)
+				`/api/users/delete/${encodeURI(user.email)}`, CreateConfig.createAuthConfig(authToken)
 			);
 
 			return response.data;
@@ -130,7 +131,7 @@ export class UserService {
 	static async readAllUsers(authToken:string) {
 		try {
 			const response = await axios.get(
-				`/api/users/users`, UserService.createConfig(authToken)
+				`/api/users/users`, CreateConfig.createAuthConfig(authToken)
 			);
 
 			return response.data;
@@ -160,7 +161,7 @@ export class UserService {
 			const response = await axios.put(
 				`/api/users/update-password/${encodeURI(email)}`,
 				passwordData,
-				UserService.createConfig(authToken)
+				CreateConfig.createAuthConfig(authToken)
 			);
 
 			return response.data;
@@ -174,20 +175,6 @@ export class UserService {
 				return axiosError.response.data;
 			// Other errors throw next
 			throw axiosError;
-		}
-	}
-
-
-
-
-	/**
-	 * Function to create configuration for request
-	 * @param {string} authToken
-	 * @returns {Object} Configuration object with headers: {'Authorization': `Bearer ...`}
-	 */
-	static createConfig(authToken:string) {
-		return {
-			headers: { 'Authorization': `Bearer ${authToken}` }
 		}
 	}
 }

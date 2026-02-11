@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import axios, { AxiosError } from 'axios';
+import { CreateConfig } from './create-config';
 
 @Injectable({
 	providedIn: 'root',
@@ -7,9 +8,7 @@ import axios, { AxiosError } from 'axios';
 export class FileService {
 	public static async exists(file: string, token: string) {
 		try {
-			const response = await axios.get(`/api/files/exists?path=${file}`, {
-				headers: { 'Authorization': `Bearer ${token}` }
-			});
+			const response = await axios.get(`/api/files/exists?path=${file}`, CreateConfig.createAuthConfig(token));
 			return response.data.exists;
 		} catch (error) {
 			console.error('Login error:', error);
@@ -22,9 +21,7 @@ export class FileService {
 		try {
 			const response = await axios.get(
 				`/api/files/search?q=${encodeURIComponent(query)}&path=${encodeURIComponent(path)}`,
-				{
-					headers: { 'Authorization': `Bearer ${token}` }
-				}
+				CreateConfig.createAuthConfig(token)
 			);
 			return response.data;
 		} catch (error) {
@@ -94,10 +91,10 @@ export class FileService {
 	/**
 	 * Create axios configuration with authorization header for files
 	 * 
-	 * @param {string} authToken JWT token
+	 * @param {String} authToken JWT token
 	 * @returns {Object} Axios configuration object
 	 */
-	public static createConfigForFiles(authToken: string) {
+	public static createConfigForFiles(authToken: string): object {
 		return {
 			headers: { 
 				'Authorization': `Bearer ${authToken}`,

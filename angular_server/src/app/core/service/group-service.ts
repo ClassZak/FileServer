@@ -6,6 +6,8 @@ import { UserModelAdminResponse } from '../model/user-model-admin-response';
 import { GroupBasicInfo } from '../model/group_basic_info';
 import { GroupCreateModel } from '../model/group-create-model';
 import { GroupUpdateModel } from '../model/group-update-model';
+import { CreateConfig } from './create-config';
+
 
 @Injectable({
 	providedIn: 'root',
