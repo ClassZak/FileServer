@@ -32,6 +32,7 @@ import kotlin.io.path.absolute
 import java.nio.file.*
 import java.nio.file.StandardCopyOption.REPLACE_EXISTING
 import kotlin.io.path.exists
+import kotlin.io.path.relativeTo
 
 data class DeletedFileInfo(
 	val id: Long,
@@ -95,11 +96,11 @@ class FileSystemService(
 			logger.info("Создана корневая директория: $safeRootPath")
 		}
 		
-		// Создаем папку groups, если её нет
+		// Создаем директорию groups, если её нет
 		val groupsFolder = safeRootPath.resolve(groupsDir).toFile()
 		if (!groupsFolder.exists()) {
 			groupsFolder.mkdirs()
-			logger.info("Создана папка групп: $groupsFolder")
+			logger.info("Создана директория групп: $groupsFolder")
 		}
 		
 		safeRootPathDeleted = Paths.get(rootDirectoryDeleted).normalize().toAbsolutePath()
@@ -126,13 +127,13 @@ class FileSystemService(
 			checkUserAccess(relativePath, userId, userGroups, AccessType.DELETE, false)
 		}
 		
-		// Используем старый метод delete, но с проверкой на папку groups
+		// Используем старый метод delete, но с проверкой на директорию groups
 		return delete(relativePath)
 	}
 	
 	@Transactional(rollbackFor = [Exception::class])
 	fun secureDeleteFile(relativePath: String, userId: Int, userGroups: List<Int>, isAdmin: Boolean = false): Boolean {
-		// Проверяем, что это не папка groups
+		// Проверяем, что это не директория groups
 		if (relativePath == groupsDir) {
 			throw SecurityException("Папка групп неудаляема")
 		}
@@ -186,7 +187,7 @@ class FileSystemService(
 			checkUserAccess(relativePath, userId, userGroups, AccessType.CREATE, false)
 		}
 		
-		// Дополнительная проверка для папки groups
+		// Дополнительная проверка для директории groups
 		if (relativePath == "") {
 			val sanitizedName = sanitizeFileName(folderName)
 			if (sanitizedName == groupsDir) {
@@ -253,7 +254,7 @@ class FileSystemService(
 		}
 		
 		// Для других путей пока запрещаем доступ
-		throw SecurityException("Доступ разрешен только к папкам групп")
+		throw SecurityException("Доступ разрешен только к директориям групп")
 	}
 	
 	private fun isGroupFolderPath(path: String): Boolean {
@@ -272,7 +273,7 @@ class FileSystemService(
 		val target = getSafePath(relativePath).toFile()
 		
 		if (!target.exists()) {
-			throw IllegalArgumentException("Файл или папка не найдены: $relativePath")
+			throw IllegalArgumentException("Файл или директория не найдены: $relativePath")
 		}
 		
 		// Проверяем права на удаление
@@ -301,7 +302,7 @@ class FileSystemService(
 		val canDelete = (permissionsForUser and AccessType.DELETE.value) == AccessType.DELETE.value
 		
 		if (!target.exists()) {
-			throw IllegalArgumentException("Файл или папка не найдены: $relativePath")
+			throw IllegalArgumentException("Файл или директория не найдены: $relativePath")
 		}
 		
 		// Проверяем права на удаление
@@ -330,23 +331,29 @@ class FileSystemService(
 	 */
 	fun deleteByPermissionsAndSaveCopy(currentUser: CurrentUser, relativePath: String): Boolean {
 		val target =  getSafePath(relativePath).toFile()
-		val permissionsForUser = checkAccessForDirectory(currentUser, Path(relativePath).parent.toString())
+		val parentPath = if (Path(relativePath).parent != null)
+			Path(relativePath).parent.toString()
+		else
+			""
+		val permissionsForUser = checkAccessForDirectory(currentUser, parentPath)
 		val canDelete = (permissionsForUser and AccessType.DELETE.value) == AccessType.DELETE.value
 		// safeRootPath.resolve(relativePath).absolute()
 		if (!target.exists()) {
-			throw IllegalArgumentException("Файл или папка не найдены: $relativePath")
+			logger.error("Файл или директория не найдены:${Path(relativePath).absolute()}")
+			throw IllegalArgumentException("Файл или директория не найдены: $relativePath")
 		}
 		
 		// Проверяем права на удаление
 		val parentDir = target.parentFile
 		if (parentDir != null && !parentDir.canWrite() || !canDelete) {
+			logger.error("У пользователя ${currentUser.email} нет прав доступа на удаление директории или файла \"${Path(relativePath).absolute()}\"")
 			throw SecurityException("У вас нет прав на удаление в этой директории")
 		}
 		
-		val deleted = if (target.isDirectory) {
+		val deleted = if (target.isDirectory || target.isFile) {
 			moveItem(target.absolutePath, Path(deletedFilesDir).toFile())
 		} else {
-			target.delete()
+			false // if is symlink or something else
 		}
 		
 		if (deleted) {
@@ -376,7 +383,7 @@ class FileSystemService(
 			return false
 		}
 		if(!sourceFile.canonicalPath.startsWith(sourseBaseDir.canonicalPath)) {
-			logger.error("⚠\uFE0F  Файл/папка находится вне базовой директории")
+			logger.error("⚠\uFE0F  Файл/директория находится вне базовой директории")
 			return false
 		}
 		
@@ -424,7 +431,7 @@ class FileSystemService(
 	
 	private fun deleteRecursivelySafe(file: File, skipGroupsCheck: Boolean): Boolean {
 		if (file.isDirectory) {
-			// Проверяем, не пытаемся ли удалить папку внутри groups
+			// Проверяем, не пытаемся ли удалить директорию внутри groups
 			val relativePath = getRelativePath(file.toPath())
 			if (!skipGroupsCheck && relativePath == groupsDir) {
 				throw SecurityException("Папка групп не удаляема")
@@ -530,7 +537,7 @@ class FileSystemService(
 	fun deleteFileOrFolder(relativePath: String, userId: Int, userGroups: List<Int>, isAdmin: Boolean = false): Boolean {
 		val target = getSafePath(relativePath).toFile()
 		
-		// Проверка для папки групп (неудаляема)
+		// Проверка для директории групп (неудаляема)
 		if (relativePath == groupsDir) {
 			throw SecurityException("Папка групп неудаляема")
 		}
@@ -584,7 +591,7 @@ class FileSystemService(
 		
 		val moved = sourceFile.renameTo(deletedFilePath)
 		if (!moved) {
-			throw IllegalStateException("Не удалось переместить файл в папку удаленных")
+			throw IllegalStateException("Не удалось переместить файл в директорию удаленных")
 		}
 		
 		metadata?.let {
@@ -611,7 +618,7 @@ class FileSystemService(
 				} else if (file.isDirectory) {
 					val childRelativePath = getRelativePath(file.toPath())
 					if (folderRelativePath == groupsDir) {
-						logger.info("Пропущена папка группы: $childRelativePath")
+						logger.info("Пропущена директория группы: $childRelativePath")
 					} else {
 						processDirectory(file)
 					}
@@ -626,7 +633,7 @@ class FileSystemService(
 			directoryMetadataRepository.deleteAll(directories)
 			
 			if (folder.delete()) {
-				logger.info("Пустая папка удалена: $folderRelativePath")
+				logger.info("Пустая директория удалена: $folderRelativePath")
 			}
 		}
 		
@@ -788,7 +795,7 @@ class FileSystemService(
 						foldersList.add(createFolderInfo(file))
 					}
 				} catch (e: SecurityException) {
-					logger.warn("Нет доступа к файлу/папке: ${file.name}")
+					logger.warn("Нет доступа к файлу/директории: ${file.name}")
 				} catch (e: Exception) {
 					logger.error("Ошибка при обработке ${file.name}: ${e.message}")
 				}
@@ -804,26 +811,31 @@ class FileSystemService(
 	}
 	fun listDirectoryByPermissions(currentUser: CurrentUser, relativePath: String):
 			Pair<List<FileInfo>, List<FolderInfo>> {
-		val permissionsForUser =
-			if(relativePath!="") checkAccessForDirectory(currentUser, relativePath)
-		else
+		val permissionsForUser = if((!currentUser.isAdmin) and (relativePath==""))
 			AccessType.READ.value;
-		
+		else
+			checkAccessForDirectory(currentUser, relativePath)
+			
+		//  getRelativePath(getSafePath(path))
 		val directory = getSafePath(relativePath).toFile()
 		if (permissionsForUser and AccessType.READ.value != AccessType.READ.value) {
-			throw SecurityException("У вас нет прав доступа на чтения директории: ${directory.absolutePath}")
+			logger.error("У пользователя ${currentUser.email} нет прав доступа на чтения директории ${directory.absolutePath}")
+			throw SecurityException("У вас нет прав доступа на чтения директории: $relativePath")
 		}
 		
 		if (!directory.exists()) {
-			throw IllegalArgumentException("Директория не найдена: ${directory.absolutePath}")
+			logger.error("Директория не найдена:${directory.absolutePath}")
+			throw IllegalArgumentException("Директория не найдена: $relativePath")
 		}
 		
 		if (!directory.isDirectory) {
-			throw IllegalArgumentException("Указанный путь не является директорией: ${directory.absolutePath}")
+			logger.error("Указанный путь не является директорией:${directory.absolutePath}")
+			throw IllegalArgumentException("Указанный путь не является директорией: $relativePath")
 		}
 		
 		if (!directory.canRead()) {
-			throw SecurityException("У вас нет прав доступа к директории: ${directory.absolutePath}")
+			logger.error("Процесс сервера не имеет права на чтение директории:${directory.absolutePath}")
+			throw Exception("Не удалось получить доступ к директории: $relativePath")
 		}
 		
 		val filesList = mutableListOf<FileInfo>()
@@ -833,17 +845,18 @@ class FileSystemService(
 		try {
 			directory.listFiles()?.forEach { file ->
 				try {
+					val relativeClearPath = file.relativeTo(File(rootDirectory).absoluteFile).toString()
 					if (file.isFile) {
-						permissionForElement = checkAccessForFile(currentUser, file.path, file.name)
+						permissionForElement = checkAccessForFile(currentUser, relativeClearPath, file.name)
 						if (permissionForElement and AccessType.READ.value == AccessType.READ.value)
 							filesList.add(createFileInfo(file))
 					} else if (file.isDirectory) {
-						permissionForElement = checkAccessForDirectory(currentUser, file.path)
+						permissionForElement = checkAccessForDirectory(currentUser, relativeClearPath)
 						if (permissionForElement and AccessType.READ.value == AccessType.READ.value)
 							foldersList.add(createFolderInfo(file))
 					}
 				} catch (e: SecurityException) {
-					logger.warn("Нет доступа к файлу/папке: ${file.name}")
+					logger.warn("Нет доступа к файлу/директории: ${file.name}")
 				} catch (e: Exception) {
 					logger.error("Ошибка при обработке ${file.name}: ${e.message}")
 				}
@@ -964,7 +977,7 @@ class FileSystemService(
 		}
 		
 		if (!parentDir.canWrite()) {
-			throw SecurityException("У вас нет прав на создание папки в директории: $relativePath")
+			throw SecurityException("У вас нет прав на создание директории в директории: $relativePath")
 		}
 		
 		val sanitizedName = sanitizeFileName(folderName)
@@ -976,7 +989,7 @@ class FileSystemService(
 		
 		val created = newFolder.mkdirs()
 		if (!created) {
-			throw IllegalStateException("Не удалось создать папку: $sanitizedName")
+			throw IllegalStateException("Не удалось создать директорию: $sanitizedName")
 		}
 		
 		logger.info("Папка создана: ${newFolder.absolutePath}")
@@ -997,22 +1010,22 @@ class FileSystemService(
 		}
 		
 		if (!parentDir.canWrite() || !canCreate) {
-			throw SecurityException("У вас нет прав на создание папки в директории: $relativePath")
+			throw SecurityException("У вас нет прав на создание директории в директории: $relativePath")
 		}
 		
 		val sanitizedName = sanitizeFileName(folderName)
 		val newFolder = File(parentDir, sanitizedName)
 		
 		if (newFolder.exists()) {
-			throw IllegalArgumentException("Папка с именем '$sanitizedName' уже существует")
+			throw IllegalArgumentException("Директория с именем '$sanitizedName' уже существует")
 		}
 		
 		val created = newFolder.mkdirs()
 		if (!created) {
-			throw IllegalStateException("Не удалось создать папку: $sanitizedName")
+			throw IllegalStateException("Не удалось создать директорию: $sanitizedName")
 		}
 		
-		logger.info("Папка создана: ${newFolder.absolutePath}")
+		logger.info("Директория создана: ${newFolder.absolutePath}")
 		
 		return createFolderInfo(newFolder)
 	}
@@ -1050,10 +1063,10 @@ class FileSystemService(
 		val newGroupDir = safeRootPath.resolve(groupsDir).resolve(safeNewName)
 		
 		if (!Files.exists(oldGroupDir)) {
-			throw IllegalArgumentException("Не найдена старая папка группы: $oldGroupName")
+			throw IllegalArgumentException("Не найдена старая директория группы: $oldGroupName")
 		}
 		if (Files.exists(newGroupDir)) {
-			throw IllegalArgumentException("Новая папка группы уже существует: $newGroupName")
+			throw IllegalArgumentException("Новая директория группы уже существует: $newGroupName")
 		}
 		
 		return try {
@@ -1062,7 +1075,7 @@ class FileSystemService(
 			logger.info("Папка группы переименована из $oldGroupName в $newGroupName")
 			true
 		} catch (e: IOException) {
-			logger.error("Ошибка при переименовании папки группы: ${e.message}", e)
+			logger.error("Ошибка при переименовании директории группы: ${e.message}", e)
 			false
 		}
 	}
@@ -1146,7 +1159,7 @@ class FileSystemService(
 						searchRecursively(file)
 					}
 				} catch (e: SecurityException) {
-					logger.warn("Нет доступа к файлу/папке: ${file.name}")
+					logger.warn("Нет доступа к файлу/директории: ${file.name}")
 				} catch (e: Exception) {
 					logger.error("Ошибка при обработке ${file.name}: ${e.message}")
 				}
@@ -1164,14 +1177,25 @@ class FileSystemService(
 	
 	fun searchFilesAndFoldersByPermissions(currentUser: CurrentUser, query: String, basePath: String = ""): Pair<List<FileInfo>, List<FolderInfo>> {
 		val directory = getSafePath(basePath).toFile()
-		val permissionsForUser =
-			checkAccessForDirectory(currentUser, getSafePath(basePath).toString())
+		val permissionsForUser = if((!currentUser.isAdmin) and (basePath==""))
+			AccessType.READ.value;
+		else
+			checkAccessForDirectory(currentUser,
+				getSafePath(basePath)
+					.toFile()
+					.relativeTo(
+						File(rootDirectory).absoluteFile).toString()
+			)
 		val canRead = permissionsForUser and AccessType.READ.value == AccessType.READ.value
 		
-		if (!directory.isDirectory)
-			throw IllegalArgumentException("Путь не является директорией: ${directory.absolutePath}")
-		if (!directory.exists())
-			throw IllegalArgumentException("Директория не найдена: ${directory.absolutePath}")
+		if (!directory.isDirectory){
+			logger.error("Путь не является директорией:${directory.absolutePath}")
+			throw IllegalArgumentException("Путь не является директорией: $basePath")
+		}
+		if (!directory.exists()){
+			logger.error("Директория не найдена:${directory.absolutePath}")
+			throw IllegalArgumentException("Директория не найдена: $basePath")
+		}
 		if (!canRead || !directory.canRead())
 			throw SecurityException(
 				"У вас нет прав на чтение в директорию: ${getSafePath(basePath)}"
@@ -1189,22 +1213,23 @@ class FileSystemService(
 					val matchesQuery = file.name.contains(query, ignoreCase = true)
 					
 					if (matchesQuery) {
+						val relativeClearPath = file.relativeTo(File(rootDirectory).absoluteFile).toString()
 						if (file.isFile) {
-							permissionForElement = checkAccessForFile(currentUser, file.path, file.name)
+							permissionForElement = checkAccessForFile(currentUser, relativeClearPath, file.name)
 							if (permissionForElement and AccessType.READ.value == AccessType.READ.value)
 								filesList.add(createFileInfo(file))
 						} else if (file.isDirectory) {
-							permissionForElement = checkAccessForDirectory(currentUser, file.path)
+							permissionForElement = checkAccessForDirectory(currentUser, relativeClearPath)
 							if (permissionForElement and AccessType.READ.value == AccessType.READ.value)
 								foldersList.add(createFolderInfo(file))
 						}
 					}
 					
-					if (file.isDirectory) {
+					if (file.isDirectory){
 						searchRecursively(file)
 					}
 				} catch (e: SecurityException) {
-					logger.warn("Нет доступа к файлу/папке: ${file.name}")
+					logger.warn("Нет доступа к файлу/директории: ${file.name}")
 				} catch (e: Exception) {
 					logger.error("Ошибка при обработке ${file.name}: ${e.message}")
 				}
@@ -1398,13 +1423,13 @@ class FileSystemService(
 		val user = userService.getUserEntityById(currentUser.id!!)
 			?: throw EntityNotFoundException("Не найден пользователь")
 		
-		// Проверка на работу в корневой папке для админа
+		// Проверка на работу в корневой директории для админа
 		if (isRootDirectory(safePath))
 			if (currentUser.isAdmin)
 				return AccessType.ALL.value
 		
 		if (isGroupsDirectory(safePath))
-			// Для того чтобы была видима папка "groups"
+			// Для того чтобы была видима директория "groups"
 			return AccessType.READ.value
 		if (isGroupDirectory(realPath.toString())){
 			val groupName = extractGroupFromPath(safePath)
@@ -1489,7 +1514,7 @@ class FileSystemService(
 			?: throw EntityNotFoundException("Не найден пользователь")
 		
 		
-		// Проверка на работу в корневой папке для админа
+		// Проверка на работу в корневой директории для админа
 		if (isRootDirectory(safePath))
 			if (currentUser.isAdmin)
 				return AccessType.ALL.value

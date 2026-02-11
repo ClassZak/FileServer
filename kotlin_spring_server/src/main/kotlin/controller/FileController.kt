@@ -77,7 +77,7 @@ class FileController(
 			else
 				ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf("exists" to false))
 		} catch (e: Exception) {
-			logger.error("Ошибка при поиске файла или папки", e)
+			logger.error("Ошибка при поиске файла или директории", e)
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf("exists" to false))
 		}
 	}
@@ -153,14 +153,14 @@ class FileController(
 			ResponseEntity.ok(folderInfo)
 		} catch (e: IllegalArgumentException) {
 			ResponseEntity.status(HttpStatus.BAD_REQUEST)
-				.body(mapOf("error" to (e.message ?: "Ошибка при создании папки")))
+				.body(mapOf("error" to (e.message ?: "Ошибка при создании директории")))
 		} catch (e: SecurityException) {
 			ResponseEntity.status(HttpStatus.FORBIDDEN)
-				.body(mapOf("error" to (e.message ?: "Нет прав доступа для создания папки")))
+				.body(mapOf("error" to (e.message ?: "Нет прав доступа для создания директории")))
 		} catch (e: Exception) {
-			logger.error("Ошибка при создании папки", e)
+			logger.error("Ошибка при создании директории", e)
 			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-				.body(mapOf("error" to "Ошибка при создании папки"))
+				.body(mapOf("error" to "Ошибка при создании директории"))
 		}
 	}
 	
@@ -178,11 +178,11 @@ class FileController(
 				ResponseEntity.ok(mapOf("message" to "Удалено успешно"))
 			} else {
 				ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body(mapOf("error" to "Не удалось удалить файл/папку"))
+					.body(mapOf("error" to "Не удалось удалить файл/директорию"))
 			}
 		} catch (e: IllegalArgumentException) {
 			ResponseEntity.status(HttpStatus.BAD_REQUEST)
-				.body(mapOf("error" to (e.message ?: "Файл или папка не найдены")))
+				.body(mapOf("error" to (e.message ?: "Файл или директория не найдены")))
 		} catch (e: SecurityException) {
 			ResponseEntity.status(HttpStatus.FORBIDDEN)
 				.body(mapOf("error" to (e.message ?: "Нет прав доступа для удаления")))
