@@ -1,0 +1,21 @@
+<app-app-header></app-app-header>
+<main class="MainContent">
+	@if (isLoading){
+		<app-loading-spinner [title]="'Загрузка пользователей'"></app-loading-spinner>
+	} @else {
+		<div class="add-user-container">
+			<button
+				(click)="setIsCreateUserModalComponentOpen(true)"
+				class="green-button"
+			>
+				Создать пользователя
+			</button>
+		</div>
+	}
+</main>
+<app-footer></app-footer>
+
+<app-create-user-modal
+	
+>
+</app-create-user-modal>

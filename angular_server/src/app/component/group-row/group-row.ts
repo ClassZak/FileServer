@@ -13,7 +13,7 @@ export class GroupRow {
 	@Input() groupData?: GroupBasicInfo;
 
 	public createNavigateToGroupHref(name: string | undefined){
-		if (name == undefined)
+		if (name === undefined)
 			return '/groups';
 		return `/group/${encodeURIComponent(name)}`;
 	};

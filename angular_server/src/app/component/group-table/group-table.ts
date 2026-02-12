@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { GroupBasicInfo } from '../../core/model/group_basic_info';
-import { RedirectionButton } from '../redirection-button/redirection-button';
 import { GroupRow } from '../group-row/group-row';
 
 @Component({
