@@ -4,6 +4,14 @@ import { UpdatePasswordRequest } from '../model/update-password-request';
 import axios, { AxiosError } from 'axios';
 import { CreateConfig } from './create-config';
 
+
+export class UpdatePasswordResponse{
+	public success: boolean = false;
+	public error?: string = '';
+	public message?: string = '';
+}
+
+
 @Injectable({
 	providedIn: 'root',
 })
@@ -156,7 +164,7 @@ export class UserService {
 	 * @param {Object} passwordData object with oldPassword and newPassword
 	 * @returns {Promise<Object>} Object with "error" or "success" key
 	 */
-	static async updateUserPassword(authToken:string, email:string, passwordData:UpdatePasswordRequest) {
+	static async updateUserPassword(authToken:string, email:string, passwordData:UpdatePasswordRequest): Promise<UpdatePasswordResponse> {
 		try {
 			const response = await axios.put(
 				`/api/users/update-password/${encodeURI(email)}`,
@@ -164,7 +172,7 @@ export class UserService {
 				CreateConfig.createAuthConfig(authToken)
 			);
 
-			return response.data;
+			return response.data as UpdatePasswordResponse;
 		} catch (error) {
 			const axiosError = error as AxiosError<{
 				message?: string;
@@ -172,7 +180,7 @@ export class UserService {
 			}>;
 			// Process 403 and 404 for UserController
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 404))
-				return axiosError.response.data;
+				return axiosError.response.data as UpdatePasswordResponse;
 			// Other errors throw next
 			throw axiosError;
 		}

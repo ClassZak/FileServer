@@ -40,6 +40,10 @@ body {
 body.no-scroll {
 	overflow: hidden;
 }
+body.modal-open {
+    overflow: hidden;
+    /* padding-right: var(--scrollbar-width); */
+}
 
 
 /* Заголовки */

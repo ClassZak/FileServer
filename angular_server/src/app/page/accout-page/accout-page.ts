@@ -16,6 +16,8 @@ import { AdminService } from '../../core/service/admin-service';
 import { GroupService } from '../../core/service/group-service';
 import { User } from '../../core/model/user';
 import { UpdatePasswordModalModel } from '../../core/model/update-password-modal-model';
+import { UserService } from '../../core/service/user-service';
+import { UpdatePasswordRequest } from '../../core/model/update-password-request';
 
 interface Group {
 	name: string;
@@ -141,6 +143,14 @@ export class AccountPage implements OnInit {
         try {
 			// Здесь должен быть вызов сервиса для обновления пароля
 			console.log('Updating password:', passwordData);
+			if (passwordData.newPassword !== passwordData.newPasswordConfirm)
+				throw Error('Новый пароль и его подтверждение не совпадают');
+			const token = AuthService.getToken();
+			if (!token)
+				throw Error('Отсутствует токен авторизации');
+			if (!this.user)
+				throw Error('Объект данных пользователя не определён');
+			UserService.updateUserPassword(token, this.user.email, new UpdatePasswordRequest(passwordData.oldPassword, passwordData.newPassword))
 			// Имитация успешного обновления
 			await new Promise(resolve => setTimeout(resolve, 1000));
 			alert('Пароль успешно обновлен!');
