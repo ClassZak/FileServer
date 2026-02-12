@@ -17,6 +17,8 @@ import { GroupService } from '../../core/service/group-service';
 import { User } from '../../core/model/user';
 import { UserService } from '../../core/service/user-service';
 import { CreateUserModel } from '../../component/modal/user/create-user-modal/create-user-modal';
+import { UserAdminModel } from '../../core/model/user-admin-model';
+import { UserTable } from '../../component/user-table/user-table';
 
 @Component({
 	selector: 'app-users-page',
@@ -25,8 +27,7 @@ import { CreateUserModel } from '../../component/modal/user/create-user-modal/cr
 		AppHeader,
 		AppFooter,
 		LoadingSpinner,
-		RedirectionButton,
-		GroupTable,
+		UserTable,
 		CreateUserModalComponent
 	],
 	templateUrl: './users-page.html',
@@ -35,6 +36,7 @@ import { CreateUserModel } from '../../component/modal/user/create-user-modal/cr
 export class UsersPage implements OnInit {
 	public isLoading: boolean = true;
 	isCreateUserModalComponentOpen: boolean = false;
+	isAdmin: boolean = false;
 	users: Array<User>=[];
 
 	constructor(
@@ -44,9 +46,48 @@ export class UsersPage implements OnInit {
 
 	async ngOnInit(): Promise<void> {
 		try {
-			
+			await this.checkAdminStatus();
+			await this.loadUsers();
 		} catch (error) {
 			console.error('Ошибка при загрузке страницы:', error);
+		}
+	}
+
+	private async checkAdminStatus(): Promise<void> {
+		try {
+			this.isLoading = true;
+			const token = AuthService.getToken();
+			if(token == null)
+				throw "You have not a token";
+			const isAdmin = await AdminService.isAdmin(token);
+			if (!isAdmin)
+				this.router.navigate(['/account']);
+			else
+				this.isAdmin = isAdmin;
+		} catch (error) {
+			console.error('Ошибка при проверке статуса администратора:', error);
+			this.isAdmin = false;
+			setTimeout(()=>{
+				this.router.navigate(['/account']);
+			}, 50);
+		}
+	}
+
+	private async loadUsers(){
+		try {
+			this.isLoading = true;
+			const token = AuthService.getToken();
+			if(token == null)
+				throw "You have not a token";
+			if(this.isAdmin) {
+				this.users = (await UserService.readAllUsers(token))
+					.users as Array<UserAdminModel>;
+			}
+		} catch (error) {
+			console.error('Ошибка при загрузке пользователей', error);
+		} finally {
+			this.isLoading = false;
+			this.cdr.detectChanges();
 		}
 	}
 

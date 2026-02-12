@@ -2,9 +2,13 @@
 	<table class="model-table">
 		<thead>
 			<tr>
-				<th>Название</th>
-				<th>Число участников</th>
-				<th>Почта создателя</th>
+				<th>Имя</th>
+				<th>Фамилия</th>
+				<th>Отчество</th>
+				<th>Почта</th>
+				@if (isAdmin) {
+					<th>Дата создания</th>
+				}
 				<th>Действия</th>
 			</tr>
 		</thead>

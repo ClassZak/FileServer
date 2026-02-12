@@ -3,6 +3,7 @@
 	@if (isLoading){
 		<app-loading-spinner [title]="'Загрузка пользователей'"></app-loading-spinner>
 	} @else {
+		<h1>Все пользователи</h1>
 		<div class="add-user-container">
 			<button
 				(click)="setIsCreateUserModalComponentOpen(true)"
@@ -10,6 +11,10 @@
 			>
 				Создать пользователя
 			</button>
+		</div>
+		<div>
+			<app-user-table [isAdmin]="isAdmin" [users]="users">
+			</app-user-table>
 		</div>
 	}
 </main>

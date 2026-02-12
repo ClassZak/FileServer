@@ -1,6 +1,7 @@
 <td>{{userData?.surname}}</td>
 <td>{{userData?.name}}</td>
 <td>{{userData?.patronymic}}</td>
+<td>{{userData?.email}}</td>
 @if (isAdmin && $any(userData)?.createdAt ) {
 	<td>{{$any(userData)?.createdAt}}</td>
 }
