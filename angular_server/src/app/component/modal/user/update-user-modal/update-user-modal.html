@@ -1,1 +1,121 @@
-<p>update-user-modal works!</p>
+<app-modal
+	[isOpen]="isOpen"
+	title="Изменить данные пользователя"
+	(onClose)="closeModal()"
+>
+	<form (ngSubmit)="submitForm()" class="update-user-form">
+		@if (errors['server']) {
+			<div class="error-message">
+				{{ errors['server'] }}
+			</div>
+		}
+
+		<div class="form-group">
+			<label for="user.surname">Фамилия *</label>
+			<input
+				id="user.surname"
+				name="surname"
+				type="text"
+				[(ngModel)]="formData.surname"
+				placeholder="Фамилия"
+				[disabled]="submitting"
+				[class.error]="errors['surname']"
+				required
+			/>
+			@if (errors['surname']) {
+				<div class="error-text">{{ errors['surname'] }}</div>
+			}
+		</div>
+
+		<div class="form-group">
+			<label for="user.name">Имя *</label>
+			<input
+				id="user.name"
+				name="name"
+				type="text"
+				[(ngModel)]="formData.name"
+				placeholder="Имя"
+				[disabled]="submitting"
+				[class.error]="errors['name']"
+				required
+			/>
+			@if (errors['name']) {
+				<div class="error-text">{{ errors['name'] }}</div>
+			}
+		</div>
+
+		<div class="form-group">
+			<label for="user.patronymic">Отчество *</label>
+			<input
+				id="user.patronymic"
+				name="patronymic"
+				type="text"
+				[(ngModel)]="formData.patronymic"
+				placeholder="Отчество"
+				[disabled]="submitting"
+				[class.error]="errors['patronymic']"
+				required
+			/>
+			@if (errors['patronymic']) {
+				<div class="error-text">{{ errors['patronymic'] }}</div>
+			}
+		</div>
+
+		<div class="form-group">
+			<label for="user.email">Email *</label>
+			<input
+				id="user.email"
+				name="email"
+				type="email"
+				[(ngModel)]="formData.email"
+				placeholder="Email"
+				[disabled]="submitting"
+				[class.error]="errors['email']"
+				required
+			/>
+			@if (errors['email']) {
+				<div class="error-text">{{ errors['email'] }}</div>
+			}
+		</div>
+
+		<div class="form-group">
+			<label for="user.password">Новый пароль (оставьте пустым, если не меняете)</label>
+			<input
+				id="user.password"
+				name="password"
+				type="password"
+				[(ngModel)]="formData.password"
+				placeholder="Новый пароль"
+				[disabled]="submitting"
+				[class.error]="errors['password']"
+			/>
+			@if (errors['password']) {
+				<div class="error-text">{{ errors['password'] }}</div>
+			}
+		</div>
+
+		<div class="form-actions">
+			<button
+				type="button"
+				(click)="closeModal()"
+				[disabled]="submitting"
+				class="cancel-button"
+			>
+				Отмена
+			</button>
+			<button
+				type="submit"
+				[disabled]="submitting"
+				[class.submitting]="submitting"
+				class="submit-button"
+			>
+				@if (submitting) {
+					<span class="spinner"></span>
+					Сохранение...
+				} @else {
+					Сохранить
+				}
+			</button>
+		</div>
+	</form>
+</app-modal>

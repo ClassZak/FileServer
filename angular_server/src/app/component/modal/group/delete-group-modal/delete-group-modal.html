@@ -1,1 +1,32 @@
-<p>delete-group-modal works!</p>
+<app-modal
+	[isOpen]="isOpen"
+	title="Подтверждение удаления"
+	(onClose)="closeModal()"
+>
+	<div class="confirmation-content">
+		<p>
+			Вы уверены, что хотите удалить
+			<span class="highlight">группу "{{ name }}"</span>?
+		</p>
+		<p class="warning">
+			Это действие нельзя отменить.
+		</p>
+	</div>
+	<div class="form-actions">
+		<button
+			type="button"
+			(click)="closeModal()"
+			class="cancel-button"
+		>
+			Отмена
+		</button>
+		<button
+			type="button"
+			(click)="confirmDelete()"
+			class="delete-button"
+			data-dangerous="true"
+		>
+			Удалить
+		</button>
+	</div>
+</app-modal>

@@ -1,1 +1,134 @@
-<p>update-group-modal works!</p>
+<app-modal
+	[isOpen]="isOpen"
+	title="Редактировать группу"
+	(onClose)="closeModal()"
+>
+	<form (ngSubmit)="submitForm()" class="update-group-form">
+		@if (errors['server']) {
+			<div class="error-message">
+				{{ errors['server'] }}
+			</div>
+		}
+
+		<div class="form-group">
+			<label for="groupName">Название группы *</label>
+			<input
+				id="groupName"
+				name="newName"
+				type="text"
+				[(ngModel)]="formData.newName"
+				placeholder="Введите новое название группы"
+				[disabled]="submitting"
+				[class.error]="errors['newName']"
+				maxlength="64"
+				required
+			/>
+			@if (errors['newName']) {
+				<div class="error-text">{{ errors['newName'] }}</div>
+			}
+			<div class="hint">
+				От 3 до 64 символов. Текущее название: <strong>{{ currentGroup?.name }}</strong>
+			</div>
+		</div>
+
+		<div class="form-group" style="position: relative;">
+			<label for="creatorSearch">Создатель группы *</label>
+
+			<div style="position: relative;">
+				<input
+					id="creatorSearch"
+					type="text"
+					[(ngModel)]="searchQuery"
+					(ngModelChange)="onSearchChange()"
+					(focus)="showUsersList = true"
+					name="creatorSearch"
+					placeholder="Начните вводить email, фамилию или имя пользователя"
+					[disabled]="submitting"
+					[class.error]="errors['creatorEmail']"
+					autocomplete="off"
+				/>
+				@if (selectedCreator && !showUsersList) {
+					<button
+						type="button"
+						(click)="clearSelection()"
+						class="clear-button"
+					>
+						×
+					</button>
+				}
+			</div>
+
+			@if (selectedCreator && !showUsersList) {
+				<div class="selected-user">
+					<div class="selected-user-name">
+						<strong>Текущий создатель:</strong> {{ selectedCreator.surname }} {{ selectedCreator.name }} {{ selectedCreator.patronymic }}
+					</div>
+					<div class="selected-user-email">{{ selectedCreator.email }}</div>
+				</div>
+			}
+
+			@if (showUsersList && filteredUsers.length > 0) {
+				<div class="user-list dropdown">
+					@for (user of filteredUsers; track user.email) {
+						<div
+							class="user-item"
+							(click)="selectCreator(user.email)"
+							[class.selected]="user.email === formData.creatorEmail"
+						>
+							<div class="user-name">
+								{{ user.surname }} {{ user.name }} {{ user.patronymic }}
+							</div>
+							<div class="user-email">{{ user.email }}</div>
+							@if (user.email === formData.creatorEmail) {
+								<div class="current-badge">Текущий выбор</div>
+							}
+						</div>
+					}
+				</div>
+			}
+
+			@if (showUsersList && filteredUsers.length === 0) {
+				<div class="no-results dropdown">
+					Пользователи не найдены
+				</div>
+			}
+
+			@if (errors['creatorEmail']) {
+				<div class="error-text">{{ errors['creatorEmail'] }}</div>
+			}
+		</div>
+
+		<div class="form-info warning">
+			<strong>Важная информация:</strong>
+			<ul>
+				<li>Изменение названия группы приведёт к обновлению всех ссылок и путей</li>
+				<li>Новый создатель группы автоматически станет её участником</li>
+				<li>Прежний создатель останется участником группы, если не был удалён</li>
+			</ul>
+		</div>
+
+		<div class="form-actions">
+			<button
+				type="button"
+				(click)="closeModal()"
+				[disabled]="submitting"
+				class="cancel-button"
+			>
+				Отмена
+			</button>
+			<button
+				type="submit"
+				[disabled]="submitting"
+				[class.submitting]="submitting"
+				class="submit-button"
+			>
+				@if (submitting) {
+					<span class="spinner"></span>
+					Обновление...
+				} @else {
+					Сохранить изменения
+				}
+			</button>
+		</div>
+	</form>
+</app-modal>

@@ -2,118 +2,104 @@ import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ModalComponent } from '../../modal/modal';
-
-interface User {
-  email: string;
-  surname: string;
-  name: string;
-  patronymic: string;
-}
+import { User } from '../../../../core/model/user';
 
 @Component({
-  selector: 'app-add-user-to-group-modal',
-  standalone: true,
-  imports: [CommonModule, FormsModule, ModalComponent],
-  templateUrl: './add-user-to-group-modal.html',
-  styleUrls: ['./add-user-to-group-modal.css']
+	selector: 'app-add-user-to-group-modal',
+	standalone: true,
+	imports: [CommonModule, FormsModule, ModalComponent],
+	templateUrl: './add-user-to-group-modal.html',
+	styleUrls: ['./add-user-to-group-modal.css']
 })
 export class AddUserToGroupModalComponent implements OnChanges {
-  @Input() isOpen: boolean = false;
-  @Input() users: User[] = [];
-  @Input() groupName: string = '';
-  @Output() onClose = new EventEmitter<void>();
-  @Output() onConfirm = new EventEmitter<string>();
+	@Input() isOpen: boolean = false;
+	@Input() users: User[] = [];
+	@Input() groupName: string = '';
+	@Output() onClose = new EventEmitter<void>();
+	@Output() onConfirm = new EventEmitter<string>(); // emits selected user email
 
-  submitting: boolean = false;
-  selectedUserEmail: string = '';
-  errors: any = {};
-  filteredUsers: User[] = [];
-  searchQuery: string = '';
+	submitting = false;
+	selectedUserEmail = '';
+	searchQuery = '';
+	filteredUsers: User[] = [];
+	errors: { userEmail?: string | null; server?: string | null } = {};
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['users'] || changes['searchQuery']) {
-      this.filterUsers();
-    }
-    
-    if (changes['isOpen'] && !changes['isOpen'].currentValue) {
-      this.resetForm();
-    }
-  }
+	ngOnChanges(changes: SimpleChanges): void {
+		if (changes['isOpen'] && !this.isOpen) {
+			this.resetForm();
+		}
+		if (changes['users']) {
+			this.filterUsers();
+		}
+	}
 
-  filterUsers(): void {
-    if (!this.searchQuery.trim()) {
-      this.filteredUsers = [...this.users];
-    } else {
-      const query = this.searchQuery.toLowerCase();
-      this.filteredUsers = this.users.filter(user => 
-        user.email.toLowerCase().includes(query) ||
-        user.surname.toLowerCase().includes(query) ||
-        user.name.toLowerCase().includes(query) ||
-        user.patronymic.toLowerCase().includes(query)
-      );
-    }
-  }
+	onSearchChange(): void {
+		this.filterUsers();
+	}
 
-  onSearchChange(): void {
-    this.filterUsers();
-  }
+	filterUsers(): void {
+		if (!this.searchQuery.trim()) {
+			this.filteredUsers = this.users;
+		} else {
+			const query = this.searchQuery.toLowerCase();
+			this.filteredUsers = this.users.filter(user =>
+				user.email.toLowerCase().includes(query) ||
+				(user.surname && user.surname.toLowerCase().includes(query)) ||
+				(user.name && user.name.toLowerCase().includes(query)) ||
+				(user.patronymic && user.patronymic.toLowerCase().includes(query))
+			);
+		}
+	}
 
-  selectUser(userEmail: string): void {
-    this.selectedUserEmail = userEmail;
-    this.searchQuery = '';
-    
-    if (this.errors['userEmail']) {
-      delete this.errors['userEmail'];
-    }
-  }
+	selectUser(userEmail: string): void {
+		this.selectedUserEmail = userEmail;
+		this.searchQuery = '';
+		this.filteredUsers = [];
+		delete this.errors['userEmail'];
+	}
 
-  clearSelection(): void {
-    this.selectedUserEmail = '';
-  }
+	clearSelection(): void {
+		this.selectedUserEmail = '';
+		this.searchQuery = '';
+	}
 
-  validateForm(): boolean {
-    const errors: any = {};
-    
-    if (!this.selectedUserEmail.trim()) {
-      errors['userEmail'] = 'Выберите пользователя';
-    }
-    
-    this.errors = errors;
-    return Object.keys(errors).length === 0;
-  }
+	validateForm(): boolean {
+		if (!this.selectedUserEmail) {
+			this.errors['userEmail'] = 'Выберите пользователя';
+			return false;
+		}
+		return true;
+	}
 
-  async submitForm(): Promise<void> {
-    if (this.submitting) return;
-    
-    if (!this.validateForm()) {
-      return;
-    }
-    
-    this.submitting = true;
-    try {
-      await this.onConfirm.emit(this.selectedUserEmail);
-      this.resetForm();
-    } catch (error: any) {
-      console.error('Ошибка добавления пользователя:', error);
-      this.errors['server'] = error.message || 'Ошибка добавления пользователя';
-    } finally {
-      this.submitting = false;
-    }
-  }
+	async submitForm(): Promise<void> {
+		if (this.submitting) return;
+		if (!this.validateForm()) return;
 
-  closeModal(): void {
-    this.resetForm();
-    this.onClose.emit();
-  }
+		this.submitting = true;
+		try {
+			await this.onConfirm.emit(this.selectedUserEmail);
+			this.resetForm();
+		} catch (error: any) {
+			console.error('Ошибка добавления пользователя:', error);
+			this.errors['server'] = error.message || 'Ошибка добавления пользователя';
+		} finally {
+			this.submitting = false;
+		}
+	}
 
-  resetForm(): void {
-    this.selectedUserEmail = '';
-    this.errors = {};
-    this.searchQuery = '';
-    this.filteredUsers = [...this.users];
-  }
+	closeModal(): void {
+		this.resetForm();
+		this.onClose.emit();
+	}
 
-  get selectedUser(): User | undefined {
-    return this.users.find(user => user.email === this.selectedUserEmail);
-  }
+	resetForm(): void {
+		this.selectedUserEmail = '';
+		this.searchQuery = '';
+		this.filteredUsers = [];
+		this.errors = {};
+	}
+
+	get selectedUser(): User | undefined {
+		return this.users.find(u => u.email === this.selectedUserEmail);
+	}
 }
