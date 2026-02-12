@@ -79,3 +79,49 @@
 	background-color: #7a7a7a;
 	padding: 5px;
 }
+
+
+
+
+
+
+
+
+
+
+.form-group{
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+.form-group div {
+	display: flex;
+	flex-direction: column;
+}
+
+
+.form-actions{
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 10px;
+}
+
+
+
+
+form.update-password-form{
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+
+.update-password-form input{
+	background: #333;
+	border: 1px solid #444;
+	padding: 0.2rem 0.2rem;
+	border-radius: 2px;
+	color: #edf2f7;
+	transition: all 0.3s ease;
+}

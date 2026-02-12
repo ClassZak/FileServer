@@ -60,3 +60,9 @@
 </main>
 
 <app-footer></app-footer>
+<app-update-user-password-modal
+	[isOpen]="isPasswordModalOpen"
+	(onClose)="handleClosePasswordModal()"
+	(onConfirm)="handleConfirmUpdatePassword($event)"
+>
+</app-update-user-password-modal>

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { User } from '../model/user';
-import { UpdatePasswordRequest } from '../model/update-password';
+import { UpdatePasswordRequest } from '../model/update-password-request';
 import axios, { AxiosError } from 'axios';
 import { CreateConfig } from './create-config';
 

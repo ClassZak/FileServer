@@ -8,12 +8,14 @@ import { AppHeader } from "../../app-header/app-header";
 import { LoadingSpinner } from "../../component/loading-spinner/loading-spinner";
 import { RedirectionButton } from '../../component/redirection-button/redirection-button';
 import { GroupTable } from '../../component/group-table/group-table';
+import { UpdateUserPasswordModalComponent } from '../../component/modal/user/update-user-password-modal/update-user-password-modal';
 
 // Services and models
 import { AuthService } from '../../core/service/auth-service';
 import { AdminService } from '../../core/service/admin-service';
 import { GroupService } from '../../core/service/group-service';
 import { User } from '../../core/model/user';
+import { UpdatePasswordModalModel } from '../../core/model/update-password-modal-model';
 
 interface Group {
 	name: string;
@@ -30,7 +32,8 @@ interface Group {
 		AppHeader, 
 		LoadingSpinner,
 		RedirectionButton,
-		GroupTable
+		GroupTable,
+		UpdateUserPasswordModalComponent
 	],
 	templateUrl: './accout-page.html',
 	styleUrl: './accout-page.css'
@@ -127,4 +130,24 @@ export class AccountPage implements OnInit {
 	public navigateToUsers(): void {
 		this.router.navigate(['/users']);
 	}
+
+
+
+	
+	handleClosePasswordModal(): void {
+		this.setPasswordModalIsOpen(false);
+	}
+	async handleConfirmUpdatePassword(passwordData: UpdatePasswordModalModel): Promise<void> {
+        try {
+			// Здесь должен быть вызов сервиса для обновления пароля
+			console.log('Updating password:', passwordData);
+			// Имитация успешного обновления
+			await new Promise(resolve => setTimeout(resolve, 1000));
+			alert('Пароль успешно обновлен!');
+			this.setPasswordModalIsOpen(false);
+		} catch (error) {
+			console.error('Error updating password:', error);
+			alert('Ошибка при обновлении пароля');
+		}
+    }
 }
