@@ -53,7 +53,10 @@ export class LoginPage {
 					this.error = 'Ошибка авторизации после входа';
 				}
 			} else {
-				this.error = 'Неверный email или пароль';
+				if (result.message)
+					this.error = result.message;
+				else
+					this.error = 'Неверный email или пароль';
 			}
 		} catch (error) {
 			console.log('Login failed:', error);
