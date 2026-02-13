@@ -109,14 +109,14 @@
 
 
 
-form.update-password-form, form.create-user-form{
+form.update-password-form, form.create-user-form, form.modal-form{
 	display: flex;
 	flex-direction: column;
 	gap: 20px;
 }
 
 
-.update-password-form input, .create-user-form input{
+.update-password-form input, .create-user-form input, form.modal-form input{
 	background: #333;
 	border: 1px solid #444;
 	padding: 0.2rem 0.2rem;

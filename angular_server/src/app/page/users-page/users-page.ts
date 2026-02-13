@@ -59,7 +59,7 @@ export class UsersPage implements OnInit {
 			this.isLoading = true;
 			const token = AuthService.getToken();
 			if(token == null)
-				throw "You have not a token";
+				throw "У вас нет токена авторизации";
 			const isAdmin = await AdminService.isAdmin(token);
 			if (!isAdmin)
 				this.router.navigate(['/account']);
@@ -79,7 +79,7 @@ export class UsersPage implements OnInit {
 			this.isLoading = true;
 			const token = AuthService.getToken();
 			if(token == null)
-				throw "You have not a token";
+				throw "У вас нет токена авторизации";
 			if(this.isAdmin) {
 				this.users = (await UserService.readAllUsers(token))
 					.users as Array<UserAdminModel>;

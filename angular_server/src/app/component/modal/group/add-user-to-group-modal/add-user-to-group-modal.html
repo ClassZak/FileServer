@@ -11,20 +11,22 @@
 		}
 
 		<div class="form-group">
-			<label for="userSearch">Выберите пользователя для добавления *</label>
+			<div>
 
-			<!-- Search input -->
-			<input
-				id="userSearch"
-				type="text"
-				[(ngModel)]="searchQuery"
-				(ngModelChange)="onSearchChange()"
-				name="searchQuery"
-				placeholder="Начните вводить email, фамилию или имя пользователя"
-				[disabled]="submitting"
-				autocomplete="off"
-			/>
-
+				<label for="userSearch">Выберите пользователя для добавления *</label>
+				<!-- Search input -->
+				<input
+					id="userSearch"
+					type="text"
+					[(ngModel)]="searchQuery"
+					(ngModelChange)="onSearchChange()"
+					name="searchQuery"
+					placeholder="Начните вводить email, фамилию или имя пользователя"
+					[disabled]="submitting"
+					autocomplete="off"
+				/>
+			</div>
+				
 			<!-- Selected user -->
 			@if (selectedUser && !searchQuery) {
 				<div class="selected-user">

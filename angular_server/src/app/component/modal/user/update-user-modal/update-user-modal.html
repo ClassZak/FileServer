@@ -3,7 +3,7 @@
 	title="Изменить данные пользователя"
 	(onClose)="closeModal()"
 >
-	<form (ngSubmit)="submitForm()" class="update-user-form">
+	<form (ngSubmit)="submitForm()" class="modal-form">
 		@if (errors['server']) {
 			<div class="error-message">
 				{{ errors['server'] }}

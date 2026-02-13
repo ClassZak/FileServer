@@ -3,31 +3,33 @@
 	title="Подтверждение удаления из группы"
 	(onClose)="closeModal()"
 >
-	<div class="confirmation-content">
-		<p>
-			Вы уверены, что хотите удалить
-			<span class="highlight">пользователя "{{ userDisplay }}"</span>
-			из группы <span class="highlight">"{{ groupName }}"</span>?
-		</p>
-		<p class="warning">
-			Это действие нельзя отменить.
-		</p>
-	</div>
-	<div class="form-actions">
-		<button
-			type="button"
-			(click)="closeModal()"
-			class="cancel-button"
-		>
-			Отмена
-		</button>
-		<button
-			type="button"
-			(click)="confirmRemove()"
-			class="delete-button"
-			data-dangerous="true"
-		>
-			Удалить
-		</button>
-	</div>
+	<form (ngSubmit)="confirmRemove()" class="update-group-form">
+		<div class="confirmation-content">
+			<p>
+				Вы уверены, что хотите удалить
+				<span class="highlight">пользователя "{{ userDisplay }}"</span>
+				из группы <span class="highlight">"{{ groupName }}"</span>?
+			</p>
+			<p class="warning">
+				Это действие нельзя отменить.
+			</p>
+		</div>
+		<div class="form-actions">
+			<button
+				type="button"
+				(click)="closeModal()"
+				class="cancel-button"
+			>
+				Отмена
+			</button>
+			<button
+				type="button"
+				(click)="confirmRemove()"
+				class="delete-button"
+				data-dangerous="true"
+			>
+				Удалить
+			</button>
+		</div>
+	</form>
 </app-modal>

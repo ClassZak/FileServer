@@ -91,7 +91,7 @@ export class AccountPage implements OnInit {
 		try {
 			const token = AuthService.getToken();
 			if(token == null)
-				throw "You have not a token";
+				throw "У вас нет токена авторизации";
 			this.isAdmin = await AdminService.isAdmin(token);
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
@@ -140,7 +140,7 @@ export class AccountPage implements OnInit {
 		this.setPasswordModalIsOpen(false);
 	}
 	async handleConfirmUpdatePassword(passwordData: UpdatePasswordModalModel): Promise<void> {
-        try {
+		try {
 			// Здесь должен быть вызов сервиса для обновления пароля
 			console.log('Updating password:', passwordData);
 			if (passwordData.newPassword !== passwordData.newPasswordConfirm)
@@ -159,5 +159,5 @@ export class AccountPage implements OnInit {
 			console.error('Error updating password:', error);
 			alert('Ошибка при обновлении пароля');
 		}
-    }
+	}
 }

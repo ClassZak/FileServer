@@ -4,12 +4,18 @@ import { CreateUserModel } from '../model/create-user-model';
 import { UpdatePasswordRequest } from '../model/update-password-request';
 import axios, { AxiosError } from 'axios';
 import { CreateConfig } from './create-config';
+import { UserAdminModel } from '../model/user-admin-model';
 
 
 export class UpdatePasswordResponse{
 	public success: boolean = false;
 	public error?: string = '';
 	public message?: string = '';
+}
+export class DeleteUserResponse{
+	public success: boolean = false;
+	public error?: string = '';
+	public users?: UserAdminModel[];
 }
 
 
@@ -137,12 +143,12 @@ export class UserService {
 	 * @returns {Promise<Object>}
 	 * Object with "error" or "users" key. "users" key is used for users list storing
 	 */
-	static async readAllUsers(authToken:string) {
+	static async readAllUsers(authToken:string): Promise<DeleteUserResponse> {
 		try {
 			const response = await axios.get(
 				`/api/users/users`, CreateConfig.createAuthConfig(authToken)
 			);
-
+			
 			return response.data;
 		} catch (error) {
 			const axiosError = error as AxiosError<{
@@ -151,7 +157,7 @@ export class UserService {
 			}>;
 			// Process 403 for UserController
 			if (axiosError.response && (axiosError.response.status === 403))
-				return axiosError.response.data;
+				return axiosError.response.data as DeleteUserResponse;
 			// Other errors throw next
 			throw axiosError;
 		}

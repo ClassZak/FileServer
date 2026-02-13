@@ -5,6 +5,7 @@ import { AccountPage } from './page/accout-page/accout-page';
 import { LoginPage } from './page/login-page/login-page';
 import { UsersPage } from './page/users-page/users-page';
 import { FilesPage } from './page/files-page/files-page';
+import { UserPage } from './page/user-page/user-page';
 
 export const routes: Routes = [
 	{ path: '', component: Home},
@@ -13,5 +14,6 @@ export const routes: Routes = [
 	{ path: 'account', component: AccountPage},
 	{ path: 'login', component: LoginPage},
 	{ path: 'users', component: UsersPage},
-	{ path: 'files', component: FilesPage},
+	{ path: 'user/:email', component: UserPage},
+	{ path: 'files/**', component: FilesPage},
 ];

@@ -91,7 +91,7 @@ export class UpdateUserModalComponent implements OnChanges {
   }
 
   closeModal(): void {
-    this.resetForm();
+    //this.resetForm();
     this.onClose.emit();
   }
 
