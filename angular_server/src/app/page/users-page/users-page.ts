@@ -16,7 +16,7 @@ import { AdminService } from '../../core/service/admin-service';
 import { GroupService } from '../../core/service/group-service';
 import { User } from '../../core/model/user';
 import { UserService } from '../../core/service/user-service';
-import { CreateUserModel } from '../../component/modal/user/create-user-modal/create-user-modal';
+import { CreateUserModel } from '../../core/model/create-user-model';
 import { UserAdminModel } from '../../core/model/user-admin-model';
 import { UserTable } from '../../component/user-table/user-table';
 
@@ -38,6 +38,7 @@ export class UsersPage implements OnInit {
 	isCreateUserModalComponentOpen: boolean = false;
 	isAdmin: boolean = false;
 	users: Array<User>=[];
+	error: string = '';
 
 	constructor(
 		private router: Router,
@@ -93,5 +94,21 @@ export class UsersPage implements OnInit {
 
 	public setIsCreateUserModalComponentOpen(state: boolean){
 		this.isCreateUserModalComponentOpen = state;
+	}
+	public async handleComfirmCreateUser(userData: CreateUserModel) : Promise<void>{
+		try {
+			const token = AuthService.getToken();
+			if (!token)
+				throw Error('Отсутствует токен авторизации');
+			const response = await UserService.createUser(userData, token);
+			if (!response.success)
+				throw Error('Не удалось создать пользователя');
+
+			this.loadUsers();
+			this.isCreateUserModalComponentOpen = false;
+		} catch (error: any) {
+			console.error('Error updating password:', error);
+			this.error = error.toString();
+		}
 	}
 }

@@ -21,6 +21,8 @@
 <app-footer></app-footer>
 
 <app-create-user-modal
-	
+	[isOpen]="isCreateUserModalComponentOpen"
+	(onClose)="setIsCreateUserModalComponentOpen(false)"
+	(onConfirm)="handleComfirmCreateUser($event)"
 >
 </app-create-user-modal>

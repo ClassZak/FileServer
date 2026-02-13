@@ -1,15 +1,9 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ModalComponent } from '../../modal/modal';
 
-export interface CreateUserModel {
-	surname: string;
-	name: string;
-	patronymic: string;
-	email: string;
-	password: string;
-}
+import { CreateUserModel } from '../../../../core/model/create-user-model';
 
 @Component({
 	selector: 'app-create-user-modal',
@@ -24,14 +18,11 @@ export class CreateUserModalComponent {
 	@Output() onConfirm = new EventEmitter<CreateUserModel>();
 
 	submitting = false;
-	formData: CreateUserModel = {
-		surname: '',
-		name: '',
-		patronymic: '',
-		email: '',
-		password: ''
-	};
+	formData: CreateUserModel = new CreateUserModel();
 	errors: { [key: string]: string | null } = {};
+	
+	constructor(private cdr: ChangeDetectorRef){
+	}
 
 	validateForm(): boolean {
 		const newErrors: typeof this.errors = {};
@@ -72,6 +63,7 @@ export class CreateUserModalComponent {
 			this.errors['server'] = error.message || 'Ошибка создания пользователя';
 		} finally {
 			this.submitting = false;
+			this.cdr.detectChanges();
 		}
 	}
 

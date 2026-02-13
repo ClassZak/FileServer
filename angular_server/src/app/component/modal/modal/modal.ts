@@ -75,9 +75,9 @@ export class ModalComponent implements OnDestroy, OnChanges {
 	}
 
 	handleOverlayClick(event: MouseEvent): void {
-		if (event.target === event.currentTarget) {
+		/*if (event.target === event.currentTarget) {
 			this.closeModal();
-		}
+		}*/
 	}
 
 	private cleanup(): void {

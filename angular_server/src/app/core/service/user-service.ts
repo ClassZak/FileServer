@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { User } from '../model/user';
+import { CreateUserModel } from '../model/create-user-model';
 import { UpdatePasswordRequest } from '../model/update-password-request';
 import axios, { AxiosError } from 'axios';
 import { CreateConfig } from './create-config';
@@ -24,9 +25,9 @@ export class UserService {
 	 * Function for create new user
 	 * @param {User} user data for new user
 	 * @param {string} authToken Authorization token for admin role checking
-	 * @returns {Promise<Object>} Object with "error" or "success" key
+	 * @returns {Promise<Object>} Object with "error" : <message> or "success" : true
 	 */
-	static async createUser(user:User, authToken:string) {
+	static async createUser(user:CreateUserModel, authToken:string) {
 		try {
 			const response = await axios.post(
 				'/api/users/new', user, CreateConfig.createAuthConfig(authToken)

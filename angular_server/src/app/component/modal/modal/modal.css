@@ -1,4 +1,3 @@
-/* styles/Modal.css */
 .modal-overlay {
 	position: fixed;
 	top: 0;
@@ -18,9 +17,9 @@
 .modal-content {
 	background-color: #242424;
 	border-radius: 0.5rem;
-	padding: 1.5rem;
+	padding: 2rem;
 	width: 100%;
-	max-width: 28rem; /* 448px */
+	max-width: 32rem;
 	max-height: 90vh;
 	overflow-y: auto;
 	box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -92,7 +91,7 @@
 .form-group{
 	display: flex;
 	flex-direction: column;
-	gap: 10px;
+	gap: 15px;
 }
 .form-group div {
 	display: flex;
@@ -104,20 +103,20 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	gap: 10px;
+	gap: 15px;
 }
 
 
 
 
-form.update-password-form{
+form.update-password-form, form.create-user-form{
 	display: flex;
 	flex-direction: column;
 	gap: 20px;
 }
 
 
-.update-password-form input{
+.update-password-form input, .create-user-form input{
 	background: #333;
 	border: 1px solid #444;
 	padding: 0.2rem 0.2rem;
