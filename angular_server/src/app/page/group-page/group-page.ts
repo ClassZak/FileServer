@@ -20,6 +20,7 @@ import { UserModelAdminResponse } from '../../core/model/user-model-admin-respon
 import { User } from '../../core/model/user';
 import { UserTable } from "../../component/user-table/user-table";
 import { UserTableGroupPage } from '../../component/user-table-group-page/user-table-group-page';
+import { UserService } from '../../core/service/user-service';
 
 @Component({
 	selector: 'app-group-page',
@@ -45,17 +46,30 @@ export class GroupPage implements OnInit {
 	isDeleteGroupModalComponentOpen: boolean = false;
 	isRemoveUserFromGroupModalComponentOpen: boolean = false;
 	isUpdateGroupModalComponentOpen: boolean = false;
-	users?: Array<UserAdminModel>;
+	users?: Array<User>;
 	group?: GroupDetails<UserModelAdminResponse> | GroupDetails<User>;
 	groupName: string = '';
 	isAdmin: boolean = false;
 	private paramSubscription?: Subscription;
 	error: string = '';
 	selectedUserEmail: string = '';
- 	onRemoveUser(email: string): void {
+	get adminGroup(): GroupDetails<UserModelAdminResponse> | undefined {
+		return this.isAdmin ? this.group as GroupDetails<UserModelAdminResponse> : undefined;
+	}
+	get allUsersForModal(): User[] {
+		return (this.users || []).map(u => ({
+		email: u.email,
+		name: u.name,
+		surname: u.surname,
+		patronymic: u.patronymic,
+		// другие поля User, которые могут отсутствовать в UserAdminModel – добавьте при необходимости
+		} as User));
+	}
+	onRemoveUser(email: string): void {
 		this.selectedUserEmail = email;
 		this.setIsRemoveUserFromGroupModalComponentOpen(true);
 	}
+
 
 	setIsAddUserToGroupModalComponentOpen(status: boolean){
 		this.isAddUserToGroupModalComponentOpen = status;
@@ -88,9 +102,10 @@ export class GroupPage implements OnInit {
 		});
 		try{
 			await this.checkAdminStatus();
-			await this.loadGroupData();
+			await Promise.all([this.loadGroupData(), this.loadUsers()]);
+			this.isLoading = false;
 		} catch (error) {
-
+			// TODO: notice
 		} finally {
 			this.cdr.detectChanges();
 		}
@@ -104,7 +119,6 @@ export class GroupPage implements OnInit {
 
 	private async checkAdminStatus(): Promise<void> {
 		try {
-			this.isLoading = true;
 			const token = AuthService.getToken();
 			if(token === null)
 				throw "У вас нет токена авторизации";
@@ -112,12 +126,11 @@ export class GroupPage implements OnInit {
 			this.isAdmin = isAdmin;
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
-			this.isAdmin = false;
+			// TODO: notice
 		}
 	}
 	private async loadGroupData(): Promise<void> {
 		try {
-			this.isLoading = true;
 			const token = AuthService.getToken();
 			if (token === null) throw new Error('У вас нет токена авторизации');
 
@@ -147,7 +160,20 @@ export class GroupPage implements OnInit {
 			this.error = error.toString();
 			// TODO: notice
 		} finally {
-			this.isLoading = false;
+		}
+	}
+	private async loadUsers(){
+		try {
+			const token = AuthService.getToken();
+			if(token === null)
+				throw "У вас нет токена авторизации";
+			if(this.isAdmin) {
+				this.users = (await UserService.readAllUsers(token))
+					.users as Array<UserAdminModel>;
+			}
+		} catch (error) {
+			console.error('Ошибка при загрузке пользователей', error);
+		} finally {
 		}
 	}
 }

@@ -3,6 +3,7 @@
 	title="Редактировать группу"
 	(onClose)="closeModal()"
 >
+	@if (isOpen) {
 	<form (ngSubmit)="submitForm()" class="update-group-form">
 		@if (errors['server']) {
 			<div class="error-message">
@@ -131,4 +132,5 @@
 			</button>
 		</div>
 	</form>
+	}
 </app-modal>

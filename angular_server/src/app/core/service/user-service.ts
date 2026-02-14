@@ -17,6 +17,11 @@ export class DeleteUserResponse{
 	public error?: string = '';
 	public users?: UserAdminModel[];
 }
+export class ReadUsersResponse{
+	public success: boolean = false;
+	public error?: string = '';
+	public users?: UserAdminModel[];
+}
 
 
 @Injectable({
@@ -143,7 +148,7 @@ export class UserService {
 	 * @returns {Promise<Object>}
 	 * Object with "error" or "users" key. "users" key is used for users list storing
 	 */
-	static async readAllUsers(authToken:string): Promise<DeleteUserResponse> {
+	static async readAllUsers(authToken:string): Promise<ReadUsersResponse> {
 		try {
 			const response = await axios.get(
 				`/api/users/users`, CreateConfig.createAuthConfig(authToken)
@@ -157,7 +162,7 @@ export class UserService {
 			}>;
 			// Process 403 for UserController
 			if (axiosError.response && (axiosError.response.status === 403))
-				return axiosError.response.data as DeleteUserResponse;
+				return axiosError.response.data as ReadUsersResponse;
 			// Other errors throw next
 			throw axiosError;
 		}

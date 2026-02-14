@@ -77,11 +77,14 @@
 		[isOpen]="isRemoveUserFromGroupModalComponentOpen"
 		(onClose)="setIsRemoveUserFromGroupModalComponentOpen(false)"
 		[user]="selectedUserEmail"
+		[groupName]="groupName"
 	>
 	</app-remove-user-from-group-modal>
 	<app-update-group-modal
 		[isOpen]="isUpdateGroupModalComponentOpen"
 		(onClose)="setIsUpdateGroupModalComponentOpen(false)"
+		[users]="users!"
+		[currentGroup]="adminGroup!"
 	>
 	</app-update-group-modal>
 }

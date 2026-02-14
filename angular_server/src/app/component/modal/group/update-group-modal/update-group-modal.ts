@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ModalComponent } from '../../modal/modal';
 import { User } from '../../../../core/model/user';
+import { UserModelAdminResponse } from '../../../../core/model/user-model-admin-response';
+import { GroupDetails } from '../../../../core/model/group-details';
 
 export interface UpdateGroupModel {
 	newName: string;
@@ -19,7 +21,7 @@ export interface UpdateGroupModel {
 export class UpdateGroupModalComponent implements OnChanges {
 	@Input() isOpen: boolean = false;
 	@Input() users: User[] = [];
-	@Input() currentGroup!: { name: string; creatorEmail: string };
+	@Input() currentGroup!: GroupDetails<UserModelAdminResponse>;
 	@Output() onClose = new EventEmitter<void>();
 	@Output() onConfirm = new EventEmitter<UpdateGroupModel>();
 
@@ -37,7 +39,7 @@ export class UpdateGroupModalComponent implements OnChanges {
 		if (changes['isOpen'] && this.isOpen && this.currentGroup) {
 			this.formData = {
 				newName: this.currentGroup.name || '',
-				creatorEmail: this.currentGroup.creatorEmail || ''
+				creatorEmail: this.currentGroup.creator.email || ''
 			};
 			this.errors = {};
 			this.searchQuery = '';
