@@ -51,6 +51,7 @@ export class UsersPage implements OnInit {
 			await this.loadUsers();
 		} catch (error) {
 			console.error('Ошибка при загрузке страницы:', error);
+			// TODO: notice
 		}
 	}
 
@@ -58,7 +59,7 @@ export class UsersPage implements OnInit {
 		try {
 			this.isLoading = true;
 			const token = AuthService.getToken();
-			if(token == null)
+			if(token === null)
 				throw "У вас нет токена авторизации";
 			const isAdmin = await AdminService.isAdmin(token);
 			if (!isAdmin)
@@ -78,7 +79,7 @@ export class UsersPage implements OnInit {
 		try {
 			this.isLoading = true;
 			const token = AuthService.getToken();
-			if(token == null)
+			if(token === null)
 				throw "У вас нет токена авторизации";
 			if(this.isAdmin) {
 				this.users = (await UserService.readAllUsers(token))

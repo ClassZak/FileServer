@@ -91,7 +91,7 @@ export class UserPage implements OnInit {
 					response.message: 'Не удалось загрузить данные пользователя'
 				);
 			const token = AuthService.getToken();
-			if(token == null)
+			if(token === null)
 				throw "У вас нет токена авторизации";
 			const isAdmin = await AdminService.isAdmin(token);
 			if (!isAdmin)
@@ -116,7 +116,7 @@ export class UserPage implements OnInit {
 		try {
 			this.isLoading = true;
 			const token = AuthService.getToken();
-			if(token == null)
+			if(token === null)
 				throw Error('У вас нет токена авторизации');
 			if(!this.isAdmin)
 				throw Error('Вы не являетесь администратором');

@@ -90,7 +90,7 @@ export class AccountPage implements OnInit {
 	private async checkAdminStatus(): Promise<void> {
 		try {
 			const token = AuthService.getToken();
-			if(token == null)
+			if(token === null)
 				throw "У вас нет токена авторизации";
 			this.isAdmin = await AdminService.isAdmin(token);
 		} catch (error) {
@@ -105,9 +105,9 @@ export class AccountPage implements OnInit {
 				throw Error('No token');
 			const groupsResult = await GroupService.getMyGroups(token);
 			
-			if (groupsResult.error) {
+			if ('error' in groupsResult) {
 				console.error('Ошибка загрузки групп:', groupsResult.error);
-			} else {
+			} else if (Array.isArray(groupsResult)) {
 				this.groups = groupsResult;
 			}
 		} catch (error) {

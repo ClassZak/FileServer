@@ -3,7 +3,8 @@
 	title="Создать новую группу"
 	(onClose)="closeModal()"
 >
-	<form (ngSubmit)="submitForm()" class="create-group-form">
+	<!-- Используем класс modal-form для единообразия -->
+	<form (ngSubmit)="submitForm()" class="modal-form">
 		@if (errors['server']) {
 			<div class="error-message">
 				{{ errors['server'] }}
@@ -11,81 +12,78 @@
 		}
 
 		<div class="form-group">
-			<label for="groupName">Название группы *</label>
-			<input
-				id="groupName"
-				name="name"
-				type="text"
-				[(ngModel)]="formData.name"
-				placeholder="Введите название группы"
-				[disabled]="submitting"
-				[class.error]="errors['name']"
-				maxlength="64"
-				required
-			/>
-			@if (errors['name']) {
-				<div class="error-text">{{ errors['name'] }}</div>
-			}
-			<div class="hint">От 3 до 64 символов</div>
-		</div>
+			<!-- Поле "Название группы" – обёрнуто в div -->
+			<div>
+				<label for="groupName">Название группы *</label>
+				<input
+					id="groupName"
+					name="name"
+					type="text"
+					[(ngModel)]="formData.name"
+					placeholder="Введите название группы"
+					[disabled]="submitting"
+					[class.error]="errors['name']"
+					maxlength="64"
+					required
+				/>
+				@if (errors['name']) {
+					<div class="error-text">{{ errors['name'] }}</div>
+				}
+				<div class="hint">От 3 до 64 символов</div>
+			</div>
 
-		<div class="form-group">
-			<label for="creatorSearch">Создатель группы *</label>
+			<!-- Поле поиска создателя – тоже в div -->
+			<div>
+				<label for="creatorSearch">Создатель группы *</label>
+				<input
+					id="creatorSearch"
+					type="text"
+					[(ngModel)]="searchQuery"
+					(ngModelChange)="onSearchChange()"
+					name="creatorSearch"
+					placeholder="Начните вводить email, фамилию или имя"
+					[disabled]="submitting"
+					autocomplete="off"
+				/>
 
-			<input
-				id="creatorSearch"
-				type="text"
-				[(ngModel)]="searchQuery"
-				(ngModelChange)="onSearchChange()"
-				name="creatorSearch"
-				placeholder="Начните вводить email, фамилию или имя пользователя"
-				[disabled]="submitting"
-				autocomplete="off"
-			/>
-
-			@if (selectedCreator && !searchQuery) {
-				<div class="selected-user">
-					<div class="selected-user-name">
-						<strong>Выбран:</strong> {{ selectedCreator.surname }} {{ selectedCreator.name }} {{ selectedCreator.patronymic }}
-					</div>
-					<div class="selected-user-email">{{ selectedCreator.email }}</div>
-					<button
-						type="button"
-						(click)="clearCreator()"
-						class="change-button"
-					>
-						Изменить
-					</button>
-				</div>
-			}
-
-			@if (searchQuery && filteredUsers.length > 0) {
-				<div class="user-list">
-					@for (user of filteredUsers; track user.email) {
-						<div
-							class="user-item"
-							(click)="selectCreator(user.email)"
-						>
-							<div class="user-name">
-								{{ user.surname }} {{ user.name }} {{ user.patronymic }}
-							</div>
-							<div class="user-email">{{ user.email }}</div>
+				<!-- Выбранный пользователь -->
+				@if (selectedCreator && !searchQuery) {
+					<div class="selected-user">
+						<div class="selected-user-name">
+							<strong>Выбран:</strong> {{ selectedCreator.surname }} {{ selectedCreator.name }} {{ selectedCreator.patronymic }}
 						</div>
-					}
-				</div>
-			}
+						<div class="selected-user-email">{{ selectedCreator.email }}</div>
+						<button type="button" (click)="clearCreator()" class="change-button">
+							Изменить
+						</button>
+					</div>
+				}
 
-			@if (searchQuery && filteredUsers.length === 0) {
-				<div class="no-results">
-					Пользователи не найдены
-				</div>
-			}
+				<!-- Результаты поиска -->
+				@if (searchQuery && filteredUsers.length > 0) {
+					<div class="user-list">
+						@for (user of filteredUsers; track user.email) {
+							<div class="user-item" (click)="selectCreator(user.email)">
+								<div class="user-name">
+									{{ user.surname }} {{ user.name }} {{ user.patronymic }}
+								</div>
+								<div class="user-email">{{ user.email }}</div>
+							</div>
+						}
+					</div>
+				}
 
-			@if (errors['creatorEmail']) {
-				<div class="error-text">{{ errors['creatorEmail'] }}</div>
-			}
+				@if (searchQuery && filteredUsers.length === 0) {
+					<div class="no-results">Пользователи не найдены</div>
+				}
+
+				@if (errors['creatorEmail']) {
+					<div class="error-text">{{ errors['creatorEmail'] }}</div>
+				}
+			</div>
 		</div>
 
+		<!-- Информационный блок (можно оставить как есть) -->
 		<div class="form-info">
 			<strong>Информация:</strong>
 			<ul>
@@ -95,6 +93,7 @@
 			</ul>
 		</div>
 
+		<!-- Кнопки действий с классами из глобальных стилей -->
 		<div class="form-actions">
 			<button
 				type="button"

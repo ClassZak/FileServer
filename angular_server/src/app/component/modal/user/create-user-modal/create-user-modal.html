@@ -3,7 +3,7 @@
 	title="Создать нового пользователя"
 	(onClose)="closeModal()"
 >
-	<form (ngSubmit)="submitForm()" class="create-user-form">
+	<form (ngSubmit)="submitForm()" class="modal-form">
 		@if (errors['server']) {
 			<div class="error-message">
 				{{ errors['server'] }}

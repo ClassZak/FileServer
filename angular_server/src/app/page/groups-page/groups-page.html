@@ -1,1 +1,29 @@
-<p>groups-page works!</p>
+<app-app-header></app-app-header>
+<main class="MainContent">
+	@if (isLoading){
+		<app-loading-spinner [title]="'Загрузка пользователей'"></app-loading-spinner>
+	} @else {
+		<h1>Все группы</h1>
+		<div class="add-user-container">
+			<button
+				(click)="setIsCreateGroupModalComponentOpen(true)"
+				class="green-button"
+			>
+				Создать группу
+			</button>
+		</div>
+		<div>
+			<app-group-table [isAdmin]="isAdmin" [groups]="groups">
+			</app-group-table>
+		</div>
+	}
+</main>
+<app-footer></app-footer>
+
+<app-create-group-modal
+	[isOpen]="isCreateGroupModalComponentOpen"
+	(onClose)="setIsCreateGroupModalComponentOpen(false)"
+	(onConfirm)="handleConfirmCreateGroup($event)"
+	[users]="users"
+>
+</app-create-group-modal>
