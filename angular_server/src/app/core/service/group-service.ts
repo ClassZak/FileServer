@@ -95,7 +95,7 @@ export class GroupService {
 	 * @param {string} groupName Group name
 	 * @returns {Promise<GroupFullDetailsAdminResponse | null | ErrorContainer>} Object with "group" key or null if no access or error object
 	 */
-	static async getGroupFullDetailsAdmin(authToken:string, groupName:string) : Promise<GroupFullDetailsAdminResponse | null | ErrorContainer>  {
+	static async getGroupFullDetailsAdmin(authToken:string, groupName:string) : Promise<GroupFullDetailsAdminResponse | null | ErrorContainer>	{
 		try {
 			const response = await axios.get(
 				`/api/groups/name/${encodeURIComponent(groupName)}/full`,

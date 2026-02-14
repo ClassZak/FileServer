@@ -33,7 +33,7 @@ import { UpdatePasswordModalModel } from '../../core/model/update-password-modal
 	styleUrl: './user-page.css',
 })
 export class UserPage implements OnInit {
-  	public isLoading: boolean = true;
+		public isLoading: boolean = true;
 	isUpdateUserModalOpen : boolean = false;
 	isUpdateUserPasswordModalOpen : boolean = false;
 	isDeleteUserModalOpen : boolean = false;

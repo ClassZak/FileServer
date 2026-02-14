@@ -4,20 +4,20 @@
 <td>{{ userData?.email }}</td>
 
 @if (isAdmin && $any(userData)?.createdAt) {
-  <td>{{ $any(userData)?.createdAt }}</td>
+	<td>{{ $any(userData)?.createdAt }}</td>
 }
 
 <td>
-  <div class="buttons-row">
-    <app-redirection-button
-      [reference]="createNavigateToUserHref(userData?.email)"
-      [title]="isAdmin ? 'Изменить данные' : 'Просмотр'"
-      className="blue-button"
-      ></app-redirection-button>
-      
-      <!-- Дополнительная кнопка "Исключить" только для администратора -->
-      @if (isAdmin) {
-        <button class="red-button" (click)="onRemove()">Исключить</button>
-      }
-  </div>
+	<div class="buttons-row">
+		<app-redirection-button
+			[reference]="createNavigateToUserHref(userData?.email)"
+			[title]="isAdmin ? 'Изменить данные' : 'Просмотр'"
+			className="blue-button"
+			></app-redirection-button>
+			
+			<!-- Дополнительная кнопка "Исключить" только для администратора -->
+			@if (isAdmin) {
+				<button class="red-button" (click)="onRemove()">Исключить</button>
+			}
+	</div>
 </td>

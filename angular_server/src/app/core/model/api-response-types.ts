@@ -4,15 +4,15 @@ import { GroupDetails } from './group-details';
 
 // Успешный ответ для обычного пользователя
 export interface GroupFullDetailsResponse {
-    group: GroupDetails<User>;
+		group: GroupDetails<User>;
 }
 
 // Успешный ответ для администратора
 export interface GroupFullDetailsAdminResponse {
-    group: GroupDetails<UserModelAdminResponse>;
+		group: GroupDetails<UserModelAdminResponse>;
 }
 
 // Контейнер для ошибки (возвращается при 403)
 export interface ErrorContainer {
-    error: string;
+		error: string;
 }
