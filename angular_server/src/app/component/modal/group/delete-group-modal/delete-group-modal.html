@@ -3,7 +3,7 @@
 	title="Подтверждение удаления"
 	(onClose)="closeModal()"
 >
-	<form (ngSubmit)="submitForm()" class="delete-user-form">
+	<form (ngSubmit)="submitForm()" class="modal-form">
 		<div class="confirmation-content">
 			<p>
 				Вы уверены, что хотите удалить
@@ -27,6 +27,7 @@
 				[disabled]="submitting"
 				[class.submitting]="submitting"
 				class="submit-button"
+				data-dangerous="true"
 			>
 				@if (submitting) {
 					<span class="spinner"></span>

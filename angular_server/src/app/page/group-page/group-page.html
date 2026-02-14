@@ -39,6 +39,20 @@
 					Добавить пользователя в группу
 				</button>
 			</div>
+			<div class="buttons-row">
+				<app-redirection-button 
+					[className]="'blue-button'" 
+					[title]="'Пользователи'" 
+					[reference]="'/users'"
+				>
+				</app-redirection-button>
+				<app-redirection-button 
+					[className]="'blue-button'" 
+					[title]="'Группы'" 
+					[reference]="'/groups'"
+				>
+				</app-redirection-button>
+			</div>
 		} @else {
 			<div class="account-card">
 				<h2>Информация о группе</h2>
@@ -66,11 +80,14 @@
 		(onClose)="setIsAddUserToGroupModalComponentOpen(false)"
 		[users]="this.users!"
 		[groupName]="this.groupName"
+		(onConfirm)="handleConfirmAddUserToGroupModalComponent($event)"
 	>
 	</app-add-user-to-group-modal>
 	<app-delete-group-modal
 		[isOpen]="isDeleteGroupModalComponentOpen"
 		(onClose)="setIsDeleteGroupModalComponentOpen(false)"
+		(onConfirm)="handleConfirmDeleteGroupModalComponent()"
+		[name]="groupName"
 	>
 	</app-delete-group-modal>
 	<app-remove-user-from-group-modal
@@ -78,6 +95,7 @@
 		(onClose)="setIsRemoveUserFromGroupModalComponentOpen(false)"
 		[user]="selectedUserEmail"
 		[groupName]="groupName"
+		(onConfirm)="handleConfirmRemoveUserFromGroupModalComponent()"
 	>
 	</app-remove-user-from-group-modal>
 	<app-update-group-modal
@@ -85,6 +103,7 @@
 		(onClose)="setIsUpdateGroupModalComponentOpen(false)"
 		[users]="users!"
 		[currentGroup]="adminGroup!"
+		(onConfirm)="handleConfirmUpdateGroupModalComponent($event)"
 	>
 	</app-update-group-modal>
 }

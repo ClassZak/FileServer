@@ -21,28 +21,30 @@ import { User } from '../../core/model/user';
 import { UserTable } from "../../component/user-table/user-table";
 import { UserTableGroupPage } from '../../component/user-table-group-page/user-table-group-page';
 import { UserService } from '../../core/service/user-service';
+import { GroupUpdateModel } from '../../core/model/group-update-model';
+import { RedirectionButton } from '../../component/redirection-button/redirection-button';
 
 @Component({
 	selector: 'app-group-page',
 	imports: [
-	CommonModule,
-	AppHeader,
-	AppFooter,
-	LoadingSpinner,
-	AddUserToGroupModalComponent,
-	DeleteGroupModalComponent,
-	RemoveUserFromGroupModalComponent,
-	UpdateGroupModalComponent,
-	UserTable,
-	UserTableGroupPage
-],
+		CommonModule,
+		AppHeader,
+		AppFooter,
+		LoadingSpinner,
+		AddUserToGroupModalComponent,
+		DeleteGroupModalComponent,
+		RemoveUserFromGroupModalComponent,
+		UpdateGroupModalComponent,
+		UserTable,
+		UserTableGroupPage,
+		RedirectionButton
+	],
 	templateUrl: './group-page.html',
 	styleUrl: './group-page.css',
 })
 export class GroupPage implements OnInit {
 	public isLoading: boolean = true;
 	isAddUserToGroupModalComponentOpen: boolean = false;
-	isCreateGroupModalComponentOpen: boolean = false;
 	isDeleteGroupModalComponentOpen: boolean = false;
 	isRemoveUserFromGroupModalComponentOpen: boolean = false;
 	isUpdateGroupModalComponentOpen: boolean = false;
@@ -73,9 +75,6 @@ export class GroupPage implements OnInit {
 
 	setIsAddUserToGroupModalComponentOpen(status: boolean){
 		this.isAddUserToGroupModalComponentOpen = status;
-	}
-	setIsCreateGroupModalComponentOpen(status: boolean){
-		this.isCreateGroupModalComponentOpen = status;
 	}
 	setIsDeleteGroupModalComponentOpen(status: boolean){
 		this.isDeleteGroupModalComponentOpen = status;
@@ -174,6 +173,94 @@ export class GroupPage implements OnInit {
 		} catch (error) {
 			console.error('Ошибка при загрузке пользователей', error);
 		} finally {
+		}
+	}
+
+
+	public async handleConfirmAddUserToGroupModalComponent(email: string) : Promise<void>{
+		try {
+			const token = AuthService.getToken();
+			if(!token)
+				throw Error('Отсутствует токен авторизации');
+			const response = await GroupService.addUserToGroup(token, this.groupName, email);
+			if (response.error)
+				throw Error(response.error);
+			if (response.success)
+				await this.loadGroupData();
+
+			this.isAddUserToGroupModalComponentOpen = false;
+			this.cdr.detectChanges();
+		} catch (error: any) {
+			console.error(error);
+			this.error = error.toString();
+			// TODO: notice
+		}
+	}
+	public async handleConfirmDeleteGroupModalComponent() : Promise<void>{
+		try {
+			const token = AuthService.getToken();
+			if(!token)
+				throw Error('Отсутствует токен авторизации');
+			const response = await GroupService.deleteGroup(token, this.groupName);
+			if (response.error)
+				throw Error(response.error);
+			if (response.success)
+				this.router.navigate(['/groups']);
+
+			this.isDeleteGroupModalComponentOpen = false;
+			this.cdr.detectChanges();
+		} catch (error: any) {
+			console.error(error);
+			this.error = error.toString();
+			// TODO: notice
+		}
+	}
+	public async handleConfirmRemoveUserFromGroupModalComponent() : Promise<void>{
+		try {
+			if (this.selectedUserEmail == this.group?.creator.email)
+				throw Error('Вы не можете исключить из группы её создателя');
+			const token = AuthService.getToken();
+			if(!token)
+				throw Error('Отсутствует токен авторизации');
+			if (!this.selectedUserEmail || this.selectedUserEmail=='') {
+				this.isRemoveUserFromGroupModalComponentOpen = false;
+				this.cdr.detectChanges();
+				return;
+			}
+			const response = await GroupService.removeUserFromGroup(token, this.groupName, this.selectedUserEmail);
+			if (response.error)
+				throw Error(response.error);
+			if (response.success)
+				await this.loadGroupData();
+
+			this.isRemoveUserFromGroupModalComponentOpen = false;
+			this.cdr.detectChanges();
+		} catch (error: any) {
+			console.error(error);
+			this.error = error.toString();
+			// TODO: notice
+		}
+	}
+	public async handleConfirmUpdateGroupModalComponent(updateGroupModel: GroupUpdateModel) : Promise<void>{
+		try {
+			const token = AuthService.getToken();
+			if(!token)
+				throw Error('Отсутствует токен авторизации');
+			const response = await GroupService.updateGroup(token, this.groupName, updateGroupModel);
+			if (response.error)
+				throw Error(response.error);
+			if (response.success && this.groupName != updateGroupModel.newName){
+				this.groupName = updateGroupModel.newName;
+				this.router.navigate([`/group/${encodeURIComponent(this.groupName)}`]);
+				await Promise.all([this.loadGroupData(), this.loadUsers()]);
+			}
+
+			this.isUpdateGroupModalComponentOpen = false;
+			this.cdr.detectChanges();
+		} catch (error: any) {
+			console.error(error);
+			this.error = error.toString();
+			// TODO: notice
 		}
 	}
 }

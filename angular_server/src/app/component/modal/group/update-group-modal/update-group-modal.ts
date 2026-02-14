@@ -5,11 +5,7 @@ import { ModalComponent } from '../../modal/modal';
 import { User } from '../../../../core/model/user';
 import { UserModelAdminResponse } from '../../../../core/model/user-model-admin-response';
 import { GroupDetails } from '../../../../core/model/group-details';
-
-export interface UpdateGroupModel {
-	newName: string;
-	creatorEmail: string;
-}
+import { GroupUpdateModel } from '../../../../core/model/group-update-model';
 
 @Component({
 	selector: 'app-update-group-modal',
@@ -23,16 +19,12 @@ export class UpdateGroupModalComponent implements OnChanges {
 	@Input() users: User[] = [];
 	@Input() currentGroup!: GroupDetails<UserModelAdminResponse>;
 	@Output() onClose = new EventEmitter<void>();
-	@Output() onConfirm = new EventEmitter<UpdateGroupModel>();
+	@Output() onConfirm = new EventEmitter<GroupUpdateModel>();
 
 	submitting = false;
-	formData: UpdateGroupModel = {
-		newName: '',
-		creatorEmail: ''
-	};
+	formData: GroupUpdateModel = new GroupUpdateModel('', '');
 	searchQuery = '';
 	filteredUsers: User[] = [];
-	showUsersList = false;
 	errors: { [key: string]: string | null } = {};
 
 	ngOnChanges(changes: SimpleChanges): void {
@@ -43,7 +35,6 @@ export class UpdateGroupModalComponent implements OnChanges {
 			};
 			this.errors = {};
 			this.searchQuery = '';
-			this.showUsersList = false;
 		}
 		if (changes['isOpen'] && !this.isOpen) {
 			this.resetForm();
@@ -55,7 +46,6 @@ export class UpdateGroupModalComponent implements OnChanges {
 
 	onSearchChange(): void {
 		this.filterUsers();
-		this.showUsersList = true;
 	}
 
 	filterUsers(): void {
@@ -75,14 +65,13 @@ export class UpdateGroupModalComponent implements OnChanges {
 	selectCreator(email: string): void {
 		this.formData.creatorEmail = email;
 		this.searchQuery = '';
-		this.showUsersList = false;
+		this.filteredUsers = [];
 		delete this.errors['creatorEmail'];
 	}
 
-	clearSelection(): void {
+	clearCreator(): void {
 		this.formData.creatorEmail = '';
 		this.searchQuery = '';
-		this.showUsersList = true;
 	}
 
 	validateForm(): boolean {
@@ -130,7 +119,6 @@ export class UpdateGroupModalComponent implements OnChanges {
 		this.formData = { newName: '', creatorEmail: '' };
 		this.searchQuery = '';
 		this.filteredUsers = [];
-		this.showUsersList = false;
 		this.errors = {};
 	}
 

@@ -9,10 +9,15 @@
 	transition: background-color 0.2s;
 }
 
-.submit-button[data-dangerous="true"]{
-	color: #bb4848;
-}
-
 .submit-button:hover {
 	background-color: #484848;
+}
+
+.submit-button[data-dangerous="true"]{
+	background-color: #dc143c;
+	color: #fafad2;
+}
+.submit-button[data-dangerous="true"]:hover {
+	background-color: #fe365e;
+	color: #fdfdf5;
 }

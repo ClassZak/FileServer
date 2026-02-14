@@ -151,11 +151,16 @@ export class UserPage implements OnInit {
 			if (response.error)
 				throw Error(response.error);
 			if (!response.success)
-				throw Error('Ошибка удаления пользователя');
+				throw Error('Ошибка Обновления данных пользователя');
+			else if (this.userEmail != newUserData.email){
+				this.router.navigate([`/user/${encodeURIComponent(newUserData.email)}`]);
+			}
+			console.log('User data updated')
 			this.setIsUpdateUserModalOpen(false);
-			this.loadUserData();
+			await this.loadUserData();
+			this.cdr.detectChanges();
 		} catch (error) {
-			console.error('Error updating password:', error);
+			console.error('Error updating user data:', error);
 			// TODO: notice
 		}
 	}
@@ -173,7 +178,8 @@ export class UserPage implements OnInit {
 				new UpdatePasswordRequest(passwordData.oldPassword, passwordData.newPassword)
 			);
 			this.setIsUpdateUserPasswordModalOpen(false);
-			this.loadUserData();
+			await this.loadUserData();
+			this.cdr.detectChanges();
 		} catch (error) {
 			console.error('Error updating password:', error);
 			// TODO: notice

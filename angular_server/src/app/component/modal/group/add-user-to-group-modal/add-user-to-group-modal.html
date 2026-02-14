@@ -1,9 +1,9 @@
 <app-modal
 	[isOpen]="isOpen"
-	[title]="'Добавить пользователя в группу' + groupName"
+	title="Добавить пользователя в группу {{ groupName }}"
 	(onClose)="closeModal()"
 >
-	<form (ngSubmit)="submitForm()" class="add-user-to-group-form">
+	<form (ngSubmit)="submitForm()" class="modal-form">
 		@if (errors['server']) {
 			<div class="error-message">
 				{{ errors['server'] }}
@@ -12,73 +12,64 @@
 
 		<div class="form-group">
 			<div>
-
 				<label for="userSearch">Выберите пользователя для добавления *</label>
-				<!-- Search input -->
 				<input
 					id="userSearch"
 					type="text"
 					[(ngModel)]="searchQuery"
 					(ngModelChange)="onSearchChange()"
 					name="searchQuery"
-					placeholder="Начните вводить email, фамилию или имя пользователя"
+					placeholder="Начните вводить email, фамилию или имя"
 					[disabled]="submitting"
 					autocomplete="off"
 				/>
-			</div>
-				
-			<!-- Selected user -->
-			@if (selectedUser && !searchQuery) {
-				<div class="selected-user">
-					<div class="selected-user-name">
-						<strong>Выбран:</strong> {{ selectedUser.surname }} {{ selectedUser.name }} {{ selectedUser.patronymic }}
-					</div>
-					<div class="selected-user-email">{{ selectedUser.email }}</div>
-					<button
-						type="button"
-						(click)="clearSelection()"
-						class="change-button"
-					>
-						Изменить
-					</button>
-				</div>
-			}
 
-			<!-- User list (visible only when searching) -->
-			@if (searchQuery && filteredUsers.length > 0) {
-				<div class="user-list">
-					@for (user of filteredUsers; track user.email) {
-						<div
-							class="user-item"
-							(click)="selectUser(user.email)"
-						>
-							<div class="user-name">
-								{{ user.surname }} {{ user.name }} {{ user.patronymic }}
-							</div>
-							<div class="user-email">{{ user.email }}</div>
+				<!-- Выбранный пользователь (если есть и не идёт поиск) -->
+				@if (selectedUser && !searchQuery) {
+					<div class="selected-user">
+						<div class="selected-user-name">
+							<strong>Выбран:</strong> {{ selectedUser.surname }} {{ selectedUser.name }} {{ selectedUser.patronymic }}
 						</div>
-					}
-				</div>
-			}
+						<div class="selected-user-email">{{ selectedUser.email }}</div>
+						<button type="button" (click)="clearSelection()" class="change-button">
+							Изменить
+						</button>
+					</div>
+				}
 
-			@if (searchQuery && filteredUsers.length === 0) {
-				<div class="no-results">
-					Пользователи не найдены
-				</div>
-			}
+				<!-- Результаты поиска -->
+				@if (searchQuery && filteredUsers.length > 0) {
+					<div class="user-list">
+						@for (user of filteredUsers; track user.email) {
+							<div class="user-item" (click)="selectUser(user.email)">
+								<div class="user-name">
+									{{ user.surname }} {{ user.name }} {{ user.patronymic }}
+								</div>
+								<div class="user-email">{{ user.email }}</div>
+							</div>
+						}
+					</div>
+				}
 
-			@if (errors['userEmail']) {
-				<div class="error-text">{{ errors['userEmail'] }}</div>
-			}
+				@if (searchQuery && filteredUsers.length === 0) {
+					<div class="no-results">Пользователи не найдены</div>
+				}
+
+				@if (errors['userEmail']) {
+					<div class="error-text">{{ errors['userEmail'] }}</div>
+				}
+			</div>
 		</div>
 
+		<!-- Информационный блок -->
 		<div class="form-info">
 			<strong>Информация:</strong>
 			<ul>
-				<li>Будут показаны только пользователи, которых еще нет в группе</li>
+				<li>Пользователь будет добавлен в группу «{{ groupName }}»</li>
 			</ul>
 		</div>
 
+		<!-- Кнопки действий -->
 		<div class="form-actions">
 			<button
 				type="button"
