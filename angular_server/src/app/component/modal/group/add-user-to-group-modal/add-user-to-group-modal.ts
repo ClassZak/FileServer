@@ -100,6 +100,8 @@ export class AddUserToGroupModalComponent implements OnChanges {
 	}
 
 	get selectedUser(): User | undefined {
+		if(!this.users || this.users.length == 0)
+			return undefined;
 		return this.users.find(u => u.email === this.selectedUserEmail);
 	}
 }

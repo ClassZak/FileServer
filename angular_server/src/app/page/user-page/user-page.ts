@@ -24,7 +24,6 @@ import { UpdatePasswordModalModel } from '../../core/model/update-password-modal
 		AppHeader,
 		AppFooter,
 		LoadingSpinner,
-		UserTable,
 
 		UpdateUserModalComponent,
 		UpdateUserPasswordModalComponent,
@@ -43,6 +42,7 @@ export class UserPage implements OnInit {
 	myUserData?: User;
 	isAdmin: boolean = false;
 	private paramSubscription?: Subscription;
+	error: string = '';
 
 	setIsUpdateUserModalOpen(status: boolean){
 		this.isUpdateUserModalOpen = status;
@@ -54,7 +54,6 @@ export class UserPage implements OnInit {
 		this.isDeleteUserModalOpen = status;
 	}
 
-	error: string = '';
 
 	constructor(
 		private router: Router,
@@ -80,6 +79,10 @@ export class UserPage implements OnInit {
 	ngOnDestroy(): void {
 		this.paramSubscription?.unsubscribe();
 	}
+
+
+
+	
 	private async checkAdminStatus(): Promise<void> {
 		try {
 			this.isLoading = true;

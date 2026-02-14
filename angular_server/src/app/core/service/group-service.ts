@@ -9,6 +9,7 @@ import { GroupUpdateModel } from '../model/group-update-model';
 import { CreateConfig } from './create-config';
 import { DefaultServiceResult } from '../model/default-server-result';
 import { ErrorContainer } from '../model/error-container';
+import { GroupFullDetailsAdminResponse, GroupFullDetailsResponse } from '../model/api-response-types';
 
 export class CheckMembershipResult{
 	isMember: boolean = false;
@@ -31,9 +32,9 @@ export class GroupService {
 	 * 
 	 * @param {string} authToken JWT token
 	 * @param {string} groupName Group name
-	 * @returns {Promise<Object|null|ErrorContainer>} Object with "group" key or null if no access
+	 * @returns {Promise<GroupFullDetailsResponse | null | ErrorContainer>} Object with "group" key or null if no access
 	 */
-	static async getGroupFullDetails(authToken:string, groupName:string) : Promise<Object|null|ErrorContainer> {
+	static async getGroupFullDetails(authToken:string, groupName:string) : Promise<GroupFullDetailsResponse | null | ErrorContainer> {
 		try {
 			const response = await axios.get(
 				`/api/groups/name/${encodeURIComponent(groupName)}/full`,
@@ -92,9 +93,9 @@ export class GroupService {
 	 * 
 	 * @param {string} authToken JWT token
 	 * @param {string} groupName Group name
-	 * @returns {Promise<Object|null|ErrorContainer>} Object with "group" key or null if no access or error object
+	 * @returns {Promise<GroupFullDetailsAdminResponse | null | ErrorContainer>} Object with "group" key or null if no access or error object
 	 */
-	static async getGroupFullDetailsAdmin(authToken:string, groupName:string) : Promise<Object|null|ErrorContainer> {
+	static async getGroupFullDetailsAdmin(authToken:string, groupName:string) : Promise<GroupFullDetailsAdminResponse | null | ErrorContainer>  {
 		try {
 			const response = await axios.get(
 				`/api/groups/name/${encodeURIComponent(groupName)}/full`,
