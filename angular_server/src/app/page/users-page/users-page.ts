@@ -104,8 +104,9 @@ export class UsersPage implements OnInit {
 			if (!response.success)
 				throw Error('Не удалось создать пользователя');
 
-			this.loadUsers();
 			this.isCreateUserModalComponentOpen = false;
+			await this.loadUsers();
+			this.cdr.detectChanges();
 		} catch (error: any) {
 			console.error('Error updating password:', error);
 			this.error = error.toString();
