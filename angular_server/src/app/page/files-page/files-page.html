@@ -1,1 +1,79 @@
+<app-app-header></app-app-header>
+<main class="MainContent">
+	@if (isLoading) {
+		<app-loading-spinner [title]="'Загрузка'"></app-loading-spinner>
+	} @else {
+		<div className="files-page-container">
+			@if (!isSearchMode){
 
+			} @else {
+				<div className="files-header">
+					<h1 className="files-title">Файловый менеджер</h1>
+				</div>
+				<div className="navigation-panel">
+					<div className='search-panel'>
+						<FileSearch currentPath={currentPath} />
+					</div>
+					<Breadcrumbs 
+						currentPath={currentPath} 
+						onNavigate={navigateToFolder} 
+						navigateUp={navigateUp}
+					/>
+					<div className="navigation-row">
+						<div className="path-input-container">
+							<form onSubmit={handlePathSubmit} className="path-form">
+								<input
+									type="text"
+									value={pathInput}
+									onChange={handlePathInputChange}
+									onKeyDown={handlePathInputKeyDown}
+									placeholder="Введите путь (например: documents/images)"
+									className="path-input"
+								/>
+								<button
+									type="submit"
+									className="path-submit-button"
+								>
+									Перейти
+								</button>
+							</form>
+						</div>
+						
+						<div className="navigation-actions">
+							<button
+								onClick={navigateUp}
+								disabled={!currentPath}
+								className="nav-button back-button"
+								type="button"
+							>
+								Назад
+							</button>
+						</div>
+					</div>
+					<span className="current-path-label">Текущий путь:</span> {currentPath || '/'}
+					<div className='flex' style={{gap:'10px', marginTop:'10px'}}>
+						<button
+							onClick={() => setShowCreateFolderModal(true)}
+							className="nav-button create-button"
+							type="button"
+						>
+							Создать папку
+						</button>
+						
+						<label className="nav-button upload-button">
+							{uploading ? 'Загрузка...' : 'Загрузить файл'}
+							<input
+								type="file"
+								className="file-input"
+								onChange={handleFileUploadWithService}
+								disabled={uploading}
+							/>
+						</label>
+					</div>
+					
+				</div>
+			}
+		</div>
+	}
+</main>
+<app-footer></app-footer>

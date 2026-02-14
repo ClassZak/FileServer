@@ -1,6 +1,15 @@
 import { Injectable } from '@angular/core';
 import axios, { AxiosError } from 'axios';
 import { CreateConfig } from './create-config';
+import { ErrorContainer } from '../model/error-container';
+import { DefaultServiceResult } from '../model/default-server-result';
+import { FileInfo } from '../model/file-info';
+import { FolderInfo } from '../model/folder-info';
+
+export class DirectoryList{
+	constructor(public files: Array<FileInfo>, public folders: Array<FolderInfo>){
+	}
+}
 
 @Injectable({
 	providedIn: 'root',
@@ -13,6 +22,27 @@ export class FileService {
 		} catch (error) {
 			console.error('Login error:', error);
 			return false;
+		}
+	}
+
+
+	/**
+	 * 
+	 * @param {string} token Auth token
+	 * @param {string} path Directory path
+	 * @returns Error or data
+	 */
+	public static async loadDirectory(token: string, path: string) : Promise<ErrorContainer|DirectoryList> {
+		try {
+			const response = await axios.get(
+				`/api/files/list?path=${encodeURIComponent(path)}`, 
+				CreateConfig.createAuthConfig(token)
+			);
+			const dirList = new DirectoryList(response.data.files, response.data.folders);
+			return dirList;
+		} catch (error: any) {
+			console.error(error);
+			return {error: error} ;
 		}
 	}
 	
