@@ -41,6 +41,10 @@ footer a {
 	text-decoration: none;
 	text-align: center;
 }
+footer a:hover {
+	/* color: #333; */
+	text-decoration: underline;
+}
 footer .social{
 	text-align: center;
 }

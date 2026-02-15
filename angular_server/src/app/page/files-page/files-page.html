@@ -87,15 +87,12 @@
 			</div>
 
 			<div class="navigation-panel">
-				<div class="search-panel">
-					<app-file-search [currentPath]="currentPath"></app-file-search>
-				</div>
+				<app-file-search [currentPath]="currentPath"></app-file-search>
 				<app-breadcrumbs
 					[currentPath]="currentPath"
 					(navigate)="navigateToFolder($event)"
 					(navigateUp)="navigateUp()"
 				></app-breadcrumbs>
-
 				<div class="navigation-row">
 					<div class="path-input-container">
 						<form (ngSubmit)="onPathSubmit()" class="path-form">
@@ -125,7 +122,7 @@
 
 				<span class="current-path-label">Текущий путь:</span> {{ currentPath || '/' }}
 
-				<div class="flex" style="gap: 10px; margin-top: 10px;">
+				<div style="display: flex; gap: 10px; margin-top: 10px;">
 					<button
 						(click)="openCreateFolderModal()"
 						class="nav-button create-button"
