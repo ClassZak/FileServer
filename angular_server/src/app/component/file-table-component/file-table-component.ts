@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FileInfo } from '../../core/model/file-info';
 import { IconManager } from '../icon-manager/icon-manager';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
-// Импортируем все цветные иконки
+
 import * as fileIcons from '@ng-icons/material-file-icons/colored';
 
 @Component({

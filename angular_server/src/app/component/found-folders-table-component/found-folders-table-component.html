@@ -1,6 +1,9 @@
 @if (folders.length > 0) {
 	<div>
-		<h4>Найденные папки</h4>
+		<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+			<ng-icon [name]="getIcon({ isFolder: true })" size="20"></ng-icon>
+			<h3 style="margin: 0;">Найденные папки</h3>
+		</div>
 		<table class="model-table">
 			<thead>
 				<tr>
@@ -13,8 +16,18 @@
 			<tbody>
 				@for (folder of folders; track $index) {
 					<tr>
-						<td>{{ folder.name }}</td>
-						<td>{{ folder.fullPath }}</td>
+						<td>
+							<div style="display: flex; align-items: center; gap: 8px;">
+								<ng-icon [name]="getIcon({ isFolder: true })"></ng-icon>
+								{{ folder.name }}
+							</div>
+						</td>
+						<td>
+							<div style="display: flex; align-items: center; gap: 8px;">
+								<ng-icon [name]="getIcon({ isFolder: true })"></ng-icon>
+								{{ folder.fullPath }}
+							</div>
+						</td>
 						<td>{{ folder.lastModified }}</td>
 						<td>
 							<div class="buttons-row">

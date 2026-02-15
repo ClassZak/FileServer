@@ -100,7 +100,6 @@
 	color: #2b6cb0;
 	border: 1px solid #333;
 	border-left: none;
-	border-radius: 0 4px 4px 0;
 	cursor: pointer;
 	font-size: 14px;
 	transition: background-color 0.2s;
@@ -197,18 +196,18 @@
 }
 
 .search-mode-exit-button {
-	padding: 6px 12px;
+	/*padding: 3px 6px;
 	background-color: #000e16;
 	color: #2b6cb0;
 	border: 1px solid #333;
 	border-radius: 4px;
 	cursor: pointer;
-	font-size: 14px;
+	font-size: 14px;*/
 	transition: background-color 0.2s;
 }
 
 .search-mode-exit-button:hover {
-	background-color: #90cdf4;
+	text-decoration: underline;
 }
 
 /* Общие стили */

@@ -1,6 +1,9 @@
 @if (files.length > 0){
 	<div class="found-files-table">
-		<h4>Найденные файлы</h4>
+		<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+			<ng-icon [name]="getIcon({ isFolder: false })" size="20"></ng-icon>
+			<h3 style="margin: 0;">Найденные файлы</h3>
+		</div>
 		<table class="model-table">
 			<thead>
 				<tr>
@@ -15,9 +18,24 @@
 			<tbody>
 				@for (file of files; track $index) {
 					<tr>
-						<td>{{getRelativePath(file)}}</td>
-						<td>{{file.name}}</td>
-						<td>{{file.extension}}</td>
+						<td>
+							<div style="display: flex; align-items: center; gap: 8px;">
+								<ng-icon [name]="getIcon({ isFolder: false, extension: file.extension })"></ng-icon>
+								{{getRelativePath(file)}}
+							</div>
+						</td>
+						<td>
+							<div style="display: flex; align-items: center; gap: 8px;">
+								<ng-icon [name]="getIcon({ isFolder: false, extension: file.extension })"></ng-icon>
+								{{ file.name }}
+							</div>
+						</td>
+						<td>
+							<div style="display: flex; align-items: center; gap: 8px;">
+								<ng-icon [name]="getIcon({ isFolder: false, extension: file.extension })"></ng-icon>
+								{{ file.extension }}
+							</div>
+						</td>
 						<td>{{file.readableSize}}</td>
 						<td>{{file.lastModified}}</td>
 						<td>

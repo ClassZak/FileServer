@@ -1,6 +1,9 @@
 @if (folders.length > 0){
 	<div class="folder-table">
-		<h3>Папки</h3>
+		<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+			<ng-icon [name]="getIcon({ isFolder: true })" size="20"></ng-icon>
+			<h3 style="margin: 0;">Папки</h3>
+		</div>
 		<table class="model-table">
 			<thead>
 				<tr>
@@ -13,7 +16,12 @@
 			<tbody>
 				@for (folder of folders; track $index){
 					<tr>
-						<td>{{ folder.name }}</td>
+						<td>
+							<div style="display: flex; align-items: center; gap: 8px;">
+								<ng-icon [name]="getIcon({ isFolder: true })"></ng-icon>
+								{{ folder.name }}
+							</div>
+						</td>
 						<td>{{ folder.lastModified }}</td>
 						<td>{{ folder.readableSize }}</td>
 						<td>

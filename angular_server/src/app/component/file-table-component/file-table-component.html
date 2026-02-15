@@ -1,7 +1,9 @@
 @if (files.length > 0) {
 	<div class="file-table">
-		<ng-icon [name]="getIcon({ isFolder: true })"></ng-icon>
-		<h3>Файлы</h3>
+		<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+			<ng-icon [name]="getIcon({ isFolder: false })" size="20"></ng-icon>
+			<h3 style="margin: 0;">Файлы</h3>
+		</div>
 		<table class="model-table">
 			<thead>
 				<tr>
@@ -16,10 +18,17 @@
 				@for (file of files; track $index) {
 					<tr>
 						<td>
-							<ng-icon [name]="getIcon({ isFolder: false, extension: file.extension })"></ng-icon>
-							{{ file.name }}
+							<div style="display: flex; align-items: center; gap: 8px;">
+								<ng-icon [name]="getIcon({ isFolder: false, extension: file.extension })"></ng-icon>
+								{{ file.name }}
+							</div>
 						</td>
-						<td>{{ file.extension }}</td>
+						<td>
+							<div style="display: flex; align-items: center; gap: 8px;">
+								<ng-icon [name]="getIcon({ isFolder: false, extension: file.extension })"></ng-icon>
+								{{ file.extension }}
+							</div>
+						</td>
 						<td>{{ file.readableSize }}</td>
 						<td>{{ file.lastModified }}</td>
 						<td>
