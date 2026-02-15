@@ -1,10 +1,11 @@
 @if (folders.length > 0) {
-	<div class="found-folders-table">
+	<div>
 		<h4>Найденные папки</h4>
-		<table>
+		<table class="model-table">
 			<thead>
 				<tr>
 					<th>Имя</th>
+					<th>Полный путь</th>
 					<th>Дата изменения</th>
 					<th>Действия</th>
 				</tr>
@@ -13,16 +14,19 @@
 				@for (folder of folders; track $index) {
 					<tr>
 						<td>{{ folder.name }}</td>
+						<td>{{ folder.fullPath }}</td>
 						<td>{{ folder.lastModified }}</td>
 						<td>
-							<app-redirection-button
-								[className]="'blue-button'"
-								[reference]="'/files/'+folder.fullPath"
-								[title]="'Открыть'"
-							>
-							</app-redirection-button>
-							<button (click)="deleteFolder(folder)" class="action-button delete">Удалить
-							</button>
+							<div class="buttons-row">
+								<app-redirection-button
+									[className]="'blue-button'"
+									[reference]="'/files/'+folder.fullPath"
+									[title]="'Открыть'"
+								>
+								</app-redirection-button>
+								<button (click)="deleteFolder(folder)" class="red-button">Удалить
+								</button>
+							</div>
 						</td>
 					</tr>
 				}

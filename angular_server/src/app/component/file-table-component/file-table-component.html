@@ -1,7 +1,7 @@
 @if (files.length > 0){
 	<div class="file-table">
 		<h3>Файлы</h3>
-		<table>
+		<table class="model-table">
 			<thead>
 				<tr>
 					<th>Имя</th>
@@ -17,12 +17,14 @@
 						<td>{{ file.size }}</td>
 						<td>{{ file.lastModified }}</td>
 						<td>
-							<button 
-								(click)="downloadFile(file)" class="action-button download">Скачать
-							</button>
-							<button
-								(click)="deleteFile(file)" class="action-button delete">Удалить
-							</button>
+							<div class="buttons-row">
+								<button 
+									(click)="downloadFile(file)" class="blue-button">Скачать
+								</button>
+								<button
+									(click)="deleteFile(file)" class="red-button">Удалить
+								</button>
+							</div>
 						</td>
 					</tr>
 				}

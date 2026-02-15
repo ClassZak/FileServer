@@ -1,7 +1,7 @@
 @if (files.length > 0){
 	<div class="found-files-table">
 		<h4>Найденные файлы</h4>
-		<table>
+		<table class="model-table">
 			<thead>
 				<tr>
 					<th>Путь</th>
@@ -19,10 +19,12 @@
 						<td>{{file.size}}</td>
 						<td>{{file.lastModified}}</td>
 						<td>
-							<button (click)="downloadFile(file)" class="action-button download">Скачать
-							</button>
-							<button (click)="deleteFile(file)" class="action-button delete">Удалить
-							</button>
+							<div class="buttons-row">
+								<button (click)="downloadFile(file)" class="blue-button">Скачать
+								</button>
+								<button (click)="deleteFile(file)" class="red-button">Удалить
+								</button>
+							</div>
 						</td>
 					</tr>
 				}

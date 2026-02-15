@@ -1,7 +1,7 @@
 @if (folders.length > 0){
 	<div class="folder-table">
 		<h3>Папки</h3>
-		<table>
+		<table class="model-table">
 			<thead>
 				<tr>
 					<th>Имя</th>
@@ -17,14 +17,16 @@
 						</td>
 						<td>{{ folder.lastModified }}</td>
 						<td>
-							<app-redirection-button
-								[className]="'blue-button'"
-								[reference]="'/files/'+folder.fullPath"
-								[title]="'Открыть'"
-							>
-							</app-redirection-button>
-							<button (click)="deleteFolder(folder)" class="action-button delete">Удалить
-							</button>
+							<div class="buttons-row">
+								<app-redirection-button
+									[className]="'blue-button'"
+									[reference]="'/files/'+folder.fullPath"
+									[title]="'Открыть'"
+								>
+								</app-redirection-button>
+								<button (click)="deleteFolder(folder)" class="red-button">Удалить
+								</button>
+							</div>
 						</td>
 					</tr>
 				}
