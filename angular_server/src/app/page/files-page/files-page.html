@@ -186,7 +186,7 @@
 	[isOpen]="showCreateFolderModal"
 	(onClose)="closeCreateFolderModal()"
 	[currentPath]="currentPath"
-	(onCreate)="handleCreateFolder($event)"
+	(onConfirm)="handleCreateFolder($event)"
 ></app-create-folder-modal>
 
 <app-delete-confirmation-modal

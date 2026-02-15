@@ -1,10 +1,11 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ModalComponent } from "../../modal/modal";
 
 @Component({
 	selector: 'app-delete-confirmation-modal',
 	standalone: true,
-	imports: [CommonModule],
+	imports: [CommonModule, ModalComponent],
 	templateUrl: './delete-confirmation-modal-component.html',
 	styleUrls: ['./delete-confirmation-modal-component.css']
 })
@@ -14,11 +15,12 @@ export class DeleteConfirmationModalComponent {
 	@Output() onClose = new EventEmitter<void>();
 	@Output() onConfirm = new EventEmitter<void>();
 
-	close(): void {
+	closeModal(): void {
 		this.onClose.emit();
 	}
 
-	confirm(): void {
+	confirmModal(): void {
 		this.onConfirm.emit();
+		this.closeModal();
 	}
 }

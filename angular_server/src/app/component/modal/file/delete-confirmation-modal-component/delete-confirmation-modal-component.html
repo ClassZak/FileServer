@@ -1,12 +1,34 @@
-@if (isOpen){
-	<div class="modal" (click)="close()">
-		<div class="modal-content" (click)="$event.stopPropagation()">
-			<h3>Подтверждение удаления</h3>
-			<p>Вы уверены, что хотите удалить <strong>{{ itemName }}</strong>?</p>
-			<div class="modal-actions">
-				<button (click)="close()" class="cancel-button">Отмена</button>
-				<button (click)="confirm()" class="delete-button">Удалить</button>
-			</div>
+<app-modal
+	[isOpen]="isOpen"
+	title="Удаление"
+	(onClose)="closeModal()"
+>
+	<form (ngSubmit)="confirmModal()" class="modal-form">
+		<div class="confirmation-content">
+			<p>
+				Вы уверены, что хотите удалить
+				<span class="highlight"> "{{ itemName }}"</span>?
+			</p>
+			<p class="warning">
+				Это действие нельзя отменить.
+			</p>
 		</div>
-	</div>
-}
+		<div class="form-actions">
+			<button
+				type="button"
+				(click)="closeModal()"
+				class="cancel-button"
+			>
+				Отмена
+			</button>
+			<button
+				type="button"
+				(click)="confirmModal()"
+				class="submit-button"
+				data-dangerous="true"
+			>
+				Удалить
+			</button>
+		</div>
+	</form>
+</app-modal>
