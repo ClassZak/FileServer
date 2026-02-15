@@ -1,10 +1,12 @@
-@if (files.length > 0){
+@if (files.length > 0) {
 	<div class="file-table">
+		<ng-icon [name]="getIcon({ isFolder: true })"></ng-icon>
 		<h3>Файлы</h3>
 		<table class="model-table">
 			<thead>
 				<tr>
 					<th>Имя</th>
+					<th>Расширение</th>
 					<th>Размер</th>
 					<th>Дата изменения</th>
 					<th>Действия</th>
@@ -13,17 +15,17 @@
 			<tbody>
 				@for (file of files; track $index) {
 					<tr>
-						<td>{{ file.name }}</td>
-						<td>{{ file.size }}</td>
+						<td>
+							<ng-icon [name]="getIcon({ isFolder: false, extension: file.extension })"></ng-icon>
+							{{ file.name }}
+						</td>
+						<td>{{ file.extension }}</td>
+						<td>{{ file.readableSize }}</td>
 						<td>{{ file.lastModified }}</td>
 						<td>
 							<div class="buttons-row">
-								<button 
-									(click)="downloadFile(file)" class="blue-button">Скачать
-								</button>
-								<button
-									(click)="deleteFile(file)" class="red-button">Удалить
-								</button>
+								<button (click)="downloadFile(file)" class="blue-button">Скачать</button>
+								<button (click)="deleteFile(file)" class="red-button">Удалить</button>
 							</div>
 						</td>
 					</tr>

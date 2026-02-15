@@ -3,9 +3,10 @@ export class FolderInfo{
 		public name: string,
 		public fullPath: string,
 		public lastModified: Date,
-		public size: number,
+		public size: bigint,
+		public extension: string,
 		public readableSize: string,
-		public itemCount: number,
+		public itemCount: bigint,
 		public isDirectory: boolean = true
 	){}
 }

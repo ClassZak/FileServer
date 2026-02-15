@@ -3,21 +3,21 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Breadcrumbs } from './breadcrumbs';
 
 describe('Breadcrumbs', () => {
-  let component: Breadcrumbs;
-  let fixture: ComponentFixture<Breadcrumbs>;
+	let component: Breadcrumbs;
+	let fixture: ComponentFixture<Breadcrumbs>;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [Breadcrumbs]
-    })
-    .compileComponents();
+	beforeEach(async () => {
+		await TestBed.configureTestingModule({
+			imports: [Breadcrumbs]
+		})
+		.compileComponents();
 
-    fixture = TestBed.createComponent(Breadcrumbs);
-    component = fixture.componentInstance;
-    await fixture.whenStable();
-  });
+		fixture = TestBed.createComponent(Breadcrumbs);
+		component = fixture.componentInstance;
+		await fixture.whenStable();
+	});
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
+	it('should create', () => {
+		expect(component).toBeTruthy();
+	});
 });

@@ -3,7 +3,7 @@ export class FileInfo{
 		public name: string,
 		public fullPath: string,
 		public lastModified: Date,
-		public size: number,
+		public size: bigint,
 		public extension: string,
 		public readableSize: string,
 		public isDirectory: boolean = false

@@ -6,6 +6,7 @@
 				<tr>
 					<th>Путь</th>
 					<th>Имя</th>
+					<th>Расширение</th>
 					<th>Размер</th>
 					<th>Дата изменения</th>
 					<th>Действия</th>
@@ -16,7 +17,8 @@
 					<tr>
 						<td>{{getRelativePath(file)}}</td>
 						<td>{{file.name}}</td>
-						<td>{{file.size}}</td>
+						<td>{{file.extension}}</td>
+						<td>{{file.readableSize}}</td>
 						<td>{{file.lastModified}}</td>
 						<td>
 							<div class="buttons-row">

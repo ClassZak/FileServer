@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { FileInfo } from '../../core/model/file-info';
 import { RedirectionButton } from '../redirection-button/redirection-button';
 
+
 @Component({
 	selector: 'app-found-files-table',
 	standalone: true,

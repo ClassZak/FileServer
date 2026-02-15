@@ -6,16 +6,16 @@
 				<tr>
 					<th>Имя</th>
 					<th>Дата изменения</th>
+					<th>Размер</th>
 					<th>Действия</th>
 				</tr>
 			</thead>
 			<tbody>
 				@for (folder of folders; track $index){
 					<tr>
-						<td>
-							{{ folder.name }}
-						</td>
+						<td>{{ folder.name }}</td>
 						<td>{{ folder.lastModified }}</td>
+						<td>{{ folder.readableSize }}</td>
 						<td>
 							<div class="buttons-row">
 								<app-redirection-button

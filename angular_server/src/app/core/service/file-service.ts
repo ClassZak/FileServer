@@ -90,7 +90,7 @@ export class FileService {
 	 * @param token - JWT authentication token.
 	 * @param path - Directory path (empty string for root).
 	 * @returns Promise resolving to a DirectoryList object or an ErrorContainer.
-	 *          If the API returns an error structure, it is returned as ErrorContainer.
+	 *					If the API returns an error structure, it is returned as ErrorContainer.
 	 * @throws Will throw an error for network failures or unexpected responses.
 	 */
 	static async loadDirectory(token: string, path: string): Promise<DirectoryList | ErrorContainer> {
