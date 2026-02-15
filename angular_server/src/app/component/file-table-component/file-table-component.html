@@ -1,0 +1,32 @@
+@if (files.length > 0){
+	<div class="file-table">
+		<h3>Файлы</h3>
+		<table>
+			<thead>
+				<tr>
+					<th>Имя</th>
+					<th>Размер</th>
+					<th>Дата изменения</th>
+					<th>Действия</th>
+				</tr>
+			</thead>
+			<tbody>
+				@for (file of files; track $index) {
+					<tr>
+						<td>{{ file.name }}</td>
+						<td>{{ file.size }}</td>
+						<td>{{ file.lastModified }}</td>
+						<td>
+							<button 
+								(click)="downloadFile(file)" class="action-button download">Скачать
+							</button>
+							<button
+								(click)="deleteFile(file)" class="action-button delete">Удалить
+							</button>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}

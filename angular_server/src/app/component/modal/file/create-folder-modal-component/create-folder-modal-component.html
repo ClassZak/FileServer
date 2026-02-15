@@ -1,0 +1,18 @@
+@if (isOpen){
+	<div class="modal" (click)="close()">
+		<div class="modal-content" (click)="$event.stopPropagation()">
+			<h3>Создать новую папку</h3>
+			<p>Текущий путь: {{ currentPath || '/' }}</p>
+			<input
+				type="text"
+				[(ngModel)]="folderName"
+				placeholder="Название папки"
+				class="modal-input"
+			/>
+			<div class="modal-actions">
+				<button (click)="close()" class="cancel-button">Отмена</button>
+				<button (click)="create()" class="create-button">Создать</button>
+			</div>
+		</div>
+	</div>
+}

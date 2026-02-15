@@ -1,0 +1,12 @@
+@if (isOpen){
+	<div class="modal" (click)="close()">
+		<div class="modal-content" (click)="$event.stopPropagation()">
+			<h3>Подтверждение удаления</h3>
+			<p>Вы уверены, что хотите удалить <strong>{{ itemName }}</strong>?</p>
+			<div class="modal-actions">
+				<button (click)="close()" class="cancel-button">Отмена</button>
+				<button (click)="confirm()" class="delete-button">Удалить</button>
+			</div>
+		</div>
+	</div>
+}

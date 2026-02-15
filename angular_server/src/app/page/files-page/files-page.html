@@ -1,79 +1,197 @@
 <app-app-header></app-app-header>
 <main class="MainContent">
-	@if (isLoading) {
-		<app-loading-spinner [title]="'Загрузка'"></app-loading-spinner>
+	@if (loading){
+		<app-loading-spinner [title]="'Загрузка'">
+		</app-loading-spinner>
 	} @else {
-		<div className="files-page-container">
-			@if (!isSearchMode){
-
-			} @else {
-				<div className="files-header">
-					<h1 className="files-title">Файловый менеджер</h1>
+	<div class="files-page-container">
+		<!-- SEARCH MODE -->
+		@if (isSearchMode) {
+			<div class="search-mode-panel">
+				<div class="flex">
+					<div class="search-mode-info">
+						<span class="search-mode-label">Режим поиска:</span>
+						<span class="search-mode-query">
+							"{{ searchQuery }}" в {{ searchPath || 'корневой папке' }}
+						</span>
+					</div>
+					<app-redirection-button
+						[reference]="'/files/' + currentPath"
+						title="Выйти из поиска"
+						className="search-mode-exit-button"
+					></app-redirection-button>
 				</div>
-				<div className="navigation-panel">
-					<div className='search-panel'>
-						<FileSearch currentPath={currentPath} />
+			</div>
+
+			<div class="search-results">
+				@if (searchLoading) {
+					<div class="search-loading">
+						<div class="loading-spinner"></div>
+						<p>Выполняется поиск...</p>
 					</div>
-					<Breadcrumbs 
-						currentPath={currentPath} 
-						onNavigate={navigateToFolder} 
-						navigateUp={navigateUp}
-					/>
-					<div className="navigation-row">
-						<div className="path-input-container">
-							<form onSubmit={handlePathSubmit} className="path-form">
-								<input
-									type="text"
-									value={pathInput}
-									onChange={handlePathInputChange}
-									onKeyDown={handlePathInputKeyDown}
-									placeholder="Введите путь (например: documents/images)"
-									className="path-input"
-								/>
-								<button
-									type="submit"
-									className="path-submit-button"
-								>
-									Перейти
-								</button>
-							</form>
-						</div>
-						
-						<div className="navigation-actions">
-							<button
-								onClick={navigateUp}
-								disabled={!currentPath}
-								className="nav-button back-button"
-								type="button"
-							>
-								Назад
-							</button>
+				} @else if (error) {
+					<app-error-message
+						[message]="error"
+						(onClose)="error = ''"
+						[showNavigation]="true"
+						(onNavigateUp)="navigateUp()"
+						[showUpButton]="!!searchPath"
+					></app-error-message>
+				} @else if (searchResults) {
+					<div class="search-results-header">
+						<h2 class="search-results-title">Результаты поиска</h2>
+						<div class="search-results-stats">
+							<p>По запросу <span class="highlight">"{{ searchQuery }}"</span></p>
+							<p>В папке: <span class="highlight">{{ searchPath || 'корневая' }}</span></p>
+							<p>Найдено результатов: <span class="highlight">{{ searchResults.totalResults }}</span></p>
 						</div>
 					</div>
-					<span className="current-path-label">Текущий путь:</span> {currentPath || '/'}
-					<div className='flex' style={{gap:'10px', marginTop:'10px'}}>
+
+					@if (searchResults.totalResults > 0) {
+						@if (searchResults.folders.length) {
+							<app-found-folders-table
+								[folders]="searchResults.folders"
+								(prepareDelete)="prepareDelete($event.path, $event.name)"
+							></app-found-folders-table>
+						}
+						@if (searchResults.files.length) {
+							<app-found-files-table
+								[files]="searchResults.files"
+								(onDownload)="handleDownload($event.path, $event.name)"
+								(onDelete)="prepareDelete($event.path, $event.name)"
+								[searchPath]="searchPath"
+							></app-found-files-table>
+						}
+					} @else {
+						<div class="no-results">
+							<div class="no-results-icon">🔍</div>
+							<h3 class="no-results-title">Ничего не найдено</h3>
+							<p class="no-results-description">
+								По запросу "{{ searchQuery }}" в папке "{{ searchPath || 'корневая' }}" ничего не найдено
+							</p>
+							<div class="no-results-actions">
+								<app-redirection-button
+									[reference]="'/files/' + currentPath"
+									title="Вернуться к просмотру файлов"
+									className="return-button"
+								></app-redirection-button>
+							</div>
+						</div>
+					}
+				}
+			</div>
+		} @else {
+			<!-- NORMAL NAVIGATION MODE -->
+			<div class="files-header">
+				<h1 class="files-title">Файловый менеджер</h1>
+			</div>
+
+			<div class="navigation-panel">
+				<div class="search-panel">
+					<app-file-search [currentPath]="currentPath"></app-file-search>
+				</div>
+				<app-breadcrumbs
+					[currentPath]="currentPath"
+					(navigate)="navigateToFolder($event)"
+					(navigateUp)="navigateUp()"
+				></app-breadcrumbs>
+
+				<div class="navigation-row">
+					<div class="path-input-container">
+						<form (ngSubmit)="onPathSubmit()" class="path-form">
+							<input
+								type="text"
+								name="pathInput"
+								[(ngModel)]="pathInput"
+								(ngModelChange)="onPathInputChange($event)"
+								placeholder="Введите путь (например: documents/images)"
+								class="path-input"
+							/>
+							<button type="submit" class="path-submit-button">Перейти</button>
+						</form>
+					</div>
+
+					<div class="navigation-actions">
 						<button
-							onClick={() => setShowCreateFolderModal(true)}
-							className="nav-button create-button"
+							(click)="navigateUp()"
+							[disabled]="!currentPath"
+							class="nav-button back-button"
 							type="button"
 						>
-							Создать папку
+							Назад
 						</button>
-						
-						<label className="nav-button upload-button">
-							{uploading ? 'Загрузка...' : 'Загрузить файл'}
-							<input
-								type="file"
-								className="file-input"
-								onChange={handleFileUploadWithService}
-								disabled={uploading}
-							/>
-						</label>
 					</div>
-					
+				</div>
+
+				<span class="current-path-label">Текущий путь:</span> {{ currentPath || '/' }}
+
+				<div class="flex" style="gap: 10px; margin-top: 10px;">
+					<button
+						(click)="openCreateFolderModal()"
+						class="nav-button create-button"
+						type="button"
+					>
+						Создать папку
+					</button>
+
+					<label class="nav-button upload-button">
+						{{ uploading ? 'Загрузка...' : 'Загрузить файл' }}
+						<input
+							type="file"
+							class="file-input"
+							(change)="handleFileUpload($event)"
+							[disabled]="uploading"
+						/>
+					</label>
+				</div>
+			</div>
+
+			<!-- Error message -->
+			<app-error-message
+				[message]="error"
+				(onClose)="error = ''"
+				[showNavigation]="true"
+				(onNavigateUp)="navigateUp()"
+				[showUpButton]="!!currentPath"
+			></app-error-message>
+
+			<!-- Loading indicator -->
+			@if (loading) {
+				<div class="loading-container">
+					<div class="loading-spinner"></div>
+					<p class="loading-text">Загрузка файлов...</p>
 				</div>
 			}
-		</div>
+
+			<!-- File and folder tables -->
+			@if (!loading) {
+				<app-folder-table
+					[folders]="folders"
+					(prepareDelete)="prepareDelete($event.path, $event.name)"
+				></app-folder-table>
+				<app-file-table
+					[files]="files"
+					(onDownload)="handleDownload($event.path, $event.name)"
+					(onDelete)="prepareDelete($event.path, $event.name)"
+				></app-file-table>
+			}
+		}
+	</div>
 	}
 </main>
 <app-footer></app-footer>
+
+<!-- Modals -->
+<app-create-folder-modal
+	[isOpen]="showCreateFolderModal"
+	(onClose)="closeCreateFolderModal()"
+	[currentPath]="currentPath"
+	(onCreate)="handleCreateFolder($event)"
+></app-create-folder-modal>
+
+<app-delete-confirmation-modal
+	[isOpen]="showDeleteModal"
+	(onClose)="closeDeleteModal()"
+	[itemName]="itemToDelete?.name || ''"
+	(onConfirm)="handleDelete()"
+></app-delete-confirmation-modal>

@@ -1,11 +1,11 @@
 export class FolderInfo{
 	constructor(
-		public name: String,
-		public fullPath: String,
+		public name: string,
+		public fullPath: string,
 		public lastModified: Date,
 		public size: number,
-		public readableSize: String,
+		public readableSize: string,
 		public itemCount: number,
-		public isDirectory: Boolean = true
+		public isDirectory: boolean = true
 	){}
 }
