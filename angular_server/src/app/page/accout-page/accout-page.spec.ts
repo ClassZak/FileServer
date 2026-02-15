@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { AccoutPage } from './accout-page';
+import { AccountPage } from './accout-page';
 
-describe('AccoutPage', () => {
-	let component: AccoutPage;
-	let fixture: ComponentFixture<AccoutPage>;
+describe('AccountPage', () => {
+	let component: AccountPage;
+	let fixture: ComponentFixture<AccountPage>;
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			imports: [AccoutPage]
+			imports: [AccountPage]
 		})
 		.compileComponents();
 
-		fixture = TestBed.createComponent(AccoutPage);
+		fixture = TestBed.createComponent(AccountPage);
 		component = fixture.componentInstance;
 		await fixture.whenStable();
 	});

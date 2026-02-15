@@ -9,6 +9,7 @@ import { LoadingSpinner } from "../../component/loading-spinner/loading-spinner"
 import { RedirectionButton } from '../../component/redirection-button/redirection-button';
 import { GroupTable } from '../../component/group-table/group-table';
 import { UpdateUserPasswordModalComponent } from '../../component/modal/user/update-user-password-modal/update-user-password-modal';
+import { AddAdminToGroupModalComponent } from '../../component/modal/group/add-admin-to-group-modal/add-admin-to-group-modal';
 
 // Services and models
 import { AuthService } from '../../core/service/auth-service';
@@ -35,7 +36,8 @@ interface Group {
 		LoadingSpinner,
 		RedirectionButton,
 		GroupTable,
-		UpdateUserPasswordModalComponent
+		UpdateUserPasswordModalComponent,
+		AddAdminToGroupModalComponent
 	],
 	templateUrl: './accout-page.html',
 	styleUrl: './accout-page.css'
@@ -46,7 +48,9 @@ export class AccountPage implements OnInit {
 	isAuthenticated: boolean = false;
 	isAdmin: boolean = false;
 	isPasswordModalOpen: boolean = false;
+	isAddAdminToGroupModalOpen: boolean = false;
 	user: User | undefined;
+	myGroups: Group[] = [];
 	groups: Group[] = [];
 
 	constructor(
@@ -57,6 +61,8 @@ export class AccountPage implements OnInit {
 	async ngOnInit(): Promise<void> {
 		try {
 			await this.checkAuthentication();
+			if (this.isAdmin)
+				await this.loadGroups();
 		} catch (error) {
 			console.error('Ошибка при загрузке страницы:', error);
 		}
@@ -73,7 +79,7 @@ export class AccountPage implements OnInit {
 				
 				// Загружаем дополнительную информацию
 				await this.checkAdminStatus()
-				await this.loadGroups()
+				await this.loadMyGroups()
 			} else {
 				console.log('Аутентификация не пройдена:', authResult.message);
 				this.router.navigate(['/login']);
@@ -98,22 +104,44 @@ export class AccountPage implements OnInit {
 		}
 	}
 
-	private async loadGroups(): Promise<void> {
+	private async loadMyGroups(): Promise<void> {
 		try {
 			const token = AuthService.getToken();
 			if (!token)
-				throw Error('No token');
+				throw Error('У вас нет токена авторизации');
 			const groupsResult = await GroupService.getMyGroups(token);
 			
 			if ('error' in groupsResult) {
 				console.error('Ошибка загрузки групп:', groupsResult.error);
 			} else if (Array.isArray(groupsResult)) {
-				this.groups = groupsResult;
+				this.myGroups = groupsResult;
 			}
 		} catch (error) {
 			console.error('Ошибка при загрузке групп:', error);
 		} finally {
 			this.isLoadingGroups = false;
+		}
+	}
+	private async loadGroups(){
+		try {
+			this.isLoading = true;
+			const token = AuthService.getToken();
+			if(token === null)
+				throw "У вас нет токена авторизации";
+			if(this.isAdmin) {
+				const response = await GroupService.getAllGroups(token);
+				if ('error' in response)
+					throw Error(response.error);
+				if (Array.isArray(response))
+					this.groups = response;
+			} else 
+				this.router.navigate(['/account']);
+		} catch (error) {
+			console.error('Ошибка при загрузке групп', error);
+			// TODO: notice
+		} finally {
+			this.isLoading = false;
+			this.cdr.detectChanges();
 		}
 	}
 
@@ -132,9 +160,9 @@ export class AccountPage implements OnInit {
 	public navigateToUsers(): void {
 		this.router.navigate(['/users']);
 	}
-
-
-
+	
+	
+	
 	
 	handleClosePasswordModal(): void {
 		this.setPasswordModalIsOpen(false);
@@ -158,6 +186,40 @@ export class AccountPage implements OnInit {
 		} catch (error) {
 			console.error('Error updating password:', error);
 			alert('Ошибка при обновлении пароля');
+		}
+	}
+
+
+	
+
+
+	public openAddAdminToGroupModal(): void {
+		this.isAddAdminToGroupModalOpen = true;
+	}
+
+	public setIsAddAdminToGroupModalOpen(state: boolean): void {
+		this.isAddAdminToGroupModalOpen = state;
+	}
+
+	handleCloseAddAdminToGroupModal(): void {
+		this.setIsAddAdminToGroupModalOpen(false);
+	}
+
+	async handleConfirmAddAdminToGroupModal(selectedGroupName: string): Promise<void> {
+		try {
+			const token = AuthService.getToken();
+			if (!token) throw new Error('Нет токена авторизации');
+			if (!this.user) throw new Error('Пользователь не определён');
+
+			await GroupService.addUserToGroup(token, selectedGroupName, this.user.email);
+			this.setIsAddAdminToGroupModalOpen(false);
+			console.log(`Вы успешно добавлены в группу «${selectedGroupName}»`);
+			// TODO: notice
+			await this.loadMyGroups();
+			this.cdr.detectChanges();
+		} catch (error) {
+			console.error('Ошибка при добавлении себя в группу:', error);
+			alert('Не удалось добавить себя в группу. Подробности в консоли.');
 		}
 	}
 }

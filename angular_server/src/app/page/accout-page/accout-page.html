@@ -43,7 +43,7 @@
 							[className]="'blue-button'">
 						</app-redirection-button>
 						
-						<button (click)="navigateToUsers();" class="green-button">
+						<button (click)="openAddAdminToGroupModal()" class="green-button">
 							Вступить в группу
 						</button>
 					</div>
@@ -51,7 +51,7 @@
 				
 				@if (!isLoadingGroups) {
 					<h1>Ваши группы</h1>
-					<app-group-table [isAdmin]="isAdmin" [groups]="groups">
+					<app-group-table [isAdmin]="isAdmin" [groups]="myGroups">
 					</app-group-table>
 				}
 			</div>
@@ -66,3 +66,11 @@
 	(onConfirm)="handleConfirmUpdatePassword($event)"
 >
 </app-update-user-password-modal>
+<app-add-admin-to-group-modal
+	[isOpen]="isAddAdminToGroupModalOpen"
+	[groups]="groups"
+	[currentUserEmail]="user?.email || ''"
+	(onClose)="handleCloseAddAdminToGroupModal()"
+	(onConfirm)="handleConfirmAddAdminToGroupModal($event)"
+>
+</app-add-admin-to-group-modal>

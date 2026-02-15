@@ -218,6 +218,30 @@ form.modal-form input{
 	background: #3a3a3a;
 }
 
+
+.group-list {
+	background: #2a2a2a;
+	border: 1px solid #3a3a3a;
+	border-radius: 0.5rem;
+	max-height: 200px;
+	overflow-y: auto;
+	margin-top: 0.25rem;
+}
+.group-item {
+	padding: 0.5rem 0.75rem;
+	cursor: pointer;
+	border-bottom: 1px solid #3a3a3a;
+	transition: background 0.2s;
+}
+
+.group-item:last-child {
+	border-bottom: none;
+}
+
+.group-item:hover {
+	background: #3a3a3a;
+}
+
 .user-name {
 	font-weight: 500;
 	color: #e5e7eb;
