@@ -16,6 +16,7 @@ import { Subscription } from 'rxjs';
 import { UserService } from '../../core/service/user-service';
 import { UpdatePasswordRequest } from '../../core/model/update-password-request';
 import { UpdatePasswordModalModel } from '../../core/model/update-password-modal-model';
+import { RedirectionButton } from '../../component/redirection-button/redirection-button';
 
 @Component({
 	selector: 'app-user-page',
@@ -27,7 +28,9 @@ import { UpdatePasswordModalModel } from '../../core/model/update-password-modal
 
 		UpdateUserModalComponent,
 		UpdateUserPasswordModalComponent,
-		DeleteUserModalComponent
+		DeleteUserModalComponent,
+		
+		RedirectionButton
 	],
 	templateUrl: './user-page.html',
 	styleUrl: './user-page.css',

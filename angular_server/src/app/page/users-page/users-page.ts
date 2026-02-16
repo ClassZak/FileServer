@@ -6,7 +6,6 @@ import { Router } from '@angular/router';
 import { AppFooter } from '../../app-footer/app-footer';
 import { AppHeader } from "../../app-header/app-header";
 import { LoadingSpinner } from "../../component/loading-spinner/loading-spinner";
-import { RedirectionButton } from '../../component/redirection-button/redirection-button';
 import { GroupTable } from '../../component/group-table/group-table';
 import { CreateUserModalComponent } from '../../component/modal/user/create-user-modal/create-user-modal';
 
@@ -19,6 +18,7 @@ import { UserService } from '../../core/service/user-service';
 import { CreateUserModel } from '../../core/model/create-user-model';
 import { UserAdminModel } from '../../core/model/user-admin-model';
 import { UserTable } from '../../component/user-table/user-table';
+import { RedirectionButton } from '../../component/redirection-button/redirection-button';
 
 @Component({
 	selector: 'app-users-page',
@@ -28,7 +28,9 @@ import { UserTable } from '../../component/user-table/user-table';
 		AppFooter,
 		LoadingSpinner,
 		UserTable,
-		CreateUserModalComponent
+		CreateUserModalComponent,
+		
+		RedirectionButton
 	],
 	templateUrl: './users-page.html',
 	styleUrl: './users-page.css',

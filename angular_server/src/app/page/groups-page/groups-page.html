@@ -16,6 +16,20 @@
 			<app-group-table [isAdmin]="isAdmin" [groups]="groups">
 			</app-group-table>
 		</div>
+		<div class="buttons-row">
+			<app-redirection-button 
+				[className]="'blue-button'" 
+				[title]="'Пользователи'" 
+				[reference]="'/users'"
+			>
+			</app-redirection-button>
+			<app-redirection-button 
+				[className]="'blue-button'" 
+				[title]="'Группы'" 
+				[reference]="'/groups'"
+			>
+			</app-redirection-button>
+		</div>
 	}
 </main>
 <app-footer></app-footer>

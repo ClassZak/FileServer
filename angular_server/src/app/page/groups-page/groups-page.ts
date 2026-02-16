@@ -7,6 +7,7 @@ import { AppHeader } from '../../app-header/app-header';
 import { AppFooter } from '../../app-footer/app-footer';
 import { LoadingSpinner } from '../../component/loading-spinner/loading-spinner';
 import { GroupTable } from '../../component/group-table/group-table';
+import { RedirectionButton } from '../../component/redirection-button/redirection-button';
 
 // Services and models
 import { AuthService } from '../../core/service/auth-service';
@@ -31,7 +32,8 @@ import { UserAdminModel } from '../../core/model/user-admin-model';
 		AppFooter,
 		LoadingSpinner,
 		GroupTable,
-		CreateGroupModalComponent
+		CreateGroupModalComponent,
+		RedirectionButton
 	],
 	templateUrl: './groups-page.html',
 	styleUrl: './groups-page.css',

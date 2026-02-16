@@ -24,6 +24,7 @@ import { CreateFolderModalComponent } from '../../component/modal/file/create-fo
 import { DeleteConfirmationModalComponent } from '../../component/modal/file/delete-confirmation-modal-component/delete-confirmation-modal-component';
 import { RedirectionButton } from '../../component/redirection-button/redirection-button';
 import { User } from '../../core/model/user';
+import AdminService from '../../core/service/admin-service';
 
 @Component({
 	selector: 'app-files-page',
@@ -57,6 +58,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 	uploading = false;
 	isAuthenticated: boolean = false;
 	authorizedUser?: User;
+	isAdmin: boolean = false;
 	error = '';
 
 	// Navigation state
@@ -138,6 +140,8 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				console.log('Аутентификация прошла успешно');
 				this.isAuthenticated = true;
 				this.authorizedUser = authResult.user;
+
+				await this.checkAdminStatus();
 			} else {
 				console.log('Аутентификация не пройдена:', authResult.message);
 				this.router.navigate(['/login']);
@@ -149,6 +153,16 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			this.isLoading = false;
 		}
 		this.cdr.detectChanges();
+	}
+	private async checkAdminStatus(): Promise<void> {
+		try {
+			const token = AuthService.getToken();
+			if(token === null)
+				throw "У вас нет токена авторизации";
+			this.isAdmin = await AdminService.isAdmin(token);
+		} catch (error) {
+			console.error('Ошибка при проверке статуса администратора:', error);
+		}
 	}
 
 	/**
