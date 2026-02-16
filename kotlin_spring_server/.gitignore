@@ -53,3 +53,6 @@ bin/
 
 ### Vim
 /.vim/
+
+### Angular build
+src/main/resources/static/
