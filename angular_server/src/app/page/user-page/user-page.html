@@ -51,6 +51,7 @@
 >
 </app-update-user-password-modal>
 <app-delete-user-modal
+	[email]="userEmail"
 	[isOpen]="isDeleteUserModalOpen"
 	(onClose)="setIsDeleteUserModalOpen(false)"
 	(onConfirm)="handleDeleteUserModal()"

@@ -19,8 +19,8 @@ interface Group {
 })
 export class AddAdminToGroupModalComponent implements OnChanges {
 	@Input() isOpen: boolean = false;
-	@Input() groups: Group[] = [];               // список всех групп
-	@Input() currentUserEmail: string = '';       // email текущего администратора
+	@Input() groups: Group[] = [];							 // список всех групп
+	@Input() currentUserEmail: string = '';			 // email текущего администратора
 	@Output() onClose = new EventEmitter<void>();
 	@Output() onConfirm = new EventEmitter<string>(); // передаёт название выбранной группы
 

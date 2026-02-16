@@ -1,5 +1,5 @@
 .block-indent {
-	padding-left: 2em;
+	/*padding-left: 2em;*/
 	/* Disable text-indent, couse padding is used */
 	text-indent: 0;
 }
