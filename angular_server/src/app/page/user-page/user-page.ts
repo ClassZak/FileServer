@@ -37,6 +37,8 @@ export class UserPage implements OnInit {
 	isUpdateUserModalOpen : boolean = false;
 	isUpdateUserPasswordModalOpen : boolean = false;
 	isDeleteUserModalOpen : boolean = false;
+	isAuthenticated: boolean = false;
+	authorizedUser?: User;
 	user?: UserAdminModel;
 	userEmail: string = '';
 	myUserData?: User;
@@ -62,6 +64,11 @@ export class UserPage implements OnInit {
 	) {}
 
 	async ngOnInit(): Promise<void> {
+		try{
+			await this.checkAuthentication();
+		} catch (error) {
+			console.error('Ошибка при загрузке страницы:', error); // TODO: notice
+		}
 		this.paramSubscription = this.route.paramMap.subscribe(params => {
 			this.userEmail = params.get('email') || '';
 			if(this.userEmail == '')
@@ -82,7 +89,27 @@ export class UserPage implements OnInit {
 
 
 
-	
+
+	private async checkAuthentication(): Promise<void> {
+		try {
+			const authResult = await AuthService.checkAuth();
+			
+			if (authResult.authenticated) {
+				console.log('Аутентификация прошла успешно');
+				this.isAuthenticated = true;
+				this.authorizedUser = authResult.user;
+			} else {
+				console.log('Аутентификация не пройдена:', authResult.message);
+				this.router.navigate(['/login']);
+			}
+		} catch (error) {
+			console.error('Ошибка при проверке аутентификации:', error);
+			this.router.navigate(['/login']);
+		} finally {
+			this.isLoading = false;
+		}
+		this.cdr.detectChanges();
+	}
 	private async checkAdminStatus(): Promise<void> {
 		try {
 			this.isLoading = true;

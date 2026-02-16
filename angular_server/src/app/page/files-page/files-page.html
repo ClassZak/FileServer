@@ -1,6 +1,6 @@
 <app-app-header></app-app-header>
 <main class="MainContent">
-	@if (loading){
+	@if (isLoading){
 		<app-loading-spinner [title]="'Загрузка'">
 		</app-loading-spinner>
 	} @else {
@@ -153,7 +153,7 @@
 			></app-error-message>
 
 			<!-- Loading indicator -->
-			@if (loading) {
+			@if (isLoading) {
 				<div class="loading-container">
 					<div class="loading-spinner"></div>
 					<p class="loading-text">Загрузка файлов...</p>
@@ -161,7 +161,7 @@
 			}
 
 			<!-- File and folder tables -->
-			@if (!loading) {
+			@if (!isLoading) {
 				<app-folder-table
 					[folders]="folders"
 					(prepareDelete)="prepareDelete($event.path, $event.name)"

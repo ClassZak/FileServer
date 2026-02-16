@@ -23,6 +23,7 @@ import { FoundFoldersTableComponent } from '../../component/found-folders-table-
 import { CreateFolderModalComponent } from '../../component/modal/file/create-folder-modal-component/create-folder-modal-component';
 import { DeleteConfirmationModalComponent } from '../../component/modal/file/delete-confirmation-modal-component/delete-confirmation-modal-component';
 import { RedirectionButton } from '../../component/redirection-button/redirection-button';
+import { User } from '../../core/model/user';
 
 @Component({
 	selector: 'app-files-page',
@@ -52,8 +53,10 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 	// Data states
 	files: FileInfo[] = [];
 	folders: FolderInfo[] = [];
-	loading = false;
+	isLoading = false;
 	uploading = false;
+	isAuthenticated: boolean = false;
+	authorizedUser?: User;
 	error = '';
 
 	// Navigation state
@@ -82,7 +85,12 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 		private cdr: ChangeDetectorRef
 	) {}
 
-	ngOnInit(): void {
+	async ngOnInit(): Promise<void> {
+		try{
+			await this.checkAuthentication();
+		} catch (error) {
+			console.error('Ошибка при загрузке страницы:', error); // TODO: notice
+		}
 		// Подписка на изменение сегментов URL (часть после /files/)
 		this.routeParamsSubscription = this.route.url.subscribe((segments: UrlSegment[]) => {
 			// Убираем первый сегмент 'files'
@@ -121,6 +129,28 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 		this.queryParamsSubscription?.unsubscribe();
 	}
 
+
+	private async checkAuthentication(): Promise<void> {
+		try {
+			const authResult = await AuthService.checkAuth();
+			
+			if (authResult.authenticated) {
+				console.log('Аутентификация прошла успешно');
+				this.isAuthenticated = true;
+				this.authorizedUser = authResult.user;
+			} else {
+				console.log('Аутентификация не пройдена:', authResult.message);
+				this.router.navigate(['/login']);
+			}
+		} catch (error) {
+			console.error('Ошибка при проверке аутентификации:', error);
+			this.router.navigate(['/login']);
+		} finally {
+			this.isLoading = false;
+		}
+		this.cdr.detectChanges();
+	}
+
 	/**
 	 * Decide whether to load directory or perform search based on current mode.
 	 */
@@ -136,7 +166,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 	 * Load the directory contents for the current path.
 	 */
 	private async loadDirectory(): Promise<void> {
-		this.loading = true;
+		this.isLoading = true;
 		this.error = '';
 
 		try {
@@ -163,7 +193,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			this.files = [];
 			this.folders = [];
 		} finally {
-			this.loading = false;
+			this.isLoading = false;
 			this.cdr.detectChanges();
 		}
 	}

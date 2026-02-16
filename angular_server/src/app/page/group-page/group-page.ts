@@ -44,6 +44,8 @@ import { RedirectionButton } from '../../component/redirection-button/redirectio
 })
 export class GroupPage implements OnInit {
 	public isLoading: boolean = true;
+	isAuthenticated: boolean = false;
+	authorizedUser?: User;
 	isAddUserToGroupModalComponentOpen: boolean = false;
 	isDeleteGroupModalComponentOpen: boolean = false;
 	isRemoveUserFromGroupModalComponentOpen: boolean = false;
@@ -94,6 +96,11 @@ export class GroupPage implements OnInit {
 	) {}
 	
 	async ngOnInit(): Promise<void> {
+		try{
+			await this.checkAuthentication();
+		} catch (error) {
+			console.error('Ошибка при загрузке страницы:', error); // TODO: notice
+		}
 		this.paramSubscription = this.route.paramMap.subscribe(params => {
 			this.groupName = params.get('name') || '';
 			if(this.groupName == '')
@@ -116,6 +123,26 @@ export class GroupPage implements OnInit {
 
 
 
+	private async checkAuthentication(): Promise<void> {
+		try {
+			const authResult = await AuthService.checkAuth();
+			
+			if (authResult.authenticated) {
+				console.log('Аутентификация прошла успешно');
+				this.isAuthenticated = true;
+				this.authorizedUser = authResult.user;
+			} else {
+				console.log('Аутентификация не пройдена:', authResult.message);
+				this.router.navigate(['/login']);
+			}
+		} catch (error) {
+			console.error('Ошибка при проверке аутентификации:', error);
+			this.router.navigate(['/login']);
+		} finally {
+			this.isLoading = false;
+		}
+		this.cdr.detectChanges();
+	}
 	private async checkAdminStatus(): Promise<void> {
 		try {
 			const token = AuthService.getToken();

@@ -43,6 +43,8 @@ export class GroupsPage implements OnInit {
 	groups: Array<GroupBasicInfo>=[];
 	users: Array<UserAdminModel>=[];
 	error: string = '';
+	isAuthenticated: boolean = false;
+	authorizedUser?: User;
 
 	constructor(
 		private router: Router,
@@ -51,6 +53,7 @@ export class GroupsPage implements OnInit {
 
 	async ngOnInit(): Promise<void> {
 		try {
+			await this.checkAuthentication();
 			await this.checkAdminStatus();
 			await this.loadGroups();
 			await this.loadUsers();
@@ -60,6 +63,29 @@ export class GroupsPage implements OnInit {
 		}
 	}
 
+
+
+
+	private async checkAuthentication(): Promise<void> {
+		try {
+			const authResult = await AuthService.checkAuth();
+			
+			if (authResult.authenticated) {
+				console.log('Аутентификация прошла успешно');
+				this.isAuthenticated = true;
+				this.authorizedUser = authResult.user;
+			} else {
+				console.log('Аутентификация не пройдена:', authResult.message);
+				this.router.navigate(['/login']);
+			}
+		} catch (error) {
+			console.error('Ошибка при проверке аутентификации:', error);
+			this.router.navigate(['/login']);
+		} finally {
+			this.isLoading = false;
+		}
+		this.cdr.detectChanges();
+	}
 	private async checkAdminStatus(): Promise<void> {
 		try {
 			this.isLoading = true;
