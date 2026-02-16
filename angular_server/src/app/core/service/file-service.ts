@@ -152,18 +152,18 @@ export class FileService {
 			);
 			return response.data;
 		} catch (error) {
-			const axiosError = error as AxiosError<{ error?: string }>;
+			const axiosError = error as AxiosError<{ error?: string; message?: string; }>;
 			const errorData = axiosError.response?.data;
 			console.error('FileService.upload error:', axiosError);
 
-			if (errorData?.error) {
-				throw errorData.error;
+			if (errorData?.message) {
+				throw errorData.message;
 			} else if (axiosError.response?.status === 403) {
-				throw 'You do not have permission to upload files to this directory.';
+				throw 'У вас нет прав на загрузку файлов в эту директорию.';
 			} else if (axiosError.response?.status === 400) {
-				throw `Upload error: ${errorData?.error || 'unknown error'}`;
+				throw `Ошибка отправки файла: ${errorData?.error || 'неизвестная ошибка'}`;
 			} else {
-				throw 'File upload failed.';
+				throw 'Не удалось отправить файл.';
 			}
 		}
 	}
