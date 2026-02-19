@@ -1,6 +1,6 @@
 <app-modal
 	[isOpen]="isOpen"
-	title="Добавить себя в группу как администратора"
+	title="Добавить себя в группу"
 	(onClose)="closeModal()"
 >
 	<form (ngSubmit)="submitForm()" class="modal-form">
@@ -61,7 +61,7 @@
 		<div class="form-info">
 			<strong>Информация:</strong>
 			<ul>
-				<li>Вы ({{ currentUserEmail }}) будете добавлены как администратор в группу «{{ selectedGroupName || '...' }}»</li>
+				<li>Вы ({{ currentUserEmail }}) будете добавлены в группу «{{ selectedGroupName || '...' }}»</li>
 			</ul>
 		</div>
 
