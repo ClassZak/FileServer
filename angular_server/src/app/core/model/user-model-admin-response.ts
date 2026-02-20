@@ -3,13 +3,13 @@ export class UserModelAdminResponse{
 	name:string = '';
 	patronymic:string = '';
 	email:string = '';
-	createdAt:string = '';
+	createdAt:Date = new Date();
 	constructor(
 		surname = '',
 		name = '',
 		patronymic = '',
 		email = '',
-		createdAt = '',
+		createdAt = new Date(),
 	){
 		this.surname		= surname;
 		this.name			= name;

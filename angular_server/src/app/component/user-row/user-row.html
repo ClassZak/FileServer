@@ -3,7 +3,7 @@
 <td>{{userData?.patronymic}}</td>
 <td>{{userData?.email}}</td>
 @if (isAdmin && $any(userData)?.createdAt ) {
-	<td>{{$any(userData)?.createdAt}}</td>
+	<td>{{ $any(userData)?.createdAt | date:'dd.MM.yyyy HH:mm:ss' }}</td>
 	<td>
 		<app-redirection-button
 			[reference]="createNavigateToUserHref(userData?.email)"

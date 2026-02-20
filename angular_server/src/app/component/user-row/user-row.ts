@@ -2,10 +2,11 @@ import { Component, Input } from '@angular/core';
 import { UserAdminModel } from '../../core/model/user-admin-model';
 import { User } from '../../core/model/user';
 import { RedirectionButton } from '../redirection-button/redirection-button';
+import { DatePipe } from '@angular/common';
 
 @Component({
 	selector: 'tr[app-user-row]',
-	imports: [RedirectionButton],
+	imports: [RedirectionButton, DatePipe],
 	templateUrl: './user-row.html',
 	styleUrl: './user-row.css',
 })

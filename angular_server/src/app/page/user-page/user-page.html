@@ -10,7 +10,7 @@
 				<p><strong>Фамилия:</strong> {{user?.surname}}</p>
 				<p><strong>Имя:</strong> {{user?.name}}</p>
 				<p><strong>Отчество:</strong> {{user?.patronymic}}</p>
-				<p><strong>Создан:</strong> {{user?.createdAt}}</p>
+				<p><strong>Создан:</strong> {{user?.createdAt | date:'dd.MM.yyyy HH:mm:ss'}}</p>
 			</div>
 		</div>
 		<div class="buttons-row">
