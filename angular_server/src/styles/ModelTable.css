@@ -38,6 +38,7 @@
 @media screen and (width< 615px) {
 	.model-table *{
 		text-wrap-mode:wrap;
+		word-wrap: break-word;
 		font-size:xx-small;
 		padding: 0;
 	}

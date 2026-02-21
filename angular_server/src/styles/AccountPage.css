@@ -1,4 +1,11 @@
-/* AccountPage.css */
+.account-container {
+	padding: 2rem;
+}
+@media screen and (width < 500px) {
+	.account-container {
+		padding: 2rem;
+	}
+}
 .account-container {
 	padding: 2rem;
 }
@@ -51,6 +58,11 @@
 	cursor: pointer;
 	transition: all 0.3s ease;
 	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+@media screen and (width < 500px) {
+	.logout-button{
+		padding: 2px;
+	}
 }
 
 .logout-button:hover {

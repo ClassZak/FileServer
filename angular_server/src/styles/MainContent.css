@@ -1,3 +1,5 @@
+@import url(../styles.css);
+
 .MainContent {
 	width: 90%;
 	min-height: calc(100vh - 200px); /* Минимальная высота минус хедер и футер */
@@ -12,7 +14,7 @@
 @media screen and (max-width: 500px) {
 	.MainContent {
 		width: 100%;
-		padding: 1rem 0 2rem;
+		padding: 2rem 0 2rem;
 	}
 }
 
