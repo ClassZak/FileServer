@@ -1,0 +1,10 @@
+.block-indent {
+	/*padding-left: 2em;*/
+	/* Disable text-indent, couse padding is used */
+	text-indent: 0;
+}
+.block-indent br {
+	display: block;
+	content: "";
+	margin-top: 0.5em;
+}

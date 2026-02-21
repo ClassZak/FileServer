@@ -1,0 +1,49 @@
+@if (folders.length > 0) {
+	<div>
+		<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+			<ng-icon [name]="getIcon({ isFolder: true })" size="20"></ng-icon>
+			<h3 style="margin: 0;">Найденные папки</h3>
+		</div>
+		<table class="model-table">
+			<thead>
+				<tr>
+					<th>Имя</th>
+					<th>Полный путь</th>
+					<th>Дата изменения</th>
+					<th>Действия</th>
+				</tr>
+			</thead>
+			<tbody>
+				@for (folder of folders; track $index) {
+					<tr>
+						<td>
+							<div style="display: flex; align-items: center; gap: 8px;">
+								<ng-icon [name]="getIcon({ isFolder: true })"></ng-icon>
+								{{ folder.name }}
+							</div>
+						</td>
+						<td>
+							<div style="display: flex; align-items: center; gap: 8px;">
+								<ng-icon [name]="getIcon({ isFolder: true })"></ng-icon>
+								{{ folder.fullPath }}
+							</div>
+						</td>
+						<td>{{ folder.lastModified }}</td>
+						<td>
+							<div class="buttons-row">
+								<app-redirection-button
+									[className]="'blue-button'"
+									[reference]="'/files/'+folder.fullPath"
+									[title]="'Открыть'"
+								>
+								</app-redirection-button>
+								<button (click)="deleteFolder(folder)" class="red-button">Удалить
+								</button>
+							</div>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}

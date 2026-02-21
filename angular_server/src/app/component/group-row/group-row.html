@@ -1,0 +1,11 @@
+<td>{{groupData?.name}}</td>
+<td>{{groupData?.membersCount}}</td>
+<td>{{groupData?.creatorEmail}}</td>
+<td>
+	<app-redirection-button
+		[reference]="createNavigateToGroupHref(groupData?.name)"
+		[title]="isAdmin ? 'Изменить данные' : 'Просмотр'"
+		[className]='"blue-button"'
+	>
+	</app-redirection-button>
+</td>

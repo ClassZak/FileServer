@@ -1,0 +1,93 @@
+<app-modal
+	[isOpen]="isOpen"
+	title="Добавить себя в группу"
+	(onClose)="closeModal()"
+>
+	<form (ngSubmit)="submitForm()" class="modal-form">
+		@if (errors['server']) {
+			<div class="error-message">
+				{{ errors['server'] }}
+			</div>
+		}
+
+		<div class="form-group">
+			<div>
+				<label for="groupSearch">Выберите группу *</label>
+				<input
+					id="groupSearch"
+					type="text"
+					[(ngModel)]="searchQuery"
+					(ngModelChange)="onSearchChange()"
+					name="searchQuery"
+					placeholder="Начните вводить название группы"
+					[disabled]="submitting"
+					autocomplete="off"
+				/>
+
+				<!-- Выбранная группа (если есть и не идёт поиск) -->
+				@if (selectedGroup && !searchQuery) {
+					<div class="selected-group">
+						<div class="selected-group-name">
+							<strong>Выбрана:</strong> {{ selectedGroup.name }}
+						</div>
+						<button type="button" (click)="clearSelection()" class="change-button">
+							Изменить
+						</button>
+					</div>
+				}
+
+				<!-- Результаты поиска -->
+				@if (searchQuery && filteredGroups.length > 0) {
+					<div class="group-list">
+						@for (group of filteredGroups; track group.name) {
+							<div class="group-item" (click)="selectGroup(group.name)">
+								{{ group.name }}
+							</div>
+						}
+					</div>
+				}
+
+				@if (searchQuery && filteredGroups.length === 0) {
+					<div class="no-results">Группы не найдены</div>
+				}
+
+				@if (errors['group']) {
+					<div class="error-text">{{ errors['group'] }}</div>
+				}
+			</div>
+		</div>
+
+		<!-- Информационный блок -->
+		<div class="form-info">
+			<strong>Информация:</strong>
+			<ul>
+				<li>Вы ({{ currentUserEmail }}) будете добавлены в группу «{{ selectedGroupName || '...' }}»</li>
+			</ul>
+		</div>
+
+		<!-- Кнопки действий -->
+		<div class="form-actions">
+			<button
+				type="button"
+				(click)="closeModal()"
+				[disabled]="submitting"
+				class="cancel-button"
+			>
+				Отмена
+			</button>
+			<button
+				type="submit"
+				[disabled]="submitting"
+				[class.submitting]="submitting"
+				class="submit-button"
+			>
+				@if (submitting) {
+					<span class="spinner"></span>
+					Добавление...
+				} @else {
+					Добавить себя
+				}
+			</button>
+		</div>
+	</form>
+</app-modal>

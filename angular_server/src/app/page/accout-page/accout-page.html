@@ -1,0 +1,76 @@
+<app-app-header></app-app-header>
+
+<main class="MainContent">
+	@if (isLoading) {
+		<app-loading-spinner
+			[title]="'Загрузка'">
+		</app-loading-spinner>
+	} @else {
+		<div>		
+			<h1 class="account-title">Личный кабинет</h1>
+			<div class="account-container">
+				<div class="account-card">
+					<h2>Информация о пользователе</h2>
+					<div class="account-info">	
+						<p><strong>Email:</strong> {{user?.email}} </p>
+						<p><strong>Фамилия:</strong> {{user?.surname}} </p>
+						<p><strong>Имя:</strong> {{user?.name}} </p>
+						<p><strong>Отчество:</strong> {{user?.patronymic}} </p>
+					</div>
+					<div class='buttons-row'>
+						<button
+							(click)="setPasswordModalIsOpen(true)"
+							class="logout-button">
+							Обновить пароль
+						</button>
+						<button (click)="handleLogout()" class="logout-button">
+							Выйти
+						</button>
+					</div>
+				</div>
+			
+				@if (isAdmin) {
+					<div class='buttons-row'>
+						<app-redirection-button 
+							[reference]="'/users'" 
+							[title]="'Пользователи'"		
+							[className]="'blue-button'">
+						</app-redirection-button>
+						
+						<app-redirection-button 
+							[reference]="'/groups'" 
+							[title]="'Группы'"		
+							[className]="'blue-button'">
+						</app-redirection-button>
+						
+						<button (click)="openAddAdminToGroupModal()" class="green-button">
+							Вступить в группу
+						</button>
+					</div>
+				}
+				
+				@if (!isLoadingGroups) {
+					<h1>Ваши группы</h1>
+					<app-group-table [isAdmin]="isAdmin" [groups]="myGroups">
+					</app-group-table>
+				}
+			</div>
+		</div>
+	}
+</main>
+
+<app-footer></app-footer>
+<app-update-user-password-modal
+	[isOpen]="isPasswordModalOpen"
+	(onClose)="handleClosePasswordModal()"
+	(onConfirm)="handleConfirmUpdatePassword($event)"
+>
+</app-update-user-password-modal>
+<app-add-admin-to-group-modal
+	[isOpen]="isAddAdminToGroupModalOpen"
+	[groups]="groups"
+	[currentUserEmail]="user?.email || ''"
+	(onClose)="handleCloseAddAdminToGroupModal()"
+	(onConfirm)="handleConfirmAddAdminToGroupModal($event)"
+>
+</app-add-admin-to-group-modal>

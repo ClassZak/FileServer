@@ -1,0 +1,97 @@
+<app-modal
+	[isOpen]="isOpen"
+	title="Добавить пользователя в группу {{ groupName }}"
+	(onClose)="closeModal()"
+>
+	<form (ngSubmit)="submitForm()" class="modal-form">
+		@if (errors['server']) {
+			<div class="error-message">
+				{{ errors['server'] }}
+			</div>
+		}
+
+		<div class="form-group">
+			<div>
+				<label for="userSearch">Выберите пользователя для добавления *</label>
+				<input
+					id="userSearch"
+					type="text"
+					[(ngModel)]="searchQuery"
+					(ngModelChange)="onSearchChange()"
+					name="searchQuery"
+					placeholder="Начните вводить email, фамилию или имя"
+					[disabled]="submitting"
+					autocomplete="off"
+				/>
+
+				<!-- Выбранный пользователь (если есть и не идёт поиск) -->
+				@if (selectedUser && !searchQuery) {
+					<div class="selected-user">
+						<div class="selected-user-name">
+							<strong>Выбран:</strong> {{ selectedUser.surname }} {{ selectedUser.name }} {{ selectedUser.patronymic }}
+						</div>
+						<div class="selected-user-email">{{ selectedUser.email }}</div>
+						<button type="button" (click)="clearSelection()" class="change-button">
+							Изменить
+						</button>
+					</div>
+				}
+
+				<!-- Результаты поиска -->
+				@if (searchQuery && filteredUsers.length > 0) {
+					<div class="user-list">
+						@for (user of filteredUsers; track user.email) {
+							<div class="user-item" (click)="selectUser(user.email)">
+								<div class="user-name">
+									{{ user.surname }} {{ user.name }} {{ user.patronymic }}
+								</div>
+								<div class="user-email">{{ user.email }}</div>
+							</div>
+						}
+					</div>
+				}
+
+				@if (searchQuery && filteredUsers.length === 0) {
+					<div class="no-results">Пользователи не найдены</div>
+				}
+
+				@if (errors['userEmail']) {
+					<div class="error-text">{{ errors['userEmail'] }}</div>
+				}
+			</div>
+		</div>
+
+		<!-- Информационный блок -->
+		<div class="form-info">
+			<strong>Информация:</strong>
+			<ul>
+				<li>Пользователь будет добавлен в группу «{{ groupName }}»</li>
+			</ul>
+		</div>
+
+		<!-- Кнопки действий -->
+		<div class="form-actions">
+			<button
+				type="button"
+				(click)="closeModal()"
+				[disabled]="submitting"
+				class="cancel-button"
+			>
+				Отмена
+			</button>
+			<button
+				type="submit"
+				[disabled]="submitting"
+				[class.submitting]="submitting"
+				class="submit-button"
+			>
+				@if (submitting) {
+					<span class="spinner"></span>
+					Добавление...
+				} @else {
+					Добавить пользователя
+				}
+			</button>
+		</div>
+	</form>
+</app-modal>

@@ -1,0 +1,12 @@
+<div class="file-search">
+	<input
+		type="text"
+		[(ngModel)]="searchQuery"
+		(ngModelChange)="searchQuery = $event"
+		placeholder="Поиск файлов..."
+		class="search-input"
+	/>
+	<button (click)="onSearch()" class="image-button">
+		<img alt="Найти" src="/assets/img/magnifyingglass.png">
+	</button>
+</div>

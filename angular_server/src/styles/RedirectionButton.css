@@ -1,0 +1,19 @@
+a.RedirectionButton {
+	text-decoration: none;
+	display: block;
+	font-size: smaller;
+}
+
+a.DefaultButton {
+	padding: 0px 12px;
+	background-color: var(--accent-gold);
+	color: black;
+	text-decoration: none;
+	text-align: center;
+	border-radius: 5px;
+	border: 2px solid var(--secondary-olive);
+	cursor: pointer;
+	transition: all 0.3s ease;
+
+	font-size: smaller;
+}

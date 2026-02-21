@@ -1,0 +1,16 @@
+@import url(../../../styles/MainContent.css);
+@import url(../../../styles/indented.css);
+@import url(../../app-header/app-header.css);
+@import url(../../file-search/file-search.css);
+
+
+@import url(../../../styles/AccountPage.css);
+@import url(../../../styles/blue-button.css);
+@import url(../../../styles/orange-button.css);
+@import url(../../../styles/red-button.css);
+@import url(../../../styles/green-button.css);
+@import url(../../../styles/buttons-row.css);
+
+@import url(../../../styles/ModelTable.css);
+
+@import url(../../../styles/FilesPage.css);

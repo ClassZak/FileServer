@@ -1,0 +1,73 @@
+<app-app-header></app-app-header>
+<main class="MainContent">
+	@if (isLoading){
+		<app-loading-spinner [title]="'Загрузка пользователя'"></app-loading-spinner>
+	} @else {
+		<div class="account-card">
+			<h2>Информация о пользователе</h2>
+			<div class="account-info">
+				<p><strong>Email:</strong> {{user?.email}}</p>
+				<p><strong>Фамилия:</strong> {{user?.surname}}</p>
+				<p><strong>Имя:</strong> {{user?.name}}</p>
+				<p><strong>Отчество:</strong> {{user?.patronymic}}</p>
+				<p><strong>Создан:</strong> {{user?.createdAt | date:'dd.MM.yyyy HH:mm:ss'}}</p>
+			</div>
+		</div>
+		<div class="buttons-row">
+			<button
+				(click)="setIsUpdateUserModalOpen(true)"
+				class="orange-button"
+			>
+				Изменить данные
+			</button>
+			<button
+				(click)="setIsUpdateUserPasswordModalOpen(true)"
+				class="orange-button"
+			>
+				Изменить пароль
+			</button>
+			<button
+				(click)="setIsDeleteUserModalOpen(true)"
+				class="red-button"
+			>
+				Удалить пользователя
+			</button>
+		</div>
+		<div class="buttons-row">
+			<app-redirection-button 
+				[className]="'blue-button'" 
+				[title]="'Пользователи'" 
+				[reference]="'/users'"
+			>
+			</app-redirection-button>
+			<app-redirection-button 
+				[className]="'blue-button'" 
+				[title]="'Группы'" 
+				[reference]="'/groups'"
+			>
+			</app-redirection-button>
+		</div>
+	}
+</main>
+<app-footer></app-footer>
+
+<app-update-user-modal
+	[isOpen]="isUpdateUserModalOpen"
+	(onClose)="setIsUpdateUserModalOpen(false)"
+	[currentUser]="user!"
+	(onConfirm)="handleUpdateUserModal($event)"
+>
+</app-update-user-modal>
+<app-update-user-password-modal
+	[isOpen]="isUpdateUserPasswordModalOpen"
+	(onClose)="setIsUpdateUserPasswordModalOpen(false)"
+	(onConfirm)="handleUpdateUserPasswordModal($event)"
+>
+</app-update-user-password-modal>
+<app-delete-user-modal
+	[email]="userEmail"
+	[isOpen]="isDeleteUserModalOpen"
+	(onClose)="setIsDeleteUserModalOpen(false)"
+	(onConfirm)="handleDeleteUserModal()"
+>
+</app-delete-user-modal>

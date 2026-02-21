@@ -1,0 +1,155 @@
+<app-app-header></app-app-header>
+<main class="MainContent">
+	<div class="login-container">
+		<div class="login-wrapper">
+			<div class="login-card">
+				<h1 class="login-title">Авторизация</h1>
+				<div class="auth-switcher">
+					<button
+						type="button"
+						[class.active]="this.formType === 0"
+						(click)="this.formType = 0"
+					>
+						По Email
+					</button>
+					<!--this.formType == 1 means this.formType == LoginFormType.SNP-->
+					<button
+						type="button"
+						[class]="this.formType == 1 ? 'snp active' : 'snp'"
+						(click)="this.formType = 1"
+					>
+						По ФИО
+					</button>
+				</div>
+				
+				<!-- Показ ошибки -->
+				<div class="error-message">
+					{{ error }}
+				</div>
+				@if (this.formType == 0) {
+					<form class="auth-form" (ngSubmit)="handleEmailLogin($event)">
+						<div class="auth-form-group">
+							<label for="email">Email адрес</label>
+							<input
+								id="email"
+								type="email"
+								required
+								placeholder="example@mail.ru"
+								[(ngModel)]="email"
+								name="email"
+							/>
+						</div>
+						<div class="auth-form-group">
+							<label for="password">Пароль</label>
+							<div class="password-container">
+								<input
+									id="password"
+									[type]="showPassword ? 'text' : 'password'"
+									required
+									placeholder="Введите пароль"
+									[(ngModel)]="password"
+									name="password"
+								/>
+								<button
+									type="button"
+									class="password-toggle"
+									(click)="togglePasswordVisibility()"
+								>
+									{{ showPassword ? 'Скрыть' : 'Показать' }}
+								</button>
+							</div>
+						</div>
+					
+						<button
+							type="submit"
+							class="auth-submit-btn"
+						>
+							@if (isSubmiting){
+								Вход...
+							} @else {
+								Войти через Email
+							}
+						</button>
+					</form>
+				} @else {
+					<form class="auth-form" (ngSubmit)="handleSNPLogin($event)">
+						<div class="snp-grid">
+							<div class="auth-form-group">
+								<label for="surname">Фамилия</label>
+								<input
+									id="surname"
+									name="surname"
+									[(ngModel)]="this.surname"
+									placeholder="Иванов"
+									type="text"
+									[disabled]=isSubmiting
+									required
+								/>
+								</div>
+								<div class="auth-form-group">
+									<label for="name">Имя</label>
+									<input
+									id="name"
+									name="name"
+									[(ngModel)]="this.name"
+									placeholder="Иван"
+									type="text"
+									[disabled]=isSubmiting
+									required
+								/>
+							</div>
+							<div class="auth-form-group">
+								<label for="patronymic">Отчество</label>
+								<input
+									id="patronymic"
+									name="patronymic"
+									[(ngModel)]="this.patronymic"
+									placeholder="Иванович"
+									type="text"
+									[disabled]=isSubmiting
+									required
+								/>
+							</div>
+						</div>
+						<div class="auth-form-group">
+							<label for="snpPassword">Пароль</label>
+							<div class="password-container">
+								<input
+									id="snpPassword"
+									name="password"
+									[(ngModel)]="password"
+									placeholder="Введите пароль"
+									[type]="showPassword ? 'text' : 'password'"
+									[disabled]=isSubmiting
+									required
+								/>
+								<button
+									type="button"
+									class="password-toggle"
+									[disabled]=isSubmiting
+									(click)="togglePasswordVisibility()"
+								>
+									{{ showPassword ? 'Скрыть' : 'Показать' }}
+								</button>
+							</div>
+						</div>
+						<button
+							type="submit"
+							class="auth-submit-btn"
+						>
+							@if (isSubmiting){
+								Вход...
+							} @else {
+								Войти по ФИО
+							}
+						</button>
+					</form>
+				}
+				<div class="auth-info">
+					<p>Для входа используйте email или ФИО с паролем</p>
+				</div>
+			</div>
+		</div>
+	</div>
+</main>
+<app-footer></app-footer>

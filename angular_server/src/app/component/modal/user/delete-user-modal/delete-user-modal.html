@@ -1,0 +1,34 @@
+<app-modal
+	[isOpen]="isOpen"
+	title="Подтверждение удаления"
+	(onClose)="closeModal()"
+>
+	<form (ngSubmit)="confirmDelete()" class="modal-form">
+		<div class="confirmation-content">
+			<p>
+				Вы уверены, что хотите удалить
+				<span class="highlight">пользователя с почтой «{{ email }}»</span>?
+			</p>
+			<p class="warning">
+				Это действие нельзя отменить.
+			</p>
+		</div>
+		<div class="form-actions">
+			<button
+				type="button"
+				(click)="closeModal()"
+				class="cancel-button"
+			>
+				Отмена
+			</button>
+			<button
+				type="button"
+				(click)="confirmDelete()"
+				class="submit-button"
+				data-dangerous="true"
+			>
+				Удалить
+			</button>
+		</div>
+	</form>
+</app-modal>

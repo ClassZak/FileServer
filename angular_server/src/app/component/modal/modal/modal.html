@@ -1,0 +1,24 @@
+@if (isOpen) {
+	<div 
+		class="modal-overlay" 
+		(click)="handleOverlayClick($event)"
+		role="dialog"
+		aria-modal="true"
+		[attr.aria-labelledby]="title ? 'modal-title' : null"
+	>
+		<div 
+			#modalContent
+			[class]="'modal-content ' + className"
+		>
+			@if (title) {
+				<h3 
+					id="modal-title"
+					class="text-xl font-semibold mb-4"
+				>
+					{{title}}
+				</h3>
+			}
+			<ng-content></ng-content>
+		</div>
+	</div>
+}

@@ -1,0 +1,42 @@
+<app-app-header></app-app-header>
+<main class="MainContent">
+	@if (isLoading){
+		<app-loading-spinner [title]="'Загрузка пользователей'"></app-loading-spinner>
+	} @else {
+		<h1>Все пользователи</h1>
+		<div class="add-user-container">
+			<button
+				(click)="setIsCreateUserModalComponentOpen(true)"
+				class="green-button"
+			>
+				Создать пользователя
+			</button>
+		</div>
+		<div>
+			<app-user-table [isAdmin]="isAdmin" [users]="users">
+			</app-user-table>
+		</div>
+		<div class="buttons-row">
+			<app-redirection-button 
+				[className]="'blue-button'" 
+				[title]="'Пользователи'" 
+				[reference]="'/users'"
+			>
+			</app-redirection-button>
+			<app-redirection-button 
+				[className]="'blue-button'" 
+				[title]="'Группы'" 
+				[reference]="'/groups'"
+			>
+			</app-redirection-button>
+		</div>
+	}
+</main>
+<app-footer></app-footer>
+
+<app-create-user-modal
+	[isOpen]="isCreateUserModalComponentOpen"
+	(onClose)="setIsCreateUserModalComponentOpen(false)"
+	(onConfirm)="handleComfirmCreateUser($event)"
+>
+</app-create-user-modal>

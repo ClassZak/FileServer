@@ -1,0 +1,16 @@
+@import url(../../styles/image-button.css);
+form {
+	display: flex;
+	gap: 5px;
+	width: 100%;
+}
+form input[type="text"] {
+	flex-grow: 1;
+	padding: 5px;
+	border: 1px solid #bbb;
+	border-radius: 5px;
+	width: inherit;
+	min-width: 20px;
+	background: #ffffff;
+	color: #293629;
+}

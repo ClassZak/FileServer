@@ -1,0 +1,41 @@
+<app-modal
+	[isOpen]="isOpen"
+	title="Подтверждение удаления"
+	(onClose)="closeModal()"
+>
+	<form (ngSubmit)="submitForm()" class="modal-form">
+		<div class="confirmation-content">
+			<p>
+				Вы уверены, что хотите удалить
+				<span class="highlight">группу "{{ name }}"</span>?
+			</p>
+			<p class="warning">
+				Это действие нельзя отменить.
+			</p>
+		</div>
+		<div class="form-actions">
+			<button
+				type="button"
+				(click)="closeModal()"
+				[disabled]="submitting"
+				class="cancel-button"
+			>
+				Отмена
+			</button>
+			<button
+				type="submit"
+				[disabled]="submitting"
+				[class.submitting]="submitting"
+				class="submit-button"
+				data-dangerous="true"
+			>
+				@if (submitting) {
+					<span class="spinner"></span>
+					Удаление...
+				} @else {
+					Удалить
+				}
+			</button>
+		</div>
+	</form>
+</app-modal>

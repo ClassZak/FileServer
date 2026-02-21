@@ -1,0 +1,27 @@
+@if (currentPath) {
+	<div class="path-panel">
+		<!-- Root button -->
+		<button class="nav-button" (click)="navigate.emit('')">Корень</button>
+
+		<!-- Breadcrumb items -->
+		@for (part of parts; track $index; let i = $index, last = $last) {
+			<span class="text-gray-400">/</span>
+			@if (last) {
+				<span class="text-gray-800 font-medium">{{ part }}</span>
+			} @else {
+				<button class="nav-button" (click)="navigate.emit(getPathTo(i))">
+					{{ part }}
+				</button>
+			}
+		}
+
+		<!-- Back button -->
+		<button
+			class="nav-button back-button"
+			(click)="navigateUp.emit()"
+			[disabled]="!currentPath"
+		>
+			Назад
+		</button>
+	</div>
+}

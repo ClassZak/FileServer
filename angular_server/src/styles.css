@@ -1,0 +1,97 @@
+
+/* index.css */
+:root {
+		--primary-dark: #293629;
+	--primary-accent: #242424;
+	--secondary-green: #181818;
+	--secondary-olive: #6a6a57;
+	--accent-gold: #dbdbdb;
+	--text-light: #dbdbdb;
+	--text-muted: #e0e0e0;
+		--side-background: #18181f;
+}
+
+/* Исправленный box-sizing */
+* {
+		box-sizing: border-box;
+		margin: 0;
+		padding: 0;
+}
+
+html, body, #root, app-root{
+		height: 100%;
+		min-height: 100vh;
+}
+
+html {
+		background: var(--side-background);
+		background-attachment: fixed;
+}
+
+/* Ключевое исправление: flex-контейнер с min-height */
+body {
+		display: flex;
+		flex-direction: column;
+		min-height: 100vh;
+		font-family: Arial, sans-serif;
+		color: var(--text-light);
+}
+
+body.no-scroll {
+	overflow: hidden;
+}
+body.modal-open {
+		overflow: hidden;
+		/* padding-right: var(--scrollbar-width); */
+}
+
+
+/* Заголовки */
+h1, h2, h3, h4, h5, h6 {
+		font-family: Montserrat, sans-serif;
+		font-weight: 600;
+		margin-bottom: 1rem;
+}
+
+h1 {
+		font-size: 2.5rem;
+		text-align: center;
+		margin: 1.5rem 0;
+}
+
+h2 {
+		font-size: 2rem;
+		padding-left: 1rem;
+}
+
+/* Ссылки */
+a {
+		color: var(--text-light);
+		text-decoration: none;
+		transition: color 0.3s ease;
+}
+
+a:hover {
+		text-decoration: underline;
+}
+
+p a {
+		text-decoration: underline;
+		color: var(--text-muted);
+}
+
+
+/* Button style */
+button {
+	background-color: #dbdbdb;
+	border-radius: 5px;
+}
+
+
+
+*:has(.MainContent) {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+

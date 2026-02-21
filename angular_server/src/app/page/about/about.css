@@ -1,0 +1,78 @@
+@import url(../../../styles/MainContent.css);
+@import url(../../../styles/indented.css);
+@import url(../../app-header/app-header.css);
+@import url(../../file-search/file-search.css);
+
+
+.about-page, .MainContent .about-page{
+	/*max-width: 1100px;*/
+	width: 90%;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.about-toc {
+	background: rgba(0, 0, 0, 0.03);
+	border-left: 4px solid var(--secondary-accent);
+	padding: 1rem 1.5rem;
+}
+
+.about-toc ol {
+	padding-left: 1.5rem;
+}
+
+.about-toc li {
+	margin-bottom: 0.5rem;
+}
+
+.about-toc a {
+	text-decoration: none;
+	color: inherit;
+}
+
+.about-toc a:hover {
+	text-decoration: underline;
+}
+
+.about-page hr {
+	margin: 2rem 0;
+}
+
+.about-page a {
+	font-size: 0.9rem;
+}
+
+
+/*.about-page p {
+	line-height: 1.4;
+	margin-bottom: 1.2rem;
+}*/
+
+
+
+.about-page img {
+	display: block;
+	max-width: 100%;
+	max-height: 600px;
+	width: auto;
+	height: auto;
+	margin: 1.5rem auto;
+	
+	/* Рамка, отделяющая от тёмного фона */
+	border: 1px solid rgba(255, 255, 255, 0.15);
+	border-radius: 8px;
+	
+	/* Тень для объёма */
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+	
+	/* Плавный переход для эффекта наведения */
+	transition: all 0.2s ease;
+	
+	object-fit: contain;
+	background-color: #1a1a1a; /* подложка на случай, если изображение с прозрачностью */
+}
+
+.about-page img:hover {
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 0 2px rgba(255, 255, 255, 0.2);
+	transform: scale(1.01); /* лёгкое увеличение */
+}

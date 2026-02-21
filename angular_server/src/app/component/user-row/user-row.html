@@ -1,0 +1,15 @@
+<td>{{userData?.surname}}</td>
+<td>{{userData?.name}}</td>
+<td>{{userData?.patronymic}}</td>
+<td>{{userData?.email}}</td>
+@if (isAdmin && $any(userData)?.createdAt ) {
+	<td>{{ $any(userData)?.createdAt | date:'dd.MM.yyyy HH:mm:ss' }}</td>
+	<td>
+		<app-redirection-button
+			[reference]="createNavigateToUserHref(userData?.email)"
+			[title]="isAdmin ? 'Изменить данные' : 'Просмотр'"
+			[className]='"blue-button"'
+		>
+		</app-redirection-button>
+	</td>
+}

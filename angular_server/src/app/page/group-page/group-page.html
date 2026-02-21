@@ -1,0 +1,109 @@
+<app-app-header></app-app-header>
+<main class="MainContent">
+	@if (isLoading) {
+		<app-loading-spinner [title]="'Загрузка группы'"></app-loading-spinner>
+	} @else {
+		@if (this.isAdmin){
+			<div class="account-card">
+				<h2>Информация о группе</h2>
+				<div class="account-info">
+					<p><strong>Название:</strong>{{group?.name}}</p>
+					<p><strong>Количество участников:</strong>{{group?.membersCount}}</p>
+					<p><strong>Создатель:</strong>{{group?.creator?.toString()}}</p>
+				</div>
+			</div>
+			<div>
+				<app-user-table-group-page
+					[isAdmin]="isAdmin"
+					[users]="group?.members"
+					(removeUser)="onRemoveUser($event)">
+				</app-user-table-group-page>
+			</div>
+			<div class="buttons-row">
+				<button
+					(click)="setIsDeleteGroupModalComponentOpen(true)"
+					class="red-button"
+				>
+					Удалить группу
+				</button>
+				<button
+					(click)="setIsUpdateGroupModalComponentOpen(true)"
+					class="orange-button"
+				>
+					Обновить данные группы
+				</button>
+				<button
+					(click)="setIsAddUserToGroupModalComponentOpen(true)"
+					class='green-button'
+				>
+					Добавить пользователя в группу
+				</button>
+			</div>
+			<div class="buttons-row">
+				<app-redirection-button 
+					[className]="'blue-button'" 
+					[title]="'Пользователи'" 
+					[reference]="'/users'"
+				>
+				</app-redirection-button>
+				<app-redirection-button 
+					[className]="'blue-button'" 
+					[title]="'Группы'" 
+					[reference]="'/groups'"
+				>
+				</app-redirection-button>
+			</div>
+		} @else {
+			<div class="account-card">
+				<h2>Информация о группе</h2>
+				<div class="account-info">
+					<p><strong>Название:</strong>{{group?.name}}</p>
+					<p><strong>Количество участников:</strong>{{group?.membersCount}}</p>
+					<p><strong>Создатель:</strong>{{group?.creator?.toString()}}</p>
+				</div>
+				<h2>Участники группы</h2>
+				<app-user-table
+					[isAdmin]="isAdmin"
+					[users]="group?.members"
+				>
+				</app-user-table>
+			</div>
+		}
+	}
+</main>
+<app-footer></app-footer>
+
+
+@if (!isLoading && isAdmin){
+	<app-add-user-to-group-modal
+		[isOpen]="isAddUserToGroupModalComponentOpen"
+		(onClose)="setIsAddUserToGroupModalComponentOpen(false)"
+		[users]="this.users!"
+		[groupName]="this.groupName"
+		(onConfirm)="handleConfirmAddUserToGroupModalComponent($event)"
+	>
+	</app-add-user-to-group-modal>
+	<app-delete-group-modal
+		[isOpen]="isDeleteGroupModalComponentOpen"
+		(onClose)="setIsDeleteGroupModalComponentOpen(false)"
+		(onConfirm)="handleConfirmDeleteGroupModalComponent()"
+		[name]="groupName"
+	>
+	</app-delete-group-modal>
+	<app-remove-user-from-group-modal
+		[isOpen]="isRemoveUserFromGroupModalComponentOpen"
+		(onClose)="setIsRemoveUserFromGroupModalComponentOpen(false)"
+		[user]="selectedUserEmail"
+		[groupName]="groupName"
+		(onConfirm)="handleConfirmRemoveUserFromGroupModalComponent()"
+	>
+	</app-remove-user-from-group-modal>
+	<app-update-group-modal
+		[isOpen]="isUpdateGroupModalComponentOpen"
+		(onClose)="setIsUpdateGroupModalComponentOpen(false)"
+		[users]="users!"
+		[currentGroup]="adminGroup!"
+		(onConfirm)="handleConfirmUpdateGroupModalComponent($event)"
+	>
+	</app-update-group-modal>
+}
