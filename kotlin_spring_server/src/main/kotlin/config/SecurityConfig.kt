@@ -1,7 +1,5 @@
 package org.zak.config
 
-import jakarta.servlet.http.HttpServlet
-import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager
@@ -15,7 +13,6 @@ import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 import org.zak.filter.JwtRequestFilter
-import java.net.URLEncoder
 
 @Configuration
 @EnableWebSecurity
@@ -26,6 +23,7 @@ class SecurityConfig {
 		val configuration = CorsConfiguration()
 		configuration.allowedOrigins = listOf(
 			"http://localhost:3000",  // React app
+			"http://localhost:4200",  // Angular app
 			"http://localhost:8080"
 		)
 		configuration.allowedMethods = listOf("*")
@@ -33,13 +31,14 @@ class SecurityConfig {
 		configuration.allowCredentials = true
 		
 		val source = UrlBasedCorsConfigurationSource()
-		source.registerCorsConfiguration("/**", configuration)  // Important: /**
+		source.registerCorsConfiguration("/**", configuration)
 		return source
 	}
+	
 	@Bean
 	fun filterChain(
 		http: HttpSecurity,
-		jwtRequestFilter: JwtRequestFilter  // Внедряем через параметр метода
+		jwtRequestFilter: JwtRequestFilter
 	): SecurityFilterChain {
 		http
 			.cors { cors ->
@@ -51,49 +50,21 @@ class SecurityConfig {
 			}
 			.authorizeHttpRequests { authz ->
 				authz
-					// Публичные endpoints
+					// Статические ресурсы Angular
 					.requestMatchers(
 						"/",
-						"/login",
-						"/register",
-						"/styles/**",
-						"/public/**",
-						"/scripts/**",
-						"/scripts/base_scripts/**",
-						"/error",
-						"/api/auth/check-auth"
+						"/index.html",
+						"/favicon.ico",
+						"/*.js",
+						"/*.css",
+						"/assets/**"
 					).permitAll()
-					// API endpoints аутентификации
-					.requestMatchers("/api/auth/**").permitAll()
-					.requestMatchers("/api/public/**").permitAll()
-					// Защищенные endpoints
-					.requestMatchers("/api/admin/**").authenticated()//.hasRole("ADMIN")
-					.requestMatchers("/api/users/**").authenticated()
-					.requestMatchers("/protected/**").authenticated()
-					.anyRequest().authenticated()
-			}
-			/*
-			.exceptionHandling { exceptions ->
-				exceptions.authenticationEntryPoint { request, response, authException ->
-					// Проверяем, хочет ли клиент JSON
-					val acceptsJson = request.getHeader("Accept")?.contains("application/json") == true
-					
-					if (acceptsJson) {
-						// Для JSON запросов - 401 с JSON ответом
-						response.status = HttpServletResponse.SC_UNAUTHORIZED
-						response.contentType = "application/json"
-						response.writer.write("""{"error":"Unauthorized","loginUrl":"/login"}""")
-					} else {
-						// Для HTML запросов - 302 редирект
-						val redirectUrl = "/login?redirect=" +
-								URLEncoder.encode(request.requestURI, "UTF-8")
-						response.sendRedirect(redirectUrl)
-					}
-				}
-			}*/
-			// Отключаем дефолтную форму логина Spring Security
-			.formLogin { formLogin ->
-				formLogin.disable()
+					// Публичные API (не требуют токена)
+					.requestMatchers("/api/auth/**", "/api/public/**").permitAll()
+					// Все остальные API требуют аутентификации
+					.requestMatchers("/api/**").authenticated()
+					// Все остальные пути (например, маршруты Angular) разрешены
+					.anyRequest().permitAll()
 			}
 			.httpBasic { httpBasic ->
 				httpBasic.disable()

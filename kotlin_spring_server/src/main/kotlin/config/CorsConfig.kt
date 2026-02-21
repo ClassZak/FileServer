@@ -14,6 +14,7 @@ class CorsConfig {
 			override fun addCorsMappings(registry: CorsRegistry) {
 				registry.addMapping("/app/**")
 					.allowedOrigins("http://localhost:3000") // frontend URL
+					.allowedOrigins("http://localhost:4200") // frontend URL
 					.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
 					.allowedHeaders("*")
 					.allowCredentials(true)

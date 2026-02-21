@@ -45,9 +45,9 @@ class FileController(
 		@RequestParam path: String = "",
 		@RequestHeader("Authorization") authHeader: String
 	): ResponseEntity<Any> {
-		val currentUser = getCurrentUserFromJwt(authHeader)
 		return try {
-			val (files, folders) = fileSystemService.listDirectory(path)
+			val currentUser = getCurrentUserFromJwt(authHeader)
+			val (files, folders) = fileSystemService.listDirectoryByPermissions(currentUser, path)
 			ResponseEntity.ok(mapOf("files" to files, "folders" to folders))
 		} catch (e: IllegalArgumentException) {
 			// Директория не существует
@@ -65,15 +65,19 @@ class FileController(
 	}
 	
 	@GetMapping("/exists")
-	fun existsFileOrDirectory(@RequestParam path: String = "") : ResponseEntity<Any> {
+	fun existsFileOrDirectory(
+		@RequestParam path: String = "",
+		@RequestHeader("Authorization") authHeader: String
+	) : ResponseEntity<Any> {
 		try {
-			val exists = fileSystemService.pathExists(path)
+			val currentUser = getCurrentUserFromJwt(authHeader)
+			val exists = fileSystemService.pathExistsByPermissions(currentUser, path)
 			return if (exists)
 				ResponseEntity.ok(mapOf("exists" to true))
 			else
 				ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf("exists" to false))
 		} catch (e: Exception) {
-			logger.error("Ошибка при поиске файла или папки", e)
+			logger.error("Ошибка при поиске файла или директории", e)
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf("exists" to false))
 		}
 	}
@@ -85,7 +89,8 @@ class FileController(
 		@RequestHeader("Authorization") authHeader: String
 	): ResponseEntity<Any> {
 		return try {
-			val fileInfo = fileSystemService.uploadFile(path, file)
+			val currentUser = getCurrentUserFromJwt(authHeader)
+			val fileInfo = fileSystemService.uploadFileByPermissions(currentUser, path, file)
 			ResponseEntity.ok(fileInfo)
 		} catch (e: IllegalArgumentException) {
 			ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -103,15 +108,17 @@ class FileController(
 	@GetMapping("/search")
 	fun searchFilesAndFolders(
 		@RequestParam q: String,
-		@RequestParam(required = false, defaultValue = "") path: String
+		@RequestParam(required = false, defaultValue = "") path: String,
+		@RequestHeader("Authorization") authHeader: String
 	): ResponseEntity<Any> {
 		return try {
+			val currentUser = getCurrentUserFromJwt(authHeader)
 			if (q.isBlank()) {
 				return ResponseEntity.badRequest()
 					.body(mapOf("error" to "Поисковый запрос не может быть пустым"))
 			}
 			
-			val (files, folders) = fileSystemService.searchFilesAndFolders(q, path)
+			val (files, folders) = fileSystemService.searchFilesAndFoldersByPermissions(currentUser, q, path)
 			ResponseEntity.ok(mapOf(
 				"files" to files,
 				"folders" to folders,
@@ -133,23 +140,27 @@ class FileController(
 	}
 	
 	@PostMapping("/create-folder")
-	fun createFolder(@RequestBody request: Map<String, String>): ResponseEntity<Any> {
+	fun createFolder(
+		@RequestBody request: Map<String, String>,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Any> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
 		val path = request["path"] ?: ""
 		val folderName = request["folderName"] ?: ""
 		
 		return try {
-			val folderInfo = fileSystemService.createFolder(path, folderName)
+			val folderInfo = fileSystemService.createFolderByPermissions(currentUser, path, folderName)
 			ResponseEntity.ok(folderInfo)
 		} catch (e: IllegalArgumentException) {
 			ResponseEntity.status(HttpStatus.BAD_REQUEST)
-				.body(mapOf("error" to (e.message ?: "Ошибка при создании папки")))
+				.body(mapOf("error" to (e.message ?: "Ошибка при создании директории")))
 		} catch (e: SecurityException) {
 			ResponseEntity.status(HttpStatus.FORBIDDEN)
-				.body(mapOf("error" to (e.message ?: "Нет прав доступа для создания папки")))
+				.body(mapOf("error" to (e.message ?: "Нет прав доступа для создания директории")))
 		} catch (e: Exception) {
-			logger.error("Ошибка при создании папки", e)
+			logger.error("Ошибка при создании директории", e)
 			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-				.body(mapOf("error" to "Ошибка при создании папки"))
+				.body(mapOf("error" to "Ошибка при создании директории"))
 		}
 	}
 	
@@ -167,11 +178,11 @@ class FileController(
 				ResponseEntity.ok(mapOf("message" to "Удалено успешно"))
 			} else {
 				ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body(mapOf("error" to "Не удалось удалить файл/папку"))
+					.body(mapOf("error" to "Не удалось удалить файл/директорию"))
 			}
 		} catch (e: IllegalArgumentException) {
 			ResponseEntity.status(HttpStatus.BAD_REQUEST)
-				.body(mapOf("error" to (e.message ?: "Файл или папка не найдены")))
+				.body(mapOf("error" to (e.message ?: "Файл или директория не найдены")))
 		} catch (e: SecurityException) {
 			ResponseEntity.status(HttpStatus.FORBIDDEN)
 				.body(mapOf("error" to (e.message ?: "Нет прав доступа для удаления")))
@@ -183,9 +194,13 @@ class FileController(
 	}
 	
 	@GetMapping("/download")
-	fun downloadFile(@RequestParam path: String): ResponseEntity<Any> {
+	fun downloadFile(
+		@RequestParam path: String,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Any> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
 		return try {
-			val (file, contentType) = fileSystemService.downloadFile(path)
+			val (file, contentType) = fileSystemService.downloadFileByPermissions(currentUser, path)
 			
 			val resource = FileSystemResource(file)
 			
