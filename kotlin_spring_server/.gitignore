@@ -56,3 +56,6 @@ bin/
 
 ### Angular build
 src/main/resources/static/
+
+### SSL certificate
+/src/main/resources/keystore.p12
