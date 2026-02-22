@@ -10,12 +10,3 @@
 @import url(../../../styles/buttons-row.css);
 
 @import url(../../../styles/ModelTable.css);
-
-
-
-
-@media screen and (width < 500px){
-	.MainContent > .users-container{
-		margin: 0;
-	}
-}

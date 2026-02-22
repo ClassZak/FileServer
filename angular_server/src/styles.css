@@ -33,12 +33,8 @@ body {
 	color: var(--text-light);
 }
 
-body.no-scroll {
+body.no-scroll, body.modal-open {
 	overflow: hidden;
-}
-body.modal-open {
-	overflow: hidden;
-	/* padding-right: var(--scrollbar-width); */
 }
 
 
@@ -143,8 +139,9 @@ button {
 }
 
 
-
-*:has(.MainContent) {
+app-about, app-account-page, app-files-page, app-group-page, app-groups-page, app-home, app-login-page, app-user-page, app-users-page
+/*,*:has(.MainContent)*/
+{
 	display: flex;
 	flex-direction: column;
 	height: 100%;

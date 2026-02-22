@@ -10,3 +10,10 @@
 @import url(../../../styles/buttons-row.css);
 
 @import url(../../../styles/ModelTable.css);
+
+@media screen and (width < 500px) {
+	.MainContent .account-container {
+		padding: 0;
+		margin: 0;
+	}
+}

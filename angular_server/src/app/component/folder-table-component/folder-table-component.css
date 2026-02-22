@@ -4,11 +4,4 @@
 @import url(../../../styles/ModelTable.css);
 @import url(../../../styles/buttons-row.css);
 
-@import url(../group-row/group-row.css);
-
-@media screen and (width< 500px) {
-	app-folder-table{
-		width: 100%;
-		background-color: red;
-	}
-}
+@import url(../../../styles/RedirectionButton.css);
