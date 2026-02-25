@@ -1,12 +1,57 @@
 :root {
-	--primary-dark: #293629;
-	--primary-accent: #242424;
-	--secondary-green: #181818;
-	--secondary-olive: #6a6a57;
-	--accent-gold: #dbdbdb;
-	--text-light: #dbdbdb;
-	--text-muted: #e0e0e0;
-	--side-background: #18181f;
+	/* Base colors */
+	--color-bg-page:				 #18181f;
+	--color-bg-surface:				 #242424;
+	--color-bg-surface-alt:			 #181818;
+	--color-bg-header:				 #293629;
+	--color-bg-hover:				 #484848;
+	
+
+	--color-text-primary:			 #dbdbdb;
+	--color-text-secondary:			 #e0e0e0;
+	
+	
+	--color-border-default:			 #333;
+	--color-border-muted:			 #3a3a3a;
+	--color-border-strong:			 #4a4a4a;
+	--color-border-weak:			 #bbb;
+	
+	--color-accent-primary:			 #dbdbdb;
+	--color-accent-secondary:		 #f6e05e;
+	--color-accent-muted:			 #6a6a57;
+
+	
+	--color-info-bg:				 #000e16;
+	--color-info-hover:				 #90cdf4;
+	--color-info-text:				 #2b6cb0;
+	--color-success-text:			 #48bb78;
+	--color-orange-button:			 #bb7248;
+
+
+	--color-danger-bg:				 #dc143c;
+	--color-danger-bg-seondary:		 #b91c1c;
+	--color-danger-hover:			 #fe365e;
+	--color-danger-hover-secondary:	 #dc2626;
+	--color-danger-text:			 #fafad2;
+	--color-danger-border:			 #dc2626;
+
+	--color-bg-overlay:				 rgba(0, 0, 0, 0.5);
+	--color-text-overlay:			 #777;
+
+	--color-text-auth-form:			 #777;
+
+
+
+	--color-input-text:				 #edf2f7;
+
+
+
+	--color-bg-button:				 #2a2a2a;
+	--color-bg-form-input:			 #2a2a2a;
+
+
+	--color-border-spinner:			 #f3f3f3;
+	--color-border-top-spinner:		 #3498db;
 }
 
 * {
@@ -21,7 +66,7 @@ html, body, #root, app-root{
 }
 
 html {
-	background: var(--side-background);
+	background: var(--color-bg-page);
 	background-attachment: fixed;
 }
 
@@ -30,7 +75,7 @@ body {
 	flex-direction: column;
 	min-height: 100vh;
 	font-family: Arial, sans-serif;
-	color: var(--text-light);
+	color: var(--color-text-primary);
 }
 
 body.no-scroll, body.modal-open {
@@ -117,7 +162,7 @@ h6 {
 }
 /* a tag */
 a {
-	color: var(--text-light);
+	color: var(--color-text-primary);
 	text-decoration: none;
 	transition: color 0.3s ease;
 }
@@ -128,7 +173,7 @@ a:hover {
 
 p a {
 	text-decoration: underline;
-	color: var(--text-muted);
+	color: var(--color-text-secondary);
 }
 
 

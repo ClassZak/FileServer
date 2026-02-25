@@ -1,24 +1,24 @@
 .file-table {
 	min-width: 100%;
-	background-color: #242424;
-	border: 1px solid #333;
+	background-color: var(--color-bg-surface);
+	border: 1px solid var(--color-border-default);
 	border-collapse: collapse;
 }
 
 .file-table thead {
-	background-color: var(--secondary-olive);
+	background-color: var(--color-accent-muted);
 }
 
 .file-table th {
 	padding: 0.75rem 1rem;
 	text-align: left;
 	font-weight: 600;
-	border-bottom: 2px solid #333;
+	border-bottom: 2px solid var(--color-border-default);
 }
 
 .file-table td {
 	padding: 0.75rem 1rem;
-	border-top: 1px solid #333;
+	border-top: 1px solid var(--color-border-default);
 	vertical-align: middle;
 }
 
@@ -27,16 +27,16 @@
 }
 
 .file-table tbody tr:hover {
-	background-color: #484848;
+	background-color: var(--color-bg-hover);
 }
 
 .file-type-badge {
 	padding: 0.25rem 0.5rem;
-	background-color: #2a2a2a;
+	background-color: var(--color-bg-button);
 	border-radius: 0.25rem;
 	font-size: 0.75rem;
 	font-weight: 500;
-	color: #4a5568;
+	color: var(--color-text-secondary);
 }
 
 .file-action-button {
@@ -49,20 +49,20 @@
 }
 
 .file-action-button--download {
-	background-color: #000e16;
-	color: #2b6cb0;
+	background-color: var(--color-info-bg);
+	color: var(--color-info-text);
 }
 
 .file-action-button--download:hover {
-	background-color: #90cdf4;
+	background-color: var(--color-info-hover);
 }
 
 .file-action-button--delete {
-	background-color: #dc143c;
-	color: #fafad2;
+	background-color: var(--color-danger-bg);
+	color: var(--color-danger-text);
 }
 
 .file-action-button--delete:hover {
-	background-color: #fe365e;
-	color: #fdfdf5;
+	background-color: var(--color-danger-hover);
+	color: var(--color-text-secondary);
 }

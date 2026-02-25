@@ -7,10 +7,10 @@ div.file-search{
 div.file-search input[type="text"] {
 	flex-grow: 1;
 	padding: 5px;
-	border: 1px solid #bbb;
+	border: 1px solid var(--color-border-weak);
 	border-radius: 5px;
 	width: inherit;
 	min-width: 20px;
-	background: #ffffff;
-	color: #293629;
+	background: white;
+	color: var(--color-bg-header);
 }

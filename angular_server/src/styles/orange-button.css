@@ -1,6 +1,6 @@
 .orange-button {
-	background-color: #2a2a2a;
-	color: #bb7248;
+	background-color: var(--color-bg-button);
+	color: var(--color-orange-button);
 	padding: 0.375rem 0.75rem;
 	border-radius: 0.25rem;
 	font-size: 0.875rem;
@@ -10,5 +10,5 @@
 }
 
 .orange-button:hover {
-	background-color: #484848;
+	background-color: var(--color-bg-hover);
 }

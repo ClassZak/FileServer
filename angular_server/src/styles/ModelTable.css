@@ -1,22 +1,22 @@
 .model-table {
 	min-width: 100%;
-	background-color: #242424;
-	border: 1px solid #333;
+	background-color: var(--color-bg-surface);
+	border: 1px solid var(--color-border-default);
 	border-collapse: collapse;
 }
 
 .model-table thead {
-	background-color: var(--secondary-olive);
+	background-color: var(--color-accent-muted);
 }
 
 .model-table td{
 	padding: 0.75rem 1rem;
-	border-top: 1px solid #333;
+	border-top: 1px solid var(--color-border-default);
 	vertical-align: middle;
 }
 .model-table td{
 	padding: 0.75rem 1rem;
-	border-top: 1px solid #333;
+	border-top: 1px solid var(--color-border-default);
 	vertical-align: middle;
 }
 
@@ -24,13 +24,13 @@
 	padding: 0.75rem 1rem;
 	text-align: left;
 	font-weight: 600;
-	border-bottom: 2px solid #333;
+	border-bottom: 2px solid var(--color-border-default);
 }
 @media screen and (width< 1000px) {
 	.model-table th, .model-table td{
 		text-wrap-mode: nowrap;
 		padding: 0.25rem 0.5rem;
-		border-bottom: 2px solid #333;
+		border-bottom: 2px solid var(--color-border-default);
 	}
 }
 @media screen and (width< 880px) {
@@ -55,7 +55,7 @@
 }
 
 .model-table tbody tr:hover {
-	background-color: #484848;
+	background-color: var(--color-bg-hover);
 }
 
 
@@ -70,7 +70,7 @@
 
 td{
 	padding: 0.75rem 1rem;
-	border-top: 1px solid #333;
+	border-top: 1px solid var(--color-border-default);
 	vertical-align: middle;
 }
 @media screen and (width< 880px) {
@@ -78,7 +78,7 @@ td{
 		text-wrap-mode:wrap;
 		font-size: smaller;
 		padding: 0;
-		border: 2px solid #333;
+		border: 2px solid var(--color-border-default);
 	}
 }
 @media screen and (width< 615px) {
@@ -88,7 +88,7 @@ td{
 		word-wrap: anywhere;
 		overflow-wrap: anywhere;
 		padding: 0;
-		border-left: 2px solid #333;
+		border-left: 2px solid var(--color-border-default);
 	}
 	td:first-child, th:first-child{
 		border-left: none;

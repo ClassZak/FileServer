@@ -69,7 +69,7 @@
 	transition: all 0.2s ease;
 	
 	object-fit: contain;
-	background-color: #1a1a1a; /* подложка на случай, если изображение с прозрачностью */
+	background-color: black; /* подложка на случай, если изображение с прозрачностью */
 }
 
 .about-page img:hover {

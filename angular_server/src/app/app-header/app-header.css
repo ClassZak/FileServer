@@ -3,8 +3,7 @@ app-file-search{
 }
 app-app-header {
 	width: 100%;
-	background-color: var(--primary-dark);
-	background-color: var(--primary-dark);
+	background-color: var(--color-bg-header);
 	position: fixed;
 	font-weight: bold;
 	z-index: 1000;
