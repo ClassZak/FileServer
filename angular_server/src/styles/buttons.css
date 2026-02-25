@@ -1,0 +1,72 @@
+.btn {
+	background-color: var(--color-bg-button);
+	color: var(--color-text-primary);
+	padding: 0.375rem 0.75rem;
+	border-radius: 0.25rem;
+	font-size: 0.875rem;
+	cursor: pointer;
+	border: none;
+	transition: background-color 0.2s;
+}
+
+.btn:hover {
+	background-color: var(--color-bg-button-hover);
+	color: var(--color-text-secondary);
+}
+
+
+
+.btn-red, .btn-delete {
+	background-color: var(--color-danger-bg);
+	color: var(--color-danger-text);
+}
+.btn-red:hover, .btn-delete:hover {
+	background-color: var(--color-danger-hover);
+	color: var(--color-text-secondary);
+}
+
+
+.btn-blue, .btn-cancel {
+	background-color: var(--color-info-bg);
+	color: var(--color-info-text);
+}
+.btn-blue:hover, .btn-cancel:hover {
+	background-color: var(--color-info-hover);
+}
+
+
+.btn-green, .btn-submit {
+	background-color: var(--color-bg-button);
+	color: var(--color-success-text);
+}
+.btn-green:hover, .btn-submit:hover {
+	background-color: var(--color-bg-hover);
+}
+
+.btn-submit[data-dangerous="true"]{
+	background-color: var(--color-danger-bg);
+	color: var(--color-danger-text);
+}
+.btn-submit[data-dangerous="true"]:hover {
+	background-color: var(--color-danger-hover);
+	color: var(--color-text-secondary);
+}
+
+
+.btn-orange {
+	background-color: var(--color-bg-button);
+	color: var(--color-orange-button);
+}
+.btn-orange {
+	background-color: var(--color-bg-hover);
+}
+
+
+
+
+.btn-img{
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 0;
+}
