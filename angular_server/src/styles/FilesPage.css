@@ -308,3 +308,11 @@ div.navigation-panel .path-form input[type="text"]{
 	font-size: 1rem;
 	transition: all 0.3s ease;
 }
+
+
+
+div.upload-buttons{
+	display: flex;
+	gap: 10px;
+	margin-top: 10px;
+}
