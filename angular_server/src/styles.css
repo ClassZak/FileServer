@@ -53,6 +53,13 @@
 
 	--color-border-spinner:			 #f3f3f3;
 	--color-border-top-spinner:		 #3498db;
+
+
+
+
+
+
+	--screen-wifth-large:			 900px;
 }
 
 * {
@@ -193,3 +200,7 @@ app-about, app-account-page, app-files-page, app-group-page, app-groups-page, ap
 	height: 100%;
 }
 
+button:focus-visible, a:focus-visible, input:focus-visible {
+	outline: 2px solid var(--color-accent-primary);
+	outline-offset: 2px;
+}
