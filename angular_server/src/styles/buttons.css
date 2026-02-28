@@ -32,6 +32,7 @@
 }
 .btn-blue:hover, .btn-cancel:hover {
 	background-color: var(--color-info-hover);
+	color: var(--color-info-text);
 }
 
 
@@ -41,6 +42,7 @@
 }
 .btn-green:hover, .btn-submit:hover {
 	background-color: var(--color-bg-hover);
+	color: var(--color-success-text);
 }
 
 .btn-submit[data-dangerous="true"]{
@@ -52,13 +54,24 @@
 	color: var(--color-text-secondary);
 }
 
+.btn-cancel {
+	background-color: var(--color-info-bg);
+	color: var(--color-info-text);
+}
+.btn-cancel:hover {
+	background-color: var(--color-info-hover);
+	color: var(--color-info-text);
+}
+
+
 
 .btn-orange {
 	background-color: var(--color-bg-button);
 	color: var(--color-orange-button);
 }
-.btn-orange {
+.btn-orange:hover {
 	background-color: var(--color-bg-hover);
+	color: var(--color-orange-button);
 }
 
 

@@ -16,32 +16,32 @@
 		<div class="buttons-row">
 			<button
 				(click)="setIsUpdateUserModalOpen(true)"
-				class="orange-button"
+				class="btn btn-orange"
 			>
 				Изменить данные
 			</button>
 			<button
 				(click)="setIsUpdateUserPasswordModalOpen(true)"
-				class="orange-button"
+				class="btn btn-orange"
 			>
 				Изменить пароль
 			</button>
 			<button
 				(click)="setIsDeleteUserModalOpen(true)"
-				class="red-button"
+				class="btn btn-red"
 			>
 				Удалить пользователя
 			</button>
 		</div>
 		<div class="buttons-row">
 			<app-redirection-button 
-				[className]="'blue-button'" 
+				[className]="'btn btn-blue'" 
 				[title]="'Пользователи'" 
 				[reference]="'/users'"
 			>
 			</app-redirection-button>
 			<app-redirection-button 
-				[className]="'blue-button'" 
+				[className]="'btn btn-blue'" 
 				[title]="'Группы'" 
 				[reference]="'/groups'"
 			>

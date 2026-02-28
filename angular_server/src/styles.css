@@ -192,8 +192,15 @@ button {
 }
 
 
-app-about, app-account-page, app-files-page, app-group-page, app-groups-page, app-home, app-login-page, app-user-page, app-users-page
-/*,*:has(.MainContent)*/
+app-about,
+app-account-page,
+app-files-page,
+app-group-page,
+app-groups-page,
+app-home,
+app-login-page,
+app-user-page,
+app-users-page
 {
 	display: flex;
 	flex-direction: column;

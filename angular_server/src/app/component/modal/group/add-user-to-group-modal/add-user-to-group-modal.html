@@ -75,7 +75,7 @@
 				type="button"
 				(click)="closeModal()"
 				[disabled]="submitting"
-				class="cancel-button"
+				class="btn btn-cancel"
 			>
 				Отмена
 			</button>
@@ -83,7 +83,7 @@
 				type="submit"
 				[disabled]="submitting"
 				[class.submitting]="submitting"
-				class="submit-button"
+				class="btn btn-submit"
 			>
 				@if (submitting) {
 					<span class="spinner"></span>
