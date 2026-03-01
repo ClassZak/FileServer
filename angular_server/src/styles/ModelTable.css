@@ -3,10 +3,6 @@
 	background-color: var(--color-bg-surface);
 	border: 1px solid var(--color-border-default);
 	border-collapse: collapse;
-
-
-
-	
 }
 
 .model-table thead {
@@ -47,7 +43,6 @@
 }
 @media screen and (width < 922px) {
 	.model-table *{
-		font-size: smaller;
 		padding: 0;
 	}
 }
