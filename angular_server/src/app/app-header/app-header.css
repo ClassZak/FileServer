@@ -35,7 +35,7 @@ app-app-header > form{
 }
 
 
-@media screen and (width< 500px) {
+@media screen and (width < 576px) {
 	.header-content a {
 		font-size: 0.7rem;
 	}

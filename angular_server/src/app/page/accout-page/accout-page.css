@@ -11,7 +11,7 @@
 
 @import url(../../../styles/ModelTable.css);
 
-@media screen and (width < 500px) {
+@media screen and (width < 576px) {
 	.MainContent .account-container {
 		padding: 0;
 		margin: 0;

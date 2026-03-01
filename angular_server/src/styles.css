@@ -59,7 +59,10 @@
 
 
 
-	--screen-wifth-large:			 900px;
+	--breakpoint-sm:				 576px;
+	--breakpoint-md:				 768px;
+	--breakpoint-lg:				 992px;
+	--breakpoint-xl:				 1200px;
 }
 
 * {
@@ -120,7 +123,7 @@ h6 {
 	font-size: 1rem;
 }
 
-@media screen and (width < 400px) {
+@media screen and (width < 768px) {
 	h1, h2, h3, h4, h5, h6 {
 		margin-bottom: 0.75em;
 		padding: 0;
@@ -144,7 +147,7 @@ h6 {
 		font-size: 1em;
 	}
 }
-@media screen and (width < 300px) {
+@media screen and (width < 576px) {
 	h1, h2, h3, h4, h5, h6 {
 		margin-bottom: 0.5em;
 		padding: 0;

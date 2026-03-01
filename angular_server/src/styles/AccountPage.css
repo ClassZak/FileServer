@@ -56,7 +56,7 @@
 	transition: all 0.3s ease;
 	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
-@media screen and (width < 500px) {
+@media screen and (width < 576px) {
 	.logout-button{
 		padding: 2px;
 	}

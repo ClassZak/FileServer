@@ -12,7 +12,7 @@ footer {
 	font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
 }
 
-@media screen and (width< 500px) {
+@media screen and (width < 576px) {
 	app-footer{
 		width: 100%;
 	}

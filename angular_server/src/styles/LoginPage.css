@@ -220,7 +220,7 @@
 }
 
 /* Адаптивность */
-@media (max-width: 640px) {
+@media screen and (width < 576px) {
 	.login-container {
 		padding: 1rem;
 	}

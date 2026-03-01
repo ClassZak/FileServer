@@ -55,7 +55,7 @@
 	margin-bottom: 12px;
 }
 
-@media (min-width: 768px) {
+@media screen and (width < 768px) {
 	.navigation-row {
 		flex-direction: row;
 		align-items: center;
