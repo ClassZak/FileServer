@@ -4,7 +4,6 @@
 		<app-loading-spinner [title]="'Загрузка'">
 		</app-loading-spinner>
 	} @else {
-	<div class="model-table-container">
 		<!-- SEARCH MODE -->
 		@if (isSearchMode) {
 			<div class="search-mode-panel">
@@ -49,18 +48,22 @@
 
 					@if (searchResults.totalResults > 0) {
 						@if (searchResults.folders.length) {
-							<app-found-folders-table
-								[folders]="searchResults.folders"
-								(prepareDelete)="prepareDelete($event.path, $event.name)"
-							></app-found-folders-table>
+							<div class="model-table-container">
+								<app-found-folders-table
+									[folders]="searchResults.folders"
+									(prepareDelete)="prepareDelete($event.path, $event.name)"
+								></app-found-folders-table>
+							</div>
 						}
 						@if (searchResults.files.length) {
-							<app-found-files-table
-								[files]="searchResults.files"
-								(onDownload)="handleDownload($event.path, $event.name)"
-								(onDelete)="prepareDelete($event.path, $event.name)"
-								[searchPath]="searchPath"
-							></app-found-files-table>
+							<div class="model-table-container">
+								<app-found-files-table
+									[files]="searchResults.files"
+									(onDownload)="handleDownload($event.path, $event.name)"
+									(onDelete)="prepareDelete($event.path, $event.name)"
+									[searchPath]="searchPath"
+								></app-found-files-table>
+							</div>
 						}
 					} @else {
 						<div class="no-results">
@@ -162,18 +165,21 @@
 
 			<!-- File and folder tables -->
 			@if (!isLoading) {
-				<app-folder-table
+				<div class="model-table-container">
+					<app-folder-table
 					[folders]="folders"
 					(prepareDelete)="prepareDelete($event.path, $event.name)"
-				></app-folder-table>
-				<app-file-table
-					[files]="files"
-					(onDownload)="handleDownload($event.path, $event.name)"
-					(onDelete)="prepareDelete($event.path, $event.name)"
-				></app-file-table>
+					></app-folder-table>
+				</div>
+				<div class="model-table-container">
+					<app-file-table
+						[files]="files"
+						(onDownload)="handleDownload($event.path, $event.name)"
+						(onDelete)="prepareDelete($event.path, $event.name)"
+					></app-file-table>
+				</div>
 			}
 		}
-	</div>
 	}
 </main>
 <app-footer></app-footer>
