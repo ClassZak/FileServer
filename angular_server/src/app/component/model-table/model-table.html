@@ -1,0 +1,61 @@
+@if (modelTableDataObject && modelTableDataObject.models.length > 0) {
+<table>
+	<thead>
+		<tr>
+			@for (col of modelTableDataObject.columnDefinitions; track $index) {
+				<th [class]="col.headerClass">{{ col.header }}</th>
+			}
+			@if (modelTableDataObject.actionsConfig) {
+				<th [class]="modelTableDataObject.actionsConfig.actionsHeaderClassName">
+					{{ modelTableDataObject.actionsConfig.actionsHeader }}
+				</th>
+			}
+		</tr>
+	</thead>
+	<tbody>
+		@for (model of modelTableDataObject.models; track $index) {
+			<tr>
+				@for (col of modelTableDataObject.columnDefinitions; track $index) {
+					<td [class]="col.cellClass">
+						@if (getIcon(model, col)) {
+							<ng-icon [name]="getIcon(model, col)" size="20"></ng-icon>
+						}
+						{{ getCellValue(model, col) }}
+					</td>
+				}
+				@if (modelTableDataObject.actionsConfig) {
+					<td>
+						@for (action of modelTableDataObject.actionsConfig.actionsConfigs; track $index) {
+							@switch (action.type) {
+								@case (ActionType.LINK) {
+									<app-redirection-button
+										[title]="getActionLabel(action, model)"
+										[reference]="getActionHref(action, model)"
+										[className]="getActionClass(action, model)"
+									></app-redirection-button>
+								}
+								@case (ActionType.ACTION) {
+									<button
+										[ngClass]="getActionClass(action, model)"
+										(click)="handleAction(action, model)"
+									>
+										{{ getActionLabel(action, model) }}
+									</button>
+								}
+								@case (ActionType.DATA_ACTION) {
+									<button
+										[ngClass]="getActionClass(action, model)"
+										(click)="handleAction(action, model)"
+									>
+										{{ getActionLabel(action, model) }}
+									</button>
+								}
+							}
+						}
+					</td>
+				}
+			</tr>
+		}
+	</tbody>
+</table>
+}

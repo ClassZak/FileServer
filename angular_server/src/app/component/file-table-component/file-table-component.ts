@@ -10,7 +10,6 @@ import * as fileIcons from '@ng-icons/material-file-icons/colored';
 	selector: 'app-file-table',
 	standalone: true,
 	imports: [CommonModule, NgIconComponent],
-	// Регистрируем сразу весь набор иконок
 	providers: [provideIcons(fileIcons)],
 	templateUrl: './file-table-component.html',
 	styleUrls: ['./file-table-component.css']
@@ -21,11 +20,10 @@ export class FileTableComponent {
 	@Output() onDelete = new EventEmitter<{ path: string; name: string }>();
 
 	getIcon(item: { isFolder: boolean; extension?: string }): string {
-		if (item.isFolder) {
-			// Используем централизованный IconManager для папки
+		if (item.isFolder)
 			return IconManager.getFileIcon('folder');
-		}
-		return IconManager.getFileIcon(item.extension || '');
+		else
+			return IconManager.getFileIcon(item.extension || '');
 	}
 
 	downloadFile(file: FileInfo): void {

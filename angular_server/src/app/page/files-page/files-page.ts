@@ -14,6 +14,8 @@ import { AppHeader } from '../../app-header/app-header';
 import { AppFooter } from '../../app-footer/app-footer';
 import { LoadingSpinner } from '../../component/loading-spinner/loading-spinner';
 import { BreadcrumbsComponent } from '../../component/breadcrumbs/breadcrumbs'; // renamed
+import { ModelTable } from '../../component/model-table/model-table';
+import { ActionType, ActionsConfig, ActionConfig, ColumnDefinition, ModelTableDataObject } from '../../core/model/model-table-types';
 import { FileSearchComponent } from '../../component/file-search-component/file-search-component';
 import { ErrorMessageComponent } from '../../component/error-message-component/error-message-component';
 import { FileTableComponent } from '../../component/file-table-component/file-table-component';
@@ -25,6 +27,7 @@ import { DeleteConfirmationModalComponent } from '../../component/modal/file/del
 import { RedirectionButton } from '../../component/redirection-button/redirection-button';
 import { User } from '../../core/model/user';
 import AdminService from '../../core/service/admin-service';
+import { IconManager } from '../../component/icon-manager/icon-manager';
 
 @Component({
 	selector: 'app-files-page',
@@ -37,6 +40,7 @@ import AdminService from '../../core/service/admin-service';
 		AppFooter,
 		LoadingSpinner,
 		BreadcrumbsComponent,
+		ModelTable,
 		FileSearchComponent,
 		ErrorMessageComponent,
 		FileTableComponent,
@@ -60,6 +64,34 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 	authorizedUser?: User;
 	isAdmin: boolean = false;
 	error = '';
+
+	// ModelTable
+	modelTableDataObject: ModelTableDataObject<FileInfo> = new ModelTableDataObject(
+		[
+			{header:'Имя', field:'name', cellClass:'icon-container', icon:((item: FileInfo)=>IconManager.getFileIcon(item.extension))},
+			{header:'Расширение', field:'extension', icon:((item: FileInfo)=>IconManager.getFileIcon(item.extension))},
+			{header:'Размер', field:'readableSize'},
+			{header:'Дата изменения', field:'lastModified'},
+		],
+		[],
+		{
+		actionsHeader: 'Действия',
+		actionsConfigs: [
+			{
+				type: ActionType.ACTION,
+				label: 'Скачать',
+				class: 'btn btn-blue',
+				onClick: (file: FileInfo) => this.handleFileDownload(file)
+			},
+			{
+				type: ActionType.ACTION,
+				label: 'Удалить',
+				class: 'btn btn-red',
+				onClick: (file: FileInfo) => this.handleFileDelete(file)
+			}
+		]
+	}
+	);
 
 	// Navigation state
 	currentPath = '';
@@ -195,16 +227,19 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			if ('error' in result) {
 				this.error = (result as ErrorContainer).error || 'Unknown error';
 				this.files = [];
+				this.modelTableDataObject.models = [];
 				this.folders = [];
 			} else {
 				const dirList = result as DirectoryList;
 				this.files = dirList.files;
+				this.modelTableDataObject.models = dirList.files;
 				this.folders = dirList.folders;
 			}
 		} catch (err: any) {
 			console.error('Load directory error:', err);
 			this.error = err.message || 'Failed to load directory.';
 			this.files = [];
+			this.modelTableDataObject.models = [];
 			this.folders = [];
 		} finally {
 			this.isLoading = false;
@@ -351,6 +386,9 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 	}
 
 	// ========== Delete ==========
+	handleFileDelete(file: FileInfo): void {
+		this.prepareDelete(file.fullPath, file.name);
+	}
 
 	prepareDelete(path: string, name: string): void {
 		this.itemToDelete = { path, name };
@@ -386,7 +424,9 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 	}
 
 	// ========== Download ==========
-
+	handleFileDownload(file: FileInfo): void {
+		this.handleDownload(file.fullPath, file.name);
+	}
 	async handleDownload(path: string, name: string): Promise<void> {
 		try {
 			const token = AuthService.getToken();
