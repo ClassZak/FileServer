@@ -2,10 +2,10 @@
 
 .MainContent {
 	width: 90%;
-	min-height: calc(100vh - 200px); /* Минимальная высота минус хедер и футер */
-	flex: 1 0 auto; /* Ключевое изменение: растягивается, но не сжимается */
+	min-height: calc(100vh - 200px); /* Minimum height minus header and footer */
+	flex: 1 0 auto; /* Stretches but does not shrink */
 	margin: 0 auto;
-	padding: 5rem 0 5rem; /* Уменьшен верхний отступ, увеличен нижний */
+	padding: 5rem 0 5rem;
 	background-color: var(--color-bg-surface);
 	isolation: isolate;
 	box-sizing: border-box;
@@ -18,7 +18,7 @@
 	}
 }
 
-/* Убираем общий margin для всех детей */
+/* Default margin for all primary children */
 .MainContent > * {
 	margin: 1.5rem;
 }
@@ -38,6 +38,7 @@
 	line-height: 1;
 }
 
+/*
 *:has(.MainContent) {
 	display: flex;
 	flex-direction: column;
@@ -45,3 +46,4 @@
 	height: 100%;
 	min-height: calc(100hv - 200px);
 }
+*/

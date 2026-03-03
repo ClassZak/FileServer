@@ -1,5 +1,6 @@
 @if (modelTableDataObject && modelTableDataObject.models.length > 0) {
-<table>
+<div class="model-table-container">
+<table class="model-table">
 	<thead>
 		<tr>
 			@for (col of modelTableDataObject.columnDefinitions; track $index) {
@@ -16,46 +17,55 @@
 		@for (model of modelTableDataObject.models; track $index) {
 			<tr>
 				@for (col of modelTableDataObject.columnDefinitions; track $index) {
-					<td [class]="col.cellClass">
-						@if (getIcon(model, col)) {
-							<ng-icon [name]="getIcon(model, col)" size="20"></ng-icon>
-						}
-						{{ getCellValue(model, col) }}
-					</td>
+					@if (col.icon) {
+						<td [class]="col.cellClass">
+							<div class="icon-container">
+								<ng-icon [name]="getIcon(model, col)"></ng-icon>
+								{{ getCellValue(model, col) }}
+							</div>
+						</td>
+					} @else {
+						<td [class]="col.cellClass">
+							{{ getCellValue(model, col) }}
+						</td>
+					}
 				}
 				@if (modelTableDataObject.actionsConfig) {
 					<td>
-						@for (action of modelTableDataObject.actionsConfig.actionsConfigs; track $index) {
-							@switch (action.type) {
-								@case (ActionType.LINK) {
-									<app-redirection-button
-										[title]="getActionLabel(action, model)"
-										[reference]="getActionHref(action, model)"
-										[className]="getActionClass(action, model)"
-									></app-redirection-button>
-								}
-								@case (ActionType.ACTION) {
-									<button
-										[ngClass]="getActionClass(action, model)"
-										(click)="handleAction(action, model)"
-									>
-										{{ getActionLabel(action, model) }}
-									</button>
-								}
-								@case (ActionType.DATA_ACTION) {
-									<button
-										[ngClass]="getActionClass(action, model)"
-										(click)="handleAction(action, model)"
-									>
-										{{ getActionLabel(action, model) }}
-									</button>
+						<div class="buttons-row">
+							@for (action of modelTableDataObject.actionsConfig.actionsConfigs; track $index) {
+								@switch (action.type) {
+									@case (ActionType.LINK) {
+										<app-redirection-button
+											[title]="getActionLabel(action, model)"
+											[reference]="getActionHref(action, model)"
+											[className]="getActionClass(action, model)"
+										></app-redirection-button>
+									}
+									@case (ActionType.ACTION) {
+										<button
+											[ngClass]="getActionClass(action, model)"
+											(click)="handleAction(action, model)"
+										>
+											{{ getActionLabel(action, model) }}
+										</button>
+									}
+									@case (ActionType.DATA_ACTION) {
+										<button
+											[ngClass]="getActionClass(action, model)"
+											(click)="handleAction(action, model)"
+										>
+											{{ getActionLabel(action, model) }}
+										</button>
+									}
 								}
 							}
-						}
+						</div>
 					</td>
 				}
 			</tr>
 		}
 	</tbody>
 </table>
+</div>
 }

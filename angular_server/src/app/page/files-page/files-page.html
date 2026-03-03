@@ -178,10 +178,12 @@
 						(onDelete)="prepareDelete($event.path, $event.name)"
 					></app-file-table>
 				</div>
-				<app-model-table
-					[modelTableDataObject]="modelTableDataObject"
-				>	
-				</app-model-table>
+				<div class="model-table-container">
+					<app-model-table
+						[modelTableDataObject]="modelTableDataObject"
+					>
+					</app-model-table>
+				</div>
 			}
 		}
 	}
