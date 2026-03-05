@@ -1,16 +1,9 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, ViewChild, ElementRef, Renderer2, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FileInfo } from '../../core/model/file-info';
-import { IconManager } from '../icon-manager/icon-manager';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { RedirectionButton } from '../redirection-button/redirection-button';
-
 import * as fileIcons from '@ng-icons/material-file-icons/colored';
-
-
-import { ActionConfig, ActionType, ColumnDefinition, ModelTableDataObject }
-from '../../core/model/model-table-types';
-
+import { ActionConfig, ActionType, ColumnDefinition, ModelTableDataObject } from '../../core/model/model-table-types';
 
 @Component({
 	selector: 'app-model-table',
@@ -24,20 +17,128 @@ export class ModelTable<TModel> {
 	ActionType = ActionType;
 	@Input() modelTableDataObject?: ModelTableDataObject<TModel>;
 
+	@ViewChild('tableContainer') tableContainer!: ElementRef<HTMLElement>;
+	@ViewChild('table') table!: ElementRef<HTMLTableElement>;
 
+	resizing = false;
+	resizingColIndex: number | null = null; // для подсветки колонки
+	resizeLineLeft = 0;
+
+	private currentColIndex: number | null = null;
+	private startX = 0;
+	private startWidth = 0;
+	private unsubscribeMouseMove?: () => void;
+	private unsubscribeMouseUp?: () => void;
+
+	constructor(private renderer: Renderer2, private cdr: ChangeDetectorRef) {}
+
+	// Определяем, является ли колонка последней (с учётом колонки действий)
+	isLastColumn(colIndex: number): boolean {
+		if (!this.modelTableDataObject) return false;
+		const totalColumns = this.modelTableDataObject.columnDefinitions.length +
+			(this.modelTableDataObject.actionsConfig ? 1 : 0);
+		return colIndex === totalColumns - 1;
+	}
+
+	// Начало ресайза
+	startResize(event: MouseEvent, colIndex: number): void {
+		console.log('startResize', colIndex);
+		event.preventDefault();
+		event.stopPropagation();
+
+		const headerCells = this.table.nativeElement.querySelectorAll('thead th');
+		if (colIndex >= headerCells.length) return;
+		const header = headerCells[colIndex] as HTMLElement;
+
+		this.currentColIndex = colIndex;
+		this.resizingColIndex = colIndex; // для подсветки
+		this.startX = event.clientX;
+		this.startWidth = header.getBoundingClientRect().width; // точная визуальная ширина
+
+		this.resizing = true;
+
+		this.unsubscribeMouseMove = this.renderer.listen('document', 'mousemove', this.onMouseMove.bind(this));
+		this.unsubscribeMouseUp = this.renderer.listen('document', 'mouseup', this.onMouseUp.bind(this));
+
+		// Подсветим активную ручку
+		const handle = event.target as HTMLElement;
+		handle.classList.add('active');
+		this.resizing = true;
+		this.cdr.detectChanges();
+	}
+	
+	private onMouseMove(event: MouseEvent): void {
+		if (!this.resizing || this.currentColIndex === null || !this.tableContainer) return;
+		const containerRect = this.tableContainer.nativeElement.getBoundingClientRect();
+		this.resizeLineLeft = event.clientX - containerRect.left;
+		this.setResizeLineXPos(this.resizeLineLeft)
+		this.cdr.detectChanges();
+	}
+	private onMouseUp(event: MouseEvent): void {
+		this.cdr.detectChanges();
+		console.log('onMouseUp');
+		this.cdr.detectChanges();
+		console.log(document.getElementById("resize-line"));
+		console.log('onMouseUp', this.resizeLineLeft); 
+		console.log(this.resizing);
+		console.log(this.currentColIndex);
+		if (this.resizing && this.currentColIndex !== null) {
+			const diff = event.clientX - this.startX;
+			const newWidth = Math.max(50, this.startWidth + diff); // минимальная ширина 50px
+
+			// Устанавливаем ширину заголовка
+			const headerCells = this.table.nativeElement.querySelectorAll('thead th');
+			const header = headerCells[this.currentColIndex] as HTMLElement;
+			if (header) {
+				this.renderer.setStyle(header, 'width', `${newWidth}px`);
+			}
+
+			// Устанавливаем ширину всех ячеек в этой колонке
+			const rows = this.table.nativeElement.querySelectorAll('tbody tr');
+			rows.forEach(row => {
+				const cell = row.children[this.currentColIndex!] as HTMLElement;
+				if (cell) {
+					this.renderer.setStyle(cell, 'width', `${newWidth}px`);
+				}
+			});
+
+			// Сброс состояния
+			this.resizing = false;
+			this.resizingColIndex = null;
+			this.resizeLineLeft = 0;
+			this.setResizeLineXPos(0);
+
+			// Убираем активный класс с ручек
+			this.tableContainer.nativeElement.querySelectorAll('.resize-handle.active').forEach(el => {
+				el.classList.remove('active');
+			});
+		}
+
+		this.unsubscribeMouseMove?.();
+		this.unsubscribeMouseUp?.();
+		this.currentColIndex = null;
+
+		this.cdr.detectChanges();
+	}
+	
+	setResizeLineXPos(xpos: number) : void{
+		document.getElementById("resize-line")!.style.left = `${xpos.toString()}px`;
+	}
+
+	// Остальные методы (getIcon, getActionHeader, getActionHref, getCellValue, getActionLabel, getActionClass, handleAction)
+	// остаются без изменений – их не трогаем.
 	getIcon(item: TModel, col: ColumnDefinition<TModel>): string {
 		if (!col.icon) return '';
-		if (typeof col.icon === 'function')
-			return col.icon(item);
-
+		if (typeof col.icon === 'function') return col.icon(item);
 		return col.icon;
 	}
-	getActionHeader(): string{
+
+	getActionHeader(): string {
 		if (this.modelTableDataObject?.actionsConfig)
-			return this.modelTableDataObject?.actionsConfig.actionsHeader;
-		else
-			return 'Действия';
+			return this.modelTableDataObject.actionsConfig.actionsHeader;
+		return 'Действия';
 	}
+
 	getActionHref(action: ActionConfig<TModel>, item: TModel): string {
 		if (action.type === ActionType.LINK && action.href) {
 			return typeof action.href === 'function' ? action.href(item) : action.href;
@@ -47,28 +148,23 @@ export class ModelTable<TModel> {
 
 	getCellValue(item: TModel, col: ColumnDefinition<TModel>): any {
 		if (typeof col.field === 'function') {
-			return col.field(item as any);
+			return col.field(item);
 		}
 		return (item as any)[col.field];
 	}
 
 	getActionLabel(action: ActionConfig<TModel>, item: TModel): string {
-		return typeof action.label === 'function' ? action.label(item as any) : action.label;
+		return typeof action.label === 'function' ? action.label(item) : action.label;
 	}
 
 	getActionClass(action: ActionConfig<TModel>, item: TModel): string {
-		return typeof action.class === 'function' ? 
-			action.class(item as any) : 
-			(action.class || '');
+		return typeof action.class === 'function' ? action.class(item) : (action.class || '');
 	}
 
 	handleAction(action: ActionConfig<TModel>, item: TModel): void {
 		if (action.type === ActionType.ACTION && action.onClick) {
 			action.onClick(item);
-		} else if (
-				action.type === ActionType.DATA_ACTION && 
-				action.onClick && action.dataField
-			) {
+		} else if (action.type === ActionType.DATA_ACTION && action.onClick && action.dataField) {
 			const value = (item as any)[action.dataField];
 			action.onClick(value);
 		}

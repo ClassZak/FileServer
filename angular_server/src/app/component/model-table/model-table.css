@@ -4,6 +4,7 @@
 
 
 
+/* Base angular component style */
 app-model-table, .model-table-container {
 	overflow-x: auto;
 	border: 3px solid var(--color-border-strong);
@@ -12,13 +13,9 @@ app-model-table, .model-table-container {
 table.model-table td, table.model-table th{
 	overflow: hidden;
 	white-space: nowrap;
+	/* Box-sizing fix, for correct width calculations */
+	box-sizing: border-box;
 }
-
-
-
-
-
-
 table.model-table {
 	width: 100%;
 	background-color: var(--color-bg-surface);
@@ -30,23 +27,32 @@ table.model-table {
 
 
 
+/* Table head style */
 table.model-table thead {
 	background-color: var(--color-accent-muted);
 }
 table.model-table th {
-	padding: 0.75rem 1rem;
 	text-align: center;
 	font-weight: 600;
+	overflow: scroll;
 	border-bottom: 2px solid var(--color-border-default);
-	border-left: 2px solid var(--color-border-default);
+	/*border-left: 2px solid var(--color-border-default);*/
 }
 table.model-table th:first-child {
-	border-left: none;
+	/* border-left: none; */
+}
+table.model-table th div.cell{
+	padding: 0.75rem 1rem;
+	/*border-top: 1px solid var(--color-border-default);*/
+	vertical-align: middle;
+	white-space: nowrap;
+	overflow: scroll;
+	display: block;
 }
 
 
 
-
+/* Table body sryle */
 table.model-table tbody tr {
 	transition: background-color 0.2s;
 }
@@ -62,26 +68,37 @@ table.model-table tbody tr:nth-child(even):hover {
 
 
 
+/* Table cells style */
 table.model-table td{
-	padding: 0.75rem 1rem;
+	/*padding: 0.75rem 1rem;*/
+	padding: 0;
 	border-top: 1px solid var(--color-border-default);
 	vertical-align: middle;
 	white-space: nowrap;
+	overflow: scroll;
 }
 table.model-table tr:first-child td{
 	border-top: none;
 }
+/*
 table.model-table>tbody>tr>td{
 	border-left: 1px solid var(--color-border-default);
 }
 table.model-table>tbody>tr>td:first-child{
 	border-left: none;
+}*/
+table.model-table td div.cell{
+	padding: 0.75rem 1rem;
+	/*border-top: 1px solid var(--color-border-default);*/
+	white-space: nowrap;
 	overflow: scroll;
+	display: block;
 }
 
 
 
 
+/* Icon container style */
 table.model-table td div.icon-container{
 	display: flex;
 	align-items: center;
@@ -91,8 +108,13 @@ table.model-table td div.icon-container{
 
 
 
+/* Styles for small screens */
 @media screen and (width < 1200px) {
 	table.model-table th, table.model-table td{
+		padding: 0.25rem 0.5rem;
+	}
+	table.model-table th div.cell,
+	table.model-table td div.cell{
 		padding: 0.25rem 0.5rem;
 	}
 }
@@ -100,13 +122,13 @@ table.model-table td div.icon-container{
 	table.model-table *{
 		padding: 0;
 	}
-	table.model-table td .buttons-row button{
+	table.model-table td div.cell .buttons-row button{
 		padding: 3px;
 	}
-	table.model-table td {
+	table.model-table td div.cell {
 		/* text-wrap-mode:wrap; */
 		font-size: smaller;
-		border: 2px solid var(--color-border-default);
+		/*border: 2px solid var(--color-border-default);*/
 	}
 }
 @media screen and (width < 576px) {
@@ -117,7 +139,8 @@ table.model-table td div.icon-container{
 	table.model-table td{
 		overflow-x: auto;
 	}
-	table.model-table td, table.model-table th{
+	table.model-table th div.cell,
+	table.model-table td div.cell{
 		font-size:small;
 	}
 	table.model-table td:first-child, table.model-table th:first-child{
@@ -127,8 +150,78 @@ table.model-table td div.icon-container{
 
 
 
+/* MainContent style for small screens */
 @media screen and (width < 576px){
 	.MainContent app-model-table {
 		margin: 0;
 	}
+}
+
+
+
+/* Table container must be ralative for line */
+.model-table-container {
+	position: relative;
+	overflow-x: auto;
+	border: 3px solid var(--color-border-strong);
+	display: block;
+}
+
+table.model-table {
+	table-layout: fixed; /* обязательно для изменения ширины */
+	width: 100%;
+	background-color: var(--color-bg-surface);
+	border: 1px solid var(--color-border-default);
+	border-collapse: collapse;
+	overflow-x: scroll;
+}
+
+
+
+th {
+	position: relative;
+}
+
+.resize-handle {
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 2px;
+	height: 100%;
+	background: var(--color-border-strong);
+	cursor: col-resize;
+	z-index: 2;
+}
+
+.resize-handle:hover,
+.resize-handle.active {
+}
+
+
+td.resize-active {
+	background-color: rgba(var(--color-accent-primary-rgb), 0.1);
+}
+
+
+/* Resize line */
+.resize-line {
+	position: absolute;
+	top: 0;
+	width: 2px;
+	height: 100%;
+	background-color: var(--color-border-strong);
+	z-index: 1000;
+	pointer-events: none;
+	transform: translateX(-50%);
+}
+
+.resize-line {
+	background-color: red !important; /* яркий цвет */
+	z-index: 10000 !important;
+	height: 100%;
+	position: absolute;
+	top: 0;
+	width: 2px;
+	pointer-events: none;
+	transform: translateX(-50%);
 }
