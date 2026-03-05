@@ -64,6 +64,9 @@ export class ModelTable<TModel> {
 		const handle = event.target as HTMLElement;
 		handle.classList.add('active');
 		this.resizing = true;
+		const containerRect = this.tableContainer.nativeElement.getBoundingClientRect();
+		this.resizeLineLeft = event.clientX - containerRect.left;
+		this.setResizeLineXPos(this.resizeLineLeft)
 		this.cdr.detectChanges();
 	}
 	
@@ -122,7 +125,16 @@ export class ModelTable<TModel> {
 	}
 	
 	setResizeLineXPos(xpos: number) : void{
-		document.getElementById("resize-line")!.style.left = `${xpos.toString()}px`;
+		const elementName = 'resize-line';
+		const resizeLine = document.getElementById(elementName);
+		if (!resizeLine)
+			throw new Error(`"${elementName}" element not found`);
+
+		
+		const elementWidth = resizeLine.style.width ? 
+			parseInt(resizeLine.style.width) :
+			resizeLine.clientWidth;
+		document.getElementById("resize-line")!.style.left = `${(xpos-elementWidth*2).toString()}px`;
 	}
 
 	// Остальные методы (getIcon, getActionHeader, getActionHref, getCellValue, getActionLabel, getActionClass, handleAction)
