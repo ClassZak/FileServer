@@ -6,7 +6,7 @@
 
 /* Base angular component style */
 app-model-table, .model-table-container {
-	overflow-x: auto;
+	/*overflow-x: auto;*/
 	border: 3px solid var(--color-border-strong);
 	display: block;
 }
@@ -37,6 +37,7 @@ table.model-table th {
 }
 table.model-table th div.cell{
 	padding: 0.75rem 1rem;
+	overflow-x: auto;
 	vertical-align: middle;
 	white-space: nowrap;
 	display: block;
@@ -81,6 +82,7 @@ table.model-table td div.cell{
 	padding: 0.75rem 1rem;
 	/*border-top: 1px solid var(--color-border-default);*/
 	white-space: nowrap;
+	overflow-x: auto;
 	display: block;
 }
 
@@ -111,10 +113,10 @@ table.model-table td div.icon-container * {
 	}
 }
 @media screen and (width < 922px) {
-	table.model-table *{
+	table.model-table tr *{
 		padding: 0;
 	}
-	table.model-table td div.cell .buttons-row button{
+	table.model-table td div.buttons-row > *{
 		padding: 3px;
 	}
 	table.model-table td div.cell {
@@ -154,7 +156,7 @@ table.model-table td div.icon-container * {
 /* Table container must be ralative for line */
 .model-table-container {
 	position: relative;
-	overflow-x: auto;
+	/*overflow-x: auto;*/
 	border: 3px solid var(--color-border-strong);
 	display: block;
 }
@@ -200,19 +202,8 @@ td.resize-active {
 	top: 0;
 	width: 2px;
 	height: 100%;
-	background-color: var(--color-border-strong);
+	background-color: var(--color-border-weak);
 	z-index: 1000;
-	pointer-events: none;
-	transform: translateX(-50%);
-}
-
-.resize-line {
-	background-color: red !important; /* яркий цвет */
-	z-index: 10000 !important;
-	height: 100%;
-	position: absolute;
-	top: 0;
-	width: 2px;
 	pointer-events: none;
 	transform: translateX(-50%);
 }

@@ -45,13 +45,22 @@
 	.model-table *{
 		padding: 0;
 	}
+	td {
+		text-wrap-mode:wrap;
+		font-size: smaller;
+		padding: 0;
+		border: 2px solid var(--color-border-default);
+	}
+	.model-table td.buttons-row > *{
+		padding: 3px !important;
+	}
 }
 @media screen and (width < 576px) {
 	.model-table *{
 		text-overflow:clip;
 		font-size:x-small;
 	}
-	.model-table td{
+	.model-table td, .model-table tr{
 		overflow-x: auto;
 	}
 }
@@ -70,7 +79,7 @@
 
 
 .model-table-container {
-	overflow-x: auto;
+	/*overflow-x: auto;*/
 }
 @media screen and (width < 576px){
 	.MainContent .model-table-container {
@@ -82,14 +91,6 @@ td{
 	padding: 0.75rem 1rem;
 	border-top: 1px solid var(--color-border-default);
 	vertical-align: middle;
-}
-@media screen and (width < 922px) {
-	td {
-		text-wrap-mode:wrap;
-		font-size: smaller;
-		padding: 0;
-		border: 2px solid var(--color-border-default);
-	}
 }
 @media screen and (width < 576px) {
 	td, th{
@@ -104,3 +105,11 @@ td{
 		border-left: none;
 	}
 }
+
+
+
+
+
+
+
+

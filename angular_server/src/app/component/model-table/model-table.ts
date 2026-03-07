@@ -24,6 +24,7 @@ export class ModelTable<TModel> {
 
 	@ViewChild('tableContainer') tableContainer!: ElementRef<HTMLElement>;
 	@ViewChild('table') table!: ElementRef<HTMLTableElement>;
+	@ViewChild('resizeLine') resizeLine!: ElementRef<HTMLTableElement>;
 
 	resizing = false;
 	resizingColIndex: number | null = null; // для подсветки колонки
@@ -96,37 +97,42 @@ export class ModelTable<TModel> {
 		if (!this.resizing || this.currentColIndex === null || !this.tableContainer) return;
 		const containerRect = this.tableContainer.nativeElement.getBoundingClientRect();
 		this.resizeLineLeft = event.clientX - containerRect.left;
+		if (this.resizeLineLeft <= 0)
+			this.resizeLineLeft = 0;
+		if (this.resizeLineLeft >= this.table!.nativeElement.getBoundingClientRect().width)
+			this.resizeLineLeft = this.table!.nativeElement.getBoundingClientRect().width;
+		
 		this.setResizeLineXPos(this.resizeLineLeft)
 		this.cdr.detectChanges();
 	}
 
 
 	private onMouseUpEndResize(event: MouseEvent): void {
-		this.cdr.detectChanges();
-		console.log('onMouseUp');
-		this.cdr.detectChanges();
-		console.log(document.getElementById("resize-line"));
-		console.log('onMouseUp', this.resizeLineLeft); 
+		console.log('onMouseUpEndResize', this.resizeLineLeft); 
 		console.log(this.resizing);
 		console.log(this.currentColIndex);
 		if (this.resizing && this.currentColIndex !== null) {
-			const diff = event.clientX - this.startX;
-			const newWidth = Math.max(MIN_COL_WIDTH, this.startWidth + diff);
-
-			// Устанавливаем ширину заголовка
+			// Set width for header
 			const headerCells = this.table.nativeElement.querySelectorAll('thead th');
-			const header = headerCells[this.currentColIndex] as HTMLElement;
-			if (header) {
-				this.renderer.setStyle(header, 'width', `${newWidth}px`);
-			}
+			const headerLeft = headerCells[this.currentColIndex] as HTMLElement;
+			const headerRight = headerCells[this.currentColIndex + 1] as HTMLElement;
+			const oldWidthOfResizingCols = headerLeft.clientWidth + headerRight.clientWidth;
 
-			// Устанавливаем ширину всех ячеек в этой колонке
+			const diff = event.clientX - this.startX;
+			const newWidth = Math.min(Math.max(MIN_COL_WIDTH, this.startWidth + diff), oldWidthOfResizingCols - MIN_COL_WIDTH);
+
+			this.renderer.setStyle(headerLeft, 'width', `${newWidth}px`);
+			this.renderer.setStyle(headerRight, 'width', `${oldWidthOfResizingCols - newWidth}px`);
+
+			// Set width for all cells
 			const rows = this.table.nativeElement.querySelectorAll('tbody tr');
 			rows.forEach(row => {
-				const cell = row.children[this.currentColIndex!] as HTMLElement;
-				if (cell) {
-					this.renderer.setStyle(cell, 'width', `${newWidth}px`);
-				}
+				const leftCell = row.children[this.currentColIndex!] as HTMLElement;
+				if (leftCell)
+					this.renderer.setStyle(leftCell, 'width', `${newWidth}px`);
+				const rightCell = row.children[this.currentColIndex!] as HTMLElement;
+				if (rightCell)
+					this.renderer.setStyle(rightCell, 'width', `${oldWidthOfResizingCols - newWidth}px`);
 			});
 
 			// Сброс состояния
@@ -141,6 +147,8 @@ export class ModelTable<TModel> {
 			});
 		}
 
+		this.renderer.setStyle(this.resizeLine.nativeElement, 'display', 'none');
+
 		this.unsubscribeMouseMove?.();
 		this.unsubscribeMouseUp?.();
 		this.currentColIndex = null;
@@ -149,16 +157,13 @@ export class ModelTable<TModel> {
 	}
 	
 	setResizeLineXPos(xpos: number) : void{
-		const elementName = 'resize-line';
-		const resizeLine = document.getElementById(elementName);
-		if (!resizeLine)
-			throw new Error(`"${elementName}" element not found`);
+		const resizeLineRef = this.resizeLine.nativeElement;
 
-		
-		const elementWidth = resizeLine.style.width ? 
-			parseInt(resizeLine.style.width) :
-			resizeLine.clientWidth;
-		document.getElementById("resize-line")!.style.left = `${(xpos-elementWidth*2).toString()}px`;
+		const elementWidth = resizeLineRef.style.width ? 
+			parseInt(resizeLineRef.style.width) :
+			resizeLineRef.clientWidth;
+
+		resizeLineRef.style.left = `${(xpos-elementWidth*2).toString()}px`;
 	}
 
 	// Остальные методы (getIcon, getActionHeader, getActionHref, getCellValue, getActionLabel, getActionClass, handleAction)
