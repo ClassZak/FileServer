@@ -5,6 +5,11 @@ import { RedirectionButton } from '../redirection-button/redirection-button';
 import * as fileIcons from '@ng-icons/material-file-icons/colored';
 import { ActionConfig, ActionType, ColumnDefinition, ModelTableDataObject } from '../../core/model/model-table-types';
 
+
+
+
+const MIN_COL_WIDTH = 20;
+
 @Component({
 	selector: 'app-model-table',
 	standalone: true,
@@ -23,6 +28,7 @@ export class ModelTable<TModel> {
 	resizing = false;
 	resizingColIndex: number | null = null; // для подсветки колонки
 	resizeLineLeft = 0;
+	isWidthStyleInitilized = false;
 
 	private currentColIndex: number | null = null;
 	private startX = 0;
@@ -42,6 +48,22 @@ export class ModelTable<TModel> {
 
 	// Начало ресайза
 	startResize(event: MouseEvent, colIndex: number): void {
+		if (this.resizing)
+			return;
+
+		if (!this.isWidthStyleInitilized){
+			const headerCells	 = this.table.nativeElement.querySelectorAll('thead th');
+			const bodyCells		 = this.table.nativeElement.querySelectorAll('tbody td');
+			headerCells.forEach((el)=>{
+				this.renderer.setStyle(el, 'width', `${el.clientWidth}px`)
+			});
+			bodyCells.forEach((el)=>{
+				this.renderer.setStyle(el, 'width', `${el.clientWidth}px`)
+			});
+
+			this.isWidthStyleInitilized = true;
+		}
+
 		console.log('startResize', colIndex);
 		event.preventDefault();
 		event.stopPropagation();
@@ -57,8 +79,8 @@ export class ModelTable<TModel> {
 
 		this.resizing = true;
 
-		this.unsubscribeMouseMove = this.renderer.listen('document', 'mousemove', this.onMouseMove.bind(this));
-		this.unsubscribeMouseUp = this.renderer.listen('document', 'mouseup', this.onMouseUp.bind(this));
+		this.unsubscribeMouseMove = this.renderer.listen('document', 'mousemove', this.onMouseMoveResize.bind(this));
+		this.unsubscribeMouseUp = this.renderer.listen('document', 'mouseup', this.onMouseUpEndResize.bind(this));
 
 		// Подсветим активную ручку
 		const handle = event.target as HTMLElement;
@@ -70,14 +92,16 @@ export class ModelTable<TModel> {
 		this.cdr.detectChanges();
 	}
 	
-	private onMouseMove(event: MouseEvent): void {
+	private onMouseMoveResize(event: MouseEvent): void {
 		if (!this.resizing || this.currentColIndex === null || !this.tableContainer) return;
 		const containerRect = this.tableContainer.nativeElement.getBoundingClientRect();
 		this.resizeLineLeft = event.clientX - containerRect.left;
 		this.setResizeLineXPos(this.resizeLineLeft)
 		this.cdr.detectChanges();
 	}
-	private onMouseUp(event: MouseEvent): void {
+
+
+	private onMouseUpEndResize(event: MouseEvent): void {
 		this.cdr.detectChanges();
 		console.log('onMouseUp');
 		this.cdr.detectChanges();
@@ -87,7 +111,7 @@ export class ModelTable<TModel> {
 		console.log(this.currentColIndex);
 		if (this.resizing && this.currentColIndex !== null) {
 			const diff = event.clientX - this.startX;
-			const newWidth = Math.max(50, this.startWidth + diff); // минимальная ширина 50px
+			const newWidth = Math.max(MIN_COL_WIDTH, this.startWidth + diff);
 
 			// Устанавливаем ширину заголовка
 			const headerCells = this.table.nativeElement.querySelectorAll('thead th');
