@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, ElementRef, Renderer2, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, ViewChild, ElementRef, Renderer2, ChangeDetectorRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgIconComponent, provideIcons } from '@ng-icons/core';
 import { RedirectionButton } from '../redirection-button/redirection-button';
@@ -18,7 +18,7 @@ const MIN_COL_WIDTH = 20;
 	templateUrl: './model-table.html',
 	styleUrl: './model-table.css',
 })
-export class ModelTable<TModel> {
+export class ModelTable<TModel> implements AfterViewInit, OnDestroy {
 	ActionType = ActionType;
 	@Input() modelTableDataObject?: ModelTableDataObject<TModel>;
 
@@ -38,6 +38,39 @@ export class ModelTable<TModel> {
 	private unsubscribeMouseUp?: () => void;
 
 	constructor(private renderer: Renderer2, private cdr: ChangeDetectorRef) {}
+	ngOnDestroy(): void {
+		this.removeGlobalListeners();
+	}
+	/**
+	 * Remove global mouse listeners.
+	 */
+	private removeGlobalListeners(): void {
+		if (this.unsubscribeMouseMove) {
+			this.unsubscribeMouseMove();
+			this.unsubscribeMouseMove = undefined;
+		}
+		if (this.unsubscribeMouseUp) {
+			this.unsubscribeMouseUp();
+			this.unsubscribeMouseUp = undefined;
+		}
+	}
+	private initColumnWidths(): void {
+		if (!this.isWidthStyleInitilized){
+			const headerCells	 = this.table.nativeElement.querySelectorAll('thead th');
+			const bodyCells		 = this.table.nativeElement.querySelectorAll('tbody td');
+			headerCells.forEach((el)=>{
+				this.renderer.setStyle(el, 'width', `${el.clientWidth}px`)
+			});
+			bodyCells.forEach((el)=>{
+				this.renderer.setStyle(el, 'width', `${el.clientWidth}px`)
+			});
+	
+			this.isWidthStyleInitilized = true;
+		}
+	}
+	ngAfterViewInit(): void {
+		this.initColumnWidths();
+	}
 
 	// Определяем, является ли колонка последней (с учётом колонки действий)
 	isLastColumn(colIndex: number): boolean {
@@ -52,18 +85,8 @@ export class ModelTable<TModel> {
 		if (this.resizing)
 			return;
 
-		if (!this.isWidthStyleInitilized){
-			const headerCells	 = this.table.nativeElement.querySelectorAll('thead th');
-			const bodyCells		 = this.table.nativeElement.querySelectorAll('tbody td');
-			headerCells.forEach((el)=>{
-				this.renderer.setStyle(el, 'width', `${el.clientWidth}px`)
-			});
-			bodyCells.forEach((el)=>{
-				this.renderer.setStyle(el, 'width', `${el.clientWidth}px`)
-			});
-
-			this.isWidthStyleInitilized = true;
-		}
+		this.initColumnWidths();
+		console.log('sdfsdfsfsdf');
 
 		console.log('startResize', colIndex);
 		event.preventDefault();
@@ -89,7 +112,7 @@ export class ModelTable<TModel> {
 		this.resizing = true;
 		const containerRect = this.tableContainer.nativeElement.getBoundingClientRect();
 		this.resizeLineLeft = event.clientX - containerRect.left;
-		this.setResizeLineXPos(this.resizeLineLeft)
+		this.setResizeLineXPos(header.getBoundingClientRect().right - containerRect.left);
 		this.cdr.detectChanges();
 	}
 	
@@ -130,7 +153,7 @@ export class ModelTable<TModel> {
 				const leftCell = row.children[this.currentColIndex!] as HTMLElement;
 				if (leftCell)
 					this.renderer.setStyle(leftCell, 'width', `${newWidth}px`);
-				const rightCell = row.children[this.currentColIndex!] as HTMLElement;
+				const rightCell = row.children[this.currentColIndex! + 1] as HTMLElement;
 				if (rightCell)
 					this.renderer.setStyle(rightCell, 'width', `${oldWidthOfResizingCols - newWidth}px`);
 			});
@@ -163,7 +186,7 @@ export class ModelTable<TModel> {
 			parseInt(resizeLineRef.style.width) :
 			resizeLineRef.clientWidth;
 
-		resizeLineRef.style.left = `${(xpos-elementWidth*2).toString()}px`;
+		resizeLineRef.style.left = `${(xpos).toString()}px`;
 	}
 
 	// Остальные методы (getIcon, getActionHeader, getActionHref, getCellValue, getActionLabel, getActionClass, handleAction)

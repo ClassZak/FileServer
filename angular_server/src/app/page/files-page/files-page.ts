@@ -68,7 +68,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 	// ModelTable
 	modelTableDataObject: ModelTableDataObject<FileInfo> = new ModelTableDataObject(
 		[
-			{header:'Имя', field:'name', cellClass:'icon-container', icon:((item: FileInfo)=>IconManager.getFileIcon(item.extension))},
+			{header:'Имя', field:'name', icon:((item: FileInfo)=>IconManager.getFileIcon(item.extension))},
 			{header:'Расширение', field:'extension', icon:((item: FileInfo)=>IconManager.getFileIcon(item.extension))},
 			{header:'Размер', field:'readableSize'},
 			{header:'Дата изменения', field:'lastModified'},

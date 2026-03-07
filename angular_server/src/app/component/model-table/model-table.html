@@ -35,9 +35,9 @@
 								<div class="cell">
 									{{ getCellValue(model, col) }}
 								</div>
-							}<!--@if (!isLastColumn(colIndex)) {
-								<span class="resize-handle" (mousedown)="startResize($event, colIndex)"></span>
-							}-->
+							}@if (!isLastColumn(colIndex)) {
+								<span class="border-span"></span>
+							}
 						</td>
 					}
 					@if (modelTableDataObject.actionsConfig) {
