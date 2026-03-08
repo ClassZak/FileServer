@@ -13,23 +13,18 @@ import { ErrorContainer } from '../../core/model/error-container';
 import { AppHeader } from '../../app-header/app-header';
 import { AppFooter } from '../../app-footer/app-footer';
 import { LoadingSpinner } from '../../component/loading-spinner/loading-spinner';
-import { BreadcrumbsComponent } from '../../component/breadcrumbs/breadcrumbs'; // renamed
+import { BreadcrumbsComponent } from '../../component/breadcrumbs/breadcrumbs';
 import { ModelTable } from '../../component/model-table/model-table';
 import { ModelTableTileComponent } from '../../component/model-table-tile-component/model-table-tile-component';
 import { ActionType, ActionsConfig, ActionConfig, ColumnDefinition, ModelTableDataObject } from '../../core/model/model-table-types';
 import { FileSearchComponent } from '../../component/file-search-component/file-search-component';
 import { ErrorMessageComponent } from '../../component/error-message-component/error-message-component';
-import { FileTableComponent } from '../../component/file-table-component/file-table-component';
-import { FolderTableComponent } from '../../component/folder-table-component/folder-table-component';
-import { FoundFilesTableComponent } from '../../component/found-files-table-component/found-files-table-component';
-import { FoundFoldersTableComponent } from '../../component/found-folders-table-component/found-folders-table-component';
 import { CreateFolderModalComponent } from '../../component/modal/file/create-folder-modal-component/create-folder-modal-component';
 import { DeleteConfirmationModalComponent } from '../../component/modal/file/delete-confirmation-modal-component/delete-confirmation-modal-component';
 import { RedirectionButton } from '../../component/redirection-button/redirection-button';
 import { User } from '../../core/model/user';
 import AdminService from '../../core/service/admin-service';
 import { IconManager } from '../../component/icon-manager/icon-manager';
-import { NgIcon } from "@ng-icons/core";
 
 @Component({
 	selector: 'app-files-page',
@@ -48,8 +43,6 @@ import { NgIcon } from "@ng-icons/core";
 
 		FileSearchComponent,
 		ErrorMessageComponent,
-		FoundFilesTableComponent,
-		FoundFoldersTableComponent,
 		CreateFolderModalComponent,
 		DeleteConfirmationModalComponent,
 		RedirectionButton,
