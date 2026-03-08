@@ -15,6 +15,7 @@ import { AppFooter } from '../../app-footer/app-footer';
 import { LoadingSpinner } from '../../component/loading-spinner/loading-spinner';
 import { BreadcrumbsComponent } from '../../component/breadcrumbs/breadcrumbs'; // renamed
 import { ModelTable } from '../../component/model-table/model-table';
+import { ModelTableTileComponent } from '../../component/model-table-tile-component/model-table-tile-component';
 import { ActionType, ActionsConfig, ActionConfig, ColumnDefinition, ModelTableDataObject } from '../../core/model/model-table-types';
 import { FileSearchComponent } from '../../component/file-search-component/file-search-component';
 import { ErrorMessageComponent } from '../../component/error-message-component/error-message-component';
@@ -28,6 +29,7 @@ import { RedirectionButton } from '../../component/redirection-button/redirectio
 import { User } from '../../core/model/user';
 import AdminService from '../../core/service/admin-service';
 import { IconManager } from '../../component/icon-manager/icon-manager';
+import { NgIcon } from "@ng-icons/core";
 
 @Component({
 	selector: 'app-files-page',
@@ -40,11 +42,12 @@ import { IconManager } from '../../component/icon-manager/icon-manager';
 		AppFooter,
 		LoadingSpinner,
 		BreadcrumbsComponent,
+
 		ModelTable,
+		ModelTableTileComponent,
+
 		FileSearchComponent,
 		ErrorMessageComponent,
-		FileTableComponent,
-		FolderTableComponent,
 		FoundFilesTableComponent,
 		FoundFoldersTableComponent,
 		CreateFolderModalComponent,
@@ -55,18 +58,21 @@ import { IconManager } from '../../component/icon-manager/icon-manager';
 	styleUrls: ['./files-page.css'],
 })
 export class FilesPageComponent implements OnInit, OnDestroy {
+	// Static references
+	IconManager = IconManager;
+
 	// Data states
-	files: FileInfo[] = [];
-	folders: FolderInfo[] = [];
 	isLoading = false;
 	uploading = false;
 	isAuthenticated: boolean = false;
 	authorizedUser?: User;
 	isAdmin: boolean = false;
 	error = '';
+	files = new Array<FileInfo>();
+	folders = new Array<FolderInfo>();
 
 	// ModelTable
-	modelTableDataObject: ModelTableDataObject<FileInfo> = new ModelTableDataObject(
+	filesModelTableDataObject: ModelTableDataObject<FileInfo> = new ModelTableDataObject(
 		[
 			{header:'Имя', field:'name', icon:((item: FileInfo)=>IconManager.getFileIcon(item.extension))},
 			{header:'Расширение', field:'extension', icon:((item: FileInfo)=>IconManager.getFileIcon(item.extension))},
@@ -75,22 +81,99 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 		],
 		[],
 		{
-		actionsHeader: 'Действия',
-		actionsConfigs: [
-			{
-				type: ActionType.ACTION,
-				label: 'Скачать',
-				class: 'btn btn-blue',
-				onClick: (file: FileInfo) => this.handleFileDownload(file)
-			},
-			{
-				type: ActionType.ACTION,
-				label: 'Удалить',
-				class: 'btn btn-red',
-				onClick: (file: FileInfo) => this.handleFileDelete(file)
-			}
-		]
-	}
+			actionsHeader: 'Действия',
+			actionsConfigs: [
+				{
+					type: ActionType.ACTION,
+					label: 'Скачать',
+					class: 'btn btn-blue',
+					onClick: (file: FileInfo) => this.handleFileDownload(file)
+				},
+				{
+					type: ActionType.ACTION,
+					label: 'Удалить',
+					class: 'btn btn-red',
+					onClick: (file: FileInfo) => this.handleFileDelete(file)
+				}
+			]
+		}
+	);
+	foldersModelTableDataObject: ModelTableDataObject<FolderInfo> = new ModelTableDataObject(
+		[
+			{header: 'Имя', field: 'name', icon:((item: FolderInfo)=>IconManager.getFileIcon('folder'))},
+			{header: 'Дата изменения', field:'lastModified'},
+			{header: 'Размер', field:'readableSize'}
+		],
+		[],
+		{
+			actionsHeader: 'Действия', 
+			actionsConfigs: [
+				{
+					type: ActionType.LINK,
+					label: 'Открыть',
+					class: 'btn btn-blue',
+					href: (item: FolderInfo)=>{return `/files/${encodeURIComponent(item.fullPath)}`}
+				},
+				{
+					type: ActionType.DATA_ACTION,
+					label: 'Удалить',
+					class: 'btn btn-red',
+					onClick: (item: FolderInfo) => this.prepareDelete(item.fullPath, item.name)
+				}
+			]
+		}
+	);
+	filesFoundModelTableDataObject: ModelTableDataObject<FileInfo> = new ModelTableDataObject(
+		[
+			{header:'Путь', field:((item: FileInfo)=>{return FileInfo.getRelativePath(item,this.searchPath)}), icon:((item: FileInfo)=>IconManager.getFileIcon(item.extension))},
+			{header:'Имя', field:'name', icon:((item: FileInfo)=>IconManager.getFileIcon(item.extension))},
+			{header:'Расширение', field:'extension', icon:((item: FileInfo)=>IconManager.getFileIcon(item.extension))},
+			{header:'Размер', field:'readableSize'},
+			{header:'Дата изменения', field:'lastModified'},
+		],
+		[],
+		{
+			actionsHeader: 'Действия',
+			actionsConfigs: [
+				{
+					type: ActionType.ACTION,
+					label: 'Скачать',
+					class: 'btn btn-blue',
+					onClick: (file: FileInfo) => this.handleFileDownload(file)
+				},
+				{
+					type: ActionType.ACTION,
+					label: 'Удалить',
+					class: 'btn btn-red',
+					onClick: (file: FileInfo) => this.handleFileDelete(file)
+				}
+			]
+		}
+	);
+	foldersFoundModelTableDataObject: ModelTableDataObject<FolderInfo> = new ModelTableDataObject(
+		[
+			{header: 'Имя', field: 'name', icon:((item: FolderInfo)=>IconManager.getFileIcon('folder'))},
+			{header: 'Дата изменения', field:'lastModified'},
+			{header: 'Размер', field:'readableSize'}
+		],
+		[],
+		{
+			actionsHeader: 'Действия', 
+			actionsConfigs: [
+				{
+					type: ActionType.LINK,
+					label: 'Открыть',
+					class: 'btn btn-blue',
+					href: (item: FolderInfo)=>{return `/files/${encodeURIComponent(item.fullPath)}`}
+				},
+				{
+					type: ActionType.DATA_ACTION,
+					label: 'Удалить',
+					class: 'btn btn-red',
+					onClick: (item: FolderInfo) => this.prepareDelete(item.fullPath, item.name)
+				}
+			]
+		}
 	);
 
 	// Navigation state
@@ -227,20 +310,29 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			if ('error' in result) {
 				this.error = (result as ErrorContainer).error || 'Unknown error';
 				this.files = [];
-				this.modelTableDataObject.models = [];
 				this.folders = [];
+				this.filesModelTableDataObject.models = this.files;
+				this.foldersModelTableDataObject.models = this.folders;
+				this.filesFoundModelTableDataObject.models = this.files;
+				this.foldersFoundModelTableDataObject.models = this.folders;
 			} else {
 				const dirList = result as DirectoryList;
 				this.files = dirList.files;
-				this.modelTableDataObject.models = dirList.files;
 				this.folders = dirList.folders;
+				this.filesModelTableDataObject.models = this.files;
+				this.foldersModelTableDataObject.models = this.folders;
+				this.filesFoundModelTableDataObject.models = this.files;
+				this.foldersFoundModelTableDataObject.models = this.folders;
 			}
 		} catch (err: any) {
 			console.error('Load directory error:', err);
 			this.error = err.message || 'Failed to load directory.';
 			this.files = [];
-			this.modelTableDataObject.models = [];
 			this.folders = [];
+			this.filesModelTableDataObject.models = this.files;
+			this.foldersModelTableDataObject.models = this.folders;
+			this.filesFoundModelTableDataObject.models = this.files;
+			this.foldersFoundModelTableDataObject.models = this.folders;
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
@@ -263,6 +355,8 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 
 			const results = await FileService.find(token, this.searchQuery, this.searchPath);
 			this.searchResults = results;
+			this.filesFoundModelTableDataObject.models = this.searchResults.files;
+			this.foldersFoundModelTableDataObject.models = this.searchResults.folders;
 		} catch (err: any) {
 			console.error('Search error:', err);
 			this.error = err.message || 'Search failed.';

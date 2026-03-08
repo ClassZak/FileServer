@@ -48,21 +48,33 @@
 
 					@if (searchResults.totalResults > 0) {
 						@if (searchResults.folders.length) {
+							<div>
+								<app-model-table-tile-component
+									[title]="'Найденные папки (' + searchResults.folders.length + ')'"
+									[iconName]="IconManager.getFileIcon('folder')"
+								> 
+								</app-model-table-tile-component>
+							</div>
 							<div class="model-table-container">
-								<app-found-folders-table
-									[folders]="searchResults.folders"
-									(prepareDelete)="prepareDelete($event.path, $event.name)"
-								></app-found-folders-table>
+								<app-model-table
+									[modelTableDataObject]="foldersFoundModelTableDataObject"
+								>
+								</app-model-table>
 							</div>
 						}
 						@if (searchResults.files.length) {
+							<div>
+								<app-model-table-tile-component
+									[title]="'Найденные файлы (' + searchResults.files.length + ')'"
+									[iconName]="IconManager.getFileIcon('txt')"
+								> 
+								</app-model-table-tile-component>
+							</div>
 							<div class="model-table-container">
-								<app-found-files-table
-									[files]="searchResults.files"
-									(onDownload)="handleDownload($event.path, $event.name)"
-									(onDelete)="prepareDelete($event.path, $event.name)"
-									[searchPath]="searchPath"
-								></app-found-files-table>
+								<app-model-table
+									[modelTableDataObject]="filesFoundModelTableDataObject"
+								>
+								</app-model-table>
 							</div>
 						}
 					} @else {
@@ -165,25 +177,39 @@
 
 			<!-- File and folder tables -->
 			@if (!isLoading) {
-				<div class="model-table-container">
-					<app-folder-table
-					[folders]="folders"
-					(prepareDelete)="prepareDelete($event.path, $event.name)"
-					></app-folder-table>
-				</div>
-				<div class="model-table-container">
-					<app-file-table
-						[files]="files"
-						(onDownload)="handleDownload($event.path, $event.name)"
-						(onDelete)="prepareDelete($event.path, $event.name)"
-					></app-file-table>
-				</div>
-				<div class="model-table-container">
-					<app-model-table
-						[modelTableDataObject]="modelTableDataObject"
-					>
-					</app-model-table>
-				</div>
+				<!-- Folders -->
+				@if (this.foldersModelTableDataObject.models.length){
+					<div>
+						<app-model-table-tile-component
+							[title]="'Папки'"
+							[iconName]="IconManager.getFileIcon('folder')"
+						>
+						</app-model-table-tile-component>
+					</div>
+					<div class="model-table-container">
+						<app-model-table
+							[modelTableDataObject]="foldersModelTableDataObject"
+						>
+						</app-model-table>
+					</div>
+				}
+
+				<!-- Files -->
+				@if (filesModelTableDataObject.models.length){
+					<div>
+						<app-model-table-tile-component
+							[title]="'Файлы'"
+							[iconName]="IconManager.getFileIcon('txt')"
+						>
+						</app-model-table-tile-component>
+					</div>
+					<div class="model-table-container">
+						<app-model-table
+							[modelTableDataObject]="filesModelTableDataObject"
+						>
+						</app-model-table>
+					</div>
+				}
 			}
 		}
 	}

@@ -1,0 +1,9 @@
+.model-table-title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 20px;
+}
+.model-table-title > h3 {
+	margin: 0;
+}

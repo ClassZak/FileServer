@@ -12,4 +12,10 @@ export class FileInfo{
 		public isDirectory: boolean = false
 	) {}
 
+	public static getRelativePath(item: FileInfo, path: string): string {
+		if (path && item.fullPath.startsWith(path)) {
+			return item.fullPath.substring(path.length).replace(/^\//, '');
+		}
+		return item.fullPath;
+	}
 }
