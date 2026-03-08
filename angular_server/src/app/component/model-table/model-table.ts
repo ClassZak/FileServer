@@ -24,10 +24,10 @@ export class ModelTable<TModel> implements AfterViewInit, OnDestroy {
 
 	@ViewChild('tableContainer') tableContainer!: ElementRef<HTMLElement>;
 	@ViewChild('table') table!: ElementRef<HTMLTableElement>;
-	@ViewChild('resizeLine') resizeLine!: ElementRef<HTMLTableElement>;
+	@ViewChild('resizeLine') resizeLine!: ElementRef<HTMLElement>;
 
 	resizing = false;
-	resizingColIndex: number | null = null; // для подсветки колонки
+	resizingColIndex: number | null = null;
 	resizeLineLeft = 0;
 	isWidthStyleInitilized = false;
 
@@ -68,8 +68,18 @@ export class ModelTable<TModel> implements AfterViewInit, OnDestroy {
 			this.isWidthStyleInitilized = true;
 		}
 	}
-	ngAfterViewInit(): void {
-		this.initColumnWidths();
+	async ngAfterViewInit(): Promise<void> {
+		try {
+			const initWidths = () => {
+				if (this.modelTableDataObject?.models.length && this.table?.nativeElement)
+					this.initColumnWidths();
+				else
+					setTimeout(initWidths, 1000);
+			}
+			initWidths();
+		} catch (error) {
+			console.error(error);
+		}
 	}
 
 	// Определяем, является ли колонка последней (с учётом колонки действий)
@@ -86,9 +96,6 @@ export class ModelTable<TModel> implements AfterViewInit, OnDestroy {
 			return;
 
 		this.initColumnWidths();
-		console.log('sdfsdfsfsdf');
-
-		console.log('startResize', colIndex);
 		event.preventDefault();
 		event.stopPropagation();
 
@@ -131,9 +138,6 @@ export class ModelTable<TModel> implements AfterViewInit, OnDestroy {
 
 
 	private onMouseUpEndResize(event: MouseEvent): void {
-		console.log('onMouseUpEndResize', this.resizeLineLeft); 
-		console.log(this.resizing);
-		console.log(this.currentColIndex);
 		if (this.resizing && this.currentColIndex !== null) {
 			// Set width for header
 			const headerCells = this.table.nativeElement.querySelectorAll('thead th');

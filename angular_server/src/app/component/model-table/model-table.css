@@ -185,13 +185,19 @@ th {
 	cursor: col-resize;
 	z-index: 2;
 }
-span.border-span {
-	width: 2px;
-	height: 100%;
-	display:flow-root;
-	background: red;
+td {
+	position: relative;
 }
-
+td span.border-span {
+	position: absolute;
+	right: 0;
+	top: 0;
+	height: 100%;
+	width: 2px;
+	background-color: var(--color-border-default); /* или цвет, как у resize-handle */
+	pointer-events: none; /* не перехватывает события мыши */
+	z-index: 1; /* чтобы быть поверх фона, но под контентом при необходимости */
+}
 .resize-handle:hover,
 .resize-handle.active {
 	background-color: var(--color-border-weak);
