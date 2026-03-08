@@ -1,2 +1,2 @@
-1. Refactor file table components using ModelTable
+1. Refactor all tables components using ModelTable
 2. Notifactions
