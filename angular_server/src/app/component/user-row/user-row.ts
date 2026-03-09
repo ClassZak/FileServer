@@ -14,9 +14,7 @@ export class UserRow {
 	@Input() isAdmin: boolean = false;
 	@Input() userData?: User | UserAdminModel;
 
-	public createNavigateToUserHref(name: string | undefined){
-		if (name === undefined)
-			return '/users';
+	public createNavigateToUserHref(name: string) {
 		return `/user/${encodeURIComponent(name)}`;
 	};
 }

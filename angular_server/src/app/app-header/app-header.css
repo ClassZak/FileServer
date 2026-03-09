@@ -43,3 +43,8 @@ app-app-header > form{
 		font-size: 0.7rem;
 	}
 }
+
+
+app-file-search-header{
+	width: 100%;
+}

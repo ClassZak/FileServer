@@ -16,8 +16,8 @@ export class UserRowGroupPage {
 	@Output() removeUser = new EventEmitter<string>(); // событие для удаления
 
 	// Формируем ссылку на страницу пользователя
-	public createNavigateToUserHref(email: string | undefined): string {
-		return email ? `/user/${encodeURIComponent(email)}` : '/users';
+	public createNavigateToUserHref(email: string): string {
+		return `/user/${encodeURIComponent(email)}`;
 	}
 
 	// Обработчик клика по кнопке "Исключить"

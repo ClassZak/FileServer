@@ -5,7 +5,7 @@
 
 		<!-- Breadcrumb items -->
 		@for (part of parts; track $index; let i = $index, last = $last) {
-			<span class="text-gray-400">/</span>
+			<span>/</span>
 			@if (last) {
 				<span class="text-gray-800 font-medium">{{ part }}</span>
 			} @else {

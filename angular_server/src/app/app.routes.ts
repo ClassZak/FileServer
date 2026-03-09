@@ -11,8 +11,8 @@ import { GroupPage } from './page/group-page/group-page';
 
 export const routes: Routes = [
 	{ path: '', component: Home},
+	{ path: 'home', redirectTo: '/' },
 	{ path: 'about', component: About},
-	{ path: '', redirectTo: '/home', pathMatch: 'full'},
 	{ path: 'account', component: AccountPage},
 	{ path: 'login', component: LoginPage},
 	{ path: 'users', component: UsersPage},
