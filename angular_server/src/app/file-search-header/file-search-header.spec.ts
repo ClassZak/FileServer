@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { FileSearch } from './file-search';
+import { FileSearchHeader } from './file-search-header';
 
-describe('FileSearch', () => {
-	let component: FileSearch;
-	let fixture: ComponentFixture<FileSearch>;
+describe('FileSearchHeader', () => {
+	let component: FileSearchHeader;
+	let fixture: ComponentFixture<FileSearchHeader>;
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			imports: [FileSearch]
+			imports: [FileSearchHeader]
 		})
 		.compileComponents();
 
-		fixture = TestBed.createComponent(FileSearch);
+		fixture = TestBed.createComponent(FileSearchHeader);
 		component = fixture.componentInstance;
 		await fixture.whenStable();
 	});

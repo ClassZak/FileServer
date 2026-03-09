@@ -4,12 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 @Component({
-	selector: 'app-file-search',
+	selector: 'app-file-search-header',
 	imports: [CommonModule, FormsModule],
-	templateUrl: './file-search.html',
-	styleUrl: './file-search.css',
+	templateUrl: './file-search-header.html',
+	styleUrl: './file-search-header.css',
 })
-export class FileSearch {
+export class FileSearchHeader {
 	public isSearching: boolean = false;
 	public searchQuery: string = '';
 

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { AccountPage } from './accout-page';
+import { AccountPage } from './account-page';
 
 describe('AccountPage', () => {
 	let component: AccountPage;

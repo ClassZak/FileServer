@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { About } from './page/about/about';
 import { Home } from './page/home/home';
-import { AccountPage } from './page/accout-page/accout-page';
+import { AccountPage } from './page/account-page/account-page';
 import { LoginPage } from './page/login-page/login-page';
 import { UsersPage } from './page/users-page/users-page';
 import { FilesPageComponent } from './page/files-page/files-page';

@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
-import { FileSearch } from "../file-search/file-search";
+import { FileSearchHeader } from "../file-search-header/file-search-header";
 
 @Component({
 	selector: 'app-app-header',
-	imports: [FileSearch],
+	imports: [FileSearchHeader],
 	templateUrl: './app-header.html',
 	styleUrl: './app-header.css',
 })

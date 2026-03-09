@@ -39,8 +39,8 @@ interface Group {
 		UpdateUserPasswordModalComponent,
 		AddAdminToGroupModalComponent
 	],
-	templateUrl: './accout-page.html',
-	styleUrl: './accout-page.css'
+	templateUrl: './account-page.html',
+	styleUrl: './account-page.css'
 })
 export class AccountPage implements OnInit {
 	public isLoading: boolean = true;
