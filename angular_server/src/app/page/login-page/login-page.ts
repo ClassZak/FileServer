@@ -33,9 +33,7 @@ export class LoginPage {
 	) {}
 
 	async ngOnInit(): Promise<void> {
-		setTimeout(async () => {
-			await this.checkAuthentication();
-		}, 1000);
+		this.checkAuthentication();
 	}
 
 	async handleEmailLogin(e: Event) {

@@ -15,7 +15,7 @@
 						</span>
 					</div>
 					<app-redirection-button
-						[reference]="'/files/' + currentPath"
+						[reference]="'/files/' + this.encodedCurrentPath"
 						title="Выйти из поиска"
 						className="search-mode-exit-button"
 					></app-redirection-button>
@@ -86,7 +86,7 @@
 							</p>
 							<div class="no-results-actions">
 								<app-redirection-button
-									[reference]="'/files/' + currentPath"
+									[reference]="'/files/' + this.encodedCurrentPath"
 									title="Вернуться к просмотру файлов"
 									className="return-button"
 								></app-redirection-button>

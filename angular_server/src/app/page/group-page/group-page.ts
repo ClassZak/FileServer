@@ -105,7 +105,10 @@ export class GroupPage implements OnInit {
 					type: ActionType.DATA_ACTION,
 					label: 'Исключить',
 					class: 'btn btn-red',
-					onClick: async (item: UserModelAdminResponse) => { this.setIsRemoveUserFromGroupModalComponentOpen(true); }
+					onClick: async (item: UserModelAdminResponse) => { 
+						this.selectedUserEmail = item.email;
+						this.setIsRemoveUserFromGroupModalComponentOpen(true); 
+					}
 				}
 			]
 		}

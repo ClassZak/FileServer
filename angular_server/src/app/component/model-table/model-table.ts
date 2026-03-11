@@ -70,13 +70,8 @@ export class ModelTable<TModel> implements AfterViewInit, OnDestroy {
 	}
 	async ngAfterViewInit(): Promise<void> {
 		try {
-			const initWidths = () => {
-				if (this.modelTableDataObject?.models.length && this.table?.nativeElement)
-					this.initColumnWidths();
-				else
-					setTimeout(initWidths, 1000);
-			}
-			initWidths();
+			if (this.modelTableDataObject?.models.length && this.table?.nativeElement)
+				this.initColumnWidths();
 		} catch (error) {
 			console.error(error);
 		}

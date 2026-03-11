@@ -218,11 +218,14 @@ export class AccountPage implements OnInit {
 				throw Error('Отсутствует токен авторизации');
 			if (!this.user)
 				throw Error('Объект данных пользователя не определён');
-			UserService.updateUserPassword(token, this.user.email, new UpdatePasswordRequest(passwordData.oldPassword, passwordData.newPassword))
-			// Имитация успешного обновления
-			await new Promise(resolve => setTimeout(resolve, 1000));
-			alert('Пароль успешно обновлен!');
+			const result = await UserService.updateUserPassword(token, this.user.email, new UpdatePasswordRequest(passwordData.oldPassword, passwordData.newPassword));
+			if (result.success)
+				alert('Пароль успешно обновлен!');
+			else
+				console.error(result.error);
 			this.setPasswordModalIsOpen(false);
+
+			// TODO: notice
 		} catch (error) {
 			console.error('Error updating password:', error);
 			alert('Ошибка при обновлении пароля');

@@ -487,6 +487,10 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 		this.itemToDelete = null;
 	}
 
+	get encodedCurrentPath(): string {
+		return encodeURIComponent(this.currentPath);
+	}
+
 	async handleDelete(): Promise<void> {
 		if (!this.itemToDelete) return;
 
