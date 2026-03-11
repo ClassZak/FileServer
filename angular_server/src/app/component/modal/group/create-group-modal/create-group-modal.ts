@@ -97,7 +97,7 @@ export class CreateGroupModalComponent implements OnChanges {
 
 		this.submitting = true;
 		try {
-			await this.onConfirm.emit(this.formData);
+			this.onConfirm.emit(this.formData);
 			this.resetForm();
 		} catch (error: any) {
 			console.error('Ошибка создания группы:', error);

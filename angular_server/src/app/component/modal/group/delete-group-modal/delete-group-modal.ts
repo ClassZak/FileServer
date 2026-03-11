@@ -34,7 +34,7 @@ export class DeleteGroupModalComponent {
 
 		this.submitting = true;
 		try {
-			await this.onConfirm.emit();
+			this.onConfirm.emit();
 		} catch (error: any) {
 			console.error('Ошибка создания пользователя:', error);
 		} finally {

@@ -105,7 +105,7 @@ export class GroupPage implements OnInit {
 					type: ActionType.DATA_ACTION,
 					label: 'Исключить',
 					class: 'btn btn-red',
-					onClick: async (item: UserModelAdminResponse) => { this.selectedUserEmail = item.email; this.handleConfirmRemoveUserFromGroupModalComponent()}
+					onClick: async (item: UserModelAdminResponse) => { this.setIsRemoveUserFromGroupModalComponentOpen(true); }
 				}
 			]
 		}
@@ -300,6 +300,7 @@ export class GroupPage implements OnInit {
 			if (!this.selectedUserEmail || this.selectedUserEmail=='') {
 				this.isRemoveUserFromGroupModalComponentOpen = false;
 				this.cdr.detectChanges();
+				this.selectedUserEmail = '';
 				return;
 			}
 			const response = await GroupService.removeUserFromGroup(token, this.groupName, this.selectedUserEmail);

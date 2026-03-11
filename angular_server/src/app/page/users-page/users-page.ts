@@ -144,7 +144,7 @@ export class UsersPage implements OnInit {
 	public setIsCreateUserModalComponentOpen(state: boolean){
 		this.isCreateUserModalComponentOpen = state;
 	}
-	public async handleComfirmCreateUser(userData: CreateUserModel) : Promise<void>{
+	public async handleConfirmCreateUser(userData: CreateUserModel) : Promise<void>{
 		try {
 			const token = AuthService.getToken();
 			if (!token)

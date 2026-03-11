@@ -251,9 +251,13 @@ export class AccountPage implements OnInit {
 			if (!token) throw new Error('Нет токена авторизации');
 			if (!this.user) throw new Error('Пользователь не определён');
 
-			await GroupService.addUserToGroup(token, selectedGroupName, this.user.email);
+			const result = await GroupService.addUserToGroup(token, selectedGroupName, this.user.email);
 			this.setIsAddAdminToGroupModalOpen(false);
-			console.log(`Вы успешно добавлены в группу «${selectedGroupName}»`);
+
+			if (result.success)
+				console.log(`Вы успешно добавлены в группу «${selectedGroupName}»`);
+			else
+				console.error(result.error);
 			// TODO: notice
 			await this.loadMyGroups();
 			this.cdr.detectChanges();

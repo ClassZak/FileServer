@@ -35,7 +35,7 @@ export class UpdateUserPasswordModalComponent {
 		
 		this.submitting = true;
 		try {
-			await this.onConfirm.emit(this.formData);
+			this.onConfirm.emit(this.formData);
 		} catch (error: any) {
 			console.error(error);
 		} finally {

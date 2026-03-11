@@ -57,7 +57,7 @@ export class CreateUserModalComponent {
 
 		this.submitting = true;
 		try {
-			await this.onConfirm.emit(this.formData);
+			this.onConfirm.emit(this.formData);
 		} catch (error: any) {
 			console.error('Ошибка создания пользователя:', error);
 			this.errors['server'] = error.message || 'Ошибка создания пользователя';

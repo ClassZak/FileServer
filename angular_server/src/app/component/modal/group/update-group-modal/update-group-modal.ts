@@ -101,7 +101,7 @@ export class UpdateGroupModalComponent implements OnChanges {
 
 		this.submitting = true;
 		try {
-			await this.onConfirm.emit(this.formData);
+			this.onConfirm.emit(this.formData);
 		} catch (error:any) {
 			console.error('Ошибка обновления группы:', error);
 			this.errors['server'] = error.message || 'Ошибка обновления группы';

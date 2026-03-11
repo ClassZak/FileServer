@@ -531,8 +531,10 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 					try {
 						const errorData = JSON.parse(reader.result as string);
 						this.error = errorData.error || 'Download failed.';
-					} catch {
-						this.error = 'Download failed.';
+					} catch (err: any) {
+						console.error('Download error:', err);
+						this.error = typeof err === 'string' ? err : err.message || 'Download failed.';
+						return;
 					}
 					this.cdr.detectChanges();
 				};

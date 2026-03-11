@@ -80,7 +80,7 @@ export class AddAdminToGroupModalComponent implements OnChanges {
 
 		this.submitting = true;
 		try {
-			await this.onConfirm.emit(this.selectedGroupName);
+			this.onConfirm.emit(this.selectedGroupName);
 			this.closeModal();
 			this.resetForm();
 		} catch (error: any) {
