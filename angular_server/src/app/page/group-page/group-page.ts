@@ -1,10 +1,9 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { AppHeader } from '../../app-header/app-header';
 import { AppFooter } from '../../app-footer/app-footer';
 import { LoadingSpinner } from '../../component/loading-spinner/loading-spinner';
 import { AddUserToGroupModalComponent } from '../../component/modal/group/add-user-to-group-modal/add-user-to-group-modal';
-import { CreateGroupModalComponent } from '../../component/modal/group/create-group-modal/create-group-modal';
 import { DeleteGroupModalComponent } from '../../component/modal/group/delete-group-modal/delete-group-modal';
 import { RemoveUserFromGroupModalComponent } from '../../component/modal/group/remove-user-from-group-modal/remove-user-from-group-modal';
 import { UpdateGroupModalComponent } from '../../component/modal/group/update-group-modal/update-group-modal';
@@ -18,11 +17,11 @@ import { GroupDetails } from '../../core/model/group-details';
 import { GroupFullDetailsAdminResponse, GroupFullDetailsResponse } from '../../core/model/api-response-types';
 import { UserModelAdminResponse } from '../../core/model/user-model-admin-response';
 import { User } from '../../core/model/user';
-import { UserTable } from "../../component/user-table/user-table";
-import { UserTableGroupPage } from '../../component/user-table-group-page/user-table-group-page';
 import { UserService } from '../../core/service/user-service';
 import { GroupUpdateModel } from '../../core/model/group-update-model';
 import { RedirectionButton } from '../../component/redirection-button/redirection-button';
+import { ModelTable } from '../../component/model-table/model-table';
+import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
 
 @Component({
 	selector: 'app-group-page',
@@ -34,10 +33,14 @@ import { RedirectionButton } from '../../component/redirection-button/redirectio
 		AddUserToGroupModalComponent,
 		DeleteGroupModalComponent,
 		RemoveUserFromGroupModalComponent,
+
+		ModelTable,
+
 		UpdateGroupModalComponent,
-		UserTable,
-		UserTableGroupPage,
 		RedirectionButton
+	],
+	providers: [
+		DatePipe
 	],
 	templateUrl: './group-page.html',
 	styleUrl: './group-page.css',
@@ -69,6 +72,46 @@ export class GroupPage implements OnInit {
 		// другие поля User, которые могут отсутствовать в UserAdminModel – добавьте при необходимости
 		} as User));
 	}
+
+	currentUserModelTableDataObjectRef?: any;
+	defaultUserModelTableDataObject: ModelTableDataObject<User> = new ModelTableDataObject<User>(
+		[
+			{header: 'Фамилия', field: 'surname'},
+			{header: 'Имя', field: 'name'},
+			{header: 'Отчество', field: 'patronymic'},
+			{header: 'Почта', field: 'email'},
+		],
+		[]
+	);
+	adminUserModelTableDataObject: ModelTableDataObject<UserModelAdminResponse> = new ModelTableDataObject<UserModelAdminResponse>(
+		[
+			{header: 'Фамилия', field: 'surname'},
+			{header: 'Имя', field: 'name'},
+			{header: 'Отчество', field: 'patronymic'},
+			{header: 'Почта', field: 'email'},
+			{header: 'Дата создания', field: (item: UserModelAdminResponse) => this.datePipe.transform(item.createdAt, 'dd.MM.yyyy HH:mm:ss')},
+		],
+		[],
+		{
+			actionsHeader: 'Действия',
+			actionsConfigs: [
+				{
+					type: ActionType.LINK,
+					label: 'Изменить данные',
+					class: 'btn btn-blue',
+					href: (item: UserModelAdminResponse) => (!item.email) ? '/users' : `/user/${encodeURIComponent(item.email)}`
+				},
+				{
+					type: ActionType.DATA_ACTION,
+					label: 'Исключить',
+					class: 'btn btn-red',
+					onClick: async (item: UserModelAdminResponse) => { this.selectedUserEmail = item.email; this.handleConfirmRemoveUserFromGroupModalComponent()}
+				}
+			]
+		}
+	);
+
+
 	onRemoveUser(email: string): void {
 		this.selectedUserEmail = email;
 		this.setIsRemoveUserFromGroupModalComponentOpen(true);
@@ -92,7 +135,8 @@ export class GroupPage implements OnInit {
 	constructor(
 		private router: Router,
 		private cdr: ChangeDetectorRef,
-		private route: ActivatedRoute
+		private route: ActivatedRoute,
+		private datePipe: DatePipe
 	) {}
 	
 	async ngOnInit(): Promise<void> {
@@ -176,10 +220,14 @@ export class GroupPage implements OnInit {
 				const adminData = response as GroupFullDetailsAdminResponse;
 				console.log(adminData.group.creator.createdAt);
 				this.group = adminData.group;
+				this.currentUserModelTableDataObjectRef = this.adminUserModelTableDataObject;
+				this.currentUserModelTableDataObjectRef.models = adminData.group.members;
 			} else {
 				const userData = response as GroupFullDetailsResponse;
 				console.log(userData.group.creator.email);
 				this.group = userData.group;
+				this.currentUserModelTableDataObjectRef = this.defaultUserModelTableDataObject;
+				this.currentUserModelTableDataObjectRef.models = userData.group.members;
 			}
 		} catch (error: any) {
 			console.error('Ошибка при загрузки данных группы:', error);
@@ -266,6 +314,8 @@ export class GroupPage implements OnInit {
 			console.error(error);
 			this.error = error.toString();
 			// TODO: notice
+		} finally {
+			this.selectedUserEmail = '';
 		}
 	}
 	public async handleConfirmUpdateGroupModalComponent(updateGroupModel: GroupUpdateModel) : Promise<void>{

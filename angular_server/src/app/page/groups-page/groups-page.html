@@ -13,8 +13,10 @@
 			</button>
 		</div>
 		<div class="model-table-container">
-			<app-group-table [isAdmin]="isAdmin" [groups]="groups">
-			</app-group-table>
+			<app-model-table
+				[modelTableDataObject]="currentGroupModelTableDataObject"
+			>
+			</app-model-table>
 		</div>
 		<div class="buttons-row">
 			<app-redirection-button 

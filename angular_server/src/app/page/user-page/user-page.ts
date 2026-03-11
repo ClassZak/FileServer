@@ -5,7 +5,6 @@ import { CommonModule } from '@angular/common';
 import { AppFooter } from '../../app-footer/app-footer';
 import { AppHeader } from '../../app-header/app-header';
 import { LoadingSpinner } from '../../component/loading-spinner/loading-spinner';
-import { UserTable } from '../../component/user-table/user-table';
 import { UpdateUserModalComponent, UpdateUserModel } from '../../component/modal/user/update-user-modal/update-user-modal';
 import { UpdateUserPasswordModalComponent } from '../../component/modal/user/update-user-password-modal/update-user-password-modal';
 import { DeleteUserModalComponent } from '../../component/modal/user/delete-user-modal/delete-user-modal';

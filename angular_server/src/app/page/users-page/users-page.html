@@ -13,8 +13,10 @@
 			</button>
 		</div>
 		<div class="model-table-container">
-			<app-user-table [isAdmin]="isAdmin" [users]="users">
-			</app-user-table>
+			<app-model-table
+				[modelTableDataObject]="currentUserModelTableDataObjectRef"
+			>
+			</app-model-table>
 		</div>
 		<div class="buttons-row">
 			<app-redirection-button 

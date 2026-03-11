@@ -6,23 +6,20 @@ import { Router } from '@angular/router';
 import { AppHeader } from '../../app-header/app-header';
 import { AppFooter } from '../../app-footer/app-footer';
 import { LoadingSpinner } from '../../component/loading-spinner/loading-spinner';
-import { GroupTable } from '../../component/group-table/group-table';
 import { RedirectionButton } from '../../component/redirection-button/redirection-button';
+import { ModelTable } from '../../component/model-table/model-table';
 
 // Services and models
 import { AuthService } from '../../core/service/auth-service';
 import { AdminService } from '../../core/service/admin-service';
 import { GroupService } from '../../core/service/group-service';
 import { User } from '../../core/model/user';
-import { UpdatePasswordModalModel } from '../../core/model/update-password-modal-model';
 import { UserService } from '../../core/service/user-service';
-import { UpdatePasswordRequest } from '../../core/model/update-password-request';
 import { GroupBasicInfo } from '../../core/model/group_basic_info';
 import { GroupCreateModel } from '../../core/model/group-create-model';
-import { GroupDetails } from '../../core/model/group-details';
-import { GroupUpdateModel } from '../../core/model/group-update-model';
 import { CreateGroupModalComponent } from '../../component/modal/group/create-group-modal/create-group-modal';
 import { UserAdminModel } from '../../core/model/user-admin-model';
+import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
 
 @Component({
 	selector: 'app-groups-page',
@@ -31,7 +28,9 @@ import { UserAdminModel } from '../../core/model/user-admin-model';
 		AppHeader,
 		AppFooter,
 		LoadingSpinner,
-		GroupTable,
+
+		ModelTable,
+
 		CreateGroupModalComponent,
 		RedirectionButton
 	],
@@ -47,6 +46,25 @@ export class GroupsPage implements OnInit {
 	error: string = '';
 	isAuthenticated: boolean = false;
 	authorizedUser?: User;
+	currentGroupModelTableDataObject:		ModelTableDataObject<GroupBasicInfo> = new ModelTableDataObject(
+		[
+			{header: 'Название', field: 'name'},
+			{header: 'Число участников', field: 'membersCount'},
+			{header: 'Почта создателя', field: 'creatorEmail'},
+		],
+		[],
+		{
+			actionsHeader: 'Действия',
+			actionsConfigs: [
+				{
+					type: ActionType.LINK,
+					label: 'Изменить данные',
+					class: 'btn btn-blue',
+					href: (item: GroupBasicInfo) => !item.name ? '/groups' :`/group/${encodeURIComponent(item.name)}`
+				}
+			]
+		}
+	);
 
 	constructor(
 		private router: Router,
@@ -119,7 +137,10 @@ export class GroupsPage implements OnInit {
 				if ('error' in response)
 					throw Error(response.error);
 				if (Array.isArray(response))
+				{
 					this.groups = response;
+					this.currentGroupModelTableDataObject.models = response;
+				}
 			} else 
 				this.router.navigate(['/account']);
 		} catch (error) {

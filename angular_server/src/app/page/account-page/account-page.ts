@@ -7,7 +7,6 @@ import { AppFooter } from '../../app-footer/app-footer';
 import { AppHeader } from "../../app-header/app-header";
 import { LoadingSpinner } from "../../component/loading-spinner/loading-spinner";
 import { RedirectionButton } from '../../component/redirection-button/redirection-button';
-import { GroupTable } from '../../component/group-table/group-table';
 import { UpdateUserPasswordModalComponent } from '../../component/modal/user/update-user-password-modal/update-user-password-modal';
 import { AddAdminToGroupModalComponent } from '../../component/modal/group/add-admin-to-group-modal/add-admin-to-group-modal';
 
@@ -16,15 +15,12 @@ import { AuthService } from '../../core/service/auth-service';
 import { AdminService } from '../../core/service/admin-service';
 import { GroupService } from '../../core/service/group-service';
 import { User } from '../../core/model/user';
+import { GroupBasicInfo } from '../../core/model/group_basic_info';
 import { UpdatePasswordModalModel } from '../../core/model/update-password-modal-model';
 import { UserService } from '../../core/service/user-service';
 import { UpdatePasswordRequest } from '../../core/model/update-password-request';
-
-interface Group {
-	name: string;
-	membersCount: number;
-	creatorEmail: string;
-}
+import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
+import { ModelTable } from '../../component/model-table/model-table';
 
 @Component({
 	selector: 'app-account-page',
@@ -35,7 +31,9 @@ interface Group {
 		AppHeader, 
 		LoadingSpinner,
 		RedirectionButton,
-		GroupTable,
+
+		ModelTable,
+
 		UpdateUserPasswordModalComponent,
 		AddAdminToGroupModalComponent
 	],
@@ -50,8 +48,46 @@ export class AccountPage implements OnInit {
 	isPasswordModalOpen: boolean = false;
 	isAddAdminToGroupModalOpen: boolean = false;
 	user: User | undefined;
-	myGroups: Group[] = [];
-	groups: Group[] = [];
+	groups: GroupBasicInfo[] = [];
+	currentGroupModelTableDataObjectRef?:ModelTableDataObject<GroupBasicInfo>;
+	defaultGroupModelTableDataObject:	ModelTableDataObject<GroupBasicInfo> = new ModelTableDataObject(
+		[
+			{header: 'Название', field: 'name'},
+			{header: 'Число участников', field: 'membersCount'},
+			{header: 'Почта создателя', field: 'creatorEmail'},
+		],
+		[],
+		{
+			actionsHeader: 'Действия',
+			actionsConfigs: [
+				{
+					type: ActionType.LINK,
+					label: 'Просмотр',
+					class: 'btn btn-blue',
+					href: (item: GroupBasicInfo) => !item.name ? '/groups' :`/group/${encodeURIComponent(item.name)}`
+				}
+			]
+		}
+	);
+	adminGroupModelTableDataObject:		ModelTableDataObject<GroupBasicInfo> = new ModelTableDataObject(
+		[
+			{header: 'Название', field: 'name'},
+			{header: 'Число участников', field: 'membersCount'},
+			{header: 'Почта создателя', field: 'creatorEmail'},
+		],
+		[],
+		{
+			actionsHeader: 'Действия',
+			actionsConfigs: [
+				{
+					type: ActionType.LINK,
+					label: 'Изменить данные',
+					class: 'btn btn-blue',
+					href: (item: GroupBasicInfo) => !item.name ? '/groups' :`/group/${encodeURIComponent(item.name)}`
+				}
+			]
+		}
+	);
 
 	constructor(
 		private router: Router,
@@ -114,7 +150,11 @@ export class AccountPage implements OnInit {
 			if ('error' in groupsResult) {
 				console.error('Ошибка загрузки групп:', groupsResult.error);
 			} else if (Array.isArray(groupsResult)) {
-				this.myGroups = groupsResult;
+				if (!this.isAdmin)
+					this.currentGroupModelTableDataObjectRef = this.defaultGroupModelTableDataObject;
+				else
+					this.currentGroupModelTableDataObjectRef = this.adminGroupModelTableDataObject;
+				this.currentGroupModelTableDataObjectRef.models = groupsResult;
 			}
 		} catch (error) {
 			console.error('Ошибка при загрузке групп:', error);

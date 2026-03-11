@@ -6,7 +6,6 @@ import { Router } from '@angular/router';
 import { AppFooter } from '../../app-footer/app-footer';
 import { AppHeader } from "../../app-header/app-header";
 import { LoadingSpinner } from "../../component/loading-spinner/loading-spinner";
-import { GroupTable } from '../../component/group-table/group-table';
 import { CreateUserModalComponent } from '../../component/modal/user/create-user-modal/create-user-modal';
 
 // Services and models
@@ -17,21 +16,22 @@ import { User } from '../../core/model/user';
 import { UserService } from '../../core/service/user-service';
 import { CreateUserModel } from '../../core/model/create-user-model';
 import { UserAdminModel } from '../../core/model/user-admin-model';
-import { UserTable } from '../../component/user-table/user-table';
 import { RedirectionButton } from '../../component/redirection-button/redirection-button';
+import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
+import { ModelTable } from "../../component/model-table/model-table";
 
 @Component({
 	selector: 'app-users-page',
 	imports: [
-		CommonModule,
-		AppHeader,
-		AppFooter,
-		LoadingSpinner,
-		UserTable,
-		CreateUserModalComponent,
-		
-		RedirectionButton
-	],
+    CommonModule,
+    AppHeader,
+    AppFooter,
+    LoadingSpinner,
+
+    CreateUserModalComponent,
+    RedirectionButton,
+    ModelTable
+],
 	templateUrl: './users-page.html',
 	styleUrl: './users-page.css',
 })
@@ -41,8 +41,28 @@ export class UsersPage implements OnInit {
 	isAuthenticated: boolean = false;
 	authorizedUser?: User;
 	isAdmin: boolean = false;
-	users: Array<User>=[];
 	error: string = '';
+
+	currentUserModelTableDataObjectRef:ModelTableDataObject<User> = new ModelTableDataObject<User>(
+		[
+			{header: 'Фамилия', field: 'surname'},
+			{header: 'Имя', field: 'name'},
+			{header: 'Отчество', field: 'patronymic'},
+			{header: 'Почта', field: 'email'},
+		],
+		[],
+		{
+			actionsHeader: 'Действия',
+			actionsConfigs: [
+				{
+					type: ActionType.LINK,
+					label: 'Изменить данные',
+					class: 'btn btn-blue',
+					href: (item: User) => !item.email ? '/users' : `/user/${encodeURIComponent(item.email)}`
+				}
+			]
+		}
+	);
 
 	constructor(
 		private router: Router,
@@ -110,8 +130,8 @@ export class UsersPage implements OnInit {
 			if(token === null)
 				throw "У вас нет токена авторизации";
 			if(this.isAdmin) {
-				this.users = (await UserService.readAllUsers(token))
-					.users as Array<UserAdminModel>;
+				const loadedUsers = (await UserService.readAllUsers(token)).users as Array<UserAdminModel>;
+				this.currentUserModelTableDataObjectRef.models = loadedUsers;
 			}
 		} catch (error) {
 			console.error('Ошибка при загрузке пользователей', error);

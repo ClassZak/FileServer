@@ -49,11 +49,15 @@
 			}
 			
 			@if (!isLoadingGroups) {
-				<h1>Ваши группы</h1>
-				<div class="model-table-container">
-					<app-group-table [isAdmin]="isAdmin" [groups]="myGroups">
-					</app-group-table>
-				</div>
+				@if (currentGroupModelTableDataObjectRef && currentGroupModelTableDataObjectRef.models.length) {
+					<h1>Ваши группы ({{currentGroupModelTableDataObjectRef.models.length}})</h1>
+					<div class="model-table-container">
+						<app-model-table
+							[modelTableDataObject]="this.currentGroupModelTableDataObjectRef"
+						>
+						</app-model-table>
+					</div>
+				}
 			}
 		</div>
 	}
