@@ -28,9 +28,6 @@ export interface SearchResults {
  * All methods require a valid JWT token and return Promises.
  * Errors are caught and rethrown as user-friendly messages when possible.
  */
-@Injectable({
-	providedIn: 'root',
-})
 export class FileService {
 	/**
 	 * Creates an Axios configuration object with the Authorization header.

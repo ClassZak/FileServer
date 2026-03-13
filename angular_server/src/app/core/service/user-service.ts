@@ -5,6 +5,7 @@ import { CreateUserModel } from '../model/create-user-model';
 import { UpdatePasswordRequest } from '../model/update-password-request';
 import { CreateConfig } from './create-config';
 import { UserAdminModel } from '../model/user-admin-model';
+import { DefaultServiceResult } from '../model/default-server-result';
 
 export class UpdatePasswordResponse {
 	public success: boolean = false;
@@ -31,9 +32,6 @@ export class ReadUserResponse {
 	public user?: UserAdminModel;
 }
 
-@Injectable({
-	providedIn: 'root',
-})
 /**
  * Service for user management operations
  */
@@ -45,7 +43,7 @@ export class UserService {
 	 * @param {string} authToken - JWT token
 	 * @returns {Promise<Object>} Response with error or success
 	 */
-	static async createUser(user: CreateUserModel, authToken: string): Promise<any> {
+	static async createUser(user: CreateUserModel, authToken: string): Promise<DefaultServiceResult> {
 		try {
 			const response = await axios.post(
 				'/api/users/new',

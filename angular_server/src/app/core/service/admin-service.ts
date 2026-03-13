@@ -3,9 +3,6 @@ import axios, { AxiosError } from "axios";
 import { CreateConfig } from './create-config';
 
 
-@Injectable({
-providedIn: 'root',
-})
 /**
  * Class for Adminstrator database entity
  */

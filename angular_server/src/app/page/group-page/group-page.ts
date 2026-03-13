@@ -285,7 +285,7 @@ export class GroupPage implements OnInit {
 			if (response.success)
 				this.router.navigate(['/groups']);
 
-			this.isDeleteGroupModalComponentOpen = false;
+			this.setIsDeleteGroupModalComponentOpen(false);
 			this.cdr.detectChanges();
 		} catch (error: any) {
 			console.error(error);
@@ -333,7 +333,6 @@ export class GroupPage implements OnInit {
 			if (response.success && this.groupName != updateGroupModel.newName){
 				this.groupName = updateGroupModel.newName;
 				this.router.navigate([`/group/${encodeURIComponent(this.groupName)}`]);
-				await Promise.all([this.loadGroupData(), this.loadUsers()]);
 			}
 
 			this.isUpdateGroupModalComponentOpen = false;

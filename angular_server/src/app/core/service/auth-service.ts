@@ -21,9 +21,6 @@ export interface CheckAuthResult {
 
 
 
-@Injectable({
-	providedIn: 'root',
-})
 export class AuthService {
 	/**
 	 * Method for login by email
