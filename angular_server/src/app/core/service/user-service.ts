@@ -76,7 +76,7 @@ export class UserService {
 			const userData = response.data.user;
 
 			// Convert ISO date string to Date object (assuming server sends without timezone)
-			const createdAtDate = new Date(userData.createdAt + 'Z');
+			const createdAtDate = new Date(userData.createdAt);
 
 			const userModel = new UserAdminModel(
 				userData.surname,
@@ -168,7 +168,7 @@ export class UserService {
 					u.name,
 					u.patronymic,
 					u.email,
-					new Date(u.createdAt + 'Z')
+					new Date(u.createdAt)
 				)
 			);
 

@@ -108,7 +108,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 					href: (item: FolderInfo)=>{return `/files/${encodeURIComponent(item.fullPath)}`}
 				},
 				{
-					type: ActionType.DATA_ACTION,
+					type: ActionType.ACTION,
 					label: 'Удалить',
 					class: 'btn btn-red',
 					onClick: (item: FolderInfo) => this.prepareDelete(item.fullPath, item.name)
@@ -160,7 +160,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 					href: (item: FolderInfo)=>{return `/files/${encodeURIComponent(item.fullPath)}`}
 				},
 				{
-					type: ActionType.DATA_ACTION,
+					type: ActionType.ACTION,
 					label: 'Удалить',
 					class: 'btn btn-red',
 					onClick: (item: FolderInfo) => this.prepareDelete(item.fullPath, item.name)

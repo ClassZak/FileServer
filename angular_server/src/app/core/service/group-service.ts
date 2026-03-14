@@ -97,7 +97,7 @@ export class GroupService {
 			const groupData = response.data.group;
 
 			// Helper to convert date string to Date object (assuming server sends ISO without timezone)
-			const toDate = (dateStr: string): Date => new Date(dateStr + 'Z');
+			const toDate = (dateStr: string): Date => new Date(dateStr);
 
 			// Transform creator with date conversion
 			const creator = new UserModelAdminResponse(

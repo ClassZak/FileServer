@@ -263,6 +263,7 @@ export class AccountPage implements OnInit {
 				console.error(result.error);
 			// TODO: notice
 			await this.loadMyGroups();
+			await this.loadGroups();
 			this.cdr.detectChanges();
 		} catch (error) {
 			console.error('Ошибка при добавлении себя в группу:', error);

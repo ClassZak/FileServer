@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { AppHeader } from '../../app-header/app-header';
 import { AppFooter } from '../../app-footer/app-footer';
 import { LoadingSpinner } from '../../component/loading-spinner/loading-spinner';
@@ -45,7 +45,7 @@ import { ActionType, ModelTableDataObject } from '../../core/model/model-table-t
 	templateUrl: './group-page.html',
 	styleUrl: './group-page.css',
 })
-export class GroupPage implements OnInit {
+export class GroupPage implements OnInit, OnDestroy {
 	public isLoading: boolean = true;
 	isAuthenticated: boolean = false;
 	authorizedUser?: User;
@@ -295,7 +295,7 @@ export class GroupPage implements OnInit {
 	}
 	public async handleConfirmRemoveUserFromGroupModalComponent() : Promise<void>{
 		try {
-			if (this.selectedUserEmail == this.group?.creator.email)
+			if (this.group && this.selectedUserEmail == this.group.creator.email)
 				throw Error('Вы не можете исключить из группы её создателя');
 			const token = AuthService.getToken();
 			if(!token)

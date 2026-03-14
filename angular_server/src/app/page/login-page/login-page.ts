@@ -39,7 +39,6 @@ export class LoginPage {
 	async handleEmailLogin(e: Event) {
 		e.preventDefault();
 		this.isSubmiting = true;
-		console.log('Login attempt with:', this.email, this.password);
 		
 		try {
 			const result = await AuthService.loginByEmail(this.email, this.password);
@@ -57,7 +56,7 @@ export class LoginPage {
 					this.error = 'Неверный email или пароль';
 			}
 		} catch (error) {
-			console.log('Login failed:', error);
+			console.error('Login failed:', error);
 			this.error = 'Произошла ошибка при входе';
 		} finally {
 			this.isSubmiting = false;
@@ -67,7 +66,6 @@ export class LoginPage {
 	async handleSNPLogin(e: Event) {
 		this.isSubmiting = true;
 		e.preventDefault();
-		console.log('Login attempt with:',this.surname,this.name,this.patronymic,this.password);
 		
 		try {
 			const result = await AuthService.loginBySnp(
@@ -84,7 +82,7 @@ export class LoginPage {
 				this.error = 'Неверные учётные данные или пароль';
 			}
 		} catch (error) {
-			console.log('Login failed:', error);
+			console.log('Авторизация не удалась:', error);
 			this.error = 'Произошла ошибка при входе';
 		} finally {
 			this.isSubmiting = false;

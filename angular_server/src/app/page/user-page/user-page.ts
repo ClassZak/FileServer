@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { User } from '../../core/model/user';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -34,7 +34,7 @@ import { RedirectionButton } from '../../component/redirection-button/redirectio
 	templateUrl: './user-page.html',
 	styleUrl: './user-page.css',
 })
-export class UserPage implements OnInit {
+export class UserPage implements OnInit, OnDestroy {
 		public isLoading: boolean = true;
 	isUpdateUserModalOpen : boolean = false;
 	isUpdateUserPasswordModalOpen : boolean = false;
@@ -202,7 +202,7 @@ export class UserPage implements OnInit {
 				throw Error('Отсутствует токен авторизации');
 			if (!this.user)
 				throw Error('Объект данных пользователя не определён');
-			UserService.updateUserPassword(
+			await UserService.updateUserPassword(
 				token, this.user.email, 
 				new UpdatePasswordRequest(passwordData.oldPassword, passwordData.newPassword)
 			);
