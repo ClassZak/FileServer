@@ -1,9 +1,3 @@
-@import url(../../../styles/buttons.css);
-@import url(../../../styles/buttons-row.css);
-
-
-
-
 /* Base angular component style */
 app-model-table, .model-table-container {
 	/*overflow-x: auto;*/

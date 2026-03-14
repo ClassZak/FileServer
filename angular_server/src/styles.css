@@ -1,3 +1,23 @@
+@import url(./styles/buttons.css);
+@import url(./styles/MainContent.css);
+@import url(./styles/buttons-row.css);
+@import url(./styles/indented.css);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 :root {
 	/* Base colors */
 	--color-bg-page:				 #18181f;
@@ -217,22 +237,3 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 	outline: 2px solid var(--color-accent-primary);
 	outline-offset: 2px;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-@import url(styles/buttons.css);
-@import url(styles/MainContent.css);
-@import url(styles/buttons-row.css);

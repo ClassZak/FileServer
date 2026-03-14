@@ -221,7 +221,6 @@ export class GroupPage implements OnInit, OnDestroy {
 			// Check admin
 			if (this.isAdmin) {
 				const adminData = response as GroupFullDetailsAdminResponse;
-				console.log(adminData.group.creator.createdAt);
 				this.group = adminData.group;
 				this.currentUserModelTableDataObjectRef = this.adminUserModelTableDataObject;
 				this.currentUserModelTableDataObjectRef.models = adminData.group.members;
