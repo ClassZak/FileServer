@@ -166,10 +166,9 @@ class FileController(
 	
 	@DeleteMapping("/delete")
 	fun deleteFile(
-		@RequestBody request: Map<String, String>,
+		@RequestParam path: String,
 		@RequestHeader("Authorization") authHeader: String
 	): ResponseEntity<Any> {
-		val path = request["path"] ?: ""
 		val currentUser = getCurrentUserFromJwt(authHeader)
 		
 		return try {
