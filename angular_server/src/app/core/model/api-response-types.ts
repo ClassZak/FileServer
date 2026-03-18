@@ -1,5 +1,5 @@
 import { User } from './user'; // ваш класс обычного пользователя
-import { UserModelAdminResponse } from './user-model-admin-response';
+import { UserAdminModel } from './user-admin-model';
 import { GroupDetails } from './group-details';
 
 // Успешный ответ для обычного пользователя
@@ -9,7 +9,7 @@ export interface GroupFullDetailsResponse {
 
 // Успешный ответ для администратора
 export interface GroupFullDetailsAdminResponse {
-		group: GroupDetails<UserModelAdminResponse>;
+		group: GroupDetails<UserAdminModel>;
 }
 
 // Контейнер для ошибки (возвращается при 403)

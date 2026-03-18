@@ -1,0 +1,101 @@
+.path-panel .back-button{
+	display:block;
+	margin-top:4px;
+}
+
+
+.path-submit-button {
+	padding: 8px 16px;
+	background-color: var(--color-info-bg);
+	color: var(--color-info-text);
+	border: 1px solid var(--color-border-default);
+	border-left: none;
+	cursor: pointer;
+	font-size: 14px;
+	transition: background-color 0.2s;
+}
+
+.path-submit-button:hover {
+	background-color: var(--color-info-hover);
+}
+
+
+.nav-button {
+	padding: 8px 16px;
+	border-radius: 4px;
+	border: none;
+	cursor: pointer;
+	font-size: 14px;
+	transition: background-color 0.2s;
+	background-color: var(--color-bg-button);
+	color: var(--color-input-text);
+}
+
+.back-button {
+	background-color: var(--color-bg-button);
+	color: var(--color-input-text);
+}
+
+.nav-button:hover:not(:disabled) {
+	background-color: var(--color-bg-hover);
+}
+
+.back-button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.create-button {
+	background-color: var(--color-bg-button);
+	color: var(--color-success-text);
+}
+
+.create-button:hover {
+	background-color: var(--color-bg-hover);
+}
+
+.upload-button {
+	background-color: var(--color-bg-button);
+	color: var(--color-info-text);
+	cursor: pointer;
+	display: inline-block;
+}
+
+.upload-button:hover {
+	background-color: var(--color-bg-hover);
+}
+
+
+
+div.upload-buttons{
+	display: flex;
+	gap: 10px;
+	margin-top: 10px;
+}
+@media screen and (width < 576px) {
+	div.upload-buttons{
+		flex-direction: column;
+	}
+}
+
+
+
+
+.search-mode-exit-button {
+	transition: background-color 0.2s;
+}
+
+.search-mode-exit-button:hover {
+	text-decoration: underline;
+}
+
+
+.return-button {
+	padding: 10px 20px;
+	background-color: var(--color-info-bg);
+	color: var(--color-info-text);
+	border: 1px solid var(--color-border-default);
+	border-radius: 4px;
+	cursor: pointer;
+	transition: background-color 0.2s;
+}

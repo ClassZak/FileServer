@@ -15,7 +15,6 @@ import AdminService from '../../core/service/admin-service';
 import { GroupService } from '../../core/service/group-service';
 import { GroupDetails } from '../../core/model/group-details';
 import { GroupFullDetailsAdminResponse, GroupFullDetailsResponse } from '../../core/model/api-response-types';
-import { UserModelAdminResponse } from '../../core/model/user-model-admin-response';
 import { User } from '../../core/model/user';
 import { UserService } from '../../core/service/user-service';
 import { GroupUpdateModel } from '../../core/model/group-update-model';
@@ -54,14 +53,14 @@ export class GroupPage implements OnInit, OnDestroy {
 	isRemoveUserFromGroupModalComponentOpen: boolean = false;
 	isUpdateGroupModalComponentOpen: boolean = false;
 	users?: Array<User>;
-	group?: GroupDetails<UserModelAdminResponse> | GroupDetails<User>;
+	group?: GroupDetails<UserAdminModel> | GroupDetails<User>;
 	groupName: string = '';
 	isAdmin: boolean = false;
 	private paramSubscription?: Subscription;
 	error: string = '';
 	selectedUserEmail: string = '';
-	get adminGroup(): GroupDetails<UserModelAdminResponse> | undefined {
-		return this.isAdmin ? this.group as GroupDetails<UserModelAdminResponse> : undefined;
+	get adminGroup(): GroupDetails<UserAdminModel> | undefined {
+		return this.isAdmin ? this.group as GroupDetails<UserAdminModel> : undefined;
 	}
 	get allUsersForModal(): User[] {
 		return (this.users || []).map(u => ({
@@ -83,13 +82,13 @@ export class GroupPage implements OnInit, OnDestroy {
 		],
 		[]
 	);
-	adminUserModelTableDataObject: ModelTableDataObject<UserModelAdminResponse> = new ModelTableDataObject<UserModelAdminResponse>(
+	adminUserModelTableDataObject: ModelTableDataObject<UserAdminModel> = new ModelTableDataObject<UserAdminModel>(
 		[
 			{header: 'Фамилия', field: 'surname'},
 			{header: 'Имя', field: 'name'},
 			{header: 'Отчество', field: 'patronymic'},
 			{header: 'Почта', field: 'email'},
-			{header: 'Дата создания', field: (item: UserModelAdminResponse) => this.datePipe.transform(item.createdAt, 'dd.MM.yyyy HH:mm:ss')},
+			{header: 'Дата создания', field: (item: UserAdminModel) => this.datePipe.transform(item.createdAt, 'dd.MM.yyyy HH:mm:ss')},
 		],
 		[],
 		{
@@ -99,13 +98,13 @@ export class GroupPage implements OnInit, OnDestroy {
 					type: ActionType.LINK,
 					label: 'Изменить данные',
 					class: 'btn btn-blue',
-					href: (item: UserModelAdminResponse) => (!item.email) ? '/users' : `/user/${encodeURIComponent(item.email)}`
+					href: (item: UserAdminModel) => (!item.email) ? '/users' : `/user/${item.email}`
 				},
 				{
 					type: ActionType.DATA_ACTION,
 					label: 'Исключить',
 					class: 'btn btn-red',
-					onClick: async (item: UserModelAdminResponse) => { 
+					onClick: async (item: UserAdminModel) => { 
 						this.selectedUserEmail = item.email;
 						this.setIsRemoveUserFromGroupModalComponentOpen(true); 
 					}
@@ -145,16 +144,19 @@ export class GroupPage implements OnInit, OnDestroy {
 	async ngOnInit(): Promise<void> {
 		try{
 			await this.checkAuthentication();
-		} catch (error) {
-			console.error('Ошибка при загрузке страницы:', error); // TODO: notice
-		}
-		this.paramSubscription = this.route.paramMap.subscribe(params => {
-			this.groupName = params.get('name') || '';
-			if(this.groupName == '')
-				this.router.navigate(['/account']);
-		});
-		try{
 			await this.checkAdminStatus();
+		} catch (error) {
+			console.error('Ошибка аутентификации при загрузке страницы:', error); // TODO: notice
+		}
+		try{
+			this.paramSubscription = this.route.paramMap.subscribe(params => {
+				this.groupName = params.get('name') || '';
+				if(this.groupName == '') {
+					this.paramSubscription?.unsubscribe();
+					this.router.navigate(['/account']);
+					return;
+				}
+			});
 			await Promise.all([this.loadGroupData(), this.loadUsers()]);
 			this.isLoading = false;
 		} catch (error) {
@@ -175,16 +177,20 @@ export class GroupPage implements OnInit, OnDestroy {
 			const authResult = await AuthService.checkAuth();
 			
 			if (authResult.authenticated) {
-				console.log('Аутентификация прошла успешно');
+				console.error('Аутентификация прошла успешно');
 				this.isAuthenticated = true;
 				this.authorizedUser = authResult.user;
 			} else {
-				console.log('Аутентификация не пройдена:', authResult.message);
+				console.error('Аутентификация не пройдена:', authResult.message);
+				this.paramSubscription?.unsubscribe();
 				this.router.navigate(['/login']);
+				return;
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
+			this.paramSubscription?.unsubscribe();
 			this.router.navigate(['/login']);
+			return;
 		} finally {
 			this.isLoading = false;
 		}
@@ -226,7 +232,6 @@ export class GroupPage implements OnInit, OnDestroy {
 				this.currentUserModelTableDataObjectRef.models = adminData.group.members;
 			} else {
 				const userData = response as GroupFullDetailsResponse;
-				console.log(userData.group.creator.email);
 				this.group = userData.group;
 				this.currentUserModelTableDataObjectRef = this.defaultUserModelTableDataObject;
 				this.currentUserModelTableDataObjectRef.models = userData.group.members;
@@ -242,7 +247,7 @@ export class GroupPage implements OnInit, OnDestroy {
 		try {
 			const token = AuthService.getToken();
 			if(token === null)
-				throw "У вас нет токена авторизации";
+				throw new Error("У вас нет токена авторизации");
 			if(this.isAdmin) {
 				this.users = (await UserService.readAllUsers(token))
 					.users as Array<UserAdminModel>;
@@ -258,10 +263,10 @@ export class GroupPage implements OnInit, OnDestroy {
 		try {
 			const token = AuthService.getToken();
 			if(!token)
-				throw Error('Отсутствует токен авторизации');
+				throw new Error('Отсутствует токен авторизации');
 			const response = await GroupService.addUserToGroup(token, this.groupName, email);
 			if (response.error)
-				throw Error(response.error);
+				throw new Error(response.error);
 			if (response.success)
 				await this.loadGroupData();
 
@@ -277,12 +282,15 @@ export class GroupPage implements OnInit, OnDestroy {
 		try {
 			const token = AuthService.getToken();
 			if(!token)
-				throw Error('Отсутствует токен авторизации');
+				throw new Error('Отсутствует токен авторизации');
 			const response = await GroupService.deleteGroup(token, this.groupName);
 			if (response.error)
-				throw Error(response.error);
-			if (response.success)
+				throw new Error(response.error);
+			if (response.success) {
+				this.paramSubscription?.unsubscribe();
 				this.router.navigate(['/groups']);
+				return;
+			}
 
 			this.setIsDeleteGroupModalComponentOpen(false);
 			this.cdr.detectChanges();
@@ -294,11 +302,11 @@ export class GroupPage implements OnInit, OnDestroy {
 	}
 	public async handleConfirmRemoveUserFromGroupModalComponent() : Promise<void>{
 		try {
-			if (this.group && this.selectedUserEmail == this.group.creator.email)
-				throw Error('Вы не можете исключить из группы её создателя');
+			if (this.group && this.selectedUserEmail == this.group?.creator.email)
+				throw new Error('Вы не можете исключить из группы её создателя');
 			const token = AuthService.getToken();
 			if(!token)
-				throw Error('Отсутствует токен авторизации');
+				throw new Error('Отсутствует токен авторизации');
 			if (!this.selectedUserEmail || this.selectedUserEmail=='') {
 				this.isRemoveUserFromGroupModalComponentOpen = false;
 				this.cdr.detectChanges();
@@ -307,7 +315,7 @@ export class GroupPage implements OnInit, OnDestroy {
 			}
 			const response = await GroupService.removeUserFromGroup(token, this.groupName, this.selectedUserEmail);
 			if (response.error)
-				throw Error(response.error);
+				throw new Error(response.error);
 			if (response.success)
 				await this.loadGroupData();
 
@@ -319,21 +327,25 @@ export class GroupPage implements OnInit, OnDestroy {
 			// TODO: notice
 		} finally {
 			this.selectedUserEmail = '';
+			this.isRemoveUserFromGroupModalComponentOpen = false;
 		}
 	}
 	public async handleConfirmUpdateGroupModalComponent(updateGroupModel: GroupUpdateModel) : Promise<void>{
 		try {
 			const token = AuthService.getToken();
 			if(!token)
-				throw Error('Отсутствует токен авторизации');
+				throw new Error('Отсутствует токен авторизации');
 			const response = await GroupService.updateGroup(token, this.groupName, updateGroupModel);
 			if (response.error)
-				throw Error(response.error);
+				throw new Error(response.error);
 			if (response.success && this.groupName != updateGroupModel.newName){
 				this.groupName = updateGroupModel.newName;
+				this.paramSubscription?.unsubscribe();
 				this.router.navigate([`/group/${encodeURIComponent(this.groupName)}`]);
+				return;
 			}
 
+			await this.loadGroupData();
 			this.isUpdateGroupModalComponentOpen = false;
 			this.cdr.detectChanges();
 		} catch (error: any) {

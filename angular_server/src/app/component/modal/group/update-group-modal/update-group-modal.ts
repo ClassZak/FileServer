@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ModalComponent } from '../../modal/modal';
 import { User } from '../../../../core/model/user';
-import { UserModelAdminResponse } from '../../../../core/model/user-model-admin-response';
+import { UserAdminModel } from '../../../../core/model/user-admin-model';
 import { GroupDetails } from '../../../../core/model/group-details';
 import { GroupUpdateModel } from '../../../../core/model/group-update-model';
 
@@ -17,7 +17,7 @@ import { GroupUpdateModel } from '../../../../core/model/group-update-model';
 export class UpdateGroupModalComponent implements OnChanges {
 	@Input() isOpen: boolean = false;
 	@Input() users: User[] = [];
-	@Input() currentGroup!: GroupDetails<UserModelAdminResponse>;
+	@Input() currentGroup!: GroupDetails<UserAdminModel>;
 	@Output() onClose = new EventEmitter<void>();
 	@Output() onConfirm = new EventEmitter<GroupUpdateModel>();
 

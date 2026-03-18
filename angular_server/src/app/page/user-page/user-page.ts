@@ -69,12 +69,14 @@ export class UserPage implements OnInit, OnDestroy {
 		try{
 			await this.checkAuthentication();
 		} catch (error) {
-			console.error('Ошибка при загрузке страницы:', error); // TODO: notice
+			console.error('Ошибка аутентификации при загрузке страницы:', error); // TODO: notice
 		}
 		this.paramSubscription = this.route.paramMap.subscribe(params => {
 			this.userEmail = params.get('email') || '';
-			if(this.userEmail == '')
+			if(this.userEmail == '') {
 				this.router.navigate(['/account']);
+				return;
+			}
 		});
 		try{
 			await this.checkAdminStatus();
@@ -103,10 +105,12 @@ export class UserPage implements OnInit, OnDestroy {
 			} else {
 				console.log('Аутентификация не пройдена:', authResult.message);
 				this.router.navigate(['/login']);
+				return;
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
 			this.router.navigate(['/login']);
+			return;
 		} finally {
 			this.isLoading = false;
 		}
@@ -118,13 +122,13 @@ export class UserPage implements OnInit, OnDestroy {
 			const response = await AuthService.checkAuth();
 			const user = response.user;
 			if (!user)
-				throw Error(
+				throw new Error(
 					response.message ? 
 					response.message: 'Не удалось загрузить данные пользователя'
 				);
 			const token = AuthService.getToken();
 			if(token === null)
-				throw "У вас нет токена авторизации";
+				throw new Error("У вас нет токена авторизации");
 			const isAdmin = await AdminService.isAdmin(token);
 			if (!isAdmin)
 				this.router.navigate(['/account']);
@@ -139,9 +143,7 @@ export class UserPage implements OnInit, OnDestroy {
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
 			this.isAdmin = false;
-			setTimeout(()=>{
-				this.router.navigate(['/account']);
-			}, 50);
+			Promise.resolve().then(()=>{this.router.navigate(['/account']);});
 		}
 	}
 	private async loadUserData(): Promise<void> {
@@ -149,15 +151,15 @@ export class UserPage implements OnInit, OnDestroy {
 			this.isLoading = true;
 			const token = AuthService.getToken();
 			if(token === null)
-				throw Error('У вас нет токена авторизации');
+				throw new Error('У вас нет токена авторизации');
 			if(!this.isAdmin)
-				throw Error('Вы не являетесь администратором');
+				throw new Error('Вы не являетесь администратором');
 			const response = await UserService.readUser(token, this.userEmail);
 			if (response.error)
-				throw Error(response.error);
+				throw new Error(response.error);
 			const user = response.user;
 			if (!user)
-				throw Error(
+				throw new Error(
 					response.message ? 
 					response.message: 'Не удалось загрузить данные пользователя'
 				);
@@ -175,15 +177,16 @@ export class UserPage implements OnInit, OnDestroy {
 		try {
 			const token = AuthService.getToken();
 			if (!token)
-				throw Error('Отсутствует токен авторизации');
+				throw new Error('Отсутствует токен авторизации');
 			const response = await UserService.updateUser(token, this.userEmail, newUserData as User);
 			if (response.error)
-				throw Error(response.error);
+				throw new Error(response.error);
 			if (!response.success)
-				throw Error('Ошибка Обновления данных пользователя');
-			else if (this.userEmail != newUserData.email){
+				throw new Error('Ошибка Обновления данных пользователя');
+			else if (this.userEmail != newUserData.email)
 				this.router.navigate([`/user/${encodeURIComponent(newUserData.email)}`]);
-			}
+			else
+				await this.loadUserData();
 			console.log('User data updated')
 			this.setIsUpdateUserModalOpen(false);
 			await this.loadUserData();
@@ -196,12 +199,12 @@ export class UserPage implements OnInit, OnDestroy {
 	async handleUpdateUserPasswordModal(passwordData: UpdatePasswordModalModel){
 		try {
 			if (passwordData.newPassword !== passwordData.newPasswordConfirm)
-				throw Error('Новый пароль и его подтверждение не совпадают');
+				throw new Error('Новый пароль и его подтверждение не совпадают');
 			const token = AuthService.getToken();
 			if (!token)
-				throw Error('Отсутствует токен авторизации');
+				throw new Error('Отсутствует токен авторизации');
 			if (!this.user)
-				throw Error('Объект данных пользователя не определён');
+				throw new Error('Объект данных пользователя не определён');
 			await UserService.updateUserPassword(
 				token, this.user.email, 
 				new UpdatePasswordRequest(passwordData.oldPassword, passwordData.newPassword)
@@ -218,14 +221,14 @@ export class UserPage implements OnInit, OnDestroy {
 		try {
 			const token = AuthService.getToken();
 			if (!token)
-				throw Error('Отсутствует токен авторизации');
+				throw new Error('Отсутствует токен авторизации');
 			if (!this.user)
-				throw Error('Объект данных пользователя не определён');
+				throw new Error('Объект данных пользователя не определён');
 			const response = await UserService.deleteUser(token, this.user);
 			if (response.error)
-				throw Error(response.error);
+				throw new Error(response.error);
 			if (!response.success)
-				throw Error('Ошибка удаления пользователя');
+				throw new Error('Ошибка удаления пользователя');
 			this.router.navigate(['/users']);
 		} catch (error) {
 			console.error('Error updating password:', error);

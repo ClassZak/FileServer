@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import axios, { AxiosError } from 'axios';
 import { User } from '../model/user';
 import { GroupDetails } from '../model/group-details';
-import { UserModelAdminResponse } from '../model/user-model-admin-response';
+import { UserAdminModel } from '../model/user-admin-model';
 import { GroupBasicInfo } from '../model/group_basic_info';
 import { GroupCreateModel } from '../model/group-create-model';
 import { GroupUpdateModel } from '../model/group-update-model';
@@ -100,7 +100,7 @@ export class GroupService {
 			const toDate = (dateStr: string): Date => new Date(dateStr);
 
 			// Transform creator with date conversion
-			const creator = new UserModelAdminResponse(
+			const creator = new UserAdminModel(
 				groupData.creator.surname,
 				groupData.creator.name,
 				groupData.creator.patronymic,
@@ -110,7 +110,7 @@ export class GroupService {
 
 			// Transform members with date conversion
 			const members = groupData.members.map((member: any) =>
-				new UserModelAdminResponse(
+				new UserAdminModel(
 					member.surname,
 					member.name,
 					member.patronymic,

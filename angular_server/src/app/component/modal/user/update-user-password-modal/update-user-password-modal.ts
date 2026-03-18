@@ -37,7 +37,7 @@ export class UpdateUserPasswordModalComponent {
 		this.submitting = true;
 		try {
 			if (this.formData.newPassword != this.formData.newPasswordConfirm)
-				throw Error('Ошибка. Новый пароль и подтверждение нового пароля не совпадают');
+				throw new Error('Ошибка. Новый пароль и подтверждение нового пароля не совпадают');
 			this.onConfirm.emit(this.formData);
 		} catch (error: any) {
 			console.error(error);

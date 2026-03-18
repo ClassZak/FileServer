@@ -138,6 +138,7 @@ export class ModelTable<TModel> implements AfterViewInit, OnDestroy {
 			const headerCells = this.table.nativeElement.querySelectorAll('thead th');
 			const headerLeft = headerCells[this.currentColIndex] as HTMLElement;
 			const headerRight = headerCells[this.currentColIndex + 1] as HTMLElement;
+			if (!headerRight) return;
 			const oldWidthOfResizingCols = headerLeft.clientWidth + headerRight.clientWidth;
 
 			const diff = event.clientX - this.startX;

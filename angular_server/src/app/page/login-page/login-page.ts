@@ -24,6 +24,7 @@ export class LoginPage {
 	patronymic: string = '';
 	error?: string;
 	showPassword: boolean = false;
+	LoginFormType = LoginFormType;
 	formType: LoginFormType = LoginFormType.Email;
 	isSubmiting: boolean = false;
 
@@ -46,6 +47,7 @@ export class LoginPage {
 				const authResult = await AuthService.checkAuth();
 				if (authResult.authenticated) {
 					this.router.navigate(['/account']);
+					return;
 				} else {
 					this.error = 'Ошибка авторизации после входа';
 				}
@@ -75,6 +77,7 @@ export class LoginPage {
 				const authResult = await AuthService.checkAuth();
 				if (authResult.authenticated) {
 					this.router.navigate(['/account']);
+					return;
 				} else {
 					this.error = 'Ошибка авторизации после входа';
 				}
@@ -96,12 +99,14 @@ export class LoginPage {
 			
 			if (authResult.authenticated) {
 				this.router.navigate(['/account']);
+				return;
 			} else {
 				console.log('Аутентификация не пройдена:', authResult.message);
 				
 			}
 		} catch (error) {
 			this.router.navigate(['/account']);
+			return;
 		}
 	}
 

@@ -44,7 +44,7 @@
 
 .logout-button {
 	background: linear-gradient(
-		135deg, var(--color-danger-bg), var(--color-danger-bg-seondary)
+		135deg, var(--color-danger-bg), var(--color-danger-bg-secondary)
 	);
 	color: white;
 	border: none;

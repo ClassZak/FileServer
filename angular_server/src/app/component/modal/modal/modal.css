@@ -264,7 +264,7 @@ form.modal-form input{
 
 .form-info {
 	background: var(--color-bg-button);
-	border-left: 4px solid var(--color-accent-primary, --color-accent-secondary);
+	border-left: 4px solid var(--color-accent-primary, var(--color-accent-secondary));
 	padding: 0.75rem 1rem;
 	border-radius: 0.375rem;
 	color: var(--color-text-primary);

@@ -1,1 +1,11 @@
-@import url(../../../styles/FilesPage.css);
+@import url(../../../styles/files-page-buttons.css);
+
+.path-panel{
+	background-color: var(--color-bg-surface);
+	margin-bottom: 10px;
+}
+
+.path-panel .back-button{
+	display:block;
+	margin-top:4px;
+}

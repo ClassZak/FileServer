@@ -12,6 +12,9 @@
 				Создать группу
 			</button>
 		</div>
+		@if (error) {
+			<div class="error-message">{{ error }}</div>
+		}
 		<div class="model-table-container">
 			<app-model-table
 				[modelTableDataObject]="currentGroupModelTableDataObject"

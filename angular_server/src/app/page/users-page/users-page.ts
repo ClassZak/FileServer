@@ -58,7 +58,7 @@ export class UsersPage implements OnInit {
 					type: ActionType.LINK,
 					label: 'Изменить данные',
 					class: 'btn btn-blue',
-					href: (item: User) => !item.email ? '/users' : `/user/${encodeURIComponent(item.email)}`
+					href: (item: User) => !item.email ? '/users' : `/user/${item.email}`
 				}
 			]
 		}
@@ -94,10 +94,12 @@ export class UsersPage implements OnInit {
 			} else {
 				console.log('Аутентификация не пройдена:', authResult.message);
 				this.router.navigate(['/login']);
+				return;
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
 			this.router.navigate(['/login']);
+			return;
 		} finally {
 			this.isLoading = false;
 		}
@@ -108,7 +110,7 @@ export class UsersPage implements OnInit {
 			this.isLoading = true;
 			const token = AuthService.getToken();
 			if(token === null)
-				throw "У вас нет токена авторизации";
+				throw new Error("У вас нет токена авторизации");
 			const isAdmin = await AdminService.isAdmin(token);
 			if (!isAdmin)
 				this.router.navigate(['/account']);
@@ -117,9 +119,7 @@ export class UsersPage implements OnInit {
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
 			this.isAdmin = false;
-			setTimeout(()=>{
-				this.router.navigate(['/account']);
-			}, 50);
+			Promise.resolve().then(()=>{this.router.navigate(['/account']);});
 		}
 	}
 
@@ -128,7 +128,7 @@ export class UsersPage implements OnInit {
 			this.isLoading = true;
 			const token = AuthService.getToken();
 			if(token === null)
-				throw "У вас нет токена авторизации";
+				throw new Error("У вас нет токена авторизации");
 			if(this.isAdmin) {
 				const loadedUsers = (await UserService.readAllUsers(token)).users as Array<UserAdminModel>;
 				this.currentUserModelTableDataObjectRef.models = loadedUsers;
@@ -148,10 +148,10 @@ export class UsersPage implements OnInit {
 		try {
 			const token = AuthService.getToken();
 			if (!token)
-				throw Error('Отсутствует токен авторизации');
+				throw new Error('Отсутствует токен авторизации');
 			const response = await UserService.createUser(userData, token);
 			if (!response.success)
-				throw Error('Не удалось создать пользователя');
+				throw new Error('Не удалось создать пользователя');
 
 			this.isCreateUserModalComponentOpen = false;
 			await this.loadUsers();

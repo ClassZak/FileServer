@@ -103,6 +103,7 @@ export class FileService {
 				return { error: error.response.data.error } as ErrorContainer;
 			}
 			throw new Error('Failed to load directory contents.');
+			// TODO: notice
 		}
 	}
 
@@ -154,13 +155,13 @@ export class FileService {
 			console.error('FileService.upload error:', axiosError);
 
 			if (errorData?.message) {
-				throw errorData.message;
+				throw new Error(errorData.message);
 			} else if (axiosError.response?.status === 403) {
-				throw 'У вас нет прав на загрузку файлов в эту директорию.';
+				throw new Error('У вас нет прав на загрузку файлов в эту директорию.');
 			} else if (axiosError.response?.status === 400) {
-				throw `Ошибка отправки файла: ${errorData?.error || 'неизвестная ошибка'}`;
+				throw new Error(`Ошибка отправки файла: ${errorData?.error || 'неизвестная ошибка'}`);
 			} else {
-				throw 'Не удалось отправить файл.';
+				throw new Error( 'Не удалось отправить файл.');
 			}
 		}
 	}
@@ -185,11 +186,11 @@ export class FileService {
 			console.error('FileService.createFolder error:', error);
 			const errorData = error.response?.data;
 			if (errorData?.error) {
-				throw errorData.error;
+				throw new Error(errorData.error);
 			} else if (error.response?.status === 403) {
-				throw 'You do not have permission to create folders here.';
+				throw new Error('У вас нет прав для создания директории здесь.');
 			} else {
-				throw 'Failed to create folder.';
+				throw new Error('Не удалось создания директорию.');
 			}
 		}
 	}
@@ -204,21 +205,20 @@ export class FileService {
 	 */
 	static async deleteItem(token: string, itemPath: string): Promise<void> {
 		try {
-			await axios.delete('/api/files/delete', {
-				data: { path: itemPath },
+			await axios.delete(`/api/files/delete?path=${encodeURIComponent(itemPath)}`, {
 				headers: { Authorization: `Bearer ${token}` },
 			});
 		} catch (error: any) {
 			console.error('FileService.deleteItem error:', error);
 			const errorData = error.response?.data;
 			if (errorData?.error) {
-				throw errorData.error;
+				throw new Error(errorData.error);
 			} else if (error.response?.status === 403) {
-				throw 'You do not have permission to delete.';
+				throw new Error('У вас нет прав на удаление.');
 			} else if (error.response?.status === 404) {
-				throw 'File or folder not found.';
+				throw new Error('Файл или папка не найдена.');
 			} else {
-				throw 'Deletion failed.';
+				throw new Error('Ошибка удаления.');
 			}
 		}
 	}
@@ -245,11 +245,11 @@ export class FileService {
 			// If the response is JSON error, we need to read it as text (handled in component)
 			// Here we just rethrow with a message
 			if (error.response?.status === 403) {
-				throw 'You do not have permission to download this file.';
+				throw new Error('У вас нет права на загрузку данного файла.');
 			} else if (error.response?.status === 404) {
-				throw 'File not found.';
+				throw new Error('Файл не найден.');
 			} else {
-				throw 'Download failed.';
+				throw new Error('Ошибка загрузки.');
 			}
 		}
 	}

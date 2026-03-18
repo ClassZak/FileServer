@@ -64,7 +64,7 @@ export class AccountPage implements OnInit {
 					type: ActionType.LINK,
 					label: 'Просмотр',
 					class: 'btn btn-blue',
-					href: (item: GroupBasicInfo) => !item.name ? '/groups' :`/group/${encodeURIComponent(item.name)}`
+					href: (item: GroupBasicInfo) => !item.name ? '/groups' :`/group/${item.name}`
 				}
 			]
 		}
@@ -83,7 +83,7 @@ export class AccountPage implements OnInit {
 					type: ActionType.LINK,
 					label: 'Изменить данные',
 					class: 'btn btn-blue',
-					href: (item: GroupBasicInfo) => !item.name ? '/groups' :`/group/${encodeURIComponent(item.name)}`
+					href: (item: GroupBasicInfo) => !item.name ? '/groups' :`/group/${item.name}`
 				}
 			]
 		}
@@ -119,10 +119,12 @@ export class AccountPage implements OnInit {
 			} else {
 				console.log('Аутентификация не пройдена:', authResult.message);
 				this.router.navigate(['/login']);
+				return;
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
 			this.router.navigate(['/login']);
+			return;
 		} finally {
 			this.isLoading = false;
 		}
@@ -144,7 +146,7 @@ export class AccountPage implements OnInit {
 		try {
 			const token = AuthService.getToken();
 			if (!token)
-				throw Error('У вас нет токена авторизации');
+				throw new Error('У вас нет токена авторизации');
 			const groupsResult = await GroupService.getMyGroups(token);
 			
 			if ('error' in groupsResult) {
@@ -167,15 +169,17 @@ export class AccountPage implements OnInit {
 			this.isLoading = true;
 			const token = AuthService.getToken();
 			if(token === null)
-				throw "У вас нет токена авторизации";
+				throw new Error("У вас нет токена авторизации");
 			if(this.isAdmin) {
 				const response = await GroupService.getAllGroups(token);
 				if ('error' in response)
-					throw Error(response.error);
+					throw new Error(response.error);
 				if (Array.isArray(response))
 					this.groups = response;
-			} else 
+			} else {
 				this.router.navigate(['/account']);
+				return;
+			}
 		} catch (error) {
 			console.error('Ошибка при загрузке групп', error);
 			// TODO: notice
@@ -212,12 +216,12 @@ export class AccountPage implements OnInit {
 			// Здесь должен быть вызов сервиса для обновления пароля
 			console.log('Updating password:', passwordData);
 			if (passwordData.newPassword !== passwordData.newPasswordConfirm)
-				throw Error('Новый пароль и его подтверждение не совпадают');
+				throw new Error('Новый пароль и его подтверждение не совпадают');
 			const token = AuthService.getToken();
 			if (!token)
-				throw Error('Отсутствует токен авторизации');
+				throw new Error('Отсутствует токен авторизации');
 			if (!this.user)
-				throw Error('Объект данных пользователя не определён');
+				throw new Error('Объект данных пользователя не определён');
 			const result = await UserService.updateUserPassword(token, this.user.email, new UpdatePasswordRequest(passwordData.oldPassword, passwordData.newPassword));
 			if (result.success)
 				alert('Пароль успешно обновлен!');

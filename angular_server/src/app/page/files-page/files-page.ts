@@ -18,7 +18,6 @@ import { ModelTable } from '../../component/model-table/model-table';
 import { ModelTableTileComponent } from '../../component/model-table-tile-component/model-table-tile-component';
 import { ActionType, ActionsConfig, ActionConfig, ColumnDefinition, ModelTableDataObject } from '../../core/model/model-table-types';
 import { FileSearchComponent } from '../../component/file-search-component/file-search-component';
-import { ErrorMessageComponent } from '../../component/error-message-component/error-message-component';
 import { CreateFolderModalComponent } from '../../component/modal/file/create-folder-modal-component/create-folder-modal-component';
 import { DeleteConfirmationModalComponent } from '../../component/modal/file/delete-confirmation-modal-component/delete-confirmation-modal-component';
 import { RedirectionButton } from '../../component/redirection-button/redirection-button';
@@ -42,7 +41,6 @@ import { IconManager } from '../../component/icon-manager/icon-manager';
 		ModelTableTileComponent,
 
 		FileSearchComponent,
-		ErrorMessageComponent,
 		CreateFolderModalComponent,
 		DeleteConfirmationModalComponent,
 		RedirectionButton,
@@ -105,7 +103,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 					type: ActionType.LINK,
 					label: 'Открыть',
 					class: 'btn btn-blue',
-					href: (item: FolderInfo)=>{return `/files/${encodeURIComponent(item.fullPath)}`}
+					href: (item: FolderInfo)=>{return `/files/${item.fullPath}`}
 				},
 				{
 					type: ActionType.ACTION,
@@ -157,7 +155,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 					type: ActionType.LINK,
 					label: 'Открыть',
 					class: 'btn btn-blue',
-					href: (item: FolderInfo)=>{return `/files/${encodeURIComponent(item.fullPath)}`}
+					href: (item: FolderInfo)=>{return `/files/${item.fullPath}`}
 				},
 				{
 					type: ActionType.ACTION,
@@ -198,23 +196,26 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 	async ngOnInit(): Promise<void> {
 		try{
 			await this.checkAuthentication();
+			this.initSubscriptions();
 		} catch (error) {
 			console.error('Ошибка при загрузке страницы:', error); // TODO: notice
 		}
-		// Подписка на изменение сегментов URL (часть после /files/)
+	}
+
+	private initSubscriptions(): void {
+		// URL segment subscribtion (/files/**)
 		this.routeParamsSubscription = this.route.url.subscribe((segments: UrlSegment[]) => {
-			// Убираем первый сегмент 'files'
+			// remove the 'files'
 			const pathSegments = segments.slice(1).map(s => s.path);
 			const path = pathSegments.join('/');
 			this.currentPath = path;
 			this.pathInput = path;
-			// Загружаем директорию только если не в режиме поиска
-			if (!this.isSearchMode) {
+			// Download directory in default mode
+			if (!this.isSearchMode)
 				this.loadDirectory();
-			}
 		});
 
-		// Подписка на query-параметры (для поиска)
+		// URL query params subscribtion (for search)
 		this.queryParamsSubscription = this.route.queryParamMap.subscribe((queryMap) => {
 			const q = queryMap.get('q');
 			const newIsSearchMode = !!q;
@@ -228,13 +229,16 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				this.searchPath = queryMap.get('searchPath') || '';
 				this.performSearch();
 			} else {
-				// При выходе из поиска загружаем текущую директорию
+				// Load current durectory
 				this.loadDirectory();
 			}
 		});
 	}
 
 	ngOnDestroy(): void {
+		this.unsubscribeAll();
+	}
+	unsubscribeAll(): void {
 		this.routeParamsSubscription?.unsubscribe();
 		this.queryParamsSubscription?.unsubscribe();
 	}
@@ -251,12 +255,17 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 
 				await this.checkAdminStatus();
 			} else {
-				console.log('Аутентификация не пройдена:', authResult.message);
+				const message = `Аутентификация не пройдена: ${authResult.message}`;
+				console.log(message);
+				this.unsubscribeAll();
 				this.router.navigate(['/login']);
+				throw new Error(message);
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
+			this.unsubscribeAll();
 			this.router.navigate(['/login']);
+			return;
 		} finally {
 			this.isLoading = false;
 		}
@@ -294,10 +303,10 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 		try {
 			const token = AuthService.getToken();
 			if (!token) {
+				this.unsubscribeAll();
 				this.router.navigate(['/login']);
 				return;
 			}
-
 			const result = await FileService.loadDirectory(token, this.currentPath);
 
 			if ('error' in result) {
@@ -342,6 +351,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 		try {
 			const token = AuthService.getToken();
 			if (!token) {
+				this.unsubscribeAll();
 				this.router.navigate(['/login']);
 				return;
 			}
@@ -354,6 +364,8 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			console.error('Search error:', err);
 			this.error = err.message || 'Search failed.';
 			this.searchResults = null;
+			this.filesFoundModelTableDataObject.models = [];
+			this.foldersFoundModelTableDataObject.models = [];
 		} finally {
 			this.searchLoading = false;
 			this.cdr.detectChanges();
@@ -406,6 +418,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			const exists = await FileService.exists(token, cleanPath);
 			if (exists) {
 				this.router.navigate(['/files', cleanPath]);
+				return;
 			} else {
 				this.error = 'Path does not exist.';
 			}
@@ -456,6 +469,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 		try {
 			const token = AuthService.getToken();
 			if (!token) {
+				this.unsubscribeAll();
 				this.router.navigate(['/login']);
 				return;
 			}
@@ -497,6 +511,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 		try {
 			const token = AuthService.getToken();
 			if (!token) {
+				this.unsubscribeAll();
 				this.router.navigate(['/login']);
 				return;
 			}
@@ -522,6 +537,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 		try {
 			const token = AuthService.getToken();
 			if (!token) {
+				this.unsubscribeAll();
 				this.router.navigate(['/login']);
 				return;
 			}
@@ -530,19 +546,10 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 
 			// Check if the response is actually an error JSON
 			if (contentType && contentType.includes('application/json')) {
-				const reader = new FileReader();
-				reader.onload = () => {
-					try {
-						const errorData = JSON.parse(reader.result as string);
-						this.error = errorData.error || 'Download failed.';
-					} catch (err: any) {
-						console.error('Download error:', err);
-						this.error = typeof err === 'string' ? err : err.message || 'Download failed.';
-						return;
-					}
-					this.cdr.detectChanges();
-				};
-				reader.readAsText(blob);
+				const text = await blob.text();
+				const errorData = JSON.parse(text);
+				this.error = errorData.error || 'Ошибка загрузки.';
+				this.cdr.detectChanges();
 				return;
 			}
 
@@ -557,7 +564,8 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			window.URL.revokeObjectURL(url);
 		} catch (err: any) {
 			console.error('Download error:', err);
-			this.error = typeof err === 'string' ? err : err.message || 'Download failed.';
+			this.error = typeof err === 'string' ? err : err.message || 'Ошибка загрузки.';
+			this.cdr.detectChanges();
 		}
 	}
 }

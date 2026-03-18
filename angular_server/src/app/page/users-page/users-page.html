@@ -18,6 +18,9 @@
 			>
 			</app-model-table>
 		</div>
+		@if (error) {
+			<div class="error-message">{{ error }}</div>
+		}
 		<div class="buttons-row">
 			<app-redirection-button 
 				[className]="'btn btn-blue'" 
