@@ -113,18 +113,21 @@ export class GroupsPage implements OnInit {
 			this.isLoading = true;
 			const token = AuthService.getToken();
 			if(token === null)
-				throw new Error("У вас нет токена авторизации");
-			const isAdmin = await AdminService.isAdmin(token);
-			if (!isAdmin)
+				throw "У вас нет токена авторизации";
+			const result = await AdminService.isAdmin(token);
+			if (result.success)
+				this.isAdmin = true;
+			else if (!result.success && !result.error)
 				this.router.navigate(['/account']);
 			else
-				this.isAdmin = isAdmin;
+				throw new Error(result.error);
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
 			this.isAdmin = false;
 			Promise.resolve().then(()=>{this.router.navigate(['/account']);});
 		}
 	}
+
 
 	private async loadGroups(){
 		try {

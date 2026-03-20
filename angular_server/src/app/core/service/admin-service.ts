@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import axios, { AxiosError } from "axios";
 import { CreateConfig } from './create-config';
+import { DefaultServiceResult } from '../model/default-server-result';
 
 
 /**
@@ -12,11 +13,11 @@ export class AdminService {
 	 * @param {string} authToken Authorization token for admin role checking
 	 * @returns {Promise<Object>} Operation result with isAdmin key
 	 */
-	public static async isAdmin(authToken: string): Promise<boolean>{
+	public static async isAdmin(authToken: string): Promise<DefaultServiceResult>{
 		try {
 			const response = await axios.get('/api/admin/is-admin',CreateConfig.createAuthConfig(authToken));
 			
-			return response.data.isAdmin;
+			return {success: response.data.isAdmin};
 		} catch (error) {
 			const axiosError = error as AxiosError<{
 				message?: string;
@@ -24,9 +25,12 @@ export class AdminService {
 			}>;
 			// Process 401 and 404 errors for AdministratorController
 			if (axiosError.response && (axiosError.response.status === 401 || axiosError.response.status === 404))
-				return false;
+				return {success: false};
 			// Other errors throw next
-			throw error;
+			return {
+				success: false,
+				error: axiosError.message
+			};
 		}
 	}
 }

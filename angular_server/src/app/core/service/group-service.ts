@@ -241,11 +241,12 @@ export class GroupService {
 				CreateConfig.createAuthConfig(authToken)
 			);
 
-			return response.data;
+			return { success: true };
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 400 || axiosError.response.status === 404)) {
-				return axiosError.response.data;
+				const serverError = axiosError.response.data.error;
+				return { error: serverError ?? '' };
 			}
 			throw axiosError;
 		}
@@ -265,11 +266,12 @@ export class GroupService {
 				CreateConfig.createAuthConfig(authToken)
 			);
 
-			return response.data;
+			return { success: true };
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 404)) {
-				return axiosError.response.data;
+				const serverError = axiosError.response.data.error;
+				return { error: serverError ?? '' };
 			}
 			throw axiosError;
 		}
@@ -291,11 +293,12 @@ export class GroupService {
 				CreateConfig.createAuthConfig(authToken)
 			);
 
-			return response.data;
+			return { success: true };
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 400 || axiosError.response.status === 404)) {
-				return axiosError.response.data;
+				const serverError = axiosError.response.data.error;
+				return { error: serverError ?? '' };
 			}
 			throw axiosError;
 		}
@@ -316,11 +319,12 @@ export class GroupService {
 				CreateConfig.createAuthConfig(authToken)
 			);
 
-			return response.data;
+			return { success: true };
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 400 || axiosError.response.status === 404)) {
-				return axiosError.response.data;
+				const serverError = axiosError.response.data.error;
+				return { error: serverError ?? '' };
 			}
 			throw axiosError;
 		}
@@ -391,7 +395,10 @@ export class GroupService {
 				CreateConfig.createAuthConfig(authToken)
 			);
 
-			return response.data;
+			return { 
+				isMember: response.data.isMember,
+				groupExists: response.data.isMember.groupExists 
+			};
 		} catch (error) {
 			console.error("Error checking membership:", error);
 			return { isMember: false, groupExists: false };

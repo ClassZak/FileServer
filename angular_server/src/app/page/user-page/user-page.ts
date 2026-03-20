@@ -9,7 +9,7 @@ import { UpdateUserModalComponent, UpdateUserModel } from '../../component/modal
 import { UpdateUserPasswordModalComponent } from '../../component/modal/user/update-user-password-modal/update-user-password-modal';
 import { DeleteUserModalComponent } from '../../component/modal/user/delete-user-modal/delete-user-modal';
 import { UserAdminModel } from '../../core/model/user-admin-model';
-import { AuthService } from '../../core/service/auth-service';
+import { AuthService, CheckAuthResult } from '../../core/service/auth-service';
 import AdminService from '../../core/service/admin-service';
 import { Subscription } from 'rxjs';
 import { UserService } from '../../core/service/user-service';
@@ -81,8 +81,9 @@ export class UserPage implements OnInit, OnDestroy {
 		try{
 			await this.checkAdminStatus();
 			await this.loadUserData();
+			this.checkIsSelfUserForAdmin()
 		} catch (error) {
-
+			// TODO: notice
 		} finally {
 			this.cdr.detectChanges();
 		}
@@ -116,30 +117,23 @@ export class UserPage implements OnInit, OnDestroy {
 		}
 		this.cdr.detectChanges();
 	}
+	private checkIsSelfUserForAdmin(): void{
+		if (this.myUserData?.email === this.user?.email && this.isAdmin)
+			this.router.navigate(['/account']);
+	}
 	private async checkAdminStatus(): Promise<void> {
 		try {
 			this.isLoading = true;
-			const response = await AuthService.checkAuth();
-			const user = response.user;
-			if (!user)
-				throw new Error(
-					response.message ? 
-					response.message: 'Не удалось загрузить данные пользователя'
-				);
 			const token = AuthService.getToken();
 			if(token === null)
-				throw new Error("У вас нет токена авторизации");
-			const isAdmin = await AdminService.isAdmin(token);
-			if (!isAdmin)
+				throw "У вас нет токена авторизации";
+			const result = await AdminService.isAdmin(token);
+			if (result.success)
+				this.isAdmin = true;
+			else if (!result.success && !result.error)
 				this.router.navigate(['/account']);
-			else {
-				this.isAdmin = isAdmin;
-				this.myUserData = user;
-			}
-
-
-			if (this.myUserData?.email == this.userEmail)
-				this.router.navigate(['/account']);
+			else
+				throw new Error(result.error);
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
 			this.isAdmin = false;
@@ -183,8 +177,10 @@ export class UserPage implements OnInit, OnDestroy {
 				throw new Error(response.error);
 			if (!response.success)
 				throw new Error('Ошибка Обновления данных пользователя');
-			else if (this.userEmail != newUserData.email)
+			else if (this.userEmail != newUserData.email){
 				this.router.navigate([`/user/${encodeURIComponent(newUserData.email)}`]);
+				return;
+			}
 			else
 				await this.loadUserData();
 			console.log('User data updated')

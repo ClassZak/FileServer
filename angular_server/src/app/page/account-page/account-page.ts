@@ -136,7 +136,14 @@ export class AccountPage implements OnInit {
 			const token = AuthService.getToken();
 			if(token === null)
 				throw "У вас нет токена авторизации";
-			this.isAdmin = await AdminService.isAdmin(token);
+			const result = await AdminService.isAdmin(token);
+			if (result.success)
+				this.isAdmin = true;
+			else
+				throw new Error(
+					result.error ?
+					result.error : 'Не удалось проверить статус администратора'
+				);
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
 		}

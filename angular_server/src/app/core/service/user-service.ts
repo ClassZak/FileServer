@@ -108,22 +108,22 @@ export class UserService {
 	 * @param {string} authToken - JWT token
 	 * @param {string} email - Email of the user to update
 	 * @param {User} user - Updated user data
-	 * @returns {Promise<any>} Response with error or success
+	 * @returns {Promise<DefaultServiceResult>} Response with error or success
 	 */
-	static async updateUser(authToken: string, email: string, user: User): Promise<any> {
+	static async updateUser(authToken: string, email: string, user: User): Promise<DefaultServiceResult> {
 		try {
 			const response = await axios.put(
 				`/api/users/update/${encodeURIComponent(email)}`,
 				user,
 				CreateConfig.createAuthConfig(authToken)
 			);
-			return response.data;
+			return {success: response.data.error ? false : response.data.success, error: response.data.error};
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 404)) {
-				return axiosError.response.data;
+				return {success: !(!(axiosError.response.data.error)), error: axiosError.response.data.error};
 			}
-			throw axiosError;
+			return {success: false, error: axiosError.message};
 		}
 	}
 
@@ -131,21 +131,21 @@ export class UserService {
 	 * Delete a user (admin only)
 	 * @param {string} authToken - JWT token
 	 * @param {User} user - User object containing email to delete
-	 * @returns {Promise<any>} Response with error or success
+	 * @returns {Promise<DefaultServiceResult>} Response with error or success
 	 */
-	static async deleteUser(authToken: string, user: User): Promise<any> {
+	static async deleteUser(authToken: string, user: User): Promise<DefaultServiceResult> {
 		try {
 			const response = await axios.delete(
 				`/api/users/delete/${encodeURIComponent(user.email)}`,
 				CreateConfig.createAuthConfig(authToken)
 			);
-			return response.data;
+			return {success: response.data.error ? false : response.data.success, error: response.data.error};
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 404)) {
-				return axiosError.response.data;
+				return {success: !(!(axiosError.response.data.error)), error: axiosError.response.data.error};
 			}
-			throw axiosError;
+			return {success: false, error: axiosError.message};
 		}
 	}
 

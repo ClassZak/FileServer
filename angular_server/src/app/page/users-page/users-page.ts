@@ -58,7 +58,7 @@ export class UsersPage implements OnInit {
 					type: ActionType.LINK,
 					label: 'Изменить данные',
 					class: 'btn btn-blue',
-					href: (item: User) => !item.email ? '/users' : `/user/${item.email}`
+					href: (item: User) => !item.email ? '/users' : `/user/${encodeURIComponent(item.email)}`
 				}
 			]
 		}
@@ -110,12 +110,14 @@ export class UsersPage implements OnInit {
 			this.isLoading = true;
 			const token = AuthService.getToken();
 			if(token === null)
-				throw new Error("У вас нет токена авторизации");
-			const isAdmin = await AdminService.isAdmin(token);
-			if (!isAdmin)
+				throw "У вас нет токена авторизации";
+			const result = await AdminService.isAdmin(token);
+			if (result.success)
+				this.isAdmin = true;
+			else if (!result.success && !result.error)
 				this.router.navigate(['/account']);
 			else
-				this.isAdmin = isAdmin;
+				throw new Error(result.error);
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
 			this.isAdmin = false;

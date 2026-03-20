@@ -98,7 +98,7 @@ export class GroupPage implements OnInit, OnDestroy {
 					type: ActionType.LINK,
 					label: 'Изменить данные',
 					class: 'btn btn-blue',
-					href: (item: UserAdminModel) => (!item.email) ? '/users' : `/user/${item.email}`
+					href: (item: UserAdminModel) => (!item.email) ? '/users' : `/user/${encodeURIComponent(item.email)}`
 				},
 				{
 					type: ActionType.DATA_ACTION,
@@ -201,11 +201,16 @@ export class GroupPage implements OnInit, OnDestroy {
 			const token = AuthService.getToken();
 			if(token === null)
 				throw "У вас нет токена авторизации";
-			const isAdmin = await AdminService.isAdmin(token);
-			this.isAdmin = isAdmin;
+			const result = await AdminService.isAdmin(token);
+			if (result.success)
+				this.isAdmin = true;
+			else
+				throw new Error(
+					result.error ?
+					result.error : 'Не удалось проверить статус администратора'
+				);
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
-			// TODO: notice
 		}
 	}
 	private async loadGroupData(): Promise<void> {
