@@ -26,7 +26,7 @@ export class AdminService {
 			// Process 401 and 404 errors for AdministratorController
 			if (axiosError.response && (axiosError.response.status === 401 || axiosError.response.status === 404))
 				return {success: false};
-			// Other errors throw next
+			// Other errors failure returns
 			return {
 				success: false,
 				error: axiosError.message

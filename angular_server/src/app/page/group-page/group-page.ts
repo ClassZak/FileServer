@@ -158,10 +158,10 @@ export class GroupPage implements OnInit, OnDestroy {
 				}
 			});
 			await Promise.all([this.loadGroupData(), this.loadUsers()]);
-			this.isLoading = false;
 		} catch (error) {
 			// TODO: notice
 		} finally {
+			this.isLoading = false;
 			this.cdr.detectChanges();
 		}
 	}
@@ -177,11 +177,11 @@ export class GroupPage implements OnInit, OnDestroy {
 			const authResult = await AuthService.checkAuth();
 			
 			if (authResult.authenticated) {
-				console.error('Аутентификация прошла успешно');
+				console.log('Аутентификация прошла успешно');
 				this.isAuthenticated = true;
 				this.authorizedUser = authResult.user;
 			} else {
-				console.error('Аутентификация не пройдена:', authResult.message);
+				console.log('Аутентификация не пройдена:', authResult.message);
 				this.paramSubscription?.unsubscribe();
 				this.router.navigate(['/login']);
 				return;
@@ -192,7 +192,6 @@ export class GroupPage implements OnInit, OnDestroy {
 			this.router.navigate(['/login']);
 			return;
 		} finally {
-			this.isLoading = false;
 		}
 		this.cdr.detectChanges();
 	}

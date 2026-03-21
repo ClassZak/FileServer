@@ -15,6 +15,12 @@ export class CheckMembershipResult {
 	isMember: boolean = false;
 	groupExists: boolean = false;
 }
+export class CheckGroupAccessResult {
+	constructor(
+		public hasAccess: boolean = false,
+		public groupName: string = ''
+	) {};
+}
 
 /**
  * Service for working with groups via API
@@ -219,7 +225,7 @@ export class GroupService {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 400)) {
 				const serverError = axiosError.response.data.error;
-				return { error: serverError ?? '' };
+				return new DefaultServiceResult(serverError);
 			}
 			throw axiosError;
 		}
@@ -241,12 +247,15 @@ export class GroupService {
 				CreateConfig.createAuthConfig(authToken)
 			);
 
-			return { success: true };
+			return { 
+				success: true,
+				message: response.data.message 
+			};
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 400 || axiosError.response.status === 404)) {
 				const serverError = axiosError.response.data.error;
-				return { error: serverError ?? '' };
+				return new DefaultServiceResult(serverError);
 			}
 			throw axiosError;
 		}
@@ -266,12 +275,15 @@ export class GroupService {
 				CreateConfig.createAuthConfig(authToken)
 			);
 
-			return { success: true };
+			return {
+				message: response.data.message,
+				success: response.data.success
+			};
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 404)) {
 				const serverError = axiosError.response.data.error;
-				return { error: serverError ?? '' };
+				return new DefaultServiceResult(serverError);
 			}
 			throw axiosError;
 		}
@@ -293,12 +305,15 @@ export class GroupService {
 				CreateConfig.createAuthConfig(authToken)
 			);
 
-			return { success: true };
+			return {
+				message: response.data.message,
+				success: response.data.success
+			};
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 400 || axiosError.response.status === 404)) {
 				const serverError = axiosError.response.data.error;
-				return { error: serverError ?? '' };
+				return new DefaultServiceResult(serverError);
 			}
 			throw axiosError;
 		}
@@ -319,12 +334,15 @@ export class GroupService {
 				CreateConfig.createAuthConfig(authToken)
 			);
 
-			return { success: true };
+			return {
+				message: response.data.message,
+				success: response.data.success
+			};
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 400 || axiosError.response.status === 404)) {
 				const serverError = axiosError.response.data.error;
-				return { error: serverError ?? '' };
+				return new DefaultServiceResult(serverError);
 			}
 			throw axiosError;
 		}
@@ -335,19 +353,22 @@ export class GroupService {
 	 *
 	 * @param {string} authToken JWT token
 	 * @param {string} groupName Group name
-	 * @returns {Promise<boolean>} True if user has access
+	 * @returns {Promise<CheckGroupAccessResult>} True if user has access
 	 */
-	static async checkGroupAccess(authToken: string, groupName: string): Promise<boolean> {
+	static async checkGroupAccess(authToken: string, groupName: string): Promise<CheckGroupAccessResult> {
 		try {
 			const response = await axios.get(
 				`/api/groups/name/${encodeURIComponent(groupName)}/check-access`,
 				CreateConfig.createAuthConfig(authToken)
 			);
+			const checkGroupAccessResult = new CheckGroupAccessResult(
+				response.data.hasAccess, response.data.groupName
+			);
 
-			return response.data.hasAccess;
+			return checkGroupAccessResult;
 		} catch (error) {
-			console.error("Error checking group access:", error);
-			return false;
+			console.error('Ошибка проверки доступа к группе:', error);
+			return new CheckGroupAccessResult();
 		}
 	}
 

@@ -53,9 +53,9 @@ export class UserService {
 			return response.data;
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
-			if (axiosError.response?.status === 403) {
-				return axiosError.response.data;
-			}
+			if (axiosError.response?.status === 403)
+				return new DefaultServiceResult(axiosError.response.data.error);
+
 			throw axiosError;
 		}
 	}
@@ -117,13 +117,13 @@ export class UserService {
 				user,
 				CreateConfig.createAuthConfig(authToken)
 			);
-			return {success: response.data.error ? false : response.data.success, error: response.data.error};
+			return new DefaultServiceResult(response.data.error);
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 404)) {
-				return {success: !(!(axiosError.response.data.error)), error: axiosError.response.data.error};
+				return new DefaultServiceResult(axiosError.response.data.error);
 			}
-			return {success: false, error: axiosError.message};
+			return new DefaultServiceResult(axiosError.message);
 		}
 	}
 

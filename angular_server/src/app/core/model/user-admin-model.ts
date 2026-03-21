@@ -14,6 +14,18 @@ export class UserAdminModel extends User {
 	}
 
 	override toString(): string{
-		return `${super.toString()} ${this.createdAt}`;
+		return `${super.toString()} ${UserAdminModel.DATE_FORMATTER.format(this.createdAt).replace(',', '')}`;
 	}
+
+	private static DATE_FORMATTER  = new Intl.DateTimeFormat(
+		'ru-Ru', {
+			day: '2-digit',
+			month: '2-digit',
+			year: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit',
+			second: '2-digit',
+			hour12: false
+		}
+	);
 }
