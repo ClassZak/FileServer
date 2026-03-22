@@ -7,18 +7,6 @@ import { CreateConfig } from './create-config';
 import { UserAdminModel } from '../model/user-admin-model';
 import { DefaultServiceResult } from '../model/default-server-result';
 
-export class UpdatePasswordResponse {
-	public success: boolean = false;
-	public error?: string = '';
-	public message?: string = '';
-}
-
-export class DeleteUserResponse {
-	public success: boolean = false;
-	public error?: string = '';
-	public users?: UserAdminModel[];
-}
-
 export class ReadUsersResponse {
 	public success: boolean = false;
 	public error?: string = '';
@@ -190,24 +178,24 @@ export class UserService {
 	 * @param {string} authToken - JWT token
 	 * @param {string} email - Email of the user
 	 * @param {UpdatePasswordRequest} passwordData - Old and new password
-	 * @returns {Promise<UpdatePasswordResponse>} Response with error or success
+	 * @returns {Promise<DefaultServiceResult>} Response with error or success
 	 */
 	static async updateUserPassword(
 		authToken: string,
 		email: string,
 		passwordData: UpdatePasswordRequest
-	): Promise<UpdatePasswordResponse> {
+	): Promise<DefaultServiceResult> {
 		try {
 			const response = await axios.put(
 				`/api/users/update-password/${encodeURIComponent(email)}`,
 				passwordData,
 				CreateConfig.createAuthConfig(authToken)
 			);
-			return response.data as UpdatePasswordResponse;
+			return response.data as DefaultServiceResult;
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 404)) {
-				return axiosError.response.data as UpdatePasswordResponse;
+				return new DefaultServiceResult(axiosError.response.data.error);
 			}
 			throw axiosError;
 		}
