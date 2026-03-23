@@ -9,3 +9,17 @@ export class DefaultServiceResult {
 			this.success = false;
 	}
 }
+
+
+export class DefaultServiceResultWithData<T> extends DefaultServiceResult {
+	
+	constructor (
+		error? : string,
+		message? : string,
+		success : boolean = false,
+		public data? :T
+	) {
+		super(error,message,success)
+		this.data = data;
+	}
+}

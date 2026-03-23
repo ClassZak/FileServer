@@ -80,6 +80,9 @@ export class GroupsPage implements OnInit {
 		} catch (error) {
 			console.error('Ошибка при загрузке страницы:', error);
 			// TODO: notice
+		} finally {
+			this.isLoading = false;
+			this.cdr.detectChanges();
 		}
 	}
 
@@ -90,27 +93,24 @@ export class GroupsPage implements OnInit {
 		try {
 			const authResult = await AuthService.checkAuth();
 			
-			if (authResult.authenticated) {
-				console.log('Аутентификация прошла успешно');
-				this.isAuthenticated = true;
-				this.authorizedUser = authResult.user;
-			} else {
-				console.log('Аутентификация не пройдена:', authResult.message);
+			if (!authResult.success || !authResult.data?.authenticated) {
+				console.error('Аутентификация не пройдена:', authResult.error);
 				this.router.navigate(['/login']);
 				return;
+			} else {
+				console.log('Аутентификация прошла успешно');
+				this.isAuthenticated = true;
+				this.authorizedUser = authResult.data?.user;
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
 			this.router.navigate(['/login']);
 			return;
-		} finally {
-			this.isLoading = false;
 		}
 		this.cdr.detectChanges();
 	}
 	private async checkAdminStatus(): Promise<void> {
 		try {
-			this.isLoading = true;
 			const token = AuthService.getToken();
 			if(token === null)
 				throw "У вас нет токена авторизации";
@@ -131,18 +131,16 @@ export class GroupsPage implements OnInit {
 
 	private async loadGroups(){
 		try {
-			this.isLoading = true;
 			const token = AuthService.getToken();
 			if(token === null)
 				throw new Error("У вас нет токена авторизации");
 			if(this.isAdmin) {
 				const response = await GroupService.getAllGroups(token);
-				if ('error' in response)
+				if (!response.success)
 					throw new Error(response.error);
-				if (Array.isArray(response))
-				{
-					this.groups = response;
-					this.currentGroupModelTableDataObject.models = response;
+				if (Array.isArray(response.data)) {
+					this.groups = response.data;
+					this.currentGroupModelTableDataObject.models = response.data;
 				}
 			} else {
 				this.router.navigate(['/account']);
@@ -152,26 +150,25 @@ export class GroupsPage implements OnInit {
 			console.error('Ошибка при загрузке групп', error);
 			// TODO: notice
 		} finally {
-			this.isLoading = false;
 			this.cdr.detectChanges();
 		}
 	}
 
 	private async loadUsers(){
 		try {
-			this.isLoading = true;
 			const token = AuthService.getToken();
 			if(token === null)
 				throw new Error("У вас нет токена авторизации");
 			if(this.isAdmin) {
-				this.users = (await UserService.readAllUsers(token))
-					.users as Array<UserAdminModel>;
+				const response = await UserService.readAllUsers(token);
+				if (!response.success)
+					throw new Error(response.error);
+				this.users = response.data?.users as Array<UserAdminModel>;
 			}
 		} catch (error) {
 			console.error('Ошибка при загрузке пользователей', error);
 			// TODO: notice
 		} finally {
-			this.isLoading = false;
 			this.cdr.detectChanges();
 		}
 	}
@@ -179,6 +176,8 @@ export class GroupsPage implements OnInit {
 
 	public async handleConfirmCreateGroup(groupData: GroupCreateModel) : Promise<void>{
 		try {
+			this.isLoading = true;
+
 			const token = AuthService.getToken();
 			if (!token)
 				throw new Error('Отсутствует токен авторизации');
@@ -188,11 +187,13 @@ export class GroupsPage implements OnInit {
 
 			this.setIsCreateGroupModalComponentOpen(false);
 			await this.loadGroups();
-			this.cdr.detectChanges();
 		} catch (error: any) {
 			console.error('Error updating password:', error);
 			this.error = error.toString();
 			// TODO: notice
+		} finally {
+			this.isLoading = false;
+			this.cdr.detectChanges();
 		}
 	}
 

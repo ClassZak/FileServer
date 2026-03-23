@@ -58,7 +58,7 @@ export class UsersPage implements OnInit {
 					type: ActionType.LINK,
 					label: 'Изменить данные',
 					class: 'btn btn-blue',
-					href: (item: User) => !item.email ? '/users' : `/user/${encodeURIComponent(item.email)}`
+					href: (item: User) => !item.email ? '/users' : `/user/${encodeURI(item.email)}`
 				}
 			]
 		}
@@ -77,6 +77,9 @@ export class UsersPage implements OnInit {
 		} catch (error) {
 			console.error('Ошибка при загрузке страницы:', error);
 			// TODO: notice
+		} finally {
+			this.isLoading = false;
+			this.cdr.detectChanges();
 		}
 	}
 
@@ -87,27 +90,24 @@ export class UsersPage implements OnInit {
 		try {
 			const authResult = await AuthService.checkAuth();
 			
-			if (authResult.authenticated) {
-				console.log('Аутентификация прошла успешно');
-				this.isAuthenticated = true;
-				this.authorizedUser = authResult.user;
-			} else {
-				console.log('Аутентификация не пройдена:', authResult.message);
+			if (!authResult.success || !authResult.data?.authenticated) {
+				console.error('Аутентификация не пройдена:', authResult.error);
 				this.router.navigate(['/login']);
 				return;
+			} else {
+				console.log('Аутентификация прошла успешно');
+				this.isAuthenticated = true;
+				this.authorizedUser = authResult.data?.user;
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
 			this.router.navigate(['/login']);
 			return;
-		} finally {
-			this.isLoading = false;
 		}
 		this.cdr.detectChanges();
 	}
 	private async checkAdminStatus(): Promise<void> {
 		try {
-			this.isLoading = true;
 			const token = AuthService.getToken();
 			if(token === null)
 				throw "У вас нет токена авторизации";
@@ -127,18 +127,19 @@ export class UsersPage implements OnInit {
 
 	private async loadUsers(){
 		try {
-			this.isLoading = true;
 			const token = AuthService.getToken();
 			if(token === null)
 				throw new Error("У вас нет токена авторизации");
 			if(this.isAdmin) {
-				const loadedUsers = (await UserService.readAllUsers(token)).users as Array<UserAdminModel>;
+				const response = await UserService.readAllUsers(token);
+				if (!response.success)
+					throw new Error(response.error);
+				const loadedUsers = response.data?.users as Array<UserAdminModel>;
 				this.currentUserModelTableDataObjectRef.models = loadedUsers;
 			}
 		} catch (error) {
 			console.error('Ошибка при загрузке пользователей', error);
 		} finally {
-			this.isLoading = false;
 			this.cdr.detectChanges();
 		}
 	}
@@ -148,6 +149,8 @@ export class UsersPage implements OnInit {
 	}
 	public async handleConfirmCreateUser(userData: CreateUserModel) : Promise<void>{
 		try {
+			this.isLoading = true;
+
 			const token = AuthService.getToken();
 			if (!token)
 				throw new Error('Отсутствует токен авторизации');
@@ -161,6 +164,10 @@ export class UsersPage implements OnInit {
 		} catch (error: any) {
 			console.error('Error updating password:', error);
 			this.error = error.toString();
+			// TODO: notice
+		} finally {
+			this.isLoading = true;
+			this.cdr.detectChanges();
 		}
 	}
 }

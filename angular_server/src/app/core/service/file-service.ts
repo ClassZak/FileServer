@@ -3,6 +3,7 @@ import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import { FileInfo } from '../model/file-info';
 import { FolderInfo } from '../model/folder-info';
 import { ErrorContainer } from '../model/error-container';
+import { DefaultServiceResultWithData, DefaultServiceResult } from '../model/default-server-result';
 
 /**
  * Represents the response from the directory listing endpoint.
@@ -21,6 +22,14 @@ export interface SearchResults {
 	totalResults: number;
 	files: FileInfo[];
 	folders: FolderInfo[];
+}
+
+/**
+ * Represents the structure of file download response
+ */
+export interface DownloadFileResult {
+	blob: Blob;
+	contentType?: string;
 }
 
 /**
@@ -68,13 +77,13 @@ export class FileService {
 	 * @returns Promise resolving to `true` if the path exists, `false` otherwise.
 	 * @throws Will throw an error if the request fails (network error, 5xx, etc.).
 	 */
-	static async exists(token: string, path: string): Promise<boolean> {
+	static async exists(token: string, path: string): Promise<DefaultServiceResult> {
 		try {
 			const response = await axios.get<{ exists: boolean }>(
 				`/api/files/exists?path=${encodeURIComponent(path)}`,
 				this.createAuthConfig(token)
 			);
-			return response.data.exists;
+			return {success: response.data.exists};
 		} catch (error) {
 			console.error('FileService.exists error:', error);
 			throw new Error('Failed to check path existence.');
@@ -90,17 +99,23 @@ export class FileService {
 	 *					If the API returns an error structure, it is returned as ErrorContainer.
 	 * @throws Will throw an error for network failures or unexpected responses.
 	 */
-	static async loadDirectory(token: string, path: string): Promise<DirectoryList | ErrorContainer> {
+	static async loadDirectory(token: string, path: string): Promise<DefaultServiceResultWithData<DirectoryList>> {
 		try {
 			const response = await axios.get<{ files: FileInfo[]; folders: FolderInfo[] }>(
 				`/api/files/list?path=${encodeURIComponent(path)}`,
 				this.createAuthConfig(token)
 			);
-			return new DirectoryList(response.data.files, response.data.folders);
+			return {
+				success: true,
+				data: new DirectoryList(response.data.files, response.data.folders)
+			} 
 		} catch (error: any) {
 			console.error('FileService.loadDirectory error:', error);
 			if (error.response?.data?.error) {
-				return { error: error.response.data.error } as ErrorContainer;
+				return {
+					success: false,
+					error: error.response.data.error
+				};
 			}
 			throw new Error('Failed to load directory contents.');
 			// TODO: notice
@@ -116,13 +131,16 @@ export class FileService {
 	 * @returns Promise resolving to SearchResults object.
 	 * @throws Will throw an error if the request fails.
 	 */
-	static async find(token: string, query: string, path: string = ''): Promise<SearchResults> {
+	static async find(token: string, query: string, path: string = ''): Promise<DefaultServiceResultWithData<SearchResults>> {
 		try {
 			const response = await axios.get<SearchResults>(
 				`/api/files/search?q=${encodeURIComponent(query)}&path=${encodeURIComponent(path)}`,
 				this.createAuthConfig(token)
 			);
-			return response.data;
+			return {
+				success: true,
+				data: response.data
+			};
 		} catch (error) {
 			console.error('FileService.find error:', error);
 			throw new Error('Search failed.');
@@ -138,7 +156,7 @@ export class FileService {
 	 * @returns Promise resolving to the uploaded FileInfo (returned by the server).
 	 * @throws Will throw a user-friendly error message string on failure.
 	 */
-	static async upload(token: string, file: File, currentPath: string): Promise<FileInfo> {
+	static async upload(token: string, file: File, currentPath: string): Promise<DefaultServiceResultWithData<FileInfo>> {
 		const formData = new FormData();
 		formData.append('file', file);
 
@@ -148,7 +166,10 @@ export class FileService {
 				formData,
 				this.createFileUploadConfig(token)
 			);
-			return response.data;
+			return {
+				success: true,
+				data: response.data
+			};
 		} catch (error) {
 			const axiosError = error as AxiosError<{ error?: string; message?: string; }>;
 			const errorData = axiosError.response?.data;
@@ -175,13 +196,15 @@ export class FileService {
 	 * @returns Promise that resolves when folder is created.
 	 * @throws Will throw a user-friendly error message string on failure.
 	 */
-	static async createFolder(token: string, path: string, folderName: string): Promise<void> {
+	static async createFolder(token: string, path: string, folderName: string): Promise<DefaultServiceResult> {
 		try {
 			await axios.post(
 				'/api/files/create-folder',
 				{ path, folderName: folderName.trim() },
 				this.createAuthConfig(token)
 			);
+
+			return {success: true};
 		} catch (error: any) {
 			console.error('FileService.createFolder error:', error);
 			const errorData = error.response?.data;
@@ -203,11 +226,13 @@ export class FileService {
 	 * @returns Promise that resolves when deletion is successful.
 	 * @throws Will throw a user-friendly error message string on failure.
 	 */
-	static async deleteItem(token: string, itemPath: string): Promise<void> {
+	static async deleteItem(token: string, itemPath: string): Promise<DefaultServiceResult> {
 		try {
 			await axios.delete(`/api/files/delete?path=${encodeURIComponent(itemPath)}`, {
 				headers: { Authorization: `Bearer ${token}` },
 			});
+
+			return {success: true};
 		} catch (error: any) {
 			console.error('FileService.deleteItem error:', error);
 			const errorData = error.response?.data;
@@ -231,14 +256,21 @@ export class FileService {
 	 * @returns Promise resolving to an object with blob and contentType.
 	 * @throws Will throw a user-friendly error message string on failure.
 	 */
-	static async downloadFile(token: string, filePath: string): Promise<{ blob: Blob; contentType: string | null }> {
+	static async downloadFile(token: string, filePath: string): Promise<DefaultServiceResultWithData<DownloadFileResult>> {
 		try {
 			const response = await axios.get(`/api/files/download?path=${encodeURIComponent(filePath)}`, {
 				headers: { Authorization: `Bearer ${token}` },
 				responseType: 'blob',
 			});
+
 			const contentType = response.headers['content-type'] || null;
-			return { blob: response.data, contentType };
+			return { success: true,
+				data: {
+					blob: response.data,
+					contentType: contentType 
+				}
+			};
+			//return { blob: response.data, contentType };
 		} catch (error: any) {
 			console.error('FileService.downloadFile error:', error);
 			const errorData = error.response?.data;

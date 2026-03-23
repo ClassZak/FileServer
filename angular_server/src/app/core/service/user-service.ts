@@ -5,18 +5,13 @@ import { CreateUserModel } from '../model/create-user-model';
 import { UpdatePasswordRequest } from '../model/update-password-request';
 import { CreateConfig } from './create-config';
 import { UserAdminModel } from '../model/user-admin-model';
-import { DefaultServiceResult } from '../model/default-server-result';
+import { DefaultServiceResult, DefaultServiceResultWithData } from '../model/default-server-result';
 
 export class ReadUsersResponse {
-	public success: boolean = false;
-	public error?: string = '';
 	public users?: UserAdminModel[];
 }
 
 export class ReadUserResponse {
-	public success: boolean = false;
-	public error?: string = '';
-	public message?: string = '';
 	public user?: UserAdminModel;
 }
 
@@ -54,7 +49,7 @@ export class UserService {
 	 * @param {string} userEmail - Email of the user to fetch
 	 * @returns {Promise<ReadUserResponse>} Response with user data or error
 	 */
-	static async readUser(authToken: string, userEmail: string): Promise<ReadUserResponse> {
+	static async readUser(authToken: string, userEmail: string): Promise<DefaultServiceResultWithData<ReadUserResponse>> {
 		try {
 			const response = await axios.get(
 				`/api/users/user/${encodeURIComponent(userEmail)}`,
@@ -74,18 +69,19 @@ export class UserService {
 				createdAtDate
 			);
 
-			const result = new ReadUserResponse();
-			result.success = true;
-			result.user = userModel;
-			return result;
+			return {
+				success: true,
+				data: {
+					user: userModel
+				}
+			};
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 404)) {
 				return {
 					success: false,
 					error: axiosError.response.data.error,
-					message: axiosError.response.data.message,
-				} as ReadUserResponse;
+				};
 			}
 			throw axiosError;
 		}
@@ -105,7 +101,9 @@ export class UserService {
 				user,
 				CreateConfig.createAuthConfig(authToken)
 			);
-			return new DefaultServiceResult(response.data.error);
+			return {
+				success: true
+			};
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 404)) {
@@ -142,7 +140,7 @@ export class UserService {
 	 * @param {string} authToken - JWT token
 	 * @returns {Promise<ReadUsersResponse>} Response with array of users or error
 	 */
-	static async readAllUsers(authToken: string): Promise<ReadUsersResponse> {
+	static async readAllUsers(authToken: string): Promise<DefaultServiceResultWithData<ReadUsersResponse>> {
 		try {
 			const response = await axios.get(
 				'/api/users/users',
@@ -160,14 +158,19 @@ export class UserService {
 				)
 			);
 
-			const result = new ReadUsersResponse();
-			result.success = true;
-			result.users = userModels;
-			return result;
+			return {
+				success: true,
+				data: {
+					users: userModels
+				}
+			};
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response?.status === 403) {
-				return axiosError.response.data as ReadUsersResponse;
+				return {
+					success: false,
+					error: axiosError.response.data.error,
+				}
 			}
 			throw axiosError;
 		}

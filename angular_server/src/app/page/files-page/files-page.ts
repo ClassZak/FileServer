@@ -248,18 +248,18 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 		try {
 			const authResult = await AuthService.checkAuth();
 			
-			if (authResult.authenticated) {
-				console.log('Аутентификация прошла успешно');
-				this.isAuthenticated = true;
-				this.authorizedUser = authResult.user;
-
-				await this.checkAdminStatus();
-			} else {
-				const message = `Аутентификация не пройдена: ${authResult.message}`;
-				console.log(message);
+			if (!authResult.success || !authResult.data?.authenticated) {
+				const message = `Аутентификация не пройдена: ${authResult.error}`;
+				console.error(message);
 				this.unsubscribeAll();
 				this.router.navigate(['/login']);
 				throw new Error(message);
+			} else {
+				console.log('Аутентификация прошла успешно');
+				this.isAuthenticated = true;
+				this.authorizedUser = authResult.data.user;
+				
+				await this.checkAdminStatus();
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
@@ -316,7 +316,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			}
 			const result = await FileService.loadDirectory(token, this.currentPath);
 
-			if ('error' in result) {
+			if (!result.success) {
 				this.error = (result as ErrorContainer).error || 'Unknown error';
 				this.files = [];
 				this.folders = [];
@@ -325,7 +325,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				this.filesFoundModelTableDataObject.models = this.files;
 				this.foldersFoundModelTableDataObject.models = this.folders;
 			} else {
-				const dirList = result as DirectoryList;
+				const dirList = result.data as DirectoryList;
 				this.files = dirList.files;
 				this.folders = dirList.folders;
 				this.filesModelTableDataObject.models = this.files;
@@ -364,7 +364,9 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			}
 
 			const results = await FileService.find(token, this.searchQuery, this.searchPath);
-			this.searchResults = results;
+			if (!results.success)
+				throw results.error;
+			this.searchResults = results.data!;
 			this.filesFoundModelTableDataObject.models = this.searchResults.files;
 			this.foldersFoundModelTableDataObject.models = this.searchResults.folders;
 		} catch (err: any) {
@@ -423,7 +425,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 
 		try {
 			const exists = await FileService.exists(token, cleanPath);
-			if (exists) {
+			if (exists.success) {
 				this.router.navigate(['/files', cleanPath]);
 				return;
 			} else {
@@ -549,7 +551,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				return;
 			}
 
-			const { blob, contentType } = await FileService.downloadFile(token, path);
+			const { blob, contentType } = (await FileService.downloadFile(token, path)).data!;
 
 			// Check if the response is actually an error JSON
 			if (contentType && contentType.includes('application/json')) {

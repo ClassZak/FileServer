@@ -7,7 +7,7 @@ import { GroupBasicInfo } from '../model/group_basic_info';
 import { GroupCreateModel } from '../model/group-create-model';
 import { GroupUpdateModel } from '../model/group-update-model';
 import { CreateConfig } from './create-config';
-import { DefaultServiceResult } from '../model/default-server-result';
+import { DefaultServiceResult, DefaultServiceResultWithData } from '../model/default-server-result';
 import { ErrorContainer } from '../model/error-container';
 import { GroupFullDetailsAdminResponse, GroupFullDetailsResponse } from '../model/api-response-types';
 
@@ -36,7 +36,7 @@ export class GroupService {
 	 * @param {string} groupName Group name
 	 * @returns {Promise<GroupFullDetailsResponse | null | ErrorContainer>} Object with "group" key or null if no access
 	 */
-	static async getGroupFullDetails(authToken: string, groupName: string): Promise<GroupFullDetailsResponse | null | ErrorContainer> {
+	static async getGroupFullDetails(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<GroupFullDetailsResponse>> {
 		try {
 			const response = await axios.get(
 				`/api/groups/name/${encodeURIComponent(groupName)}/full`,
@@ -64,22 +64,31 @@ export class GroupService {
 			);
 
 			return {
-				group: new GroupDetails(
-					groupData.name,
-					groupData.membersCount,
-					creator,
-					members
-				)
+				success: true,
+				data: {
+					group: new GroupDetails(
+						groupData.name,
+						groupData.membersCount,
+						creator,
+						members
+					)
+				}
 			};
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			// Handle 404 as "group doesn't exist or no access"
 			if (axiosError.response && axiosError.response.status === 404) {
-				return null;
+				return {
+					success: false,
+					error: `Группа ${groupName} не найдена, либо у вас нет доуступа к ней`
+				};
 			}
 			// Handle 403 as permission denied
 			if (axiosError.response && axiosError.response.status === 403) {
-				return { error: "Недостаточно прав" };
+				return {
+					success: false,
+					error: 'Недостаточно прав'
+				};
 			}
 			throw axiosError;
 		}
@@ -93,7 +102,7 @@ export class GroupService {
 	 * @param {string} groupName Group name
 	 * @returns {Promise<GroupFullDetailsAdminResponse | null | ErrorContainer>} Object with "group" key or null if no access or error object
 	 */
-	static async getGroupFullDetailsAdmin(authToken: string, groupName: string): Promise<GroupFullDetailsAdminResponse | null | ErrorContainer> {
+	static async getGroupFullDetailsAdmin(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<GroupFullDetailsAdminResponse>> {
 		try {
 			const response = await axios.get(
 				`/api/groups/name/${encodeURIComponent(groupName)}/full`,
@@ -126,22 +135,31 @@ export class GroupService {
 			);
 
 			return {
-				group: new GroupDetails(
-					groupData.name,
-					groupData.membersCount,
-					creator,
-					members
-				)
+				success: true,
+				data: {
+					group: new GroupDetails(
+						groupData.name,
+						groupData.membersCount,
+						creator,
+						members
+					)
+				}
 			};
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			// Handle 404 as "group doesn't exist or no access"
 			if (axiosError.response && axiosError.response.status === 404) {
-				return null;
+				return {
+					success: false,
+					error: `Группа ${groupName} не найдена, либо у вас нет доуступа к ней`
+				};
 			}
 			// Handle 403 as permission denied
 			if (axiosError.response && axiosError.response.status === 403) {
-				return { error: "Недостаточно прав" };
+				return {
+					success: false,
+					error: `Недостаточно прав`
+				};
 			}
 			throw axiosError;
 		}
@@ -153,24 +171,31 @@ export class GroupService {
 	 * @param {string} authToken JWT token
 	 * @returns {Promise<Array<GroupBasicInfo>|ErrorContainer>} Array of groups or error object
 	 */
-	static async getMyGroups(authToken: string): Promise<Array<GroupBasicInfo> | ErrorContainer> {
+	static async getMyGroups(authToken: string): Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>> {
 		try {
 			const response = await axios.get(
 				'/api/groups/my',
 				CreateConfig.createAuthConfig(authToken)
 			);
 
-			return response.data.groups.map((group: any) =>
-				new GroupBasicInfo(
-					group.name,
-					group.membersCount,
-					group.creatorEmail
+			return {
+				success: true,
+				data:
+					response.data.groups.map((group: any) =>
+					new GroupBasicInfo(
+						group.name,
+						group.membersCount,
+						group.creatorEmail
+					)
 				)
-			);
+			};
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && axiosError.response.status === 403) {
-				return { error: "Недостаточно прав" };
+				return {
+					success: false,
+					error: 'Недостаточно прав'
+				};
 			}
 			throw axiosError;
 		}
@@ -182,24 +207,31 @@ export class GroupService {
 	 * @param {string} authToken JWT token
 	 * @returns {Promise<Array<GroupBasicInfo>|ErrorContainer>} Array of groups or error object
 	 */
-	static async getAllGroups(authToken: string): Promise<Array<GroupBasicInfo> | ErrorContainer> {
+	static async getAllGroups(authToken: string): Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>> {
 		try {
 			const response = await axios.get(
 				'/api/groups',
 				CreateConfig.createAuthConfig(authToken)
 			);
 
-			return response.data.groups.map((group: any) =>
-				new GroupBasicInfo(
-					group.name,
-					group.membersCount,
-					group.creatorEmail
+			return {
+				success: true,
+				data: 
+					response.data.groups.map((group: any) =>
+					new GroupBasicInfo(
+						group.name,
+						group.membersCount,
+						group.creatorEmail
+					)
 				)
-			);
+			};
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && axiosError.response.status === 403) {
-				return { error: "Требуются права администратора" };
+				return {
+					success: false,
+					error: 'Недостаточно прав'
+				};
 			}
 			throw axiosError;
 		}
@@ -220,7 +252,9 @@ export class GroupService {
 				CreateConfig.createAuthConfig(authToken)
 			);
 
-			return { success: true };
+			return {
+				success: true
+			};
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 400)) {
@@ -355,7 +389,7 @@ export class GroupService {
 	 * @param {string} groupName Group name
 	 * @returns {Promise<CheckGroupAccessResult>} True if user has access
 	 */
-	static async checkGroupAccess(authToken: string, groupName: string): Promise<CheckGroupAccessResult> {
+	static async checkGroupAccess(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<CheckGroupAccessResult>> {
 		try {
 			const response = await axios.get(
 				`/api/groups/name/${encodeURIComponent(groupName)}/check-access`,
@@ -365,10 +399,17 @@ export class GroupService {
 				response.data.hasAccess, response.data.groupName
 			);
 
-			return checkGroupAccessResult;
+			return {
+				success: true,
+				data: checkGroupAccessResult
+			};
 		} catch (error) {
 			console.error('Ошибка проверки доступа к группе:', error);
-			return new CheckGroupAccessResult();
+			return {
+				success: false,
+				error: 'Ошибка проверки доступа к группе',
+				data: new CheckGroupAccessResult()
+			};
 		}
 	}
 
@@ -379,24 +420,30 @@ export class GroupService {
 	 * @param {string} pattern Search pattern
 	 * @returns {Promise<Array<GroupBasicInfo>|ErrorContainer>} Array of groups or error object
 	 */
-	static async searchGroups(authToken: string, pattern: string): Promise<Array<GroupBasicInfo> | ErrorContainer> {
+	static async searchGroups(authToken: string, pattern: string): Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>> {
 		try {
 			const response = await axios.get(
 				`/api/groups/search/${encodeURIComponent(pattern)}`,
 				CreateConfig.createAuthConfig(authToken)
 			);
 
-			return response.data.groups.map((group: any) =>
-				new GroupBasicInfo(
-					group.name,
-					group.membersCount,
-					group.creatorEmail
+			return {
+				success: true,
+				data: response.data.groups.map((group: any) =>
+					new GroupBasicInfo(
+						group.name,
+						group.membersCount,
+						group.creatorEmail
+					)
 				)
-			);
+			};
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && axiosError.response.status === 403) {
-				return { error: "Требуются права администратора" };
+				return {
+					success: false,
+					error: `Требуются права администратора`
+				};
 			}
 			throw axiosError;
 		}
@@ -409,7 +456,7 @@ export class GroupService {
 	 * @param {string} groupName Group name
 	 * @returns {Promise<CheckMembershipResult>} Object with isMember and groupExists
 	 */
-	static async checkMembership(authToken: string, groupName: string): Promise<CheckMembershipResult> {
+	static async checkMembership(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<CheckMembershipResult>> {
 		try {
 			const response = await axios.get(
 				`/api/groups/name/${encodeURIComponent(groupName)}/membership`,
@@ -417,12 +464,18 @@ export class GroupService {
 			);
 
 			return { 
-				isMember: response.data.isMember,
-				groupExists: response.data.isMember.groupExists 
+				success: true,
+				data: {
+					isMember: response.data.isMember,
+					groupExists: response.data.isMember.groupExists 
+				}
 			};
 		} catch (error) {
 			console.error("Error checking membership:", error);
-			return { isMember: false, groupExists: false };
+			return {
+				success: false,
+				error: 'Ошибка проверки членства в группе'
+			};
 		}
 	}
 }

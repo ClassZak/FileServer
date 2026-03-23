@@ -101,6 +101,9 @@ export class AccountPage implements OnInit {
 				await this.loadGroups();
 		} catch (error) {
 			console.error('Ошибка при загрузке страницы:', error);
+		} finally {
+			this.isLoading = false;
+			this.cdr.detectChanges();
 		}
 	}
 
@@ -108,16 +111,22 @@ export class AccountPage implements OnInit {
 		try {
 			const authResult = await AuthService.checkAuth();
 			
-			if (authResult.authenticated) {
+			if (!authResult.success) {
+				console.error(authResult.error);
+				this.router.navigate(['/login']);
+				return;
+			}
+
+			if (authResult.data?.authenticated) {
 				console.log('Аутентификация прошла успешно');
 				this.isAuthenticated = true;
-				this.user = authResult.user;
+				this.user = authResult.data.user;
 				
 				// Загружаем дополнительную информацию
 				await this.checkAdminStatus()
 				await this.loadMyGroups()
 			} else {
-				console.log('Аутентификация не пройдена:', authResult.message);
+				console.error('Аутентификация не пройдена:', authResult.error);
 				this.router.navigate(['/login']);
 				return;
 			}
@@ -125,10 +134,7 @@ export class AccountPage implements OnInit {
 			console.error('Ошибка при проверке аутентификации:', error);
 			this.router.navigate(['/login']);
 			return;
-		} finally {
-			this.isLoading = false;
 		}
-		this.cdr.detectChanges();
 	}
 
 	private async checkAdminStatus(): Promise<void> {
@@ -146,6 +152,7 @@ export class AccountPage implements OnInit {
 				);
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
+			// TODO: notice
 		}
 	}
 
@@ -156,19 +163,18 @@ export class AccountPage implements OnInit {
 				throw new Error('У вас нет токена авторизации');
 			const groupsResult = await GroupService.getMyGroups(token);
 			
-			if ('error' in groupsResult) {
-				console.error('Ошибка загрузки групп:', groupsResult.error);
-			} else if (Array.isArray(groupsResult)) {
+			if (!groupsResult.success) {
+				throw new Error(`Ошибка загрузки групп:${groupsResult.error}`);
+			} else if (Array.isArray(groupsResult.data)) {
 				if (!this.isAdmin)
 					this.currentGroupModelTableDataObjectRef = this.defaultGroupModelTableDataObject;
 				else
 					this.currentGroupModelTableDataObjectRef = this.adminGroupModelTableDataObject;
-				this.currentGroupModelTableDataObjectRef.models = groupsResult;
+				this.currentGroupModelTableDataObjectRef.models = groupsResult.data;
 			}
 		} catch (error) {
 			console.error('Ошибка при загрузке групп:', error);
-		} finally {
-			this.isLoadingGroups = false;
+			// TODO: notice
 		}
 	}
 	private async loadGroups(){
@@ -179,10 +185,10 @@ export class AccountPage implements OnInit {
 				throw new Error("У вас нет токена авторизации");
 			if(this.isAdmin) {
 				const response = await GroupService.getAllGroups(token);
-				if ('error' in response)
+				if (!response.success)
 					throw new Error(response.error);
-				if (Array.isArray(response))
-					this.groups = response;
+				if (Array.isArray(response.data))
+					this.groups = response.data;
 			} else {
 				this.router.navigate(['/account']);
 				return;
@@ -191,7 +197,7 @@ export class AccountPage implements OnInit {
 			console.error('Ошибка при загрузке групп', error);
 			// TODO: notice
 		} finally {
-			this.isLoading = false;
+			this.isLoadingGroups = false;
 			this.cdr.detectChanges();
 		}
 	}
@@ -220,6 +226,8 @@ export class AccountPage implements OnInit {
 	}
 	async handleConfirmUpdatePassword(passwordData: UpdatePasswordModalModel): Promise<void> {
 		try {
+			this.isLoading = true;
+
 			// Здесь должен быть вызов сервиса для обновления пароля
 			console.log('Updating password:', passwordData);
 			if (passwordData.newPassword !== passwordData.newPasswordConfirm)
@@ -240,6 +248,9 @@ export class AccountPage implements OnInit {
 		} catch (error) {
 			console.error('Error updating password:', error);
 			alert('Ошибка при обновлении пароля');
+		} finally {
+			this.isLoading = false;
+			this.cdr.detectChanges();
 		}
 	}
 
@@ -261,6 +272,8 @@ export class AccountPage implements OnInit {
 
 	async handleConfirmAddAdminToGroupModal(selectedGroupName: string): Promise<void> {
 		try {
+			this.isLoading = true;
+
 			const token = AuthService.getToken();
 			if (!token) throw new Error('Нет токена авторизации');
 			if (!this.user) throw new Error('Пользователь не определён');
@@ -278,7 +291,11 @@ export class AccountPage implements OnInit {
 			this.cdr.detectChanges();
 		} catch (error) {
 			console.error('Ошибка при добавлении себя в группу:', error);
-			alert('Не удалось добавить себя в группу. Подробности в консоли.');
+			//alert('Не удалось добавить себя в группу. Подробности в консоли.');
+			// TODO: notice
+		} finally {
+			this.isLoading = false;
+			this.cdr.detectChanges();
 		}
 	}
 }

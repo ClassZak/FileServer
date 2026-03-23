@@ -98,7 +98,7 @@ export class GroupPage implements OnInit, OnDestroy {
 					type: ActionType.LINK,
 					label: 'Изменить данные',
 					class: 'btn btn-blue',
-					href: (item: UserAdminModel) => (!item.email) ? '/users' : `/user/${encodeURIComponent(item.email)}`
+					href: (item: UserAdminModel) => (!item.email) ? '/users' : `/user/${encodeURI(item.email)}`
 				},
 				{
 					type: ActionType.DATA_ACTION,
@@ -176,15 +176,15 @@ export class GroupPage implements OnInit, OnDestroy {
 		try {
 			const authResult = await AuthService.checkAuth();
 			
-			if (authResult.authenticated) {
-				console.log('Аутентификация прошла успешно');
-				this.isAuthenticated = true;
-				this.authorizedUser = authResult.user;
-			} else {
-				console.log('Аутентификация не пройдена:', authResult.message);
+			if (!authResult.success || !authResult.data?.authenticated) {
+				console.error('Аутентификация не пройдена:', authResult.error);
 				this.paramSubscription?.unsubscribe();
 				this.router.navigate(['/login']);
 				return;
+			} else  {
+				console.log('Аутентификация прошла успешно');
+				this.isAuthenticated = true;
+				this.authorizedUser = authResult.data?.user;
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
@@ -221,21 +221,15 @@ export class GroupPage implements OnInit, OnDestroy {
 				? await GroupService.getGroupFullDetailsAdmin(token, this.groupName)
 				: await GroupService.getGroupFullDetails(token, this.groupName);
 
-			if (response === null) throw new Error('Не удалось загрузить данные группы');
-			// Check error
-			if ('error' in response) {
-				const err = response.error;
-				if (typeof err === 'string') throw new Error(err);
-				else throw new Error('Unknown error occurred');
-			}
+			if (!response.success) throw new Error(response.error);
 			// Check admin
 			if (this.isAdmin) {
-				const adminData = response as GroupFullDetailsAdminResponse;
+				const adminData = response.data as GroupFullDetailsAdminResponse;
 				this.group = adminData.group;
 				this.currentUserModelTableDataObjectRef = this.adminUserModelTableDataObject;
 				this.currentUserModelTableDataObjectRef.models = adminData.group.members;
 			} else {
-				const userData = response as GroupFullDetailsResponse;
+				const userData = response.data as GroupFullDetailsResponse;
 				this.group = userData.group;
 				this.currentUserModelTableDataObjectRef = this.defaultUserModelTableDataObject;
 				this.currentUserModelTableDataObjectRef.models = userData.group.members;
@@ -253,8 +247,10 @@ export class GroupPage implements OnInit, OnDestroy {
 			if(token === null)
 				throw new Error("У вас нет токена авторизации");
 			if(this.isAdmin) {
-				this.users = (await UserService.readAllUsers(token))
-					.users as Array<UserAdminModel>;
+				const response = await UserService.readAllUsers(token);
+				if (!response.success)
+					throw new Error(response.error);
+				this.users = response.data?.users as Array<UserAdminModel>;
 			}
 		} catch (error) {
 			console.error('Ошибка при загрузке пользователей', error);

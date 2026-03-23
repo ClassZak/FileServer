@@ -35,7 +35,7 @@ import { RedirectionButton } from '../../component/redirection-button/redirectio
 	styleUrl: './user-page.css',
 })
 export class UserPage implements OnInit, OnDestroy {
-		public isLoading: boolean = true;
+	public isLoading: boolean = true;
 	isUpdateUserModalOpen : boolean = false;
 	isUpdateUserPasswordModalOpen : boolean = false;
 	isDeleteUserModalOpen : boolean = false;
@@ -85,6 +85,7 @@ export class UserPage implements OnInit, OnDestroy {
 		} catch (error) {
 			// TODO: notice
 		} finally {
+			this.isLoading = false;
 			this.cdr.detectChanges();
 		}
 	}
@@ -99,23 +100,20 @@ export class UserPage implements OnInit, OnDestroy {
 		try {
 			const authResult = await AuthService.checkAuth();
 			
-			if (authResult.authenticated) {
-				console.log('Аутентификация прошла успешно');
-				this.isAuthenticated = true;
-				this.authorizedUser = authResult.user;
-			} else {
-				console.log('Аутентификация не пройдена:', authResult.message);
+			if (!authResult.success || !authResult.data?.authenticated) {
+				console.error('Аутентификация не пройдена:', authResult.error);
 				this.router.navigate(['/login']);
 				return;
+			} else {
+				console.log('Аутентификация прошла успешно');
+				this.isAuthenticated = true;
+				this.authorizedUser = authResult.data?.user;
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
 			this.router.navigate(['/login']);
 			return;
-		} finally {
-			this.isLoading = false;
 		}
-		this.cdr.detectChanges();
 	}
 	private checkIsSelfUserForAdmin(): void{
 		if (this.myUserData?.email === this.user?.email && this.isAdmin)
@@ -123,7 +121,6 @@ export class UserPage implements OnInit, OnDestroy {
 	}
 	private async checkAdminStatus(): Promise<void> {
 		try {
-			this.isLoading = true;
 			const token = AuthService.getToken();
 			if(token === null)
 				throw "У вас нет токена авторизации";
@@ -142,16 +139,15 @@ export class UserPage implements OnInit, OnDestroy {
 	}
 	private async loadUserData(): Promise<void> {
 		try {
-			this.isLoading = true;
 			const token = AuthService.getToken();
 			if(token === null)
 				throw new Error('У вас нет токена авторизации');
 			if(!this.isAdmin)
 				throw new Error('Вы не являетесь администратором');
 			const response = await UserService.readUser(token, this.userEmail);
-			if (response.error)
+			if (!response.success)
 				throw new Error(response.error);
-			const user = response.user;
+			const user = response.data?.user;
 			if (!user)
 				throw new Error(
 					response.message ? 
@@ -162,13 +158,14 @@ export class UserPage implements OnInit, OnDestroy {
 		} catch (error: any) {
 			console.error('Ошибка при загрузки данных пользователя:', error);
 			this.error = error.toString();
-		} finally {
-			this.isLoading = false;
+			// TODO: notice
 		}
 	}
 
 	async handleUpdateUserModal(newUserData: UpdateUserModel){
 		try {
+			this.isLoading = true;
+
 			const token = AuthService.getToken();
 			if (!token)
 				throw new Error('Отсутствует токен авторизации');
@@ -183,17 +180,22 @@ export class UserPage implements OnInit, OnDestroy {
 			}
 			else
 				await this.loadUserData();
-			console.log('User data updated')
+			console.log('Данные пользователя успешно обновлены');
+			// TODO: notice
 			this.setIsUpdateUserModalOpen(false);
 			await this.loadUserData();
-			this.cdr.detectChanges();
 		} catch (error) {
 			console.error('Error updating user data:', error);
 			// TODO: notice
+		} finally {
+			this.isLoading = false;
+			this.cdr.detectChanges();
 		}
 	}
 	async handleUpdateUserPasswordModal(passwordData: UpdatePasswordModalModel){
 		try {
+			this.isLoading = true;
+
 			if (passwordData.newPassword !== passwordData.newPasswordConfirm)
 				throw new Error('Новый пароль и его подтверждение не совпадают');
 			const token = AuthService.getToken();
@@ -201,20 +203,27 @@ export class UserPage implements OnInit, OnDestroy {
 				throw new Error('Отсутствует токен авторизации');
 			if (!this.user)
 				throw new Error('Объект данных пользователя не определён');
-			await UserService.updateUserPassword(
+			const result = await UserService.updateUserPassword(
 				token, this.user.email, 
 				new UpdatePasswordRequest(passwordData.oldPassword, passwordData.newPassword)
 			);
+			if (!result.success)
+				throw new Error(result.error);
+
 			this.setIsUpdateUserPasswordModalOpen(false);
 			await this.loadUserData();
-			this.cdr.detectChanges();
 		} catch (error) {
 			console.error('Error updating password:', error);
 			// TODO: notice
+		} finally {
+			this.isLoading = false;
+			this.cdr.detectChanges();
 		}
 	}
 	async handleDeleteUserModal(){
 		try {
+			this.isLoading = true;
+
 			const token = AuthService.getToken();
 			if (!token)
 				throw new Error('Отсутствует токен авторизации');
@@ -229,6 +238,9 @@ export class UserPage implements OnInit, OnDestroy {
 		} catch (error) {
 			console.error('Error updating password:', error);
 			// TODO: notice
+		} finally {
+			this.isLoading = false;
+			this.cdr.detectChanges();
 		}
 	}
 }
