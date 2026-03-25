@@ -259,7 +259,10 @@ export class GroupService {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 400)) {
 				const serverError = axiosError.response.data.error;
-				return new DefaultServiceResult(serverError);
+				return {
+					success: false,
+					error: serverError
+				};
 			}
 			throw axiosError;
 		}
@@ -289,7 +292,10 @@ export class GroupService {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 400 || axiosError.response.status === 404)) {
 				const serverError = axiosError.response.data.error;
-				return new DefaultServiceResult(serverError);
+				return {
+					success: false,
+					error: serverError
+				};
 			}
 			throw axiosError;
 		}
@@ -317,7 +323,10 @@ export class GroupService {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 404)) {
 				const serverError = axiosError.response.data.error;
-				return new DefaultServiceResult(serverError);
+				return {
+					success: false,
+					error: serverError
+				};
 			}
 			throw axiosError;
 		}
@@ -347,7 +356,10 @@ export class GroupService {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 400 || axiosError.response.status === 404)) {
 				const serverError = axiosError.response.data.error;
-				return new DefaultServiceResult(serverError);
+				return {
+					success: false,
+					error: serverError
+				};
 			}
 			throw axiosError;
 		}
@@ -376,7 +388,10 @@ export class GroupService {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 400 || axiosError.response.status === 404)) {
 				const serverError = axiosError.response.data.error;
-				return new DefaultServiceResult(serverError);
+				return {
+					success: false,
+					error: serverError
+				};
 			}
 			throw axiosError;
 		}

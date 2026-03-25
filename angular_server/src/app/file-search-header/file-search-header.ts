@@ -18,17 +18,24 @@ export class FileSearchHeader {
 	){}
 	
 	handleSearch(): void {
-		const query = this.searchQuery.trim();
-		if (!query) {
-			return; // ничего не делаем при пустом запросе
-		}
-
-		// Переход в корень с параметрами поиска
-		this.router.navigate(['/files'], {
-			queryParams: {
-				q: query,
-				searchPath: '' // поиск от корня
+		this.isSearching = true;
+		try {
+			const query = this.searchQuery.trim();
+			if (!query) {
+				return; // ничего не делаем при пустом запросе
 			}
-		});
+			
+			// Переход в корень с параметрами поиска
+			this.router.navigate(['/files'], {
+				queryParams: {
+					q: query,
+					searchPath: '' // поиск от корня
+				}
+			});
+		} catch (error) {
+			// TODO: notice
+		} finally {
+			this.isSearching = false;
+		}
 	}
 }

@@ -37,7 +37,10 @@ export class UserService {
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response?.status === 403)
-				return new DefaultServiceResult(axiosError.response.data.error);
+				return {
+					success: false,
+					error: axiosError.response.data.error
+				};
 
 			throw axiosError;
 		}
@@ -107,9 +110,15 @@ export class UserService {
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 404)) {
-				return new DefaultServiceResult(axiosError.response.data.error);
+				return {
+					success: false,
+					error: axiosError.response.data.error
+				};
 			}
-			return new DefaultServiceResult(axiosError.message);
+			return {
+				success: false,
+				error: axiosError.message
+			};
 		}
 	}
 
@@ -198,7 +207,10 @@ export class UserService {
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 404)) {
-				return new DefaultServiceResult(axiosError.response.data.error);
+				return {
+					success: false,
+					error: axiosError.response.data.error
+				};
 			}
 			throw axiosError;
 		}

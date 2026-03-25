@@ -24,7 +24,13 @@
 	font-weight: 500;
 	color: var(--color-border-default);
 }
-.spinner-dots{
+
+.spinner-dots {
+	min-width: 1.5rem;
+	display: inline-block;
+}
+.spinner-dots::after{
+	content: '';
 	animation: dots 1.5s steps(4, end) infinite;
 }
 
