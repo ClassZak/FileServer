@@ -2,7 +2,7 @@
 
 ## Code Quality & Refactoring
 - [✓] **Unify service response format**: All API methods should return an object with `success: boolean`, `error?: string`, and `data?: any`. Update components to rely on this consistent structure.
-- [✖] **Replace `any` types**: Gradually replace all `any` with proper interfaces/models to improve type safety.
+- [✖] **Replace `any` types**: Gradually replace all `any` with proper interfaces/models to improve type safety. Keep it for ModelTable component.
 - [✖] **Centralize error handling**: Create a global error handler service to capture and display errors uniformly.
 - [✖] **Refactor API workflow**: Use Angular HttpClient instead of axios for server requests.
 
