@@ -88,7 +88,7 @@ export class UsersPage implements OnInit {
 
 	private async checkAuthentication(): Promise<void> {
 		try {
-			const authResult = await AuthService.checkAuth();
+			const authResult = await AuthService.checkAuthStatic();
 			
 			if (!authResult.success || !authResult.data?.authenticated) {
 				console.error('Аутентификация не пройдена:', authResult.error);
@@ -111,7 +111,7 @@ export class UsersPage implements OnInit {
 			const token = AuthService.getToken();
 			if(token === null)
 				throw "У вас нет токена авторизации";
-			const result = await AdminService.isAdmin(token);
+			const result = await AdminService.isAdminStatic(token);
 			if (result.success)
 				this.isAdmin = true;
 			else if (!result.success && !result.error)

@@ -43,9 +43,9 @@ export class LoginPage {
 		this.isSubmiting = true;
 		
 		try {
-			const result = await AuthService.loginByEmail(this.email, this.password);
+			const result = await AuthService.loginByEmailStatic(this.email, this.password);
 			if (result.success) {
-				const authResult = await AuthService.checkAuth();
+				const authResult = await AuthService.checkAuthStatic();
 				if (!authResult.success)
 					this.error = authResult.error;
 				else
@@ -75,11 +75,11 @@ export class LoginPage {
 		e.preventDefault();
 		
 		try {
-			const result = await AuthService.loginBySnp(
+			const result = await AuthService.loginBySnpStatic(
 				this.surname, this.name, this.patronymic, this.password
 			);
 			if (result.success) {
-				const authResult = await AuthService.checkAuth();
+				const authResult = await AuthService.checkAuthStatic();
 				if (!authResult.success)
 					this.error = 'Ошибка авторизации после входа';
 				else
@@ -103,7 +103,7 @@ export class LoginPage {
 
 	private async checkAuthentication(): Promise<void> {
 		try {
-			const authResult: DefaultServiceResultWithData<CheckAuthResult> = await AuthService.checkAuth();
+			const authResult: DefaultServiceResultWithData<CheckAuthResult> = await AuthService.checkAuthStatic();
 			
 			if (!authResult.success || authResult.data?.authenticated)
 				console.error('Аутентификация не пройдена:', authResult.error);
