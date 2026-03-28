@@ -218,8 +218,8 @@ export class GroupPage implements OnInit, OnDestroy {
 			if (token === null) throw new Error('У вас нет токена авторизации');
 
 			const response = this.isAdmin
-				? await GroupService.getGroupFullDetailsAdmin(token, this.groupName)
-				: await GroupService.getGroupFullDetails(token, this.groupName);
+				? await GroupService.getGroupFullDetailsAdminStatic(token, this.groupName)
+				: await GroupService.getGroupFullDetailsStatic(token, this.groupName);
 
 			if (!response.success) throw new Error(response.error);
 			// Check admin
@@ -247,7 +247,7 @@ export class GroupPage implements OnInit, OnDestroy {
 			if(token === null)
 				throw new Error("У вас нет токена авторизации");
 			if(this.isAdmin) {
-				const response = await UserService.readAllUsers(token);
+				const response = await UserService.readAllUsersStatic(token);
 				if (!response.success)
 					throw new Error(response.error);
 				this.users = response.data?.users as Array<UserAdminModel>;
@@ -264,7 +264,7 @@ export class GroupPage implements OnInit, OnDestroy {
 			const token = AuthService.getToken();
 			if(!token)
 				throw new Error('Отсутствует токен авторизации');
-			const response = await GroupService.addUserToGroup(token, this.groupName, email);
+			const response = await GroupService.addUserToGroupStatic(token, this.groupName, email);
 			if (response.error)
 				throw new Error(response.error);
 			if (response.success)
@@ -283,7 +283,7 @@ export class GroupPage implements OnInit, OnDestroy {
 			const token = AuthService.getToken();
 			if(!token)
 				throw new Error('Отсутствует токен авторизации');
-			const response = await GroupService.deleteGroup(token, this.groupName);
+			const response = await GroupService.deleteGroupStatic(token, this.groupName);
 			if (response.error)
 				throw new Error(response.error);
 			if (response.success) {
@@ -313,7 +313,7 @@ export class GroupPage implements OnInit, OnDestroy {
 				this.selectedUserEmail = '';
 				return;
 			}
-			const response = await GroupService.removeUserFromGroup(token, this.groupName, this.selectedUserEmail);
+			const response = await GroupService.removeUserFromGroupStatic(token, this.groupName, this.selectedUserEmail);
 			if (response.error)
 				throw new Error(response.error);
 			if (response.success)
@@ -335,7 +335,7 @@ export class GroupPage implements OnInit, OnDestroy {
 			const token = AuthService.getToken();
 			if(!token)
 				throw new Error('Отсутствует токен авторизации');
-			const response = await GroupService.updateGroup(token, this.groupName, updateGroupModel);
+			const response = await GroupService.updateGroupStatic(token, this.groupName, updateGroupModel);
 			if (response.error)
 				throw new Error(response.error);
 			if (response.success && this.groupName != updateGroupModel.newName){

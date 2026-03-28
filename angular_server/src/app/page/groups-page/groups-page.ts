@@ -135,7 +135,7 @@ export class GroupsPage implements OnInit {
 			if(token === null)
 				throw new Error("У вас нет токена авторизации");
 			if(this.isAdmin) {
-				const response = await GroupService.getAllGroups(token);
+				const response = await GroupService.getAllGroupsStatic(token);
 				if (!response.success)
 					throw new Error(response.error);
 				if (Array.isArray(response.data)) {
@@ -160,7 +160,7 @@ export class GroupsPage implements OnInit {
 			if(token === null)
 				throw new Error("У вас нет токена авторизации");
 			if(this.isAdmin) {
-				const response = await UserService.readAllUsers(token);
+				const response = await UserService.readAllUsersStatic(token);
 				if (!response.success)
 					throw new Error(response.error);
 				this.users = response.data?.users as Array<UserAdminModel>;
@@ -181,7 +181,7 @@ export class GroupsPage implements OnInit {
 			const token = AuthService.getToken();
 			if (!token)
 				throw new Error('Отсутствует токен авторизации');
-			const response = await GroupService.createGroup(token, groupData);
+			const response = await GroupService.createGroupStatic(token, groupData);
 			if (!response.success)
 				throw new Error('Не удалось создать группу');
 

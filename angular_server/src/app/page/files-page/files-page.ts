@@ -314,7 +314,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				this.router.navigate(['/login']);
 				return;
 			}
-			const result = await FileService.loadDirectory(token, this.currentPath);
+			const result = await FileService.loadDirectoryStatic(token, this.currentPath);
 
 			if (!result.success) {
 				this.error = (result as ErrorContainer).error || 'Unknown error';
@@ -363,7 +363,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				return;
 			}
 
-			const results = await FileService.find(token, this.searchQuery, this.searchPath);
+			const results = await FileService.findStatic(token, this.searchQuery, this.searchPath);
 			if (!results.success)
 				throw results.error;
 			this.searchResults = results.data!;
@@ -424,7 +424,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 		}
 
 		try {
-			const exists = await FileService.exists(token, cleanPath);
+			const exists = await FileService.existsStatic(token, cleanPath);
 			if (exists.success) {
 				this.router.navigate(['/files', cleanPath]);
 				return;
@@ -453,7 +453,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				return;
 			}
 
-			await FileService.upload(token, file, this.currentPath);
+			await FileService.uploadStatic(token, file, this.currentPath);
 			await this.loadDirectory();
 		} catch (err: any) {
 			this.error = typeof err === 'string' ? err : err.message || 'Upload failed.';
@@ -483,7 +483,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				return;
 			}
 
-			await FileService.createFolder(token, this.currentPath, folderName);
+			await FileService.createFolderStatic(token, this.currentPath, folderName);
 
 			this.showCreateFolderModal = false;
 			await this.loadDirectory();
@@ -525,7 +525,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				return;
 			}
 
-			await FileService.deleteItem(token, this.itemToDelete.path);
+			await FileService.deleteItemStatic(token, this.itemToDelete.path);
 
 			this.showDeleteModal = false;
 			this.itemToDelete = null;
@@ -551,7 +551,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				return;
 			}
 
-			const { blob, contentType } = (await FileService.downloadFile(token, path)).data!;
+			const { blob, contentType } = (await FileService.downloadFileStatic(token, path)).data!;
 
 			// Check if the response is actually an error JSON
 			if (contentType && contentType.includes('application/json')) {

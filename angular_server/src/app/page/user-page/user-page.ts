@@ -144,7 +144,7 @@ export class UserPage implements OnInit, OnDestroy {
 				throw new Error('У вас нет токена авторизации');
 			if(!this.isAdmin)
 				throw new Error('Вы не являетесь администратором');
-			const response = await UserService.readUser(token, this.userEmail);
+			const response = await UserService.readUserStatic(token, this.userEmail);
 			if (!response.success)
 				throw new Error(response.error);
 			const user = response.data?.user;
@@ -169,7 +169,7 @@ export class UserPage implements OnInit, OnDestroy {
 			const token = AuthService.getToken();
 			if (!token)
 				throw new Error('Отсутствует токен авторизации');
-			const response = await UserService.updateUser(token, this.userEmail, newUserData as User);
+			const response = await UserService.updateUserStatic(token, this.userEmail, newUserData as User);
 			if (response.error)
 				throw new Error(response.error);
 			if (!response.success)
@@ -203,7 +203,7 @@ export class UserPage implements OnInit, OnDestroy {
 				throw new Error('Отсутствует токен авторизации');
 			if (!this.user)
 				throw new Error('Объект данных пользователя не определён');
-			const result = await UserService.updateUserPassword(
+			const result = await UserService.updateUserPasswordStatic(
 				token, this.user.email, 
 				new UpdatePasswordRequest(passwordData.oldPassword, passwordData.newPassword)
 			);
@@ -229,7 +229,7 @@ export class UserPage implements OnInit, OnDestroy {
 				throw new Error('Отсутствует токен авторизации');
 			if (!this.user)
 				throw new Error('Объект данных пользователя не определён');
-			const response = await UserService.deleteUser(token, this.user);
+			const response = await UserService.deleteUserStatic(token, this.user);
 			if (response.error)
 				throw new Error(response.error);
 			if (!response.success)

@@ -131,7 +131,7 @@ export class UsersPage implements OnInit {
 			if(token === null)
 				throw new Error("У вас нет токена авторизации");
 			if(this.isAdmin) {
-				const response = await UserService.readAllUsers(token);
+				const response = await UserService.readAllUsersStatic(token);
 				if (!response.success)
 					throw new Error(response.error);
 				const loadedUsers = response.data?.users as Array<UserAdminModel>;
@@ -154,7 +154,7 @@ export class UsersPage implements OnInit {
 			const token = AuthService.getToken();
 			if (!token)
 				throw new Error('Отсутствует токен авторизации');
-			const response = await UserService.createUser(userData, token);
+			const response = await UserService.createUserStatic(userData, token);
 			if (!response.success)
 				throw new Error('Не удалось создать пользователя');
 

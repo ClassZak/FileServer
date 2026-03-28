@@ -10,6 +10,8 @@ import { CreateConfig } from './create-config';
 import { DefaultServiceResult, DefaultServiceResultWithData } from '../model/default-server-result';
 import { ErrorContainer } from '../model/error-container';
 import { GroupFullDetailsAdminResponse, GroupFullDetailsResponse } from '../model/api-response-types';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 
 export class CheckMembershipResult {
 	isMember: boolean = false;
@@ -26,7 +28,10 @@ export class CheckGroupAccessResult {
  * Service for working with groups via API
  * @class
  */
+@Injectable({providedIn: 'root'})
 export class GroupService {
+	constructor(private http: HttpClient) {}
+
 
 	/**
 	 * Get detailed group information with members (for group page)
@@ -36,7 +41,7 @@ export class GroupService {
 	 * @param {string} groupName Group name
 	 * @returns {Promise<GroupFullDetailsResponse | null | ErrorContainer>} Object with "group" key or null if no access
 	 */
-	static async getGroupFullDetails(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<GroupFullDetailsResponse>> {
+	static async getGroupFullDetailsStatic(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<GroupFullDetailsResponse>> {
 		try {
 			const response = await axios.get(
 				`/api/groups/name/${encodeURIComponent(groupName)}/full`,
@@ -102,7 +107,7 @@ export class GroupService {
 	 * @param {string} groupName Group name
 	 * @returns {Promise<GroupFullDetailsAdminResponse | null | ErrorContainer>} Object with "group" key or null if no access or error object
 	 */
-	static async getGroupFullDetailsAdmin(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<GroupFullDetailsAdminResponse>> {
+	static async getGroupFullDetailsAdminStatic(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<GroupFullDetailsAdminResponse>> {
 		try {
 			const response = await axios.get(
 				`/api/groups/name/${encodeURIComponent(groupName)}/full`,
@@ -171,7 +176,7 @@ export class GroupService {
 	 * @param {string} authToken JWT token
 	 * @returns {Promise<Array<GroupBasicInfo>|ErrorContainer>} Array of groups or error object
 	 */
-	static async getMyGroups(authToken: string): Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>> {
+	static async getMyGroupsStatic(authToken: string): Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>> {
 		try {
 			const response = await axios.get(
 				'/api/groups/my',
@@ -207,7 +212,7 @@ export class GroupService {
 	 * @param {string} authToken JWT token
 	 * @returns {Promise<Array<GroupBasicInfo>|ErrorContainer>} Array of groups or error object
 	 */
-	static async getAllGroups(authToken: string): Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>> {
+	static async getAllGroupsStatic(authToken: string): Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>> {
 		try {
 			const response = await axios.get(
 				'/api/groups',
@@ -244,7 +249,7 @@ export class GroupService {
 	 * @param {GroupCreateModel} groupCreateModel Group data for creation
 	 * @returns {Promise<DefaultServiceResult>} Object with "error" or "success" key
 	 */
-	static async createGroup(authToken: string, groupCreateModel: GroupCreateModel): Promise<DefaultServiceResult> {
+	static async createGroupStatic(authToken: string, groupCreateModel: GroupCreateModel): Promise<DefaultServiceResult> {
 		try {
 			const response = await axios.post(
 				'/api/groups',
@@ -276,7 +281,7 @@ export class GroupService {
 	 * @param {GroupUpdateModel} updateData Object with newName and creatorEmail
 	 * @returns {Promise<DefaultServiceResult>} Object with "error" or "success" key
 	 */
-	static async updateGroup(authToken: string, groupName: string, updateData: GroupUpdateModel): Promise<DefaultServiceResult> {
+	static async updateGroupStatic(authToken: string, groupName: string, updateData: GroupUpdateModel): Promise<DefaultServiceResult> {
 		try {
 			const response = await axios.put(
 				`/api/groups/name/${encodeURIComponent(groupName)}`,
@@ -308,7 +313,7 @@ export class GroupService {
 	 * @param {string} groupName Group name to delete
 	 * @returns {Promise<DefaultServiceResult>} Object with "error" or "success" key
 	 */
-	static async deleteGroup(authToken: string, groupName: string): Promise<DefaultServiceResult> {
+	static async deleteGroupStatic(authToken: string, groupName: string): Promise<DefaultServiceResult> {
 		try {
 			const response = await axios.delete(
 				`/api/groups/name/${encodeURIComponent(groupName)}`,
@@ -340,7 +345,7 @@ export class GroupService {
 	 * @param {string} userEmail User email to add
 	 * @returns {Promise<DefaultServiceResult>} Object with "error" or "success" key
 	 */
-	static async addUserToGroup(authToken: string, groupName: string, userEmail: string): Promise<DefaultServiceResult> {
+	static async addUserToGroupStatic(authToken: string, groupName: string, userEmail: string): Promise<DefaultServiceResult> {
 		try {
 			const response = await axios.post(
 				`/api/groups/name/${encodeURIComponent(groupName)}/users/${encodeURIComponent(userEmail)}`,
@@ -373,7 +378,7 @@ export class GroupService {
 	 * @param {string} userEmail User email to remove
 	 * @returns {Promise<DefaultServiceResult>} Object with "error" or "success" key
 	 */
-	static async removeUserFromGroup(authToken: string, groupName: string, userEmail: string): Promise<DefaultServiceResult> {
+	static async removeUserFromGroupStatic(authToken: string, groupName: string, userEmail: string): Promise<DefaultServiceResult> {
 		try {
 			const response = await axios.delete(
 				`/api/groups/name/${encodeURIComponent(groupName)}/users/${encodeURIComponent(userEmail)}`,
@@ -404,7 +409,7 @@ export class GroupService {
 	 * @param {string} groupName Group name
 	 * @returns {Promise<CheckGroupAccessResult>} True if user has access
 	 */
-	static async checkGroupAccess(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<CheckGroupAccessResult>> {
+	static async checkGroupAccessStatic(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<CheckGroupAccessResult>> {
 		try {
 			const response = await axios.get(
 				`/api/groups/name/${encodeURIComponent(groupName)}/check-access`,
@@ -435,7 +440,7 @@ export class GroupService {
 	 * @param {string} pattern Search pattern
 	 * @returns {Promise<Array<GroupBasicInfo>|ErrorContainer>} Array of groups or error object
 	 */
-	static async searchGroups(authToken: string, pattern: string): Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>> {
+	static async searchGroupsStatic(authToken: string, pattern: string): Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>> {
 		try {
 			const response = await axios.get(
 				`/api/groups/search/${encodeURIComponent(pattern)}`,
@@ -471,7 +476,7 @@ export class GroupService {
 	 * @param {string} groupName Group name
 	 * @returns {Promise<CheckMembershipResult>} Object with isMember and groupExists
 	 */
-	static async checkMembership(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<CheckMembershipResult>> {
+	static async checkMembershipStatic(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<CheckMembershipResult>> {
 		try {
 			const response = await axios.get(
 				`/api/groups/name/${encodeURIComponent(groupName)}/membership`,
@@ -483,6 +488,509 @@ export class GroupService {
 				data: {
 					isMember: response.data.isMember,
 					groupExists: response.data.isMember.groupExists 
+				}
+			};
+		} catch (error) {
+			console.error("Error checking membership:", error);
+			return {
+				success: false,
+				error: 'Ошибка проверки членства в группе'
+			};
+		}
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/**
+	 * Get detailed group information with members (for group page)
+	 * If user doesn't have access, returns null
+	 *
+	 * @param {string} authToken JWT token
+	 * @param {string} groupName Group name
+	 * @returns {Promise<GroupFullDetailsResponse | null | ErrorContainer>} Object with "group" key or null if no access
+	 */
+	async getGroupFullDetails(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<GroupFullDetailsResponse>> {
+		try {
+			const response = await firstValueFrom(
+				this.http.get<{group: any}>(
+					`/api/groups/name/${encodeURIComponent(groupName)}/full`,
+					CreateConfig.createAuthConfigNew(authToken)	
+				)
+			);
+
+			const groupData = response.group;
+
+			// Transform creator (no date fields in User model)
+			const creator = new User(
+				groupData.creator.surname,
+				groupData.creator.name,
+				groupData.creator.patronymic,
+				groupData.creator.email
+			);
+
+			// Transform members (no date fields)
+			const members = groupData.members.map((member: any) =>
+				new User(
+					member.surname,
+					member.name,
+					member.patronymic,
+					member.email
+				)
+			);
+
+			return {
+				success: true,
+				data: {
+					group: new GroupDetails(
+						groupData.name,
+						groupData.membersCount,
+						creator,
+						members
+					)
+				}
+			};
+		} catch (error) {
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 404)
+					return {
+						success: false,
+						error: `Группа ${groupName} не найдена, либо у вас нет доуступа к ней`
+					};
+				if (error.status === 403)
+					return {
+						success: false,
+						error: `Группа ${groupName} не найдена, либо у вас нет доуступа к ней`
+					};
+			}
+
+			throw error;
+		}
+	}
+
+	/**
+	 * Get detailed group information with members (for group page, admin view)
+	 * If user doesn't have access, returns null
+	 *
+	 * @param {string} authToken JWT token
+	 * @param {string} groupName Group name
+	 * @returns {Promise<GroupFullDetailsAdminResponse | null | ErrorContainer>} Object with "group" key or null if no access or error object
+	 */
+	async getGroupFullDetailsAdmin(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<GroupFullDetailsAdminResponse>> {
+		try {
+			const response = await firstValueFrom(
+				this.http.get<{group: any}>(
+					`/api/groups/name/${encodeURIComponent(groupName)}/full`,
+					CreateConfig.createAuthConfig(authToken)
+				)
+			);
+
+			const groupData = response.group;
+
+			// Helper to convert date string to Date object (assuming server sends ISO without timezone)
+			const toDate = (dateStr: string): Date => new Date(dateStr);
+
+			// Transform creator with date conversion
+			const creator = new UserAdminModel(
+				groupData.creator.surname,
+				groupData.creator.name,
+				groupData.creator.patronymic,
+				groupData.creator.email,
+				toDate(groupData.creator.createdAt)
+			);
+
+			// Transform members with date conversion
+			const members = groupData.members.map((member: any) =>
+				new UserAdminModel(
+					member.surname,
+					member.name,
+					member.patronymic,
+					member.email,
+					toDate(member.createdAt)
+				)
+			);
+
+			return {
+				success: true,
+				data: {
+					group: new GroupDetails(
+						groupData.name,
+						groupData.membersCount,
+						creator,
+						members
+					)
+				}
+			};
+		} catch (error) {
+			if (error instanceof HttpErrorResponse) {
+				// Handle 404 as "group doesn't exist or no access"
+				if (error.status === 404)
+					return {
+						success: false,
+						error: `Группа ${groupName} не найдена, либо у вас нет доуступа к ней`
+					};
+				// Handle 403 as permission denied
+				if (error.status === 403)
+					return {
+						success: false,
+						error: `Недостаточно прав`
+					};
+			}
+
+			throw error;
+		}
+	}
+
+	/**
+	 * Get list of user's groups (without members)
+	 *
+	 * @param {string} authToken JWT token
+	 * @returns {Promise<Array<GroupBasicInfo>|ErrorContainer>} Array of groups or error object
+	 */
+	async getMyGroups(authToken: string): Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>> {
+		try {
+			const response = await firstValueFrom(
+				this.http.get<{groups: any}>(
+					'/api/groups/my',
+					CreateConfig.createAuthConfig(authToken)
+				)
+			);
+
+			return {
+				success: true,
+				data:
+					response.groups.map((group: any) =>
+					new GroupBasicInfo(
+						group.name,
+						group.membersCount,
+						group.creatorEmail
+					)
+				)
+			};
+		} catch (error) {
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 403)
+					return {
+						success: false,
+						error: 'Недостаточно прав'
+					};
+			}
+
+			throw error;
+		}
+	}
+
+	/**
+	 * Get all groups (admin only, without members)
+	 *
+	 * @param {string} authToken JWT token
+	 * @returns {Promise<Array<GroupBasicInfo>|ErrorContainer>} Array of groups or error object
+	 */
+	async getAllGroups(authToken: string): Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>> {
+		try {
+			const response = await firstValueFrom(
+				this.http.get<{groups: any}>(
+					'/api/groups',
+					CreateConfig.createAuthConfig(authToken)	
+				)
+			);
+
+			return {
+				success: true,
+				data: 
+					response.groups.map((group: any) =>
+					new GroupBasicInfo(
+						group.name,
+						group.membersCount,
+						group.creatorEmail
+					)
+				)
+			};
+		} catch (error) {
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 403)
+					return {
+						success: false,
+						error: 'Недостаточно прав'
+					};
+			}
+
+			throw error;
+		}
+	}
+
+	/**
+	 * Create new group (admin only)
+	 *
+	 * @param {string} authToken JWT token
+	 * @param {GroupCreateModel} groupCreateModel Group data for creation
+	 * @returns {Promise<DefaultServiceResult>} Object with "error" or "success" key
+	 */
+	async createGroup(authToken: string, groupCreateModel: GroupCreateModel): Promise<DefaultServiceResult> {
+		try {
+			this.http.post(
+				'/api/groups',
+				groupCreateModel,
+				CreateConfig.createAuthConfig(authToken)
+			);
+
+			return {success: true};
+		} catch (error) {
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 403 || error.status === 400)
+					return {
+						success: false,
+						error: error.error.error || error.message
+					};
+			}
+
+			throw error;
+		}
+	}
+
+	/**
+	 * Update group information (admin only)
+	 *
+	 * @param {string} authToken JWT token
+	 * @param {string} groupName Current group name
+	 * @param {GroupUpdateModel} updateData Object with newName and creatorEmail
+	 * @returns {Promise<DefaultServiceResult>} Object with "error" or "success" key
+	 */
+	async updateGroup(authToken: string, groupName: string, updateData: GroupUpdateModel): Promise<DefaultServiceResult> {
+		try {
+			const response = await firstValueFrom(
+				this.http.put<{message?: string}>(
+					`/api/groups/name/${encodeURIComponent(groupName)}`,
+					updateData,
+					CreateConfig.createAuthConfig(authToken)
+				)
+			);
+
+			return { 
+				success: true,
+				message: response.message 
+			};
+		} catch (error) {
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 404 || error.status === 403 || error.status === 400)
+					return {
+						success: false,
+						error: error.error.error || error.message
+					};
+			}
+
+			throw error;
+		}
+	}
+
+	/**
+	 * Delete group (admin only)
+	 *
+	 * @param {string} authToken JWT token
+	 * @param {string} groupName Group name to delete
+	 * @returns {Promise<DefaultServiceResult>} Object with "error" or "success" key
+	 */
+	async deleteGroup(authToken: string, groupName: string): Promise<DefaultServiceResult> {
+		try {
+			const response = await firstValueFrom(
+				this.http.delete<{success: boolean, message: string}>(
+					`/api/groups/name/${encodeURIComponent(groupName)}`,
+					CreateConfig.createAuthConfig(authToken)
+				)
+			);
+
+			return {
+				message: response.message,
+				success: response.success
+			};
+		} catch (error) {
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 404 || error.status === 403 || error.status === 400)
+					return {
+						success: false,
+						error: error.error.error || error.message
+					};
+			}
+
+			throw error;
+		}
+	}
+
+	/**
+	 * Add user to group (admin only)
+	 *
+	 * @param {string} authToken JWT token
+	 * @param {string} groupName Group name
+	 * @param {string} userEmail User email to add
+	 * @returns {Promise<DefaultServiceResult>} Object with "error" or "success" key
+	 */
+	async addUserToGroup(authToken: string, groupName: string, userEmail: string): Promise<DefaultServiceResult> {
+		try {
+			const response = await firstValueFrom(
+				this.http.post<{success: boolean, message: string}>(
+					`/api/groups/name/${encodeURIComponent(groupName)}/users/${encodeURIComponent(userEmail)}`,
+					{},
+					CreateConfig.createAuthConfig(authToken)
+				)
+			);
+
+			return {
+				message: response.message,
+				success: response.success
+			};
+		} catch (error) {
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 404 || error.status === 403 || error.status === 400)
+					return {
+						success: false,
+						error: error.error.error || error.message
+					};
+			}
+
+			throw error;
+		}
+	}
+
+	/**
+	 * Remove user from group (admin only)
+	 *
+	 * @param {string} authToken JWT token
+	 * @param {string} groupName Group name
+	 * @param {string} userEmail User email to remove
+	 * @returns {Promise<DefaultServiceResult>} Object with "error" or "success" key
+	 */
+	async removeUserFromGroup(authToken: string, groupName: string, userEmail: string): Promise<DefaultServiceResult> {
+		try {
+			const response = await firstValueFrom(
+				this.http.delete<{success: boolean, message: string}>(
+					`/api/groups/name/${encodeURIComponent(groupName)}/users/${encodeURIComponent(userEmail)}`,
+					CreateConfig.createAuthConfig(authToken)
+				)
+			);
+
+			return {
+				message: response.message,
+				success: response.success
+			};
+		} catch (error) {
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 404 || error.status === 403 || error.status === 400)
+					return {
+						success: false,
+						error: error.error.error || error.message
+					};
+			}
+
+			throw error;
+		}
+	}
+
+	/**
+	 * Check if current user has access to group
+	 *
+	 * @param {string} authToken JWT token
+	 * @param {string} groupName Group name
+	 * @returns {Promise<CheckGroupAccessResult>} True if user has access
+	 */
+	async checkGroupAccess(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<CheckGroupAccessResult>> {
+		try {
+			const response = await firstValueFrom(
+				this.http.get<{hasAccess: boolean, groupName: string}>(
+					`/api/groups/name/${encodeURIComponent(groupName)}/check-access`,
+					CreateConfig.createAuthConfig(authToken)
+				)
+			);
+			const checkGroupAccessResult = new CheckGroupAccessResult(
+				response.hasAccess,
+				response.groupName
+			);
+
+			return {
+				success: true,
+				data: checkGroupAccessResult
+			};
+		} catch (error) {
+			console.error('Ошибка проверки доступа к группе:', error);
+			return {
+				success: false,
+				error: 'Ошибка проверки доступа к группе',
+				data: new CheckGroupAccessResult()
+			};
+		}
+	}
+
+	/**
+	 * Search groups by name pattern (admin only)
+	 *
+	 * @param {string} authToken JWT token
+	 * @param {string} pattern Search pattern
+	 * @returns {Promise<Array<GroupBasicInfo>|ErrorContainer>} Array of groups or error object
+	 */
+	async searchGroups(authToken: string, pattern: string): Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>> {
+		try {
+			const response = await firstValueFrom(
+				this.http.get<{groups: Array<any>}>(
+					`/api/groups/search/${encodeURIComponent(pattern)}`,
+					CreateConfig.createAuthConfig(authToken)
+				)
+			);
+
+			return {
+				success: true,
+				data: response.groups.map((group: any) =>
+					new GroupBasicInfo(
+						group.name,
+						group.membersCount,
+						group.creatorEmail
+					)
+				)
+			};
+		} catch (error) {
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 403 || error.error || error.error.error)
+					return {
+						success: false,
+						error: `Требуются права администратора`
+					}
+			}
+
+			throw error;
+		}
+	}
+
+	/**
+	 * Check membership in group
+	 *
+	 * @param {string} authToken JWT token
+	 * @param {string} groupName Group name
+	 * @returns {Promise<CheckMembershipResult>} Object with isMember and groupExists
+	 */
+	async checkMembership(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<CheckMembershipResult>> {
+		try {
+			const response = await firstValueFrom(
+				this.http.get<{isMember: boolean, groupExists: boolean}>(
+					`/api/groups/name/${encodeURIComponent(groupName)}/membership`,
+					CreateConfig.createAuthConfig(authToken)
+				)
+			);
+
+			return { 
+				success: true,
+				data: {
+					isMember: response.isMember,
+					groupExists: response.groupExists 
 				}
 			};
 		} catch (error) {

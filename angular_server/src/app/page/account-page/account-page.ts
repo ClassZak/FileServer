@@ -161,7 +161,7 @@ export class AccountPage implements OnInit {
 			const token = AuthService.getToken();
 			if (!token)
 				throw new Error('У вас нет токена авторизации');
-			const groupsResult = await GroupService.getMyGroups(token);
+			const groupsResult = await GroupService.getMyGroupsStatic(token);
 			
 			if (!groupsResult.success) {
 				throw new Error(`Ошибка загрузки групп:${groupsResult.error}`);
@@ -184,7 +184,7 @@ export class AccountPage implements OnInit {
 			if(token === null)
 				throw new Error("У вас нет токена авторизации");
 			if(this.isAdmin) {
-				const response = await GroupService.getAllGroups(token);
+				const response = await GroupService.getAllGroupsStatic(token);
 				if (!response.success)
 					throw new Error(response.error);
 				if (Array.isArray(response.data))
@@ -237,7 +237,7 @@ export class AccountPage implements OnInit {
 				throw new Error('Отсутствует токен авторизации');
 			if (!this.user)
 				throw new Error('Объект данных пользователя не определён');
-			const result = await UserService.updateUserPassword(token, this.user.email, new UpdatePasswordRequest(passwordData.oldPassword, passwordData.newPassword));
+			const result = await UserService.updateUserPasswordStatic(token, this.user.email, new UpdatePasswordRequest(passwordData.oldPassword, passwordData.newPassword));
 			if (result.success)
 				alert('Пароль успешно обновлен!');
 			else
@@ -278,7 +278,7 @@ export class AccountPage implements OnInit {
 			if (!token) throw new Error('Нет токена авторизации');
 			if (!this.user) throw new Error('Пользователь не определён');
 
-			const result = await GroupService.addUserToGroup(token, selectedGroupName, this.user.email);
+			const result = await GroupService.addUserToGroupStatic(token, selectedGroupName, this.user.email);
 			this.setIsAddAdminToGroupModalOpen(false);
 
 			if (result.success)

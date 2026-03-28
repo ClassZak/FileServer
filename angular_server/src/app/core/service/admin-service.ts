@@ -54,7 +54,6 @@ export class AdminService {
 					CreateConfig.createAuthConfigNew(authToken)
 				)
 			);
-			this.http.get('/api/admin/is-admin', CreateConfig.createAuthConfigNew(authToken));
 			
 			return {success: response.isAdmin };
 		} catch (error) {
