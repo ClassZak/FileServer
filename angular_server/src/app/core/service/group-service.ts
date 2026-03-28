@@ -593,7 +593,7 @@ export class GroupService {
 			const response = await firstValueFrom(
 				this.http.get<{group: any}>(
 					`/api/groups/name/${encodeURIComponent(groupName)}/full`,
-					CreateConfig.createAuthConfig(authToken)
+					CreateConfig.createAuthConfigNew(authToken)
 				)
 			);
 
@@ -740,10 +740,12 @@ export class GroupService {
 	 */
 	async createGroup(authToken: string, groupCreateModel: GroupCreateModel): Promise<DefaultServiceResult> {
 		try {
-			this.http.post(
-				'/api/groups',
-				groupCreateModel,
-				CreateConfig.createAuthConfig(authToken)
+			await firstValueFrom(
+				this.http.post(
+					'/api/groups',
+					groupCreateModel,
+					CreateConfig.createAuthConfig(authToken)
+				)
 			);
 
 			return {success: true};

@@ -321,10 +321,12 @@ export class UserService {
 	 */
 	async updateUser(authToken: string, email: string, user: User): Promise<DefaultServiceResult> {
 		try {
-			this.http.put(
-				`/api/users/update/${encodeURIComponent(email)}`,
-				user,
-				CreateConfig.createAuthConfig(authToken)
+			await firstValueFrom(
+				this.http.put(
+					`/api/users/update/${encodeURIComponent(email)}`,
+					user,
+					CreateConfig.createAuthConfig(authToken)
+				)
 			);
 			return {
 				success: true

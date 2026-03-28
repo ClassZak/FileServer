@@ -424,10 +424,12 @@ export class FileService {
 	 */
 	async createFolder(token: string, path: string, folderName: string): Promise<DefaultServiceResult> {
 		try {
-			this.http.post(
-				'/api/files/create-folder',
-				{ path, folderName: folderName.trim() },
-				CreateConfig.createAuthConfigNew(token)	
+			await firstValueFrom(
+				this.http.post(
+					'/api/files/create-folder',
+					{ path, folderName: folderName.trim() },
+					CreateConfig.createAuthConfigNew(token)	
+				)
 			);
 
 			return {success: true};
@@ -458,9 +460,11 @@ export class FileService {
 	 */
 	async deleteItem(token: string, itemPath: string): Promise<DefaultServiceResult> {
 		try {
-			this.http.delete(
-				`/api/files/delete?path=${encodeURIComponent(itemPath)}`,
-				CreateConfig.createAuthConfigNew(token)
+			await firstValueFrom(
+				this.http.delete(
+					`/api/files/delete?path=${encodeURIComponent(itemPath)}`,
+					CreateConfig.createAuthConfigNew(token)
+				)
 			);
 
 			return {success: true};
