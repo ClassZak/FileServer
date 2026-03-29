@@ -576,7 +576,10 @@ export class GroupService {
 					};
 			}
 
-			throw error;
+			return {
+				success: false,
+				error: (error as Error).message
+			}
 		}
 	}
 
@@ -649,7 +652,10 @@ export class GroupService {
 					};
 			}
 
-			throw error;
+			return {
+				success: false,
+				error: (error as Error).message
+			}
 		}
 	}
 
@@ -664,7 +670,7 @@ export class GroupService {
 			const response = await firstValueFrom(
 				this.http.get<{groups: any}>(
 					'/api/groups/my',
-					CreateConfig.createAuthConfig(authToken)
+					CreateConfig.createAuthConfigNew(authToken)
 				)
 			);
 
@@ -688,7 +694,10 @@ export class GroupService {
 					};
 			}
 
-			throw error;
+			return {
+				success: false,
+				error: (error as Error).message
+			};
 		}
 	}
 
@@ -703,7 +712,7 @@ export class GroupService {
 			const response = await firstValueFrom(
 				this.http.get<{groups: any}>(
 					'/api/groups',
-					CreateConfig.createAuthConfig(authToken)	
+					CreateConfig.createAuthConfigNew(authToken)	
 				)
 			);
 
@@ -727,7 +736,10 @@ export class GroupService {
 					};
 			}
 
-			throw error;
+			return {
+				success: false,
+				error: (error as Error).message
+			};
 		}
 	}
 
@@ -744,7 +756,7 @@ export class GroupService {
 				this.http.post(
 					'/api/groups',
 					groupCreateModel,
-					CreateConfig.createAuthConfig(authToken)
+					CreateConfig.createAuthConfigNew(authToken)
 				)
 			);
 
@@ -758,7 +770,10 @@ export class GroupService {
 					};
 			}
 
-			throw error;
+			return {
+				success: false,
+				error: (error as Error).message
+			};
 		}
 	}
 
@@ -776,7 +791,7 @@ export class GroupService {
 				this.http.put<{message?: string}>(
 					`/api/groups/name/${encodeURIComponent(groupName)}`,
 					updateData,
-					CreateConfig.createAuthConfig(authToken)
+					CreateConfig.createAuthConfigNew(authToken)
 				)
 			);
 
@@ -793,7 +808,10 @@ export class GroupService {
 					};
 			}
 
-			throw error;
+			return {
+				success: false,
+				error: (error as Error).message
+			};
 		}
 	}
 
@@ -809,7 +827,7 @@ export class GroupService {
 			const response = await firstValueFrom(
 				this.http.delete<{success: boolean, message: string}>(
 					`/api/groups/name/${encodeURIComponent(groupName)}`,
-					CreateConfig.createAuthConfig(authToken)
+					CreateConfig.createAuthConfigNew(authToken)
 				)
 			);
 
@@ -826,7 +844,10 @@ export class GroupService {
 					};
 			}
 
-			throw error;
+			return {
+				success: false,
+				error: (error as Error).message
+			};
 		}
 	}
 
@@ -844,7 +865,7 @@ export class GroupService {
 				this.http.post<{success: boolean, message: string}>(
 					`/api/groups/name/${encodeURIComponent(groupName)}/users/${encodeURIComponent(userEmail)}`,
 					{},
-					CreateConfig.createAuthConfig(authToken)
+					CreateConfig.createAuthConfigNew(authToken)
 				)
 			);
 
@@ -861,7 +882,10 @@ export class GroupService {
 					};
 			}
 
-			throw error;
+			return {
+				success: false,
+				error: (error as Error).message
+			};
 		}
 	}
 
@@ -878,7 +902,7 @@ export class GroupService {
 			const response = await firstValueFrom(
 				this.http.delete<{success: boolean, message: string}>(
 					`/api/groups/name/${encodeURIComponent(groupName)}/users/${encodeURIComponent(userEmail)}`,
-					CreateConfig.createAuthConfig(authToken)
+					CreateConfig.createAuthConfigNew(authToken)
 				)
 			);
 
@@ -895,7 +919,10 @@ export class GroupService {
 					};
 			}
 
-			throw error;
+			return {
+				success: false,
+				error: (error as Error).message
+			};
 		}
 	}
 
@@ -911,7 +938,7 @@ export class GroupService {
 			const response = await firstValueFrom(
 				this.http.get<{hasAccess: boolean, groupName: string}>(
 					`/api/groups/name/${encodeURIComponent(groupName)}/check-access`,
-					CreateConfig.createAuthConfig(authToken)
+					CreateConfig.createAuthConfigNew(authToken)
 				)
 			);
 			const checkGroupAccessResult = new CheckGroupAccessResult(
@@ -945,7 +972,7 @@ export class GroupService {
 			const response = await firstValueFrom(
 				this.http.get<{groups: Array<any>}>(
 					`/api/groups/search/${encodeURIComponent(pattern)}`,
-					CreateConfig.createAuthConfig(authToken)
+					CreateConfig.createAuthConfigNew(authToken)
 				)
 			);
 
@@ -968,7 +995,10 @@ export class GroupService {
 					}
 			}
 
-			throw error;
+			return {
+				success: false,
+				error: (error as Error).message
+			};
 		}
 	}
 
@@ -984,7 +1014,7 @@ export class GroupService {
 			const response = await firstValueFrom(
 				this.http.get<{isMember: boolean, groupExists: boolean}>(
 					`/api/groups/name/${encodeURIComponent(groupName)}/membership`,
-					CreateConfig.createAuthConfig(authToken)
+					CreateConfig.createAuthConfigNew(authToken)
 				)
 			);
 

@@ -247,7 +247,7 @@ export class UserService {
 				this.http.post<DefaultServiceResult>(
 					'/api/users/new',
 					user,
-					CreateConfig.createAuthConfig(authToken)
+					CreateConfig.createAuthConfigNew(authToken)
 				)
 			);
 
@@ -261,7 +261,10 @@ export class UserService {
 					};
 			}
 
-			throw error;
+			return {
+				success: false,
+				error: (error as Error).message
+			}
 		}
 	}
 
@@ -276,7 +279,7 @@ export class UserService {
 			const response = await firstValueFrom(
 				this.http.get<{user: any}>(
 					`/api/users/user/${encodeURIComponent(userEmail)}`,
-					CreateConfig.createAuthConfig(authToken)
+					CreateConfig.createAuthConfigNew(authToken)
 				)
 			);
 
@@ -308,7 +311,10 @@ export class UserService {
 					};
 			}
 
-			throw error;
+			return {
+				success: false,
+				error: (error as Error).message
+			}
 		}
 	}
 
@@ -325,7 +331,7 @@ export class UserService {
 				this.http.put(
 					`/api/users/update/${encodeURIComponent(email)}`,
 					user,
-					CreateConfig.createAuthConfig(authToken)
+					CreateConfig.createAuthConfigNew(authToken)
 				)
 			);
 			return {
@@ -358,7 +364,7 @@ export class UserService {
 			const response = await firstValueFrom(
 				this.http.delete<DefaultServiceResult>(
 					`/api/users/delete/${encodeURIComponent(user.email)}`,
-					CreateConfig.createAuthConfig(authToken)
+					CreateConfig.createAuthConfigNew(authToken)
 				)
 			);
 
@@ -389,7 +395,7 @@ export class UserService {
 			const response = await firstValueFrom(
 				this.http.get<{users: Array<any>}>(
 					'/api/users/users',
-					CreateConfig.createAuthConfig(authToken)
+					CreateConfig.createAuthConfigNew(authToken)
 				)
 			);
 
@@ -419,7 +425,10 @@ export class UserService {
 					};
 			}
 
-			throw error;
+			return {
+				success: false,
+				error: (error as Error).message
+			}
 		}
 	}
 
@@ -440,7 +449,7 @@ export class UserService {
 				this.http.put<DefaultServiceResult>(
 					`/api/users/update-password/${encodeURIComponent(email)}`,
 					passwordData,
-					CreateConfig.createAuthConfig(authToken)
+					CreateConfig.createAuthConfigNew(authToken)
 				)
 			);
 			return response as DefaultServiceResult;
@@ -453,7 +462,10 @@ export class UserService {
 					};
 			}
 
-			throw error;
+			return {
+				success: false,
+				error: (error as Error).message
+			}
 		}
 	}
 }

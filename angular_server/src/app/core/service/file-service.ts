@@ -240,16 +240,22 @@ export class FileService {
 			return {success: true};
 		} catch (error: any) {
 			console.error('FileService.deleteItem error:', error);
-			const errorData = error.response?.data;
-			if (errorData?.error) {
-				throw new Error(errorData.error);
-			} else if (error.response?.status === 403) {
-				throw new Error('У вас нет прав на удаление.');
-			} else if (error.response?.status === 404) {
-				throw new Error('Файл или папка не найдена.');
-			} else {
-				throw new Error('Ошибка удаления.');
+			let errorMessage = undefined;
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 403)
+					errorMessage = 'У вас нет прав на удаление.';
+				else if (error.status === 404)
+					errorMessage = 'Файл или папка не найдена.';
+				else
+					errorMessage = 'Ошибка удаления.';
 			}
+			else
+				errorMessage = (error as Error).message;
+			
+			return {
+				success: false,
+				error: errorMessage
+			};
 		}
 	}
 
@@ -363,7 +369,16 @@ export class FileService {
 			};
 		} catch (error) {
 			console.error('FileService.find error:', error);
-			throw new Error('Search failed.');
+			let errorMessage = undefined;
+			if (error instanceof HttpErrorResponse)
+				errorMessage = error.error.error || error.message;
+			else
+				errorMessage = (error as Error).message;
+
+			return {
+				success: false,
+				error: errorMessage
+			};
 		}
 	}
 
@@ -394,21 +409,25 @@ export class FileService {
 				data: response
 			};
 		} catch (error) {
+			let errorMessage = undefined;
 			if (error instanceof HttpErrorResponse){
 				if (error.error?.message)
-					throw new Error(error.error?.message);
+					errorMessage = error.error?.message;
 				if (error.message)
-					throw new Error(error.message);
+					errorMessage = error.message;
 				if (error.status === 403)
-					throw new Error('У вас нет прав на загрузку файлов в эту директорию.');
+					errorMessage = 'У вас нет прав на загрузку файлов в эту директорию.';
 				if (error.status === 400)
-					throw new Error(`Ошибка отправки файла: ${error?.error || 'неизвестная ошибка'}`);
-				
+					errorMessage = error?.error || 'неизвестная ошибка';
 			}
+
+			errorMessage = !errorMessage ? 
+				'Ошибка отправки файла.' : 
+				`Ошибка отправки файла: ${errorMessage}`;
 
 			return {
 				success: false,
-				error: 'Не удалось отправить файл.'
+				error: errorMessage
 			}
 		}
 	}
@@ -435,18 +454,24 @@ export class FileService {
 			return {success: true};
 		} catch (error) {
 			console.error('FileService.createFolder error:', error);
+			let errorMessage = undefined;
 			if (error instanceof HttpErrorResponse) {
 				if (error.error?.message)
-					throw new Error(error.error?.message);
+					errorMessage = error.error?.message;
 				if (error.message)
-					throw new Error(error.message);
+					errorMessage = error.message;
 				if (error.status === 403)
-					throw new Error('У вас нет прав для создания директории здесь.');
+					errorMessage = 'У вас нет прав для создания директории здесь.';
 				else
-					throw new Error('Не удалось создания директорию.');
+					errorMessage = 'Не удалось создания директорию.';
 			}
 
-			return {success: false};
+			errorMessage = !errorMessage ? 'Ошибка создания директории.' : `Ошибка создания директории: ${errorMessage}`;
+
+			return {
+				success: false,
+				error: errorMessage
+			};
 		}
 	}
 
@@ -470,21 +495,28 @@ export class FileService {
 			return {success: true};
 		} catch (error) {
 			console.error('FileService.deleteItem error:', error);
+			let errorMessage = undefined;
 			if (error instanceof HttpErrorResponse) {
 				if (error.error?.message)
-					throw new Error(error.error?.message);
+					errorMessage = error.error?.message;
 				if (error.message)
-					throw new Error(error.message);
+					errorMessage = error.message;
 
 				if (error.status === 403)
-					throw new Error('У вас нет прав на удаление.');
+					errorMessage = 'У вас нет прав на удаление.';
 				else if (error.status === 404)
-					throw new Error('Файл или папка не найдена.');
-				else
-					throw new Error('Ошибка удаления.');
+					errorMessage = 'Файл или папка не найдена.';
 			}
 
-			return {success: false};
+			if (!errorMessage)
+				errorMessage = 'Ошибка удаления'
+			else
+				errorMessage = `Ошибка удаления:${errorMessage}`;
+
+			return {
+				success: false,
+				error: errorMessage
+			};
 		}
 	}
 
@@ -514,19 +546,24 @@ export class FileService {
 					contentType: response.headers.get('content-type')!
 				}
 			};
-		} catch (error: any) {
+		} catch (error) {
 			console.error('FileService.downloadFile error:', error);
-
+			let errorMessage = undefined;
 			if (error instanceof HttpErrorResponse) {
-				if (error.status === 403) {
-					throw new Error('У вас нет права на загрузку данного файла.');
-				} else if (error.status === 404) {
-					throw new Error('Файл не найден.');
-				} else {
-					throw new Error('Ошибка загрузки.');
-				}
+				if (error.status === 403)
+					errorMessage = 'У вас нет права на загрузку данного файла.';
+				else if (error.status === 404)
+					errorMessage = 'Файл не найден.';
+				else
+					errorMessage = 'Ошибка загрузки.';
 			}
-			throw new Error('Ошибка загрузки.');
+			else
+				errorMessage = `Ошибка загрузки:${(error as Error).message}`;
+
+			return {
+				success: false,
+				error: errorMessage
+			};
 		}
 	}
 }
