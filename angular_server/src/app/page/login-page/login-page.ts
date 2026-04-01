@@ -65,6 +65,7 @@ export class LoginPage {
 		} catch (error) {
 			console.error('Login failed:', error);
 			this.error = 'Произошла ошибка при входе';
+			// TODO: notice
 		} finally {
 			this.isSubmiting = false;
 		}
@@ -105,15 +106,16 @@ export class LoginPage {
 		try {
 			const authResult: DefaultServiceResultWithData<CheckAuthResult> = await AuthService.checkAuthStatic();
 			
-			if (!authResult.success || authResult.data?.authenticated)
-				console.error('Аутентификация не пройдена:', authResult.error);
+			if (!authResult.success || !authResult.data?.authenticated)
+				throw new Error(`Аутентификация не пройдена:${authResult.error}`);
 			else {
 				this.router.navigate(['/account']);
 				return;
 			}
 		} catch (error) {
-			this.router.navigate(['/account']);
+			console.error(error);
 			return;
+			// TODO: notice
 		}
 	}
 

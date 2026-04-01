@@ -8,7 +8,6 @@ import { GroupCreateModel } from '../model/group-create-model';
 import { GroupUpdateModel } from '../model/group-update-model';
 import { CreateConfig } from './create-config';
 import { DefaultServiceResult, DefaultServiceResultWithData } from '../model/default-server-result';
-import { ErrorContainer } from '../model/error-container';
 import { GroupFullDetailsAdminResponse, GroupFullDetailsResponse } from '../model/api-response-types';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -23,6 +22,48 @@ export class CheckGroupAccessResult {
 		public groupName: string = ''
 	) {};
 }
+
+
+
+/**
+ * Imterface for GET /api/groups/my requests
+ */
+interface ApiGroupsMyServerResponse {
+	groups: Array<GroupBasicInfo>
+}
+
+/**
+ * Imterface for GET /api/groups requests
+ */
+interface ApiGroupsServerResponse {
+	groups: Array<GroupBasicInfo>
+}
+
+/**
+ * Imterface for GET /api/groups/name/${encodeURIComponent(groupName)}/check-access requests
+ */
+interface ApiGroupsNameGroupNameCheckAccessServerResponse {
+	hasAccess: boolean;
+	groupName: string;
+}
+
+/**
+ * Imterface for GET /api/groups/search/${encodeURIComponent(pattern)} requests
+ */
+interface ApiGroupsSearchPatternServerResponse {
+	groups: Array<GroupBasicInfo>;
+}
+
+/**
+ * Imterface for GET /api/groups/name/${encodeURIComponent(groupName)}/membership requests
+ */
+interface ApiGroupsNameGroupNameMemberShipServerResponse {
+	isMember: boolean;
+	groupExists: boolean;
+}
+
+
+
 
 /**
  * Service for working with groups via API
@@ -39,7 +80,7 @@ export class GroupService {
 	 *
 	 * @param {string} authToken JWT token
 	 * @param {string} groupName Group name
-	 * @returns {Promise<GroupFullDetailsResponse | null | ErrorContainer>} Object with "group" key or null if no access
+	 * @returns {Promise<DefaultServiceResultWithData<GroupFullDetailsResponse>>} Object with "group" key or null if no access
 	 */
 	static async getGroupFullDetailsStatic(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<GroupFullDetailsResponse>> {
 		try {
@@ -105,7 +146,7 @@ export class GroupService {
 	 *
 	 * @param {string} authToken JWT token
 	 * @param {string} groupName Group name
-	 * @returns {Promise<GroupFullDetailsAdminResponse | null | ErrorContainer>} Object with "group" key or null if no access or error object
+	 * @returns {Promise<DefaultServiceResultWithData<GroupFullDetailsAdminResponse>>} Object with "group" key or null if no access or error object
 	 */
 	static async getGroupFullDetailsAdminStatic(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<GroupFullDetailsAdminResponse>> {
 		try {
@@ -174,7 +215,7 @@ export class GroupService {
 	 * Get list of user's groups (without members)
 	 *
 	 * @param {string} authToken JWT token
-	 * @returns {Promise<Array<GroupBasicInfo>|ErrorContainer>} Array of groups or error object
+	 * @returns {Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>>} Array of groups or error object
 	 */
 	static async getMyGroupsStatic(authToken: string): Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>> {
 		try {
@@ -210,7 +251,7 @@ export class GroupService {
 	 * Get all groups (admin only, without members)
 	 *
 	 * @param {string} authToken JWT token
-	 * @returns {Promise<Array<GroupBasicInfo>|ErrorContainer>} Array of groups or error object
+	 * @returns {Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>>} Array of groups or error object
 	 */
 	static async getAllGroupsStatic(authToken: string): Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>> {
 		try {
@@ -438,7 +479,7 @@ export class GroupService {
 	 *
 	 * @param {string} authToken JWT token
 	 * @param {string} pattern Search pattern
-	 * @returns {Promise<Array<GroupBasicInfo>|ErrorContainer>} Array of groups or error object
+	 * @returns {Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>>} Array of groups or error object
 	 */
 	static async searchGroupsStatic(authToken: string, pattern: string): Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>> {
 		try {
@@ -520,12 +561,12 @@ export class GroupService {
 	 *
 	 * @param {string} authToken JWT token
 	 * @param {string} groupName Group name
-	 * @returns {Promise<GroupFullDetailsResponse | null | ErrorContainer>} Object with "group" key or null if no access
+	 * @returns {Promise<DefaultServiceResultWithData<GroupFullDetailsResponse>>} Object with "group" key or null if no access
 	 */
 	async getGroupFullDetails(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<GroupFullDetailsResponse>> {
 		try {
 			const response = await firstValueFrom(
-				this.http.get<{group: any}>(
+				this.http.get<GroupFullDetailsResponse>(
 					`/api/groups/name/${encodeURIComponent(groupName)}/full`,
 					CreateConfig.createAuthConfigNew(authToken)	
 				)
@@ -589,12 +630,12 @@ export class GroupService {
 	 *
 	 * @param {string} authToken JWT token
 	 * @param {string} groupName Group name
-	 * @returns {Promise<GroupFullDetailsAdminResponse | null | ErrorContainer>} Object with "group" key or null if no access or error object
+	 * @returns {Promise<DefaultServiceResultWithData<GroupFullDetailsAdminResponse>>} Object with "group" key or null if no access or error object
 	 */
 	async getGroupFullDetailsAdmin(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<GroupFullDetailsAdminResponse>> {
 		try {
 			const response = await firstValueFrom(
-				this.http.get<{group: any}>(
+				this.http.get<GroupFullDetailsAdminResponse>(
 					`/api/groups/name/${encodeURIComponent(groupName)}/full`,
 					CreateConfig.createAuthConfigNew(authToken)
 				)
@@ -611,7 +652,7 @@ export class GroupService {
 				groupData.creator.name,
 				groupData.creator.patronymic,
 				groupData.creator.email,
-				toDate(groupData.creator.createdAt)
+				groupData.creator.createdAt
 			);
 
 			// Transform members with date conversion
@@ -663,12 +704,12 @@ export class GroupService {
 	 * Get list of user's groups (without members)
 	 *
 	 * @param {string} authToken JWT token
-	 * @returns {Promise<Array<GroupBasicInfo>|ErrorContainer>} Array of groups or error object
+	 * @returns {Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>>} Array of groups or error object
 	 */
 	async getMyGroups(authToken: string): Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>> {
 		try {
 			const response = await firstValueFrom(
-				this.http.get<{groups: any}>(
+				this.http.get<ApiGroupsMyServerResponse>(
 					'/api/groups/my',
 					CreateConfig.createAuthConfigNew(authToken)
 				)
@@ -676,14 +717,7 @@ export class GroupService {
 
 			return {
 				success: true,
-				data:
-					response.groups.map((group: any) =>
-					new GroupBasicInfo(
-						group.name,
-						group.membersCount,
-						group.creatorEmail
-					)
-				)
+				data: response.groups
 			};
 		} catch (error) {
 			if (error instanceof HttpErrorResponse) {
@@ -705,12 +739,12 @@ export class GroupService {
 	 * Get all groups (admin only, without members)
 	 *
 	 * @param {string} authToken JWT token
-	 * @returns {Promise<Array<GroupBasicInfo>|ErrorContainer>} Array of groups or error object
+	 * @returns {Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>>} Array of groups or error object
 	 */
 	async getAllGroups(authToken: string): Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>> {
 		try {
 			const response = await firstValueFrom(
-				this.http.get<{groups: any}>(
+				this.http.get<ApiGroupsServerResponse>(
 					'/api/groups',
 					CreateConfig.createAuthConfigNew(authToken)	
 				)
@@ -718,14 +752,7 @@ export class GroupService {
 
 			return {
 				success: true,
-				data: 
-					response.groups.map((group: any) =>
-					new GroupBasicInfo(
-						group.name,
-						group.membersCount,
-						group.creatorEmail
-					)
-				)
+				data: response.groups
 			};
 		} catch (error) {
 			if (error instanceof HttpErrorResponse) {
@@ -788,7 +815,7 @@ export class GroupService {
 	async updateGroup(authToken: string, groupName: string, updateData: GroupUpdateModel): Promise<DefaultServiceResult> {
 		try {
 			const response = await firstValueFrom(
-				this.http.put<{message?: string}>(
+				this.http.put<DefaultServiceResult>(
 					`/api/groups/name/${encodeURIComponent(groupName)}`,
 					updateData,
 					CreateConfig.createAuthConfigNew(authToken)
@@ -825,7 +852,7 @@ export class GroupService {
 	async deleteGroup(authToken: string, groupName: string): Promise<DefaultServiceResult> {
 		try {
 			const response = await firstValueFrom(
-				this.http.delete<{success: boolean, message: string}>(
+				this.http.delete<DefaultServiceResult>(
 					`/api/groups/name/${encodeURIComponent(groupName)}`,
 					CreateConfig.createAuthConfigNew(authToken)
 				)
@@ -862,7 +889,7 @@ export class GroupService {
 	async addUserToGroup(authToken: string, groupName: string, userEmail: string): Promise<DefaultServiceResult> {
 		try {
 			const response = await firstValueFrom(
-				this.http.post<{success: boolean, message: string}>(
+				this.http.post<DefaultServiceResult>(
 					`/api/groups/name/${encodeURIComponent(groupName)}/users/${encodeURIComponent(userEmail)}`,
 					{},
 					CreateConfig.createAuthConfigNew(authToken)
@@ -900,7 +927,7 @@ export class GroupService {
 	async removeUserFromGroup(authToken: string, groupName: string, userEmail: string): Promise<DefaultServiceResult> {
 		try {
 			const response = await firstValueFrom(
-				this.http.delete<{success: boolean, message: string}>(
+				this.http.delete<DefaultServiceResult>(
 					`/api/groups/name/${encodeURIComponent(groupName)}/users/${encodeURIComponent(userEmail)}`,
 					CreateConfig.createAuthConfigNew(authToken)
 				)
@@ -936,7 +963,7 @@ export class GroupService {
 	async checkGroupAccess(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<CheckGroupAccessResult>> {
 		try {
 			const response = await firstValueFrom(
-				this.http.get<{hasAccess: boolean, groupName: string}>(
+				this.http.get<ApiGroupsNameGroupNameCheckAccessServerResponse>(
 					`/api/groups/name/${encodeURIComponent(groupName)}/check-access`,
 					CreateConfig.createAuthConfigNew(authToken)
 				)
@@ -965,12 +992,12 @@ export class GroupService {
 	 *
 	 * @param {string} authToken JWT token
 	 * @param {string} pattern Search pattern
-	 * @returns {Promise<Array<GroupBasicInfo>|ErrorContainer>} Array of groups or error object
+	 * @returns {Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>>} Array of groups or error object
 	 */
 	async searchGroups(authToken: string, pattern: string): Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>> {
 		try {
 			const response = await firstValueFrom(
-				this.http.get<{groups: Array<any>}>(
+				this.http.get<ApiGroupsSearchPatternServerResponse>(
 					`/api/groups/search/${encodeURIComponent(pattern)}`,
 					CreateConfig.createAuthConfigNew(authToken)
 				)
@@ -1012,7 +1039,7 @@ export class GroupService {
 	async checkMembership(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<CheckMembershipResult>> {
 		try {
 			const response = await firstValueFrom(
-				this.http.get<{isMember: boolean, groupExists: boolean}>(
+				this.http.get<ApiGroupsNameGroupNameMemberShipServerResponse>(
 					`/api/groups/name/${encodeURIComponent(groupName)}/membership`,
 					CreateConfig.createAuthConfigNew(authToken)
 				)
@@ -1022,7 +1049,7 @@ export class GroupService {
 				success: true,
 				data: {
 					isMember: response.isMember,
-					groupExists: response.groupExists 
+					groupExists: response.groupExists
 				}
 			};
 		} catch (error) {

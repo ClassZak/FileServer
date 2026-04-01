@@ -7,6 +7,12 @@ import { firstValueFrom } from 'rxjs';
 
 
 /**
+ * Interface for response for isAdmin method
+ */
+export interface IsAdminServerResponse{
+	isAdmin: boolean
+};
+/**
  * Class for Adminstrator database entity
  */
 @Injectable({ providedIn: 'root' })
@@ -49,7 +55,7 @@ export class AdminService {
 	public async isAdmin(authToken: string): Promise<DefaultServiceResult>{
 		try {
 			const response = await firstValueFrom(
-				this.http.get<{isAdmin: boolean}>(
+				this.http.get<IsAdminServerResponse>(
 					'/api/admin/is-admin',
 					CreateConfig.createAuthConfigNew(authToken)
 				)

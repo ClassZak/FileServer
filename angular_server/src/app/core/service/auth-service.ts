@@ -20,6 +20,38 @@ export interface CheckAuthResult {
 
 
 
+
+/**
+ * Interface for /api/auth/login and /api/auth/login-by-snp requests
+ */
+interface LoginResultServerResponse {
+	error?: string;
+	token?: string;
+	refreshToken?: string;
+	user?: User;
+}
+
+/**
+ * Interface for /api/auth/verify requests
+ */
+interface ApiAuthVerifyServerResponse {
+	valid: boolean;
+	user?: User;
+}
+
+/**
+ * Interface for /api/auth/refresh requests
+ */
+interface ApiAuthRefreshServerResponse {
+	error?: string;
+	token?: string;
+	refreshToken?: string;
+	user?: User;
+}
+
+
+
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
 	constructor(private http: HttpClient) {}
@@ -249,7 +281,7 @@ export class AuthService {
 	public async loginByEmail(email: string, password: string): Promise<DefaultServiceResultWithData<LoginResult>>{
 		try{
 			const response = await firstValueFrom(
-				this.http.post<{token: string, refreshToken: string, user: User}>(
+				this.http.post<LoginResultServerResponse>(
 					'/api/auth/login', {
 						email,
 						password
@@ -257,7 +289,7 @@ export class AuthService {
 				)
 			);
 			
-			if (response.token){
+			if (response.token && response.refreshToken && response.user) {
 				localStorage.setItem('token', response.token);
 				localStorage.setItem('refreshToken', response.refreshToken);
 				return {
@@ -269,6 +301,7 @@ export class AuthService {
 					}
 				};
 			}
+
 			return {
 				success: false,
 				error: 'Ошибка сервера. Попробуйте позже'
@@ -294,7 +327,7 @@ export class AuthService {
 	public async loginBySnp(surname: string, name: string, patronymic: string, password: string): Promise<DefaultServiceResultWithData<LoginResult>>{
 		try{
 			const response = await firstValueFrom(
-				this.http.post<{token: string, refreshToken: string, user: User}>(
+				this.http.post<LoginResultServerResponse>(
 					'/api/auth/login-by-snp', {
 						surname,
 						name,
@@ -304,7 +337,7 @@ export class AuthService {
 				)
 			);
 			
-			if (response.token){
+			if (response.token && response.refreshToken && response.user){
 				localStorage.setItem('token', response.token);
 				localStorage.setItem('refreshToken', response.refreshToken);
 				return {
@@ -316,6 +349,7 @@ export class AuthService {
 					}
 				};
 			}
+
 			return {
 				success: false,
 				error: 'Ошибка сервера. Попробуйте позже'
@@ -347,7 +381,7 @@ export class AuthService {
 				};
 			}
 			const response = await firstValueFrom(
-				this.http.get<{valid: boolean, user: User}>(
+				this.http.get<ApiAuthVerifyServerResponse>(
 					'/api/auth/verify',
 					CreateConfig.createAuthConfigNew(token)
 				)
@@ -374,7 +408,7 @@ export class AuthService {
 			return {
 				success: false,
 				error: error instanceof HttpErrorResponse ? 
-					error.error?.message : 
+					error.error.error || error.message : 
 					'Ошибка проверки токена'
 			}
 		}
@@ -396,19 +430,19 @@ export class AuthService {
 
 			const response =
 			await firstValueFrom(
-				this.http.post<{token: string, refreshToken: string}>(
+				this.http.post<ApiAuthRefreshServerResponse>(
 					'/api/auth/refresh', {
 						refreshToken
 					}
 				)
 			);
 
-			if (response.token) {
+			if (response.token && response.refreshToken && response.user) {
 				localStorage.setItem('token', response.token);
 				localStorage.setItem('refreshToken', response.refreshToken);
 				
 				const userResponse =
-				await firstValueFrom(this.http.get<{user: User}>(
+				await firstValueFrom(this.http.get<ApiAuthVerifyServerResponse>(
 					'/api/auth/verify',
 					CreateConfig.createAuthConfigNew(response.token)
 				));

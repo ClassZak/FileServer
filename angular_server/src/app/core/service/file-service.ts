@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import { FileInfo } from '../model/file-info';
 import { FolderInfo } from '../model/folder-info';
-import { ErrorContainer } from '../model/error-container';
 import { DefaultServiceResultWithData, DefaultServiceResult } from '../model/default-server-result';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -34,6 +33,21 @@ export interface DownloadFileResult {
 	blob: Blob;
 	contentType?: string;
 }
+
+
+
+
+/**
+ * Imterface for /api/files/list?path= requests
+ */
+interface ApiFilesListWithPath {
+	files?: Array<FileInfo>;
+	folders?: Array<FolderInfo>;
+	error?: string;
+}
+
+
+
 
 /**
  * Service for interacting with file system operations via the backend API.
@@ -324,11 +338,13 @@ export class FileService {
 	async loadDirectory(token: string, path: string): Promise<DefaultServiceResultWithData<DirectoryList>> {
 		try {
 			const response = await firstValueFrom(
-				this.http.get<{files: FileInfo[]; folders: FolderInfo[]}>(
+				this.http.get<ApiFilesListWithPath>(
 				`/api/files/list?path=${encodeURIComponent(path)}`,
 					CreateConfig.createAuthConfigNew(token)
 				)
 			);
+			if (response.error || (!response.files || !response.folders))
+				throw new Error(response.error);
 
 			return {
 				success: true,
@@ -342,7 +358,10 @@ export class FileService {
 					error: error.error?.message || error.message || 'Failed to load directory contents.'
 				};
 			}
-			return {success: false};
+			return {
+				success: false,
+				error: (error as Error).message
+			};
 		}
 	}
 

@@ -7,7 +7,6 @@ import { AuthService } from '../../core/service/auth-service';
 import { FileService, DirectoryList, SearchResults } from '../../core/service/file-service';
 import { FileInfo } from '../../core/model/file-info';
 import { FolderInfo } from '../../core/model/folder-info';
-import { ErrorContainer } from '../../core/model/error-container';
 
 // UI Components (adjust paths as needed in your project)
 import { AppHeader } from '../../app-header/app-header';
@@ -317,7 +316,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			const result = await FileService.loadDirectoryStatic(token, this.currentPath);
 
 			if (!result.success) {
-				this.error = (result as ErrorContainer).error || 'Unknown error';
+				this.error = result.error || 'Unknown error';
 				this.files = [];
 				this.folders = [];
 				this.filesModelTableDataObject.models = this.files;

@@ -17,6 +17,28 @@ export class ReadUserResponse {
 	public user?: UserAdminModel;
 }
 
+
+
+
+/**
+ * Imterface for /api/users/users requests
+ */
+interface ApiUsersUsersServerResponse {
+	error?: string;
+	users?: Array<UserAdminModel>
+}
+
+/**
+ * Imterface for /api/users/user/${encodeURIComponent(userEmail)} requests
+ */
+interface ApiUsersUserUserEmailServerResponse {
+	error?: string;
+	user?: UserAdminModel
+}
+
+
+
+
 /**
  * Service for user management operations
  */
@@ -277,29 +299,19 @@ export class UserService {
 	async readUser(authToken: string, userEmail: string): Promise<DefaultServiceResultWithData<ReadUserResponse>> {
 		try {
 			const response = await firstValueFrom(
-				this.http.get<{user: any}>(
+				this.http.get<ApiUsersUserUserEmailServerResponse>(
 					`/api/users/user/${encodeURIComponent(userEmail)}`,
 					CreateConfig.createAuthConfigNew(authToken)
 				)
 			);
 
-			const userData = response.user;
-
-			// Convert ISO date string to Date object (assuming server sends without timezone)
-			const createdAtDate = new Date(userData.createdAt);
-
-			const userModel = new UserAdminModel(
-				userData.surname,
-				userData.name,
-				userData.patronymic,
-				userData.email,
-				createdAtDate
-			);
-
+			if (response.error || !response.user)
+				throw new Error(response.error || 'Ошибка получения ответа от сервера');
+			
 			return {
 				success: true,
 				data: {
-					user: userModel
+					user: response.user
 				}
 			};
 		} catch (error) {
@@ -393,14 +405,19 @@ export class UserService {
 	async readAllUsers(authToken: string): Promise<DefaultServiceResultWithData<ReadUsersResponse>> {
 		try {
 			const response = await firstValueFrom(
-				this.http.get<{users: Array<any>}>(
+				this.http.get<ApiUsersUsersServerResponse>(
 					'/api/users/users',
 					CreateConfig.createAuthConfigNew(authToken)
 				)
 			);
+			if (response.error || !response.users)
+				return {
+					success: false,
+					error: response.error
+				};
 
 			const usersData = response.users;
-			const userModels = usersData.map((u: any) =>
+			const userModels = usersData.map((u: UserAdminModel) =>
 				new UserAdminModel(
 					u.surname,
 					u.name,
