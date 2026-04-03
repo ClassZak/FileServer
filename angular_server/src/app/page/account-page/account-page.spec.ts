@@ -15,7 +15,7 @@ describe('AccountPage', () => {
 	beforeEach(async () => {
 		TestBed.resetTestingModule();
 
-		// Моки сервисов
+		// Servicies mocks
 		const authServiceMock = {
 			checkAuthStatic: vi.fn().mockResolvedValue({
 				success: true,
@@ -41,7 +41,7 @@ describe('AccountPage', () => {
 		await TestBed.configureTestingModule({
 			imports: [
 				AccountPage,
-				RouterTestingModule.withRoutes([])	// Только RouterTestingModule
+				RouterTestingModule.withRoutes([])	// RouterTestingModule only
 			],
 			providers: [
 				{ provide: AuthService, useValue: authServiceMock },
@@ -55,7 +55,7 @@ describe('AccountPage', () => {
 		component = fixture.componentInstance;
 		router = TestBed.inject(Router);
 
-		// Перехватываем navigate, чтобы не было реального перехода
+		// We intercept navigate so that there is no real transition
 		vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
 		fixture.detectChanges();

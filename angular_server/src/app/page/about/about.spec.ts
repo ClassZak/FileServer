@@ -10,7 +10,7 @@ describe('About', () => {
 		TestBed.resetTestingModule();
 		await TestBed.configureTestingModule({
 			imports: [About],
-			providers: [provideRouter([])] // ✅ Добавлено
+			providers: [provideRouter([])]
 		}).compileComponents();
 
 		fixture = TestBed.createComponent(About);

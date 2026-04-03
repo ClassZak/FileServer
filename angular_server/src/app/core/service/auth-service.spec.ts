@@ -37,16 +37,16 @@ describe('AuthService (instance)', () => {
 
 			const resultPromise = service.tryRefreshToken();
 
-			// 1-й запрос: refresh
+			// 1st request: refresh
 			const refreshReq = httpMock.expectOne('/api/auth/refresh');
 			expect(refreshReq.request.method).toBe('POST');
 			expect(refreshReq.request.body).toEqual({ refreshToken: 'valid-refresh' });
 			refreshReq.flush(mockRefreshResponse);
 
-			// Даём время на отправку второго запроса
+			// Time for request
 			await new Promise(resolve => setTimeout(resolve, 0));
 
-			// 2-й запрос: verify
+			// 2nd request: verify
 			const verifyReq = httpMock.expectOne('/api/auth/verify');
 			expect(verifyReq.request.method).toBe('GET');
 			verifyReq.flush(mockUserResponse);

@@ -54,7 +54,7 @@ describe('FilesPage', () => {
 		await TestBed.configureTestingModule({
 			imports: [
 				FilesPageComponent,
-				RouterTestingModule.withRoutes([]) // Обеспечивает корректную работу RouterLink
+				RouterTestingModule.withRoutes([]) // For RouterLink correct work
 			],
 			providers: [
 				{ provide: AuthService, useValue: authServiceMock },

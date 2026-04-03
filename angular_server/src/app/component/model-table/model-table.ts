@@ -99,16 +99,16 @@ export class ModelTable<TModel> implements AfterViewInit, OnDestroy {
 		const header = headerCells[colIndex] as HTMLElement;
 
 		this.currentColIndex = colIndex;
-		this.resizingColIndex = colIndex; // для подсветки
+		this.resizingColIndex = colIndex; // For hightlight
 		this.startX = event.clientX;
-		this.startWidth = header.getBoundingClientRect().width; // точная визуальная ширина
+		this.startWidth = header.getBoundingClientRect().width; // Exactly width
 
 		this.resizing = true;
 
 		this.unsubscribeMouseMove = this.renderer.listen('document', 'mousemove', this.onMouseMoveResize.bind(this));
 		this.unsubscribeMouseUp = this.renderer.listen('document', 'mouseup', this.onMouseUpEndResize.bind(this));
 
-		// Подсветим активную ручку
+		// Hightlight active handle
 		const handle = event.target as HTMLElement;
 		handle.classList.add('active');
 		this.resizing = true;
@@ -158,13 +158,13 @@ export class ModelTable<TModel> implements AfterViewInit, OnDestroy {
 					this.renderer.setStyle(rightCell, 'width', `${oldWidthOfResizingCols - newWidth}px`);
 			});
 
-			// Сброс состояния
+			// Reset state
 			this.resizing = false;
 			this.resizingColIndex = null;
 			this.resizeLineLeft = 0;
 			this.setResizeLineXPos(0);
 
-			// Убираем активный класс с ручек
+			// Remove active class from handlers
 			this.tableContainer.nativeElement.querySelectorAll('.resize-handle.active').forEach(el => {
 				el.classList.remove('active');
 			});
@@ -188,9 +188,7 @@ export class ModelTable<TModel> implements AfterViewInit, OnDestroy {
 
 		resizeLineRef.style.left = `${(xpos).toString()}px`;
 	}
-
-	// Остальные методы (getIcon, getActionHeader, getActionHref, getCellValue, getActionLabel, getActionClass, handleAction)
-	// остаются без изменений – их не трогаем.
+	
 	getIcon(item: TModel, col: ColumnDefinition<TModel>): string {
 		if (!col.icon) return '';
 		if (typeof col.icon === 'function') return col.icon(item);

@@ -122,7 +122,7 @@ export class AccountPage implements OnInit {
 				this.isAuthenticated = true;
 				this.user = authResult.data.user;
 				
-				// Загружаем дополнительную информацию
+				// Load addition information
 				await this.checkAdminStatus()
 				await this.loadMyGroups()
 			} else {
@@ -228,7 +228,6 @@ export class AccountPage implements OnInit {
 		try {
 			this.isLoading = true;
 
-			// Здесь должен быть вызов сервиса для обновления пароля
 			console.log('Updating password:', passwordData);
 			if (passwordData.newPassword !== passwordData.newPasswordConfirm)
 				throw new Error('Новый пароль и его подтверждение не совпадают');
@@ -291,7 +290,6 @@ export class AccountPage implements OnInit {
 			this.cdr.detectChanges();
 		} catch (error) {
 			console.error('Ошибка при добавлении себя в группу:', error);
-			//alert('Не удалось добавить себя в группу. Подробности в консоли.');
 			// TODO: notice
 		} finally {
 			this.isLoading = false;

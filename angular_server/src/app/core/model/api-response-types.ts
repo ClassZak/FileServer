@@ -1,13 +1,13 @@
-import { User } from './user'; // ваш класс обычного пользователя
+import { User } from './user';
 import { UserAdminModel } from './user-admin-model';
 import { GroupDetails } from './group-details';
 
-// Успешный ответ для обычного пользователя
+// Default user succes response
 export interface GroupFullDetailsResponse {
 	group: GroupDetails<User>;
 }
 
-// Успешный ответ для администратора
+// Admin succes response
 export interface GroupFullDetailsAdminResponse {
 	group: GroupDetails<UserAdminModel>;
 }

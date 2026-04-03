@@ -22,14 +22,14 @@ export class FileSearchHeader {
 		try {
 			const query = this.searchQuery.trim();
 			if (!query) {
-				return; // ничего не делаем при пустом запросе
+				return; // Nothing to do if is empty
 			}
 			
-			// Переход в корень с параметрами поиска
+			// Go to root
 			this.router.navigate(['/files'], {
 				queryParams: {
 					q: query,
-					searchPath: '' // поиск от корня
+					searchPath: '' // Search in root
 				}
 			});
 		} catch (error) {

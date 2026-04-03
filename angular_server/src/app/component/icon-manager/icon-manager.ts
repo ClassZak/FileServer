@@ -1,16 +1,16 @@
 export class IconManager {
 	public static getFileIcon(extension: string): string {
-		return IconManager.icons[extension.toLowerCase()] || 'matfDocumentColored'; // общая иконка
+		return IconManager.icons[extension.toLowerCase()] || 'matfDocumentColored'; // Default icon
 	}
 
 	static icons: { [key: string]: string } = {
-		pdf: 'matfPdfColored',						// предположительно, если есть
+		pdf: 'matfPdfColored',
 		txt: 'matfDocumentColored',
 		doc: 'matfDocumentColored',
 		docx: 'matfDocumentColored',
-		xls: 'matfExcelColored',					// или 'matfTableColored'
+		xls: 'matfExcelColored',
 		xlsx: 'matfExcelColored',
-		ppt: 'matfPowerpointColored',			// или 'matfPresentationColored'
+		ppt: 'matfPowerpointColored',
 		pptx: 'matfPowerpointColored',
 		jpg: 'matfImageColored',
 		jpeg: 'matfImageColored',
@@ -24,13 +24,13 @@ export class IconManager {
 		avi: 'matfVideoColored',
 		mkv: 'matfVideoColored',
 		zip: 'matfZipColored',
-		rar: 'matfZipColored',						 // если отдельной нет
+		rar: 'matfZipColored',
 		'7z': 'matfZipColored',
 		tar: 'matfZipColored',
 		js: 'matfJavascriptColored',
 		json: 'matfJsonColored',
 		html: 'matfHtmlColored',
 		css: 'matfCssColored',
-		folder: 'matfFolderOpenColored'		 // или 'matfFolderColored'
+		folder: 'matfFolderOpenColored'
 	};
 }

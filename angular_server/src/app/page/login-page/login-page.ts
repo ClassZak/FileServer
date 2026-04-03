@@ -13,7 +13,7 @@ enum LoginFormType {
 
 @Component({
 	selector: 'app-login-page',
-	imports: [AppHeader, AppFooter, FormsModule], // Добавлен FormsModule
+	imports: [AppHeader, AppFooter, FormsModule], // Add FormsModule
 	templateUrl: './login-page.html',
 	styleUrl: './login-page.css',
 })

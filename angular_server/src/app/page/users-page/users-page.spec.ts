@@ -5,7 +5,7 @@ import AdminService from '../../core/service/admin-service';
 import { UserService } from '../../core/service/user-service';
 import { UsersPage } from './users-page';
 
-// Мокаем статические методы до создания компонента
+// Mock static methds before component creating
 vi.spyOn(AuthService, 'checkAuthStatic').mockResolvedValue({
 	success: true,
 	data: { authenticated: true, user: {
