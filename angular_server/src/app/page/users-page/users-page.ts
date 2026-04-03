@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Injectable, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
@@ -23,14 +23,14 @@ import { ModelTable } from "../../component/model-table/model-table";
 @Component({
 	selector: 'app-users-page',
 	imports: [
-    CommonModule,
-    AppHeader,
-    AppFooter,
-    LoadingSpinner,
+		CommonModule,
+		AppHeader,
+		AppFooter,
+		LoadingSpinner,
 
-    CreateUserModalComponent,
-    RedirectionButton,
-    ModelTable
+		CreateUserModalComponent,
+		RedirectionButton,
+		ModelTable
 ],
 	templateUrl: './users-page.html',
 	styleUrl: './users-page.css',

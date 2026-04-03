@@ -7,6 +7,7 @@ describe('DeleteConfirmationModalComponent', () => {
 	let fixture: ComponentFixture<DeleteConfirmationModalComponent>;
 
 	beforeEach(async () => {
+		TestBed.resetTestingModule();
 		await TestBed.configureTestingModule({
 			imports: [DeleteConfirmationModalComponent]
 		})

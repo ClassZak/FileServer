@@ -1,18 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CreateUserModal } from './create-user-modal';
+import { CreateUserModalComponent } from './create-user-modal';
 
-describe('CreateUserModal', () => {
-	let component: CreateUserModal;
-	let fixture: ComponentFixture<CreateUserModal>;
+describe('CreateUserModalComponent', () => {
+	let component: CreateUserModalComponent;
+	let fixture: ComponentFixture<CreateUserModalComponent>;
 
 	beforeEach(async () => {
+		TestBed.resetTestingModule();
 		await TestBed.configureTestingModule({
-			imports: [CreateUserModal]
+			imports: [CreateUserModalComponent]
 		})
 		.compileComponents();
 
-		fixture = TestBed.createComponent(CreateUserModal);
+		fixture = TestBed.createComponent(CreateUserModalComponent);
 		component = fixture.componentInstance;
 		await fixture.whenStable();
 	});

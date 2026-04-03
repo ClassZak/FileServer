@@ -17,7 +17,7 @@ export class UserAdminModel extends User {
 		return `${super.toString()} ${UserAdminModel.DATE_FORMATTER.format(this.createdAt).replace(',', '')}`;
 	}
 
-	private static DATE_FORMATTER  = new Intl.DateTimeFormat(
+	private static DATE_FORMATTER	= new Intl.DateTimeFormat(
 		'ru-Ru', {
 			day: '2-digit',
 			month: '2-digit',

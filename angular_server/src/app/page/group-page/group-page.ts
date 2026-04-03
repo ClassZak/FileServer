@@ -68,7 +68,7 @@ export class GroupPage implements OnInit, OnDestroy {
 		name: u.name,
 		surname: u.surname,
 		patronymic: u.patronymic,
-		// другие поля User, которые могут отсутствовать в UserAdminModel – добавьте при необходимости
+		// Other User fields, which can be not exitsts in UserAdminModel
 		} as User));
 	}
 
@@ -181,7 +181,7 @@ export class GroupPage implements OnInit, OnDestroy {
 				this.paramSubscription?.unsubscribe();
 				this.router.navigate(['/login']);
 				return;
-			} else  {
+			} else	{
 				console.log('Аутентификация прошла успешно');
 				this.isAuthenticated = true;
 				this.authorizedUser = authResult.data?.user;

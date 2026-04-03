@@ -311,7 +311,7 @@ export class AuthService {
 			return {
 				success: false,
 				error: error instanceof HttpErrorResponse ? 
-					error.error?.message : 
+					(error.error as any)?.error || error.error?.message || 'Ошибка входа по email' : 
 					'Ошибка входа по email'
 			}
 		}
@@ -359,7 +359,7 @@ export class AuthService {
 			return {
 				success: false,
 				error: error instanceof HttpErrorResponse ? 
-					error.error?.message : 
+					(error.error as any)?.error || error.error?.message || 'Ошибка входа по ФИО' : 
 					'Ошибка входа по ФИО'
 			}
 		}
@@ -408,7 +408,7 @@ export class AuthService {
 			return {
 				success: false,
 				error: error instanceof HttpErrorResponse ? 
-					error.error.error || error.message : 
+					(error.error as any)?.error || error.error?.message || 'Ошибка проверки токена' : 
 					'Ошибка проверки токена'
 			}
 		}

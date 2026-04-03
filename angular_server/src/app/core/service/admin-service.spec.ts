@@ -1,16 +1,65 @@
 import { TestBed } from '@angular/core/testing';
-
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 import { AdminService } from './admin-service';
 
-describe('AdminService', () => {
+describe('AdminService (instance)', () => {
 	let service: AdminService;
+	let httpMock: HttpTestingController;
 
 	beforeEach(() => {
-		TestBed.configureTestingModule({});
+		TestBed.resetTestingModule();
+		TestBed.configureTestingModule({
+			providers: [
+				AdminService,
+				provideHttpClient(),
+				provideHttpClientTesting()
+			]
+		});
 		service = TestBed.inject(AdminService);
+		httpMock = TestBed.inject(HttpTestingController);
 	});
 
-	it('should be created', () => {
-		expect(service).toBeTruthy();
+	afterEach(() => {
+		httpMock.verify();
+	});
+
+	it('should return success true when user is admin', async () => {
+		const token = 'fake-token';
+
+		const resultPromise = service.isAdmin(token);
+
+		const req = httpMock.expectOne('/api/admin/is-admin');
+		expect(req.request.method).toBe('GET');
+		expect(req.request.headers.get('Authorization')).toBe(`Bearer ${token}`);
+		req.flush({ isAdmin: true });
+
+		const result = await resultPromise;
+		expect(result.success).toBe(true);
+	});
+
+	it('should return success false when user is not admin', async () => {
+		const token = 'fake-token';
+
+		const resultPromise = service.isAdmin(token);
+
+		const req = httpMock.expectOne('/api/admin/is-admin');
+		req.flush({ isAdmin: false });
+
+		const result = await resultPromise;
+		expect(result.success).toBe(false);
+	});
+
+	it('should handle error and return failure', async () => {
+		const token = 'fake-token';
+
+		const resultPromise = service.isAdmin(token);
+
+		const req = httpMock.expectOne('/api/admin/is-admin');
+		req.flush({ error: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
+
+		const result = await resultPromise;
+		expect(result.success).toBe(false);
+		expect(result.error).toBeDefined();
 	});
 });

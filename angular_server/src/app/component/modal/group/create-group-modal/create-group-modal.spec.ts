@@ -1,18 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CreateGroupModal } from './create-group-modal';
+import { CreateGroupModalComponent } from './create-group-modal';
 
-describe('CreateGroupModal', () => {
-	let component: CreateGroupModal;
-	let fixture: ComponentFixture<CreateGroupModal>;
+describe('CreateGroupModalComponent', () => {
+	let component: CreateGroupModalComponent;
+	let fixture: ComponentFixture<CreateGroupModalComponent>;
 
 	beforeEach(async () => {
+		TestBed.resetTestingModule();
 		await TestBed.configureTestingModule({
-			imports: [CreateGroupModal]
+			imports: [CreateGroupModalComponent]
 		})
 		.compileComponents();
 
-		fixture = TestBed.createComponent(CreateGroupModal);
+		fixture = TestBed.createComponent(CreateGroupModalComponent);
 		component = fixture.componentInstance;
 		await fixture.whenStable();
 	});

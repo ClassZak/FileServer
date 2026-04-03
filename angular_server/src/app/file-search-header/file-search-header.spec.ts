@@ -7,6 +7,7 @@ describe('FileSearchHeader', () => {
 	let fixture: ComponentFixture<FileSearchHeader>;
 
 	beforeEach(async () => {
+		TestBed.resetTestingModule();
 		await TestBed.configureTestingModule({
 			imports: [FileSearchHeader]
 		})

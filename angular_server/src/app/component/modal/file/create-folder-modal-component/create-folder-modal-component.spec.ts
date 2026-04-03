@@ -7,6 +7,7 @@ describe('CreateFolderModalComponent', () => {
 	let fixture: ComponentFixture<CreateFolderModalComponent>;
 
 	beforeEach(async () => {
+		TestBed.resetTestingModule();
 		await TestBed.configureTestingModule({
 			imports: [CreateFolderModalComponent]
 		})

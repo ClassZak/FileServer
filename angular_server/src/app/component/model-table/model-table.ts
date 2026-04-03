@@ -77,7 +77,7 @@ export class ModelTable<TModel> implements AfterViewInit, OnDestroy {
 		}
 	}
 
-	// Определяем, является ли колонка последней (с учётом колонки действий)
+	// Check if colomn is last or not (taking into account the action column)
 	isLastColumn(colIndex: number): boolean {
 		if (!this.modelTableDataObject) return false;
 		const totalColumns = this.modelTableDataObject.columnDefinitions.length +
@@ -85,7 +85,7 @@ export class ModelTable<TModel> implements AfterViewInit, OnDestroy {
 		return colIndex === totalColumns - 1;
 	}
 
-	// Начало ресайза
+	// Resize starting
 	startResize(event: MouseEvent, colIndex: number): void {
 		if (this.resizing)
 			return;
