@@ -29,13 +29,13 @@ class AuthController(
 			if (user == null) {
 				logger.warn("Authentication failed for email: ${request.email}")
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-					.body(mapOf("error" to "Invalid credentials", "message" to "Пользователь не найден или неверный пароль"))
+					.body(mapOf("error" to "Пользователь не найден или неверный пароль"))
 			}
 			
 			if (user.id == null) {
 				logger.error("User ID is null for email: ${request.email}")
 				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body(mapOf("error" to "User ID cannot be null"))
+					.body(mapOf("error" to "Пользователь не найден или неверный пароль"))
 			}
 			
 			val userDetails = userService.loadUserByUsername(user.email)
@@ -71,8 +71,7 @@ class AuthController(
 				logger.warn("Authentication failed by SNP")
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
 					.body(mapOf(
-						"error" to "Invalid credentials",
-						"message" to "Пользователь не найден или неверный пароль"
+						"error" to "Пользователь не найден или неверный пароль"
 					))
 			}
 			
@@ -138,9 +137,9 @@ class AuthController(
 			val username = jwtUtil.extractUsername(refreshToken)
 			val userId = jwtUtil.extractUserId(refreshToken) ?: throw Exception("No userId in token")
 			val userDetails = userService.loadUserByUsername(username)
-			// ✅ Генерируем новый access token с userId
+			// Generate new access token with userId
 			val newToken = jwtUtil.generateToken(userDetails, mapOf("userId" to userId))
-			// ✅ Генерируем новый refresh token с userId
+			// Generate new refresh token with userId
 			val newRefreshToken = jwtUtil.generateRefreshToken(userDetails, userId)
 			val user = userService.getUserByEmail(username)
 			

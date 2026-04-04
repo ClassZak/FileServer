@@ -328,8 +328,8 @@ class GroupController(
 		}
 	}
 	
-	private fun errorResponse(status: HttpStatus, message: String): ResponseEntity<Map<String, Any>> {
-		return ResponseEntity.status(status).body(mapOf("error" to message))
+	private fun errorResponse(status: HttpStatus, error: String): ResponseEntity<Map<String, Any>> {
+		return ResponseEntity.status(status).body(mapOf("error" to error))
 	}
 	
 	private fun successResponse(data: Map<String, Any>): ResponseEntity<Map<String, Any>> {

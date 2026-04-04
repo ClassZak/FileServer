@@ -6,8 +6,10 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import org.zak.dto.CreateUserRequest
 import org.zak.dto.CurrentUser
+import org.zak.dto.DefaultPasswordUpdateResponse
 import org.zak.dto.LoginRequest
 import org.zak.dto.PasswordUpdateResponse
+import org.zak.dto.PasswordUpdateResponseWithError
 import org.zak.dto.UpdatePasswordRequest
 import org.zak.dto.UpdateUserRequest
 import org.zak.entity.User
@@ -167,11 +169,16 @@ class UserController(
 		val currUser = getCurrentUserFromJwt(jwtToken)
 		if (!userService.hasPasswordUpdateAccess(currUser,email))
 			return ResponseEntity.status(HttpStatus.FORBIDDEN)
-				.body(PasswordUpdateResponse(success = false, message = "Недостаточно прав"))
+				.body(PasswordUpdateResponseWithError(success = false, error = "Недостаточно прав"))
 		
 		val editUser = userService.getUserEntityByEmail(email)
 			?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
-				.body(PasswordUpdateResponse(success = false, message = "Не найден пользователь с предоставленной почтой для изменения пароля"))
+				.body(
+					PasswordUpdateResponseWithError(
+						success = false,
+						error = "Не найден пользователь с предоставленной почтой для изменения пароля"
+					)
+				)
 		
 		if (editUser.id == null)
 			throw NullPointerException("Ошибка получения id пользователя")
@@ -181,14 +188,14 @@ class UserController(
 		try {
 			return if (validationResult.valid){
 				userService.updatePassword(currUser, editUser, request)
-				ResponseEntity.ok((PasswordUpdateResponse(success = true, message = "Пароль успешно изменен")))
+				ResponseEntity.ok((DefaultPasswordUpdateResponse(success = true, message = "Пароль успешно изменен")))
 			}
 			else
-				ResponseEntity.ok((PasswordUpdateResponse(success = false, message = validationResult.message)))
+				ResponseEntity.ok((PasswordUpdateResponseWithError(success = false, error = validationResult.message)))
 		} catch (e: Exception) {
 			val errorMessage = e.message
 			return 	ResponseEntity.status(HttpStatus.NOT_FOUND)
-				.body(PasswordUpdateResponse(success = false, message = errorMessage!!))
+				.body(PasswordUpdateResponseWithError(success = false, error = errorMessage!!))
 		}
 	}
 	
