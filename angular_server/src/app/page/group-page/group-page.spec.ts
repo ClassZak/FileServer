@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 import { GroupPage } from './group-page';
 import { AuthService } from '../../core/service/auth-service';
 import AdminService from '../../core/service/admin-service';
@@ -7,65 +7,58 @@ import { GroupService } from '../../core/service/group-service';
 import { UserService } from '../../core/service/user-service';
 
 describe('GroupPage', () => {
-	let component: GroupPage;
-	let fixture: ComponentFixture<GroupPage>;
+  let component: GroupPage;
+  let fixture: ComponentFixture<GroupPage>;
 
-	beforeEach(async () => {
-		TestBed.resetTestingModule();
-		// Services mocks
-		const authServiceMock = {
-			checkAuthStatic: vi.fn().mockResolvedValue({
-				success: true,
-				data: { authenticated: true, user: { email: 'test@test.com' } }
-			}),
-			getToken: vi.fn().mockReturnValue('fake-token'),
-			logout: vi.fn()
-		};
+  beforeEach(async () => {
+    TestBed.resetTestingModule();
 
-		const adminServiceMock = {
-			isAdminStatic: vi.fn().mockResolvedValue({ success: true })
-		};
+    const authServiceMock = {
+      checkAuth: vi.fn().mockResolvedValue({
+        success: true,
+        data: { authenticated: true, user: { email: 'test@test.com' } }
+      })
+    };
+    const adminServiceMock = {
+      isAdmin: vi.fn().mockResolvedValue({ success: true })
+    };
+    const groupServiceMock = {
+      getGroupFullDetails: vi.fn().mockResolvedValue({
+        success: true,
+        data: { group: { name: 'test', membersCount: 1, creator: {}, members: [] } }
+      }),
+      getGroupFullDetailsAdmin: vi.fn().mockResolvedValue({
+        success: true,
+        data: { group: { name: 'test', membersCount: 1, creator: {}, members: [] } }
+      }),
+      addUserToGroup: vi.fn().mockResolvedValue({ success: true }),
+      deleteGroup: vi.fn().mockResolvedValue({ success: true }),
+      removeUserFromGroup: vi.fn().mockResolvedValue({ success: true }),
+      updateGroup: vi.fn().mockResolvedValue({ success: true })
+    };
+    const userServiceMock = {
+      readAllUsers: vi.fn().mockResolvedValue({ success: true, data: { users: [] } })
+    };
 
-		const groupServiceMock = {
-			getGroupFullDetailsStatic: vi.fn().mockResolvedValue({
-				success: true,
-				data: { group: { name: 'test', membersCount: 1, creator: {}, members: [] } }
-			}),
-			getGroupFullDetailsAdminStatic: vi.fn().mockResolvedValue({
-				success: true,
-				data: { group: { name: 'test', membersCount: 1, creator: {}, members: [] } }
-			}),
-			addUserToGroupStatic: vi.fn().mockResolvedValue({ success: true }),
-			deleteGroupStatic: vi.fn().mockResolvedValue({ success: true }),
-			removeUserFromGroupStatic: vi.fn().mockResolvedValue({ success: true }),
-			updateGroupStatic: vi.fn().mockResolvedValue({ success: true })
-		};
+    vi.spyOn(AuthService, 'getToken').mockReturnValue('fake-token');
 
-		const userServiceMock = {
-			readAllUsersStatic: vi.fn().mockResolvedValue({ success: true, data: { users: [] } })
-		};
+    await TestBed.configureTestingModule({
+      imports: [GroupPage, RouterTestingModule.withRoutes([])],
+      providers: [
+        { provide: AuthService, useValue: authServiceMock },
+        { provide: AdminService, useValue: adminServiceMock },
+        { provide: GroupService, useValue: groupServiceMock },
+        { provide: UserService, useValue: userServiceMock }
+      ]
+    }).compileComponents();
 
+    fixture = TestBed.createComponent(GroupPage);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+  });
 
-
-		
-		await TestBed.configureTestingModule({
-			imports: [GroupPage],
-			providers: [
-				provideRouter([]), // Init router without real routes
-				{ provide: AuthService, useValue: authServiceMock },
-				{ provide: AdminService, useValue: adminServiceMock },
-				{ provide: GroupService, useValue: groupServiceMock },
-				{ provide: UserService, useValue: userServiceMock }
-			]
-		}).compileComponents();
-
-		fixture = TestBed.createComponent(GroupPage);
-		component = fixture.componentInstance;
-		fixture.detectChanges();
-		await fixture.whenStable();
-	});
-
-	it('should create', () => {
-		expect(component).toBeTruthy();
-	});
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
 });

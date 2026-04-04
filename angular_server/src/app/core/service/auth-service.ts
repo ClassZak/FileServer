@@ -256,7 +256,7 @@ export class AuthService {
 	/**
 	 * Function for user logout
 	 */
-	static logout() {
+	static logoutStatic() {
 		try {
 			axios.post('/api/auth/logout');
 			this.clearAuthData();
@@ -466,6 +466,23 @@ export class AuthService {
 			error: 'Требуется повторный вход',
 		};
 	}
+
+
+
+	/**
+	 * Function for user logout
+	 */
+	logout() {
+		try {
+			const response = firstValueFrom(this.http.post<DefaultServiceResult>(
+				'/api/auth/logout',
+				{}
+			));
+			AuthService.clearAuthData();
+		} finally {
+		}
+	}
+
 
 
 

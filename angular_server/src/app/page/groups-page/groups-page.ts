@@ -68,7 +68,12 @@ export class GroupsPage implements OnInit {
 
 	constructor(
 		private router: Router,
-		private cdr: ChangeDetectorRef
+		private cdr: ChangeDetectorRef,
+
+		private authService: AuthService,
+		private adminService: AdminService,
+		private groupService: GroupService,
+		private userService: UserService
 	) {}
 
 	async ngOnInit(): Promise<void> {
@@ -91,7 +96,7 @@ export class GroupsPage implements OnInit {
 
 	private async checkAuthentication(): Promise<void> {
 		try {
-			const authResult = await AuthService.checkAuthStatic();
+			const authResult = await this.authService.checkAuth();
 			
 			if (!authResult.success || !authResult.data?.authenticated) {
 				console.error('Аутентификация не пройдена:', authResult.error);
@@ -114,7 +119,7 @@ export class GroupsPage implements OnInit {
 			const token = AuthService.getToken();
 			if(token === null)
 				throw "У вас нет токена авторизации";
-			const result = await AdminService.isAdminStatic(token);
+			const result = await this.adminService.isAdmin(token);
 			if (result.success)
 				this.isAdmin = true;
 			else if (!result.success && !result.error)
@@ -135,7 +140,7 @@ export class GroupsPage implements OnInit {
 			if(token === null)
 				throw new Error("У вас нет токена авторизации");
 			if(this.isAdmin) {
-				const response = await GroupService.getAllGroupsStatic(token);
+				const response = await this.groupService.getAllGroups(token);
 				if (!response.success)
 					throw new Error(response.error);
 				if (Array.isArray(response.data)) {
@@ -160,7 +165,7 @@ export class GroupsPage implements OnInit {
 			if(token === null)
 				throw new Error("У вас нет токена авторизации");
 			if(this.isAdmin) {
-				const response = await UserService.readAllUsersStatic(token);
+				const response = await this.userService.readAllUsers(token);
 				if (!response.success)
 					throw new Error(response.error);
 				this.users = response.data?.users as Array<UserAdminModel>;
@@ -181,7 +186,7 @@ export class GroupsPage implements OnInit {
 			const token = AuthService.getToken();
 			if (!token)
 				throw new Error('Отсутствует токен авторизации');
-			const response = await GroupService.createGroupStatic(token, groupData);
+			const response = await this.groupService.createGroup(token, groupData);
 			if (!response.success)
 				throw new Error('Не удалось создать группу');
 

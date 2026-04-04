@@ -11,7 +11,6 @@ import { CreateUserModalComponent } from '../../component/modal/user/create-user
 // Services and models
 import { AuthService } from '../../core/service/auth-service';
 import { AdminService } from '../../core/service/admin-service';
-import { GroupService } from '../../core/service/group-service';
 import { User } from '../../core/model/user';
 import { UserService } from '../../core/service/user-service';
 import { CreateUserModel } from '../../core/model/create-user-model';
@@ -66,7 +65,11 @@ export class UsersPage implements OnInit {
 
 	constructor(
 		private router: Router,
-		private cdr: ChangeDetectorRef
+		private cdr: ChangeDetectorRef,
+
+		private authService: AuthService,
+		private adminService: AdminService,
+		private userService: UserService
 	) {}
 
 	async ngOnInit(): Promise<void> {
@@ -88,7 +91,7 @@ export class UsersPage implements OnInit {
 
 	private async checkAuthentication(): Promise<void> {
 		try {
-			const authResult = await AuthService.checkAuthStatic();
+			const authResult = await this.authService.checkAuth();
 			
 			if (!authResult.success || !authResult.data?.authenticated) {
 				console.error('Аутентификация не пройдена:', authResult.error);
@@ -111,7 +114,7 @@ export class UsersPage implements OnInit {
 			const token = AuthService.getToken();
 			if(token === null)
 				throw "У вас нет токена авторизации";
-			const result = await AdminService.isAdminStatic(token);
+			const result = await this.adminService.isAdmin(token);
 			if (result.success)
 				this.isAdmin = true;
 			else if (!result.success && !result.error)
@@ -131,7 +134,7 @@ export class UsersPage implements OnInit {
 			if(token === null)
 				throw new Error("У вас нет токена авторизации");
 			if(this.isAdmin) {
-				const response = await UserService.readAllUsersStatic(token);
+				const response = await this.userService.readAllUsers(token);
 				if (!response.success)
 					throw new Error(response.error);
 				const loadedUsers = response.data?.users as Array<UserAdminModel>;
@@ -154,7 +157,7 @@ export class UsersPage implements OnInit {
 			const token = AuthService.getToken();
 			if (!token)
 				throw new Error('Отсутствует токен авторизации');
-			const response = await UserService.createUserStatic(userData, token);
+			const response = await this.userService.createUser(userData, token);
 			if (!response.success)
 				throw new Error('Не удалось создать пользователя');
 

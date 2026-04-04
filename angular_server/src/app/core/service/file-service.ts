@@ -40,10 +40,17 @@ export interface DownloadFileResult {
 /**
  * Imterface for /api/files/list?path= requests
  */
-interface ApiFilesListWithPath {
+interface ApiFilesListWithPathServerResponse {
 	files?: Array<FileInfo>;
 	folders?: Array<FolderInfo>;
 	error?: string;
+}
+
+/**
+ * Imterface for /api/files/exists?path=${encodeURIComponent(path)} requests
+ */
+interface ApiFilesExistsWithPathServerResponse {
+	exists: boolean
 }
 
 
@@ -327,6 +334,29 @@ export class FileService {
 
 
 	/**
+	 * Checks whether a file or directory exists at the given path.
+	 *
+	 * @param token - JWT authentication token.
+	 * @param path - Path to check (relative to user's root).
+	 * @returns Promise resolving to `true` if the path exists, `false` otherwise.
+	 * @throws Will throw an error if the request fails (network error, 5xx, etc.).
+	 */
+	async exists(token: string, path: string): Promise<DefaultServiceResult> {
+		try {
+			const response = await firstValueFrom(
+				this.http.get<ApiFilesExistsWithPathServerResponse>(
+					`/api/files/exists?path=${encodeURIComponent(path)}`,
+					CreateConfig.createAuthConfigNew(token)
+				)
+			);
+			return {success: response.exists};
+		} catch (error) {
+			console.error('FileService.exists error:', error);
+			throw new Error('Failed to check path existence.');
+		}
+	}
+
+	/**
 	 * Loads the list of files and folders in a given directory.
 	 *
 	 * @param token - JWT authentication token.
@@ -338,8 +368,8 @@ export class FileService {
 	async loadDirectory(token: string, path: string): Promise<DefaultServiceResultWithData<DirectoryList>> {
 		try {
 			const response = await firstValueFrom(
-				this.http.get<ApiFilesListWithPath>(
-				`/api/files/list?path=${encodeURIComponent(path)}`,
+				this.http.get<ApiFilesListWithPathServerResponse>(
+					`/api/files/list?path=${encodeURIComponent(path)}`,
 					CreateConfig.createAuthConfigNew(token)
 				)
 			);

@@ -31,7 +31,8 @@ export class LoginPage {
 
 	constructor(
 		private router: Router,
-		private cdr: ChangeDetectorRef
+		private cdr: ChangeDetectorRef,
+		private authService: AuthService
 	) {}
 
 	async ngOnInit(): Promise<void> {
@@ -43,9 +44,9 @@ export class LoginPage {
 		this.isSubmiting = true;
 		
 		try {
-			const result = await AuthService.loginByEmailStatic(this.email, this.password);
+			const result = await this.authService.loginByEmail(this.email, this.password);
 			if (result.success) {
-				const authResult = await AuthService.checkAuthStatic();
+				const authResult = await this.authService.checkAuth();
 				if (!authResult.success)
 					this.error = authResult.error;
 				else
@@ -76,11 +77,11 @@ export class LoginPage {
 		e.preventDefault();
 		
 		try {
-			const result = await AuthService.loginBySnpStatic(
+			const result = await this.authService.loginBySnp(
 				this.surname, this.name, this.patronymic, this.password
 			);
 			if (result.success) {
-				const authResult = await AuthService.checkAuthStatic();
+				const authResult = await this.authService.checkAuth();
 				if (!authResult.success)
 					this.error = 'Ошибка авторизации после входа';
 				else
@@ -104,7 +105,7 @@ export class LoginPage {
 
 	private async checkAuthentication(): Promise<void> {
 		try {
-			const authResult: DefaultServiceResultWithData<CheckAuthResult> = await AuthService.checkAuthStatic();
+			const authResult: DefaultServiceResultWithData<CheckAuthResult> = await this.authService.checkAuth();
 			
 			if (!authResult.success || !authResult.data?.authenticated)
 				throw new Error(`Аутентификация не пройдена:${authResult.error}`);

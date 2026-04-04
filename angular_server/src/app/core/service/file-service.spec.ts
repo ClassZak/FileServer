@@ -70,7 +70,6 @@ describe('FileService (instance)', () => {
 		const req = httpMock.expectOne(`/api/files/upload?path=${encodeURIComponent(currentPath)}`);
 		expect(req.request.method).toBe('POST');
 		expect(req.request.headers.get('Authorization')).toBe(`Bearer ${token}`);
-		expect(req.request.headers.get('Content-Type')).toBe('multipart/form-data');
 		expect(req.request.body instanceof FormData).toBe(true);
 		req.flush(mockFileInfo);
 

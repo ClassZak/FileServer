@@ -138,7 +138,12 @@ export class GroupPage implements OnInit, OnDestroy {
 		private router: Router,
 		private cdr: ChangeDetectorRef,
 		private route: ActivatedRoute,
-		private datePipe: DatePipe
+		private datePipe: DatePipe,
+
+		private authService: AuthService,
+		private adminService: AdminService,
+		private groupService: GroupService,
+		private userService: UserService
 	) {}
 	
 	async ngOnInit(): Promise<void> {
@@ -174,7 +179,7 @@ export class GroupPage implements OnInit, OnDestroy {
 
 	private async checkAuthentication(): Promise<void> {
 		try {
-			const authResult = await AuthService.checkAuthStatic();
+			const authResult = await this.authService.checkAuth();
 			
 			if (!authResult.success || !authResult.data?.authenticated) {
 				console.error('Аутентификация не пройдена:', authResult.error);
@@ -200,7 +205,7 @@ export class GroupPage implements OnInit, OnDestroy {
 			const token = AuthService.getToken();
 			if(token === null)
 				throw "У вас нет токена авторизации";
-			const result = await AdminService.isAdminStatic(token);
+			const result = await this.adminService.isAdmin(token);
 			if (result.success)
 				this.isAdmin = true;
 			else
@@ -218,8 +223,8 @@ export class GroupPage implements OnInit, OnDestroy {
 			if (token === null) throw new Error('У вас нет токена авторизации');
 
 			const response = this.isAdmin
-				? await GroupService.getGroupFullDetailsAdminStatic(token, this.groupName)
-				: await GroupService.getGroupFullDetailsStatic(token, this.groupName);
+				? await this.groupService.getGroupFullDetailsAdmin(token, this.groupName)
+				: await this.groupService.getGroupFullDetails(token, this.groupName);
 
 			if (!response.success) throw new Error(response.error);
 			// Check admin
@@ -247,7 +252,7 @@ export class GroupPage implements OnInit, OnDestroy {
 			if(token === null)
 				throw new Error("У вас нет токена авторизации");
 			if(this.isAdmin) {
-				const response = await UserService.readAllUsersStatic(token);
+				const response = await this.userService.readAllUsers(token);
 				if (!response.success)
 					throw new Error(response.error);
 				this.users = response.data?.users as Array<UserAdminModel>;
@@ -264,7 +269,7 @@ export class GroupPage implements OnInit, OnDestroy {
 			const token = AuthService.getToken();
 			if(!token)
 				throw new Error('Отсутствует токен авторизации');
-			const response = await GroupService.addUserToGroupStatic(token, this.groupName, email);
+			const response = await this.groupService.addUserToGroup(token, this.groupName, email);
 			if (response.error)
 				throw new Error(response.error);
 			if (response.success)
@@ -283,7 +288,7 @@ export class GroupPage implements OnInit, OnDestroy {
 			const token = AuthService.getToken();
 			if(!token)
 				throw new Error('Отсутствует токен авторизации');
-			const response = await GroupService.deleteGroupStatic(token, this.groupName);
+			const response = await this.groupService.deleteGroup(token, this.groupName);
 			if (response.error)
 				throw new Error(response.error);
 			if (response.success) {
@@ -313,7 +318,7 @@ export class GroupPage implements OnInit, OnDestroy {
 				this.selectedUserEmail = '';
 				return;
 			}
-			const response = await GroupService.removeUserFromGroupStatic(token, this.groupName, this.selectedUserEmail);
+			const response = await this.groupService.removeUserFromGroup(token, this.groupName, this.selectedUserEmail);
 			if (response.error)
 				throw new Error(response.error);
 			if (response.success)
@@ -335,7 +340,7 @@ export class GroupPage implements OnInit, OnDestroy {
 			const token = AuthService.getToken();
 			if(!token)
 				throw new Error('Отсутствует токен авторизации');
-			const response = await GroupService.updateGroupStatic(token, this.groupName, updateGroupModel);
+			const response = await this.groupService.updateGroup(token, this.groupName, updateGroupModel);
 			if (response.error)
 				throw new Error(response.error);
 			if (response.success && this.groupName != updateGroupModel.newName){

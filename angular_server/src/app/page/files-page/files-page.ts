@@ -189,7 +189,11 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 	constructor(
 		private route: ActivatedRoute,
 		private router: Router,
-		private cdr: ChangeDetectorRef
+		private cdr: ChangeDetectorRef,
+
+		private authService: AuthService,
+		private adminService: AdminService,
+		private fileService: FileService
 	) {}
 
 	async ngOnInit(): Promise<void> {
@@ -245,7 +249,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 
 	private async checkAuthentication(): Promise<void> {
 		try {
-			const authResult = await AuthService.checkAuthStatic();
+			const authResult = await this.authService.checkAuth();
 			
 			if (!authResult.success || !authResult.data?.authenticated) {
 				const message = `Аутентификация не пройдена: ${authResult.error}`;
@@ -275,7 +279,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			const token = AuthService.getToken();
 			if(token === null)
 				throw "У вас нет токена авторизации";
-			const result = await AdminService.isAdminStatic(token);
+			const result = await this.adminService.isAdmin(token);
 			if (result.success)
 				this.isAdmin = true;
 			else
@@ -313,7 +317,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				this.router.navigate(['/login']);
 				return;
 			}
-			const result = await FileService.loadDirectoryStatic(token, this.currentPath);
+			const result = await this.fileService.loadDirectory(token, this.currentPath);
 
 			if (!result.success) {
 				this.error = result.error || 'Unknown error';
@@ -362,7 +366,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				return;
 			}
 
-			const results = await FileService.findStatic(token, this.searchQuery, this.searchPath);
+			const results = await this.fileService.find(token, this.searchQuery, this.searchPath);
 			if (!results.success)
 				throw results.error;
 			this.searchResults = results.data!;
@@ -423,7 +427,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 		}
 
 		try {
-			const exists = await FileService.existsStatic(token, cleanPath);
+			const exists = await this.fileService.exists(token, cleanPath);
 			if (exists.success) {
 				this.router.navigate(['/files', cleanPath]);
 				return;
@@ -432,6 +436,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			}
 		} catch (err: any) {
 			this.error = err.message || 'Failed to check path.';
+			// TODO: notice
 		}
 	}
 
@@ -452,7 +457,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				return;
 			}
 
-			await FileService.uploadStatic(token, file, this.currentPath);
+			await this.fileService.upload(token, file, this.currentPath);
 			await this.loadDirectory();
 		} catch (err: any) {
 			this.error = typeof err === 'string' ? err : err.message || 'Upload failed.';
@@ -482,7 +487,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				return;
 			}
 
-			await FileService.createFolderStatic(token, this.currentPath, folderName);
+			await this.fileService.createFolder(token, this.currentPath, folderName);
 
 			this.showCreateFolderModal = false;
 			await this.loadDirectory();
@@ -524,7 +529,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				return;
 			}
 
-			await FileService.deleteItemStatic(token, this.itemToDelete.path);
+			await this.fileService.deleteItem(token, this.itemToDelete.path);
 
 			this.showDeleteModal = false;
 			this.itemToDelete = null;
@@ -550,7 +555,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				return;
 			}
 
-			const { blob, contentType } = (await FileService.downloadFileStatic(token, path)).data!;
+			const { blob, contentType } = (await this.fileService.downloadFile(token, path)).data!;
 
 			// Check if the response is actually an error JSON
 			if (contentType && contentType.includes('application/json')) {

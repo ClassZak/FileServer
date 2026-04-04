@@ -91,7 +91,12 @@ export class AccountPage implements OnInit {
 
 	constructor(
 		private router: Router,
-		private cdr: ChangeDetectorRef
+		private cdr: ChangeDetectorRef,
+
+		private authService: AuthService,
+		private adminService: AdminService,
+		private groupService: GroupService,
+		private userService: UserService,
 	) {}
 
 	async ngOnInit(): Promise<void> {
@@ -109,7 +114,7 @@ export class AccountPage implements OnInit {
 
 	private async checkAuthentication(): Promise<void> {
 		try {
-			const authResult = await AuthService.checkAuthStatic();
+			const authResult = await this.authService.checkAuth();
 			
 			if (!authResult.success) {
 				console.error(authResult.error);
@@ -142,7 +147,7 @@ export class AccountPage implements OnInit {
 			const token = AuthService.getToken();
 			if(token === null)
 				throw "У вас нет токена авторизации";
-			const result = await AdminService.isAdminStatic(token);
+			const result = await this.adminService.isAdmin(token);
 			if (result.success)
 				this.isAdmin = true;
 			else
@@ -161,7 +166,7 @@ export class AccountPage implements OnInit {
 			const token = AuthService.getToken();
 			if (!token)
 				throw new Error('У вас нет токена авторизации');
-			const groupsResult = await GroupService.getMyGroupsStatic(token);
+			const groupsResult = await this.groupService.getMyGroups(token);
 			
 			if (!groupsResult.success) {
 				throw new Error(`Ошибка загрузки групп:${groupsResult.error}`);
@@ -184,7 +189,7 @@ export class AccountPage implements OnInit {
 			if(token === null)
 				throw new Error("У вас нет токена авторизации");
 			if(this.isAdmin) {
-				const response = await GroupService.getAllGroupsStatic(token);
+				const response = await this.groupService.getAllGroups(token);
 				if (!response.success)
 					throw new Error(response.error);
 				if (Array.isArray(response.data))
@@ -203,7 +208,7 @@ export class AccountPage implements OnInit {
 	}
 
 	public handleLogout(): void {
-		AuthService.logout();
+		this.authService.logout();
 		this.router.navigate(['/login']);
 	}
 
@@ -236,7 +241,15 @@ export class AccountPage implements OnInit {
 				throw new Error('Отсутствует токен авторизации');
 			if (!this.user)
 				throw new Error('Объект данных пользователя не определён');
-			const result = await UserService.updateUserPasswordStatic(token, this.user.email, new UpdatePasswordRequest(passwordData.oldPassword, passwordData.newPassword));
+			
+			const result = await this.userService.updateUserPassword(
+				token,
+				this.user.email,
+				new UpdatePasswordRequest(
+					passwordData.oldPassword,
+					passwordData.newPassword
+				)
+			);
 			if (result.success)
 				alert('Пароль успешно обновлен!');
 			else
@@ -277,7 +290,7 @@ export class AccountPage implements OnInit {
 			if (!token) throw new Error('Нет токена авторизации');
 			if (!this.user) throw new Error('Пользователь не определён');
 
-			const result = await GroupService.addUserToGroupStatic(token, selectedGroupName, this.user.email);
+			const result = await this.groupService.addUserToGroup(token, selectedGroupName, this.user.email);
 			this.setIsAddAdminToGroupModalOpen(false);
 
 			if (result.success)

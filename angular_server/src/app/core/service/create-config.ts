@@ -37,8 +37,8 @@ export class CreateConfig {
 		return {
 			headers: new HttpHeaders({
 				'Authorization': `Bearer ${authToken}`,
-				'Content-Type': 'multipart/form-data'
 			})
+			// content-type is not need in angular post request
 		};
 	}
 	/**
