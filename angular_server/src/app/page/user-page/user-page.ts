@@ -159,9 +159,9 @@ export class UserPage implements OnInit, OnDestroy {
 				);
 			else
 				this.user = user;
-		} catch (error: any) {
+		} catch (error) {
 			console.error('Ошибка при загрузки данных пользователя:', error);
-			this.error = error.toString();
+			this.error = (error as Error).message;
 			// TODO: notice
 		}
 	}

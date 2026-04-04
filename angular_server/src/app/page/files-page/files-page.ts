@@ -336,9 +336,9 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				this.filesFoundModelTableDataObject.models = this.files;
 				this.foldersFoundModelTableDataObject.models = this.folders;
 			}
-		} catch (err: any) {
+		} catch (err) {
 			console.error('Load directory error:', err);
-			this.error = err.message || 'Failed to load directory.';
+			this.error = (err as Error).message || 'Failed to load directory.';
 			this.files = [];
 			this.folders = [];
 			this.filesModelTableDataObject.models = this.files;
@@ -372,9 +372,9 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			this.searchResults = results.data!;
 			this.filesFoundModelTableDataObject.models = this.searchResults.files;
 			this.foldersFoundModelTableDataObject.models = this.searchResults.folders;
-		} catch (err: any) {
-			console.error('Search error:', err);
-			this.error = err.message || 'Search failed.';
+		} catch (error) {
+			console.error('Search error:', error);
+			this.error = (error as Error).message || 'Search failed.';
 			this.searchResults = null;
 			this.filesFoundModelTableDataObject.models = [];
 			this.foldersFoundModelTableDataObject.models = [];
@@ -434,8 +434,8 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			} else {
 				this.error = 'Path does not exist.';
 			}
-		} catch (err: any) {
-			this.error = err.message || 'Failed to check path.';
+		} catch (error) {
+			this.error = (error as Error).message || 'Failed to check path.';
 			// TODO: notice
 		}
 	}
@@ -459,8 +459,9 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 
 			await this.fileService.upload(token, file, this.currentPath);
 			await this.loadDirectory();
-		} catch (err: any) {
-			this.error = typeof err === 'string' ? err : err.message || 'Upload failed.';
+		} catch (error) {
+			this.error = (error as Error).message || 'Upload failed.';
+			// TODO: notice
 		} finally {
 			this.uploading = false;
 			input.value = '';
@@ -491,9 +492,9 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 
 			this.showCreateFolderModal = false;
 			await this.loadDirectory();
-		} catch (err: any) {
-			console.error('Create folder error:', err);
-			this.error = typeof err === 'string' ? err : err.message || 'Failed to create folder.';
+		} catch (error) {
+			console.error('Create folder error:', error);
+			this.error = (error as Error).message || 'Failed to create folder.';
 		} finally {
 			this.cdr.detectChanges();
 		}
@@ -534,9 +535,9 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			this.showDeleteModal = false;
 			this.itemToDelete = null;
 			await this.loadDirectory();
-		} catch (err: any) {
-			console.error('Delete error:', err);
-			this.error = typeof err === 'string' ? err : err.message || 'Deletion failed.';
+		} catch (error) {
+			console.error('Delete error:', error);
+			this.error = (error as Error).message || 'Deletion failed.';
 		} finally {
 			this.cdr.detectChanges();
 		}
@@ -575,9 +576,9 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			link.click();
 			link.remove();
 			window.URL.revokeObjectURL(url);
-		} catch (err: any) {
-			console.error('Download error:', err);
-			this.error = typeof err === 'string' ? err : err.message || 'Ошибка загрузки.';
+		} catch (error) {
+			console.error('Download error:', error);
+			this.error = (error as Error).message || 'Ошибка загрузки.';
 			this.cdr.detectChanges();
 		}
 	}

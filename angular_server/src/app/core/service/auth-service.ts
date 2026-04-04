@@ -137,44 +137,6 @@ export class AuthService {
 
 
 	/**
-	 * Function to chech auth token
-	 * @returns CheckAuthResult
-	 */
-	public static async checkAuthStatic(): Promise<DefaultServiceResultWithData<CheckAuthResult>>{
-		try{
-			const token = this.getToken();
-			if (!token) {
-				return { 
-					success: false,
-					error: 'Токен отсутствует',
-				};
-			}
-			const response = await axios.get('/api/auth/verify', CreateConfig.createAuthConfig(token));
-			if (response.data.valid && response.data.user) {
-				return {
-					success: true,
-					message: 'Токен действителен',
-					data: {
-						authenticated: true,
-						user: response.data.user,
-					}
-				};
-			} else {
-				return await this.tryRefreshTokenStatic();
-			}
-		} catch(error: any) {
-			console.error('Check auth error:', error);
-			if (error.response?.status === 401) {
-				return await this.tryRefreshTokenStatic();
-			}
-			
-			return {
-				success: false,
-				error: this.getErrorMessage(error, 'Ошибка проверки токена'),
-			}
-		}
-	}
-	/**
 	 * Function for refresh the token
 	 * @returns CheckAuthResult
 	 */
@@ -311,7 +273,7 @@ export class AuthService {
 			return {
 				success: false,
 				error: error instanceof HttpErrorResponse ? 
-					(error.error as any)?.error || error.error?.message || 'Ошибка входа по email' : 
+					(error.error as HttpErrorResponse)?.error || error.error?.message || 'Ошибка входа по email' : 
 					'Ошибка входа по email'
 			}
 		}
@@ -359,7 +321,7 @@ export class AuthService {
 			return {
 				success: false,
 				error: error instanceof HttpErrorResponse ? 
-					(error.error as any)?.error || error.error?.message || 'Ошибка входа по ФИО' : 
+					(error.error as HttpErrorResponse)?.error || error.error?.message || 'Ошибка входа по ФИО' : 
 					'Ошибка входа по ФИО'
 			}
 		}
@@ -408,7 +370,7 @@ export class AuthService {
 			return {
 				success: false,
 				error: error instanceof HttpErrorResponse ? 
-					(error.error as any)?.error || error.error?.message || 'Ошибка проверки токена' : 
+					(error.error as HttpErrorResponse)?.error || error.error?.message || 'Ошибка проверки токена' : 
 					'Ошибка проверки токена'
 			}
 		}

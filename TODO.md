@@ -6,10 +6,10 @@
 6) ✖ Add deleted files page
 7) ✖ Add recently used files in Home page
 8) ✖ Add History page
-9) ✖ Add help
+9) ✓ Add help
 10) ✖ Access managment page
 11) ✓ Set icons instead of symbols
-12) ✖ Rename global css variables
+12) ✓ Rename global css variables
 14) ✓ Fix Files page menu in search mode
 15) ✖ Fix all pages
 16) ✖ Full refactor

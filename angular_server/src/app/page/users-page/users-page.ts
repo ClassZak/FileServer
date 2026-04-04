@@ -164,9 +164,9 @@ export class UsersPage implements OnInit {
 			this.isCreateUserModalComponentOpen = false;
 			await this.loadUsers();
 			this.cdr.detectChanges();
-		} catch (error: any) {
+		} catch (error) {
 			console.error('Error updating password:', error);
-			this.error = error.toString();
+			this.error = (error as Error).message;
 			// TODO: notice
 		} finally {
 			this.isLoading = true;

@@ -83,9 +83,9 @@ export class AddAdminToGroupModalComponent implements OnChanges {
 			this.onConfirm.emit(this.selectedGroupName);
 			this.closeModal();
 			this.resetForm();
-		} catch (error: any) {
+		} catch (error) {
 			console.error('Ошибка добавления администратора:', error);
-			this.errors['server'] = error.message || 'Ошибка добавления администратора';
+			this.errors['server'] = (error as Error).message || 'Ошибка добавления администратора';
 		} finally {
 			this.submitting = false;
 		}

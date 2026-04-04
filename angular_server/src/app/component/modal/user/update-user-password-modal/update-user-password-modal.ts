@@ -39,7 +39,7 @@ export class UpdateUserPasswordModalComponent {
 			if (this.formData.newPassword != this.formData.newPasswordConfirm)
 				throw new Error('Ошибка. Новый пароль и подтверждение нового пароля не совпадают');
 			this.onConfirm.emit(this.formData);
-		} catch (error: any) {
+		} catch (error) {
 			console.error(error);
 			this.error = (error as Error).message;
 			// TODO: notice

@@ -82,9 +82,9 @@ export class UpdateUserModalComponent implements OnChanges {
 		this.submitting = true;
 		try {
 			this.onConfirm.emit(this.formData);
-		} catch (error: any) {
+		} catch (error) {
 			console.error('Ошибка обновления пользователя:', error);
-			this.errors['server'] = error.message || 'Ошибка обновления пользователя';
+			this.errors['server'] = (error as Error).message || 'Ошибка обновления пользователя';
 		} finally {
 			this.submitting = false;
 		}
