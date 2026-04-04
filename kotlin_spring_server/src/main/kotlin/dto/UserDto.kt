@@ -66,10 +66,17 @@ data class CurrentUser(
 	val userDetails: User?
 )
 
-data class PasswordUpdateResponse(
+open class PasswordUpdateResponse {}
+
+data class DefaultPasswordUpdateResponse(
 	val success: Boolean,
 	val message: String
-)
+) : PasswordUpdateResponse()
+
+data class PasswordUpdateResponseWithError(
+	val success: Boolean,
+	val error: String
+) : PasswordUpdateResponse()
 
 data class ValidationResult(
 	val valid: Boolean,
