@@ -1,11 +1,12 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ModalComponent } from '../../modal/modal';
+import { FormsModule } from '@angular/forms';
 
 @Component({
 	selector: 'app-delete-group-modal',
 	standalone: true,
-	imports: [CommonModule, ModalComponent],
+	imports: [CommonModule, ModalComponent, FormsModule],
 	templateUrl: './delete-group-modal.html',
 	styleUrls: ['./delete-group-modal.css']
 })
@@ -14,7 +15,7 @@ export class DeleteGroupModalComponent {
 	@Input() name: string = '';
 	@Output() onClose = new EventEmitter<void>();
 	@Output() onConfirm = new EventEmitter<void>();
-	submitting: any;
+	submitting: boolean = false;
 
 	constructor(
 		private cdr: ChangeDetectorRef
@@ -34,7 +35,7 @@ export class DeleteGroupModalComponent {
 
 		this.submitting = true;
 		try {
-			await this.onConfirm.emit();
+			this.onConfirm.emit();
 		} catch (error: any) {
 			console.error('Ошибка создания пользователя:', error);
 		} finally {

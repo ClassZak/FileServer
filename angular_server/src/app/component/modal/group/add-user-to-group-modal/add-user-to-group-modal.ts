@@ -77,7 +77,7 @@ export class AddUserToGroupModalComponent implements OnChanges {
 
 		this.submitting = true;
 		try {
-			await this.onConfirm.emit(this.selectedUserEmail);
+			this.onConfirm.emit(this.selectedUserEmail);
 			this.resetForm();
 		} catch (error: any) {
 			console.error('Ошибка добавления пользователя:', error);

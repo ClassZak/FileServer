@@ -7,6 +7,7 @@ describe('FileSearchComponent', () => {
 	let fixture: ComponentFixture<FileSearchComponent>;
 
 	beforeEach(async () => {
+		TestBed.resetTestingModule();
 		await TestBed.configureTestingModule({
 			imports: [FileSearchComponent]
 		})

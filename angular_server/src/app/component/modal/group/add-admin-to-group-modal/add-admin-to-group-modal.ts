@@ -19,10 +19,10 @@ interface Group {
 })
 export class AddAdminToGroupModalComponent implements OnChanges {
 	@Input() isOpen: boolean = false;
-	@Input() groups: Group[] = [];							 // список всех групп
-	@Input() currentUserEmail: string = '';			 // email текущего администратора
+	@Input() groups: Group[] = [];						// List of all groups
+	@Input() currentUserEmail: string = '';				// Current admin email
 	@Output() onClose = new EventEmitter<void>();
-	@Output() onConfirm = new EventEmitter<string>(); // передаёт название выбранной группы
+	@Output() onConfirm = new EventEmitter<string>();	// Transfer name of selected group
 
 	submitting = false;
 	selectedGroupName = '';
@@ -80,7 +80,7 @@ export class AddAdminToGroupModalComponent implements OnChanges {
 
 		this.submitting = true;
 		try {
-			await this.onConfirm.emit(this.selectedGroupName);
+			this.onConfirm.emit(this.selectedGroupName);
 			this.closeModal();
 			this.resetForm();
 		} catch (error: any) {

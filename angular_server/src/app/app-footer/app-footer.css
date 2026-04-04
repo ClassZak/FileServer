@@ -1,7 +1,5 @@
-@import url(../../styles/MainContent.css);
-
 footer {
-	background-color: var(--secondary-olive);
+	background-color: var(--color-accent-muted);
 	/* color: black; */
 	padding-bottom:15px;
 	padding-top:10px;
@@ -12,7 +10,7 @@ footer {
 	font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
 }
 
-@media screen and (width< 500px) {
+@media screen and (width < 576px) {
 	app-footer{
 		width: 100%;
 	}
@@ -39,13 +37,13 @@ footer .social+p{
 	text-align: center;
 }
 footer a {
-	/* color: #333; */
+	/* color: var(--color-border-default); */
 	margin: 0 1px;
 	text-decoration: none;
 	text-align: center;
 }
 footer a:hover {
-	/* color: #333; */
+	/* color: var(--color-border-default); */
 	text-decoration: underline;
 }
 footer .social{

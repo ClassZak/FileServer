@@ -5,39 +5,46 @@ import { CreateUserModel } from '../model/create-user-model';
 import { UpdatePasswordRequest } from '../model/update-password-request';
 import { CreateConfig } from './create-config';
 import { UserAdminModel } from '../model/user-admin-model';
-
-export class UpdatePasswordResponse {
-	public success: boolean = false;
-	public error?: string = '';
-	public message?: string = '';
-}
-
-export class DeleteUserResponse {
-	public success: boolean = false;
-	public error?: string = '';
-	public users?: UserAdminModel[];
-}
+import { DefaultServiceResult, DefaultServiceResultWithData } from '../model/default-server-result';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 
 export class ReadUsersResponse {
-	public success: boolean = false;
-	public error?: string = '';
 	public users?: UserAdminModel[];
 }
 
 export class ReadUserResponse {
-	public success: boolean = false;
-	public error?: string = '';
-	public message?: string = '';
 	public user?: UserAdminModel;
 }
 
-@Injectable({
-	providedIn: 'root',
-})
+
+
+
+/**
+ * Imterface for /api/users/users requests
+ */
+interface ApiUsersUsersServerResponse {
+	error?: string;
+	users?: Array<UserAdminModel>
+}
+
+/**
+ * Imterface for /api/users/user/${encodeURIComponent(userEmail)} requests
+ */
+interface ApiUsersUserUserEmailServerResponse {
+	error?: string;
+	user?: UserAdminModel
+}
+
+
+
+
 /**
  * Service for user management operations
  */
+@Injectable({providedIn: 'root'})
 export class UserService {
+	constructor(private http: HttpClient) {}
 
 	/**
 	 * Create a new user (admin only)
@@ -45,7 +52,7 @@ export class UserService {
 	 * @param {string} authToken - JWT token
 	 * @returns {Promise<Object>} Response with error or success
 	 */
-	static async createUser(user: CreateUserModel, authToken: string): Promise<any> {
+	static async createUserStatic(user: CreateUserModel, authToken: string): Promise<DefaultServiceResult> {
 		try {
 			const response = await axios.post(
 				'/api/users/new',
@@ -55,9 +62,12 @@ export class UserService {
 			return response.data;
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
-			if (axiosError.response?.status === 403) {
-				return axiosError.response.data;
-			}
+			if (axiosError.response?.status === 403)
+				return {
+					success: false,
+					error: axiosError.response.data.error
+				};
+
 			throw axiosError;
 		}
 	}
@@ -68,7 +78,7 @@ export class UserService {
 	 * @param {string} userEmail - Email of the user to fetch
 	 * @returns {Promise<ReadUserResponse>} Response with user data or error
 	 */
-	static async readUser(authToken: string, userEmail: string): Promise<ReadUserResponse> {
+	static async readUserStatic(authToken: string, userEmail: string): Promise<DefaultServiceResultWithData<ReadUserResponse>> {
 		try {
 			const response = await axios.get(
 				`/api/users/user/${encodeURIComponent(userEmail)}`,
@@ -78,7 +88,7 @@ export class UserService {
 			const userData = response.data.user;
 
 			// Convert ISO date string to Date object (assuming server sends without timezone)
-			const createdAtDate = new Date(userData.createdAt + 'Z');
+			const createdAtDate = new Date(userData.createdAt);
 
 			const userModel = new UserAdminModel(
 				userData.surname,
@@ -88,18 +98,19 @@ export class UserService {
 				createdAtDate
 			);
 
-			const result = new ReadUserResponse();
-			result.success = true;
-			result.user = userModel;
-			return result;
+			return {
+				success: true,
+				data: {
+					user: userModel
+				}
+			};
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 404)) {
 				return {
 					success: false,
 					error: axiosError.response.data.error,
-					message: axiosError.response.data.message,
-				} as ReadUserResponse;
+				};
 			}
 			throw axiosError;
 		}
@@ -110,22 +121,30 @@ export class UserService {
 	 * @param {string} authToken - JWT token
 	 * @param {string} email - Email of the user to update
 	 * @param {User} user - Updated user data
-	 * @returns {Promise<any>} Response with error or success
+	 * @returns {Promise<DefaultServiceResult>} Response with error or success
 	 */
-	static async updateUser(authToken: string, email: string, user: User): Promise<any> {
+	static async updateUserStatic(authToken: string, email: string, user: User): Promise<DefaultServiceResult> {
 		try {
 			const response = await axios.put(
 				`/api/users/update/${encodeURIComponent(email)}`,
 				user,
 				CreateConfig.createAuthConfig(authToken)
 			);
-			return response.data;
+			return {
+				success: true
+			};
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 404)) {
-				return axiosError.response.data;
+				return {
+					success: false,
+					error: axiosError.response.data.error
+				};
 			}
-			throw axiosError;
+			return {
+				success: false,
+				error: axiosError.message
+			};
 		}
 	}
 
@@ -133,21 +152,21 @@ export class UserService {
 	 * Delete a user (admin only)
 	 * @param {string} authToken - JWT token
 	 * @param {User} user - User object containing email to delete
-	 * @returns {Promise<any>} Response with error or success
+	 * @returns {Promise<DefaultServiceResult>} Response with error or success
 	 */
-	static async deleteUser(authToken: string, user: User): Promise<any> {
+	static async deleteUserStatic(authToken: string, user: User): Promise<DefaultServiceResult> {
 		try {
 			const response = await axios.delete(
 				`/api/users/delete/${encodeURIComponent(user.email)}`,
 				CreateConfig.createAuthConfig(authToken)
 			);
-			return response.data;
+			return {success: response.data.error ? false : response.data.success, error: response.data.error};
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 404)) {
-				return axiosError.response.data;
+				return {success: !(!(axiosError.response.data.error)), error: axiosError.response.data.error};
 			}
-			throw axiosError;
+			return {success: false, error: axiosError.message};
 		}
 	}
 
@@ -156,7 +175,7 @@ export class UserService {
 	 * @param {string} authToken - JWT token
 	 * @returns {Promise<ReadUsersResponse>} Response with array of users or error
 	 */
-	static async readAllUsers(authToken: string): Promise<ReadUsersResponse> {
+	static async readAllUsersStatic(authToken: string): Promise<DefaultServiceResultWithData<ReadUsersResponse>> {
 		try {
 			const response = await axios.get(
 				'/api/users/users',
@@ -170,18 +189,23 @@ export class UserService {
 					u.name,
 					u.patronymic,
 					u.email,
-					new Date(u.createdAt + 'Z')
+					new Date(u.createdAt)
 				)
 			);
 
-			const result = new ReadUsersResponse();
-			result.success = true;
-			result.users = userModels;
-			return result;
+			return {
+				success: true,
+				data: {
+					users: userModels
+				}
+			};
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response?.status === 403) {
-				return axiosError.response.data as ReadUsersResponse;
+				return {
+					success: false,
+					error: axiosError.response.data.error,
+				}
 			}
 			throw axiosError;
 		}
@@ -192,26 +216,273 @@ export class UserService {
 	 * @param {string} authToken - JWT token
 	 * @param {string} email - Email of the user
 	 * @param {UpdatePasswordRequest} passwordData - Old and new password
-	 * @returns {Promise<UpdatePasswordResponse>} Response with error or success
+	 * @returns {Promise<DefaultServiceResult>} Response with error or success
 	 */
-	static async updateUserPassword(
+	static async updateUserPasswordStatic(
 		authToken: string,
 		email: string,
 		passwordData: UpdatePasswordRequest
-	): Promise<UpdatePasswordResponse> {
+	): Promise<DefaultServiceResult> {
 		try {
 			const response = await axios.put(
 				`/api/users/update-password/${encodeURIComponent(email)}`,
 				passwordData,
 				CreateConfig.createAuthConfig(authToken)
 			);
-			return response.data as UpdatePasswordResponse;
+			return response.data as DefaultServiceResult;
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
 			if (axiosError.response && (axiosError.response.status === 403 || axiosError.response.status === 404)) {
-				return axiosError.response.data as UpdatePasswordResponse;
+				return {
+					success: false,
+					error: axiosError.response.data.error
+				};
 			}
 			throw axiosError;
+		}
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/**
+	 * Create a new user (admin only)
+	 * @param {CreateUserModel} user - User data
+	 * @param {string} authToken - JWT token
+	 * @returns {Promise<Object>} Response with error or success
+	 */
+	async createUser(user: CreateUserModel, authToken: string): Promise<DefaultServiceResult> {
+		try {
+			const response = await firstValueFrom(
+				this.http.post<DefaultServiceResult>(
+					'/api/users/new',
+					user,
+					CreateConfig.createAuthConfigNew(authToken)
+				)
+			);
+
+			return response;
+		} catch (error) {
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 403)
+					return {
+						success: false,
+						error: error.error.error || error.message
+					};
+			}
+
+			return {
+				success: false,
+				error: (error as Error).message
+			}
+		}
+	}
+
+	/**
+	 * Read a single user by email (admin only)
+	 * @param {string} authToken - JWT token
+	 * @param {string} userEmail - Email of the user to fetch
+	 * @returns {Promise<ReadUserResponse>} Response with user data or error
+	 */
+	async readUser(authToken: string, userEmail: string): Promise<DefaultServiceResultWithData<ReadUserResponse>> {
+		try {
+			const response = await firstValueFrom(
+				this.http.get<ApiUsersUserUserEmailServerResponse>(
+					`/api/users/user/${encodeURIComponent(userEmail)}`,
+					CreateConfig.createAuthConfigNew(authToken)
+				)
+			);
+
+			if (response.error || !response.user)
+				throw new Error(response.error || 'Ошибка получения ответа от сервера');
+			
+			return {
+				success: true,
+				data: {
+					user: response.user
+				}
+			};
+		} catch (error) {
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 403 || error.status === 404)
+					return {
+						success: false,
+						error: error.error.error || error.message
+					};
+			}
+
+			return {
+				success: false,
+				error: (error as Error).message
+			}
+		}
+	}
+
+	/**
+	 * Update user information (admin only)
+	 * @param {string} authToken - JWT token
+	 * @param {string} email - Email of the user to update
+	 * @param {User} user - Updated user data
+	 * @returns {Promise<DefaultServiceResult>} Response with error or success
+	 */
+	async updateUser(authToken: string, email: string, user: User): Promise<DefaultServiceResult> {
+		try {
+			await firstValueFrom(
+				this.http.put(
+					`/api/users/update/${encodeURIComponent(email)}`,
+					user,
+					CreateConfig.createAuthConfigNew(authToken)
+				)
+			);
+			return {
+				success: true
+			};
+		} catch (error) {
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 403 || error.status === 404)
+					return {
+						success: false,
+						error: error.error.error || error.message
+					};
+			}
+
+			return {
+				success: false,
+				error: (error as Error).message
+			}
+		}
+	}
+
+	/**
+	 * Delete a user (admin only)
+	 * @param {string} authToken - JWT token
+	 * @param {User} user - User object containing email to delete
+	 * @returns {Promise<DefaultServiceResult>} Response with error or success
+	 */
+	async deleteUser(authToken: string, user: User): Promise<DefaultServiceResult> {
+		try {
+			const response = await firstValueFrom(
+				this.http.delete<DefaultServiceResult>(
+					`/api/users/delete/${encodeURIComponent(user.email)}`,
+					CreateConfig.createAuthConfigNew(authToken)
+				)
+			);
+
+			return {success: response.error ? false : response.success, error: response.error};
+		} catch (error) {
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 403 || error.status === 404)
+					return {
+						success: false,
+						error: error.error.error || error.message
+					};
+			}
+
+			return {
+				success: false,
+				error: (error as Error).message
+			}
+		}
+	}
+
+	/**
+	 * Read all users (admin only)
+	 * @param {string} authToken - JWT token
+	 * @returns {Promise<ReadUsersResponse>} Response with array of users or error
+	 */
+	async readAllUsers(authToken: string): Promise<DefaultServiceResultWithData<ReadUsersResponse>> {
+		try {
+			const response = await firstValueFrom(
+				this.http.get<ApiUsersUsersServerResponse>(
+					'/api/users/users',
+					CreateConfig.createAuthConfigNew(authToken)
+				)
+			);
+			if (response.error || !response.users)
+				return {
+					success: false,
+					error: response.error
+				};
+
+			const usersData = response.users;
+			const userModels = usersData.map((u: UserAdminModel) =>
+				new UserAdminModel(
+					u.surname,
+					u.name,
+					u.patronymic,
+					u.email,
+					new Date(u.createdAt)
+				)
+			);
+
+			return {
+				success: true,
+				data: {
+					users: userModels
+				}
+			};
+		} catch (error) {
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 403)
+					return {
+						success: false,
+						error: error.error.error || error.message
+					};
+			}
+
+			return {
+				success: false,
+				error: (error as Error).message
+			}
+		}
+	}
+
+	/**
+	 * Update user password (admin only)
+	 * @param {string} authToken - JWT token
+	 * @param {string} email - Email of the user
+	 * @param {UpdatePasswordRequest} passwordData - Old and new password
+	 * @returns {Promise<DefaultServiceResult>} Response with error or success
+	 */
+	async updateUserPassword(
+		authToken: string,
+		email: string,
+		passwordData: UpdatePasswordRequest
+	): Promise<DefaultServiceResult> {
+		try {
+			const response = await firstValueFrom(
+				this.http.put<DefaultServiceResult>(
+					`/api/users/update-password/${encodeURIComponent(email)}`,
+					passwordData,
+					CreateConfig.createAuthConfigNew(authToken)
+				)
+			);
+			return response as DefaultServiceResult;
+		} catch (error) {
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 403 || error.status === 404)
+					return {
+						success: false,
+						error: error.error.error || error.message
+					};
+			}
+
+			return {
+				success: false,
+				error: (error as Error).message
+			}
 		}
 	}
 }

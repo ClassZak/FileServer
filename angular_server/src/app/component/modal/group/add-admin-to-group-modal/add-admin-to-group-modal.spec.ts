@@ -1,18 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { AddAdminToGroupModal } from './add-admin-to-group-modal';
+import { AddAdminToGroupModalComponent } from './add-admin-to-group-modal';
 
-describe('AddAdminToGroupModal', () => {
-	let component: AddAdminToGroupModal;
-	let fixture: ComponentFixture<AddAdminToGroupModal>;
+describe('AddAdminToGroupModalComponent', () => {
+	let component: AddAdminToGroupModalComponent;
+	let fixture: ComponentFixture<AddAdminToGroupModalComponent>;
 
 	beforeEach(async () => {
+		TestBed.resetTestingModule();
 		await TestBed.configureTestingModule({
-			imports: [AddAdminToGroupModal]
+			imports: [AddAdminToGroupModalComponent]
 		})
 		.compileComponents();
 
-		fixture = TestBed.createComponent(AddAdminToGroupModal);
+		fixture = TestBed.createComponent(AddAdminToGroupModalComponent);
 		component = fixture.componentInstance;
 		await fixture.whenStable();
 	});

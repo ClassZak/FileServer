@@ -1,0 +1,19 @@
+<form (ngSubmit)="handleSearch()" class="search-form" id="files_search">
+	<input
+		class="item"
+		placeholder="Поиск..."
+		type="text"
+		[disabled]="isSearching"
+		name="searchQuery"
+		[(ngModel)]="searchQuery"
+		required
+	/>
+	<button 
+		type="submit" 
+		class="btn btn-img"
+		[disabled]="isSearching"
+		title="Найти файлы и папки"
+	>
+		<img alt="Найти" src="/assets/img/magnifyingglass.png" />
+	</button>
+</form>

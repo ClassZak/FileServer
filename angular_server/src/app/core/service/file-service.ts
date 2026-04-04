@@ -2,7 +2,10 @@ import { Injectable } from '@angular/core';
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import { FileInfo } from '../model/file-info';
 import { FolderInfo } from '../model/folder-info';
-import { ErrorContainer } from '../model/error-container';
+import { DefaultServiceResultWithData, DefaultServiceResult } from '../model/default-server-result';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { CreateConfig } from './create-config';
 
 /**
  * Represents the response from the directory listing endpoint.
@@ -24,14 +27,43 @@ export interface SearchResults {
 }
 
 /**
+ * Represents the structure of file download response
+ */
+export interface DownloadFileResult {
+	blob: Blob;
+	contentType?: string;
+}
+
+
+
+
+/**
+ * Imterface for /api/files/list?path= requests
+ */
+interface ApiFilesListWithPathServerResponse {
+	files?: Array<FileInfo>;
+	folders?: Array<FolderInfo>;
+	error?: string;
+}
+
+/**
+ * Imterface for /api/files/exists?path=${encodeURIComponent(path)} requests
+ */
+interface ApiFilesExistsWithPathServerResponse {
+	exists: boolean
+}
+
+
+
+
+/**
  * Service for interacting with file system operations via the backend API.
  * All methods require a valid JWT token and return Promises.
  * Errors are caught and rethrown as user-friendly messages when possible.
  */
-@Injectable({
-	providedIn: 'root',
-})
+@Injectable({providedIn: 'root'})
 export class FileService {
+	constructor(private http: HttpClient) {}
 	/**
 	 * Creates an Axios configuration object with the Authorization header.
 	 * Made public so it can be reused in other parts if needed.
@@ -71,13 +103,13 @@ export class FileService {
 	 * @returns Promise resolving to `true` if the path exists, `false` otherwise.
 	 * @throws Will throw an error if the request fails (network error, 5xx, etc.).
 	 */
-	static async exists(token: string, path: string): Promise<boolean> {
+	static async existsStatic(token: string, path: string): Promise<DefaultServiceResult> {
 		try {
 			const response = await axios.get<{ exists: boolean }>(
 				`/api/files/exists?path=${encodeURIComponent(path)}`,
 				this.createAuthConfig(token)
 			);
-			return response.data.exists;
+			return {success: response.data.exists};
 		} catch (error) {
 			console.error('FileService.exists error:', error);
 			throw new Error('Failed to check path existence.');
@@ -93,19 +125,26 @@ export class FileService {
 	 *					If the API returns an error structure, it is returned as ErrorContainer.
 	 * @throws Will throw an error for network failures or unexpected responses.
 	 */
-	static async loadDirectory(token: string, path: string): Promise<DirectoryList | ErrorContainer> {
+	static async loadDirectoryStatic(token: string, path: string): Promise<DefaultServiceResultWithData<DirectoryList>> {
 		try {
 			const response = await axios.get<{ files: FileInfo[]; folders: FolderInfo[] }>(
 				`/api/files/list?path=${encodeURIComponent(path)}`,
 				this.createAuthConfig(token)
 			);
-			return new DirectoryList(response.data.files, response.data.folders);
+			return {
+				success: true,
+				data: new DirectoryList(response.data.files, response.data.folders)
+			} 
 		} catch (error: any) {
 			console.error('FileService.loadDirectory error:', error);
 			if (error.response?.data?.error) {
-				return { error: error.response.data.error } as ErrorContainer;
+				return {
+					success: false,
+					error: error.response.data.error
+				};
 			}
 			throw new Error('Failed to load directory contents.');
+			// TODO: notice
 		}
 	}
 
@@ -118,13 +157,16 @@ export class FileService {
 	 * @returns Promise resolving to SearchResults object.
 	 * @throws Will throw an error if the request fails.
 	 */
-	static async find(token: string, query: string, path: string = ''): Promise<SearchResults> {
+	static async findStatic(token: string, query: string, path: string = ''): Promise<DefaultServiceResultWithData<SearchResults>> {
 		try {
 			const response = await axios.get<SearchResults>(
 				`/api/files/search?q=${encodeURIComponent(query)}&path=${encodeURIComponent(path)}`,
 				this.createAuthConfig(token)
 			);
-			return response.data;
+			return {
+				success: true,
+				data: response.data
+			};
 		} catch (error) {
 			console.error('FileService.find error:', error);
 			throw new Error('Search failed.');
@@ -140,7 +182,7 @@ export class FileService {
 	 * @returns Promise resolving to the uploaded FileInfo (returned by the server).
 	 * @throws Will throw a user-friendly error message string on failure.
 	 */
-	static async upload(token: string, file: File, currentPath: string): Promise<FileInfo> {
+	static async uploadStatic(token: string, file: File, currentPath: string): Promise<DefaultServiceResultWithData<FileInfo>> {
 		const formData = new FormData();
 		formData.append('file', file);
 
@@ -150,20 +192,23 @@ export class FileService {
 				formData,
 				this.createFileUploadConfig(token)
 			);
-			return response.data;
+			return {
+				success: true,
+				data: response.data
+			};
 		} catch (error) {
 			const axiosError = error as AxiosError<{ error?: string; message?: string; }>;
 			const errorData = axiosError.response?.data;
 			console.error('FileService.upload error:', axiosError);
 
 			if (errorData?.message) {
-				throw errorData.message;
+				throw new Error(errorData.message);
 			} else if (axiosError.response?.status === 403) {
-				throw 'У вас нет прав на загрузку файлов в эту директорию.';
+				throw new Error('У вас нет прав на загрузку файлов в эту директорию.');
 			} else if (axiosError.response?.status === 400) {
-				throw `Ошибка отправки файла: ${errorData?.error || 'неизвестная ошибка'}`;
+				throw new Error(`Ошибка отправки файла: ${errorData?.error || 'неизвестная ошибка'}`);
 			} else {
-				throw 'Не удалось отправить файл.';
+				throw new Error( 'Не удалось отправить файл.');
 			}
 		}
 	}
@@ -177,22 +222,24 @@ export class FileService {
 	 * @returns Promise that resolves when folder is created.
 	 * @throws Will throw a user-friendly error message string on failure.
 	 */
-	static async createFolder(token: string, path: string, folderName: string): Promise<void> {
+	static async createFolderStatic(token: string, path: string, folderName: string): Promise<DefaultServiceResult> {
 		try {
 			await axios.post(
 				'/api/files/create-folder',
 				{ path, folderName: folderName.trim() },
 				this.createAuthConfig(token)
 			);
+
+			return {success: true};
 		} catch (error: any) {
 			console.error('FileService.createFolder error:', error);
 			const errorData = error.response?.data;
 			if (errorData?.error) {
-				throw errorData.error;
+				throw new Error(errorData.error);
 			} else if (error.response?.status === 403) {
-				throw 'You do not have permission to create folders here.';
+				throw new Error('У вас нет прав для создания директории здесь.');
 			} else {
-				throw 'Failed to create folder.';
+				throw new Error('Не удалось создания директорию.');
 			}
 		}
 	}
@@ -205,24 +252,31 @@ export class FileService {
 	 * @returns Promise that resolves when deletion is successful.
 	 * @throws Will throw a user-friendly error message string on failure.
 	 */
-	static async deleteItem(token: string, itemPath: string): Promise<void> {
+	static async deleteItemStatic(token: string, itemPath: string): Promise<DefaultServiceResult> {
 		try {
-			await axios.delete('/api/files/delete', {
-				data: { path: itemPath },
+			await axios.delete(`/api/files/delete?path=${encodeURIComponent(itemPath)}`, {
 				headers: { Authorization: `Bearer ${token}` },
 			});
+
+			return {success: true};
 		} catch (error: any) {
 			console.error('FileService.deleteItem error:', error);
-			const errorData = error.response?.data;
-			if (errorData?.error) {
-				throw errorData.error;
-			} else if (error.response?.status === 403) {
-				throw 'You do not have permission to delete.';
-			} else if (error.response?.status === 404) {
-				throw 'File or folder not found.';
-			} else {
-				throw 'Deletion failed.';
+			let errorMessage = undefined;
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 403)
+					errorMessage = 'У вас нет прав на удаление.';
+				else if (error.status === 404)
+					errorMessage = 'Файл или папка не найдена.';
+				else
+					errorMessage = 'Ошибка удаления.';
 			}
+			else
+				errorMessage = (error as Error).message;
+			
+			return {
+				success: false,
+				error: errorMessage
+			};
 		}
 	}
 
@@ -234,26 +288,331 @@ export class FileService {
 	 * @returns Promise resolving to an object with blob and contentType.
 	 * @throws Will throw a user-friendly error message string on failure.
 	 */
-	static async downloadFile(token: string, filePath: string): Promise<{ blob: Blob; contentType: string | null }> {
+	static async downloadFileStatic(token: string, filePath: string): Promise<DefaultServiceResultWithData<DownloadFileResult>> {
 		try {
 			const response = await axios.get(`/api/files/download?path=${encodeURIComponent(filePath)}`, {
 				headers: { Authorization: `Bearer ${token}` },
 				responseType: 'blob',
 			});
+
 			const contentType = response.headers['content-type'] || null;
-			return { blob: response.data, contentType };
+			return { success: true,
+				data: {
+					blob: response.data,
+					contentType: contentType 
+				}
+			};
+			//return { blob: response.data, contentType };
 		} catch (error: any) {
 			console.error('FileService.downloadFile error:', error);
 			const errorData = error.response?.data;
 			// If the response is JSON error, we need to read it as text (handled in component)
 			// Here we just rethrow with a message
 			if (error.response?.status === 403) {
-				throw 'You do not have permission to download this file.';
+				throw new Error('У вас нет права на загрузку данного файла.');
 			} else if (error.response?.status === 404) {
-				throw 'File not found.';
+				throw new Error('Файл не найден.');
 			} else {
-				throw 'Download failed.';
+				throw new Error('Ошибка загрузки.');
 			}
+		}
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/**
+	 * Checks whether a file or directory exists at the given path.
+	 *
+	 * @param token - JWT authentication token.
+	 * @param path - Path to check (relative to user's root).
+	 * @returns Promise resolving to `true` if the path exists, `false` otherwise.
+	 * @throws Will throw an error if the request fails (network error, 5xx, etc.).
+	 */
+	async exists(token: string, path: string): Promise<DefaultServiceResult> {
+		try {
+			const response = await firstValueFrom(
+				this.http.get<ApiFilesExistsWithPathServerResponse>(
+					`/api/files/exists?path=${encodeURIComponent(path)}`,
+					CreateConfig.createAuthConfigNew(token)
+				)
+			);
+			return {success: response.exists};
+		} catch (error) {
+			console.error('FileService.exists error:', error);
+			throw new Error('Failed to check path existence.');
+		}
+	}
+
+	/**
+	 * Loads the list of files and folders in a given directory.
+	 *
+	 * @param token - JWT authentication token.
+	 * @param path - Directory path (empty string for root).
+	 * @returns Promise resolving to a DirectoryList object or an ErrorContainer.
+	 *					If the API returns an error structure, it is returned as ErrorContainer.
+	 * @throws Will throw an error for network failures or unexpected responses.
+	 */
+	async loadDirectory(token: string, path: string): Promise<DefaultServiceResultWithData<DirectoryList>> {
+		try {
+			const response = await firstValueFrom(
+				this.http.get<ApiFilesListWithPathServerResponse>(
+					`/api/files/list?path=${encodeURIComponent(path)}`,
+					CreateConfig.createAuthConfigNew(token)
+				)
+			);
+			if (response.error || (!response.files || !response.folders))
+				throw new Error(response.error);
+
+			return {
+				success: true,
+				data: new DirectoryList(response.files, response.folders)
+			} 
+		} catch (error) {
+			console.error('FileService.loadDirectory error:', error);
+			if (error instanceof HttpErrorResponse){
+				return {
+					success: false,
+					error: error.error?.message || error.message || 'Failed to load directory contents.'
+				};
+			}
+			return {
+				success: false,
+				error: (error as Error).message
+			};
+		}
+	}
+
+	/**
+	 * Searches for files and folders matching a query string, optionally restricted to a subpath.
+	 *
+	 * @param token - JWT authentication token.
+	 * @param query - Search string.
+	 * @param path - Base path to search in (empty string for root).
+	 * @returns Promise resolving to SearchResults object.
+	 * @throws Will throw an error if the request fails.
+	 */
+	async find(token: string, query: string, path: string = ''): Promise<DefaultServiceResultWithData<SearchResults>> {
+		try {
+			const response = await firstValueFrom(
+				this.http.get<SearchResults>(
+					`/api/files/search?q=${encodeURIComponent(query)}&path=${encodeURIComponent(path)}`,
+					CreateConfig.createAuthConfigNew(token)
+				)
+			);
+			return {
+				success: true,
+				data: response
+			};
+		} catch (error) {
+			console.error('FileService.find error:', error);
+			let errorMessage = undefined;
+			if (error instanceof HttpErrorResponse)
+				errorMessage = error.error.error || error.message;
+			else
+				errorMessage = (error as Error).message;
+
+			return {
+				success: false,
+				error: errorMessage
+			};
+		}
+	}
+
+	/**
+	 * Uploads a single file to the specified directory.
+	 *
+	 * @param token - JWT authentication token.
+	 * @param file - The File object to upload.
+	 * @param currentPath - Target directory path.
+	 * @returns Promise resolving to the uploaded FileInfo (returned by the server).
+	 * @throws Will throw a user-friendly error message string on failure.
+	 */
+	async upload(token: string, file: File, currentPath: string): Promise<DefaultServiceResultWithData<FileInfo>> {
+		const formData = new FormData();
+		formData.append('file', file);
+
+		try {
+			const response = await firstValueFrom(
+				this.http.post<FileInfo>(
+					`/api/files/upload?path=${encodeURIComponent(currentPath)}`,
+					formData,
+					CreateConfig.createFileUploadConfigNew(token)
+				)
+			);
+
+			return {
+				success: true,
+				data: response
+			};
+		} catch (error) {
+			let errorMessage = undefined;
+			if (error instanceof HttpErrorResponse){
+				if (error.error?.message)
+					errorMessage = error.error?.message;
+				if (error.message)
+					errorMessage = error.message;
+				if (error.status === 403)
+					errorMessage = 'У вас нет прав на загрузку файлов в эту директорию.';
+				if (error.status === 400)
+					errorMessage = error?.error || 'неизвестная ошибка';
+			}
+
+			errorMessage = !errorMessage ? 
+				'Ошибка отправки файла.' : 
+				`Ошибка отправки файла: ${errorMessage}`;
+
+			return {
+				success: false,
+				error: errorMessage
+			}
+		}
+	}
+
+	/**
+	 * Creates a new folder.
+	 *
+	 * @param token - JWT authentication token.
+	 * @param path - Parent directory path.
+	 * @param folderName - Name of the new folder.
+	 * @returns Promise that resolves when folder is created.
+	 * @throws Will throw a user-friendly error message string on failure.
+	 */
+	async createFolder(token: string, path: string, folderName: string): Promise<DefaultServiceResult> {
+		try {
+			await firstValueFrom(
+				this.http.post(
+					'/api/files/create-folder',
+					{ path, folderName: folderName.trim() },
+					CreateConfig.createAuthConfigNew(token)	
+				)
+			);
+
+			return {success: true};
+		} catch (error) {
+			console.error('FileService.createFolder error:', error);
+			let errorMessage = undefined;
+			if (error instanceof HttpErrorResponse) {
+				if (error.error?.message)
+					errorMessage = error.error?.message;
+				if (error.message)
+					errorMessage = error.message;
+				if (error.status === 403)
+					errorMessage = 'У вас нет прав для создания директории здесь.';
+				else
+					errorMessage = 'Не удалось создания директорию.';
+			}
+
+			errorMessage = !errorMessage ? 'Ошибка создания директории.' : `Ошибка создания директории: ${errorMessage}`;
+
+			return {
+				success: false,
+				error: errorMessage
+			};
+		}
+	}
+
+	/**
+	 * Deletes a file or folder.
+	 *
+	 * @param token - JWT authentication token.
+	 * @param itemPath - Full path of the item to delete.
+	 * @returns Promise that resolves when deletion is successful.
+	 * @throws Will throw a user-friendly error message string on failure.
+	 */
+	async deleteItem(token: string, itemPath: string): Promise<DefaultServiceResult> {
+		try {
+			await firstValueFrom(
+				this.http.delete(
+					`/api/files/delete?path=${encodeURIComponent(itemPath)}`,
+					CreateConfig.createAuthConfigNew(token)
+				)
+			);
+
+			return {success: true};
+		} catch (error) {
+			console.error('FileService.deleteItem error:', error);
+			let errorMessage = undefined;
+			if (error instanceof HttpErrorResponse) {
+				if (error.error?.message)
+					errorMessage = error.error?.message;
+				if (error.message)
+					errorMessage = error.message;
+
+				if (error.status === 403)
+					errorMessage = 'У вас нет прав на удаление.';
+				else if (error.status === 404)
+					errorMessage = 'Файл или папка не найдена.';
+			}
+
+			if (!errorMessage)
+				errorMessage = 'Ошибка удаления'
+			else
+				errorMessage = `Ошибка удаления:${errorMessage}`;
+
+			return {
+				success: false,
+				error: errorMessage
+			};
+		}
+	}
+
+	/**
+	 * Downloads a file. Returns the blob and content-type for further processing.
+	 *
+	 * @param token - JWT authentication token.
+	 * @param filePath - Full path of the file to download.
+	 * @returns Promise resolving to an object with blob and contentType.
+	 * @throws Will throw a user-friendly error message string on failure.
+	 */
+	async downloadFile(token: string, filePath: string): Promise<DefaultServiceResultWithData<DownloadFileResult>> {
+		try {
+			const response = await firstValueFrom(
+				this.http.get(
+					`/api/files/download?path=${encodeURIComponent(filePath)}`, {
+						headers: CreateConfig.createAuthConfigNew(token).headers,
+						responseType: 'blob',
+						observe: 'response'
+					},
+				)
+			)
+
+			return { success: true,
+				data: {
+					blob: response.body!,
+					contentType: response.headers.get('content-type')!
+				}
+			};
+		} catch (error) {
+			console.error('FileService.downloadFile error:', error);
+			let errorMessage = undefined;
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 403)
+					errorMessage = 'У вас нет права на загрузку данного файла.';
+				else if (error.status === 404)
+					errorMessage = 'Файл не найден.';
+				else
+					errorMessage = 'Ошибка загрузки.';
+			}
+			else
+				errorMessage = `Ошибка загрузки:${(error as Error).message}`;
+
+			return {
+				success: false,
+				error: errorMessage
+			};
 		}
 	}
 }

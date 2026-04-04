@@ -1,14 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { RedirectionButton } from './redirection-button';
+import { provideRouter } from '@angular/router';
 
 describe('RedirectionButton', () => {
 	let component: RedirectionButton;
 	let fixture: ComponentFixture<RedirectionButton>;
 
 	beforeEach(async () => {
+		TestBed.resetTestingModule();
 		await TestBed.configureTestingModule({
-			imports: [RedirectionButton]
+			imports: [RedirectionButton],
+			providers: [provideRouter([])]
 		})
 		.compileComponents();
 

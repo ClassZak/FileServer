@@ -7,6 +7,7 @@ describe('LoadingSpinner', () => {
 	let fixture: ComponentFixture<LoadingSpinner>;
 
 	beforeEach(async () => {
+		TestBed.resetTestingModule();
 		await TestBed.configureTestingModule({
 			imports: [LoadingSpinner]
 		})

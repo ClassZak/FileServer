@@ -4,7 +4,6 @@
 		<app-loading-spinner [title]="'Загрузка'">
 		</app-loading-spinner>
 	} @else {
-	<div class="files-page-container">
 		<!-- SEARCH MODE -->
 		@if (isSearchMode) {
 			<div class="search-mode-panel">
@@ -16,7 +15,7 @@
 						</span>
 					</div>
 					<app-redirection-button
-						[reference]="'/files/' + currentPath"
+						[reference]="'/files/' + this.encodedCurrentPath"
 						title="Выйти из поиска"
 						className="search-mode-exit-button"
 					></app-redirection-button>
@@ -30,13 +29,19 @@
 						<p>Выполняется поиск...</p>
 					</div>
 				} @else if (error) {
-					<app-error-message
-						[message]="error"
-						(onClose)="error = ''"
-						[showNavigation]="true"
-						(onNavigateUp)="navigateUp()"
-						[showUpButton]="!!searchPath"
-					></app-error-message>
+					<div class="error-container">
+						<div class="error-message">
+							<span class="error-text">{{error}}</span>
+							<button class="btn btn-red close-button" (click)="error = ''">×</button>
+						</div>
+						<div class="error-actions">
+							@if (!!currentPath) {
+								<button class="nav-button up-button" (click)="navigateUp()">
+									Наверх
+								</button>
+							}
+						</div>
+					</div>
 				} @else if (searchResults) {
 					<div class="search-results-header">
 						<h2 class="search-results-title">Результаты поиска</h2>
@@ -49,18 +54,34 @@
 
 					@if (searchResults.totalResults > 0) {
 						@if (searchResults.folders.length) {
-							<app-found-folders-table
-								[folders]="searchResults.folders"
-								(prepareDelete)="prepareDelete($event.path, $event.name)"
-							></app-found-folders-table>
+							<div>
+								<app-model-table-tile-component
+									[title]="'Найденные папки (' + searchResults.folders.length + ')'"
+									[iconName]="IconManager.getFileIcon('folder')"
+								> 
+								</app-model-table-tile-component>
+							</div>
+							<div class="model-table-container">
+								<app-model-table
+									[modelTableDataObject]="foldersFoundModelTableDataObject"
+								>
+								</app-model-table>
+							</div>
 						}
 						@if (searchResults.files.length) {
-							<app-found-files-table
-								[files]="searchResults.files"
-								(onDownload)="handleDownload($event.path, $event.name)"
-								(onDelete)="prepareDelete($event.path, $event.name)"
-								[searchPath]="searchPath"
-							></app-found-files-table>
+							<div>
+								<app-model-table-tile-component
+									[title]="'Найденные файлы (' + searchResults.files.length + ')'"
+									[iconName]="IconManager.getFileIcon('txt')"
+								> 
+								</app-model-table-tile-component>
+							</div>
+							<div class="model-table-container">
+								<app-model-table
+									[modelTableDataObject]="filesFoundModelTableDataObject"
+								>
+								</app-model-table>
+							</div>
 						}
 					} @else {
 						<div class="no-results">
@@ -71,7 +92,7 @@
 							</p>
 							<div class="no-results-actions">
 								<app-redirection-button
-									[reference]="'/files/' + currentPath"
+									[reference]="'/files/' + this.encodedCurrentPath"
 									title="Вернуться к просмотру файлов"
 									className="return-button"
 								></app-redirection-button>
@@ -104,7 +125,7 @@
 								placeholder="Введите путь (например: documents/images)"
 								class="path-input"
 							/>
-							<button type="submit" class="path-submit-button">Перейти</button>
+							<button type="submit" class="path-btn btn-submit">Перейти</button>
 						</form>
 					</div>
 
@@ -122,7 +143,7 @@
 
 				<span class="current-path-label">Текущий путь:</span> {{ currentPath || '/' }}
 
-				<div style="display: flex; gap: 10px; margin-top: 10px;">
+				<div class="upload-buttons">
 					<button
 						(click)="openCreateFolderModal()"
 						class="nav-button create-button"
@@ -144,13 +165,21 @@
 			</div>
 
 			<!-- Error message -->
-			<app-error-message
-				[message]="error"
-				(onClose)="error = ''"
-				[showNavigation]="true"
-				(onNavigateUp)="navigateUp()"
-				[showUpButton]="!!currentPath"
-			></app-error-message>
+			@if (error) {
+				<div class="error-container">
+					<div class="error-message">
+						<span class="error-text">{{error}}</span>
+						<button class="btn btn-red close-button" (click)="error = ''">×</button>
+					</div>
+					<div class="error-actions">
+						@if (!!currentPath) {
+							<button class="nav-button up-button" (click)="navigateUp()">
+								Наверх
+							</button>
+						}
+					</div>
+				</div>
+			}
 
 			<!-- Loading indicator -->
 			@if (isLoading) {
@@ -162,34 +191,41 @@
 
 			<!-- File and folder tables -->
 			@if (!isLoading) {
-				<app-folder-table
-					[folders]="folders"
-					(prepareDelete)="prepareDelete($event.path, $event.name)"
-				></app-folder-table>
-				<app-file-table
-					[files]="files"
-					(onDownload)="handleDownload($event.path, $event.name)"
-					(onDelete)="prepareDelete($event.path, $event.name)"
-				></app-file-table>
+				<!-- Folders -->
+				@if (this.foldersModelTableDataObject.models.length){
+					<div>
+						<app-model-table-tile-component
+							[title]="'Папки'"
+							[iconName]="IconManager.getFileIcon('folder')"
+						>
+						</app-model-table-tile-component>
+					</div>
+					<div class="model-table-container">
+						<app-model-table
+							[modelTableDataObject]="foldersModelTableDataObject"
+						>
+						</app-model-table>
+					</div>
+				}
+
+				<!-- Files -->
+				@if (filesModelTableDataObject.models.length){
+					<div>
+						<app-model-table-tile-component
+							[title]="'Файлы'"
+							[iconName]="IconManager.getFileIcon('txt')"
+						>
+						</app-model-table-tile-component>
+					</div>
+					<div class="model-table-container">
+						<app-model-table
+							[modelTableDataObject]="filesModelTableDataObject"
+						>
+						</app-model-table>
+					</div>
+				}
 			}
 		}
-	</div>
-	@if (isAdmin){
-		<!--div class="buttons-row">
-			<app-redirection-button 
-				[className]="'blue-button'" 
-				[title]="'Пользователи'" 
-				[reference]="'/users'"
-			>
-			</app-redirection-button>
-			<app-redirection-button 
-				[className]="'blue-button'" 
-				[title]="'Группы'" 
-				[reference]="'/groups'"
-			>
-			</app-redirection-button>
-		</div-->
-	}
 	}
 </main>
 <app-footer></app-footer>

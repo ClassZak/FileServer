@@ -12,42 +12,43 @@
 					<p><strong>Создатель:</strong>{{group?.creator?.toString()}}</p>
 				</div>
 			</div>
-			<div>
-				<app-user-table-group-page
-					[isAdmin]="isAdmin"
-					[users]="group?.members"
-					(removeUser)="onRemoveUser($event)">
-				</app-user-table-group-page>
-			</div>
+			@if (currentUserModelTableDataObjectRef && currentUserModelTableDataObjectRef.models.length) {			
+				<div class="model-table-container">
+					<app-model-table
+						[modelTableDataObject]="currentUserModelTableDataObjectRef"
+					>
+					</app-model-table>
+				</div>
+			}
 			<div class="buttons-row">
 				<button
 					(click)="setIsDeleteGroupModalComponentOpen(true)"
-					class="red-button"
+					class="btn btn-red"
 				>
 					Удалить группу
 				</button>
 				<button
 					(click)="setIsUpdateGroupModalComponentOpen(true)"
-					class="orange-button"
+					class="btn btn-orange"
 				>
 					Обновить данные группы
 				</button>
 				<button
 					(click)="setIsAddUserToGroupModalComponentOpen(true)"
-					class='green-button'
+					class='btn btn-green'
 				>
 					Добавить пользователя в группу
 				</button>
 			</div>
 			<div class="buttons-row">
 				<app-redirection-button 
-					[className]="'blue-button'" 
+					[className]="'btn btn-blue'" 
 					[title]="'Пользователи'" 
 					[reference]="'/users'"
 				>
 				</app-redirection-button>
 				<app-redirection-button 
-					[className]="'blue-button'" 
+					[className]="'btn btn-blue'" 
 					[title]="'Группы'" 
 					[reference]="'/groups'"
 				>
@@ -62,11 +63,14 @@
 					<p><strong>Создатель:</strong>{{group?.creator?.toString()}}</p>
 				</div>
 				<h2>Участники группы</h2>
-				<app-user-table
-					[isAdmin]="isAdmin"
-					[users]="group?.members"
-				>
-				</app-user-table>
+				@if (currentUserModelTableDataObjectRef && currentUserModelTableDataObjectRef.models.length) {			
+					<div class="model-table-container">
+						<app-model-table
+							[modelTableDataObject]="currentUserModelTableDataObjectRef"
+						>
+						</app-model-table>
+					</div>
+				}
 			</div>
 		}
 	}

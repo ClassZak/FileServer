@@ -1,19 +1,22 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { RemoveUserFromGroupModal } from './remove-user-from-group-modal';
+import { RemoveUserFromGroupModalComponent } from './remove-user-from-group-modal';
+import { User } from '../../../../core/model/user';
 
-describe('RemoveUserFromGroupModal', () => {
-	let component: RemoveUserFromGroupModal;
-	let fixture: ComponentFixture<RemoveUserFromGroupModal>;
+describe('RemoveUserFromGroupModalComponent', () => {
+	let component: RemoveUserFromGroupModalComponent;
+	let fixture: ComponentFixture<RemoveUserFromGroupModalComponent>;
 
 	beforeEach(async () => {
+		TestBed.resetTestingModule();
 		await TestBed.configureTestingModule({
-			imports: [RemoveUserFromGroupModal]
+			imports: [RemoveUserFromGroupModalComponent]
 		})
 		.compileComponents();
 
-		fixture = TestBed.createComponent(RemoveUserFromGroupModal);
+		fixture = TestBed.createComponent(RemoveUserFromGroupModalComponent);
 		component = fixture.componentInstance;
+		component.user = new User('Trycia', 'Hermiston', 'Florence', 'Trycia@gmail.com');
 		await fixture.whenStable();
 	});
 

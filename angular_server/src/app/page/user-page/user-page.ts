@@ -1,16 +1,15 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { User } from '../../core/model/user';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AppFooter } from '../../app-footer/app-footer';
 import { AppHeader } from '../../app-header/app-header';
 import { LoadingSpinner } from '../../component/loading-spinner/loading-spinner';
-import { UserTable } from '../../component/user-table/user-table';
 import { UpdateUserModalComponent, UpdateUserModel } from '../../component/modal/user/update-user-modal/update-user-modal';
 import { UpdateUserPasswordModalComponent } from '../../component/modal/user/update-user-password-modal/update-user-password-modal';
 import { DeleteUserModalComponent } from '../../component/modal/user/delete-user-modal/delete-user-modal';
 import { UserAdminModel } from '../../core/model/user-admin-model';
-import { AuthService } from '../../core/service/auth-service';
+import { AuthService, CheckAuthResult } from '../../core/service/auth-service';
 import AdminService from '../../core/service/admin-service';
 import { Subscription } from 'rxjs';
 import { UserService } from '../../core/service/user-service';
@@ -35,8 +34,8 @@ import { RedirectionButton } from '../../component/redirection-button/redirectio
 	templateUrl: './user-page.html',
 	styleUrl: './user-page.css',
 })
-export class UserPage implements OnInit {
-		public isLoading: boolean = true;
+export class UserPage implements OnInit, OnDestroy {
+	public isLoading: boolean = true;
 	isUpdateUserModalOpen : boolean = false;
 	isUpdateUserPasswordModalOpen : boolean = false;
 	isDeleteUserModalOpen : boolean = false;
@@ -63,26 +62,34 @@ export class UserPage implements OnInit {
 	constructor(
 		private router: Router,
 		private cdr: ChangeDetectorRef,
-		private route: ActivatedRoute
+		private route: ActivatedRoute,
+
+		private authService: AuthService,
+		private adminService: AdminService,
+		private userService: UserService
 	) {}
 
 	async ngOnInit(): Promise<void> {
 		try{
 			await this.checkAuthentication();
 		} catch (error) {
-			console.error('Ошибка при загрузке страницы:', error); // TODO: notice
+			console.error('Ошибка аутентификации при загрузке страницы:', error); // TODO: notice
 		}
 		this.paramSubscription = this.route.paramMap.subscribe(params => {
 			this.userEmail = params.get('email') || '';
-			if(this.userEmail == '')
+			if(this.userEmail == '') {
 				this.router.navigate(['/account']);
+				return;
+			}
 		});
 		try{
 			await this.checkAdminStatus();
 			await this.loadUserData();
+			this.checkIsSelfUserForAdmin()
 		} catch (error) {
-
+			// TODO: notice
 		} finally {
+			this.isLoading = false;
 			this.cdr.detectChanges();
 		}
 	}
@@ -95,70 +102,58 @@ export class UserPage implements OnInit {
 
 	private async checkAuthentication(): Promise<void> {
 		try {
-			const authResult = await AuthService.checkAuth();
+			const authResult = await this.authService.checkAuth();
 			
-			if (authResult.authenticated) {
+			if (!authResult.success || !authResult.data?.authenticated) {
+				console.error('Аутентификация не пройдена:', authResult.error);
+				this.router.navigate(['/login']);
+				return;
+			} else {
 				console.log('Аутентификация прошла успешно');
 				this.isAuthenticated = true;
-				this.authorizedUser = authResult.user;
-			} else {
-				console.log('Аутентификация не пройдена:', authResult.message);
-				this.router.navigate(['/login']);
+				this.authorizedUser = authResult.data?.user;
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
 			this.router.navigate(['/login']);
-		} finally {
-			this.isLoading = false;
+			return;
 		}
-		this.cdr.detectChanges();
+	}
+	private checkIsSelfUserForAdmin(): void{
+		if (this.myUserData?.email === this.user?.email && this.isAdmin)
+			this.router.navigate(['/account']);
 	}
 	private async checkAdminStatus(): Promise<void> {
 		try {
-			this.isLoading = true;
-			const response = await AuthService.checkAuth();
-			const user = response.user;
-			if (!user)
-				throw Error(
-					response.message ? 
-					response.message: 'Не удалось загрузить данные пользователя'
-				);
 			const token = AuthService.getToken();
 			if(token === null)
 				throw "У вас нет токена авторизации";
-			const isAdmin = await AdminService.isAdmin(token);
-			if (!isAdmin)
+			const result = await this.adminService.isAdmin(token);
+			if (result.success)
+				this.isAdmin = true;
+			else if (!result.success && !result.error)
 				this.router.navigate(['/account']);
-			else {
-				this.isAdmin = isAdmin;
-				this.myUserData = user;
-			}
-
-
-			if (this.myUserData?.email == this.userEmail)
-				this.router.navigate(['/account']);
+			else
+				throw new Error(result.error);
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
 			this.isAdmin = false;
-			setTimeout(()=>{
-				this.router.navigate(['/account']);
-			}, 50);
+			Promise.resolve().then(()=>{this.router.navigate(['/account']);});
 		}
 	}
 	private async loadUserData(): Promise<void> {
 		try {
-			this.isLoading = true;
 			const token = AuthService.getToken();
 			if(token === null)
-				throw Error('У вас нет токена авторизации');
+				throw new Error('У вас нет токена авторизации');
 			if(!this.isAdmin)
-				throw Error('Вы не являетесь администратором');
-			const response = await UserService.readUser(token, this.userEmail);
-			if (response.error)
-				throw Error(response.error);
-			const user = response.user;
+				throw new Error('Вы не являетесь администратором');
+			const response = await this.userService.readUser(token, this.userEmail);
+			if (!response.success)
+				throw new Error(response.error);
+			const user = response.data?.user;
 			if (!user)
-				throw Error(
+				throw new Error(
 					response.message ? 
 					response.message: 'Не удалось загрузить данные пользователя'
 				);
@@ -167,70 +162,89 @@ export class UserPage implements OnInit {
 		} catch (error: any) {
 			console.error('Ошибка при загрузки данных пользователя:', error);
 			this.error = error.toString();
-		} finally {
-			this.isLoading = false;
+			// TODO: notice
 		}
 	}
 
 	async handleUpdateUserModal(newUserData: UpdateUserModel){
 		try {
+			this.isLoading = true;
+
 			const token = AuthService.getToken();
 			if (!token)
-				throw Error('Отсутствует токен авторизации');
-			const response = await UserService.updateUser(token, this.userEmail, newUserData as User);
+				throw new Error('Отсутствует токен авторизации');
+			const response = await this.userService.updateUser(token, this.userEmail, newUserData as User);
 			if (response.error)
-				throw Error(response.error);
+				throw new Error(response.error);
 			if (!response.success)
-				throw Error('Ошибка Обновления данных пользователя');
+				throw new Error('Ошибка Обновления данных пользователя');
 			else if (this.userEmail != newUserData.email){
 				this.router.navigate([`/user/${encodeURIComponent(newUserData.email)}`]);
+				return;
 			}
-			console.log('User data updated')
+			else
+				await this.loadUserData();
+			console.log('Данные пользователя успешно обновлены');
+			// TODO: notice
 			this.setIsUpdateUserModalOpen(false);
 			await this.loadUserData();
-			this.cdr.detectChanges();
 		} catch (error) {
 			console.error('Error updating user data:', error);
 			// TODO: notice
+		} finally {
+			this.isLoading = false;
+			this.cdr.detectChanges();
 		}
 	}
 	async handleUpdateUserPasswordModal(passwordData: UpdatePasswordModalModel){
 		try {
+			this.isLoading = true;
+
 			if (passwordData.newPassword !== passwordData.newPasswordConfirm)
-				throw Error('Новый пароль и его подтверждение не совпадают');
+				throw new Error('Новый пароль и его подтверждение не совпадают');
 			const token = AuthService.getToken();
 			if (!token)
-				throw Error('Отсутствует токен авторизации');
+				throw new Error('Отсутствует токен авторизации');
 			if (!this.user)
-				throw Error('Объект данных пользователя не определён');
-			UserService.updateUserPassword(
+				throw new Error('Объект данных пользователя не определён');
+			const result = await this.userService.updateUserPassword(
 				token, this.user.email, 
 				new UpdatePasswordRequest(passwordData.oldPassword, passwordData.newPassword)
 			);
+			if (!result.success)
+				throw new Error(result.error);
+
 			this.setIsUpdateUserPasswordModalOpen(false);
 			await this.loadUserData();
-			this.cdr.detectChanges();
 		} catch (error) {
 			console.error('Error updating password:', error);
 			// TODO: notice
+		} finally {
+			this.isLoading = false;
+			this.cdr.detectChanges();
 		}
 	}
 	async handleDeleteUserModal(){
 		try {
+			this.isLoading = true;
+
 			const token = AuthService.getToken();
 			if (!token)
-				throw Error('Отсутствует токен авторизации');
+				throw new Error('Отсутствует токен авторизации');
 			if (!this.user)
-				throw Error('Объект данных пользователя не определён');
-			const response = await UserService.deleteUser(token, this.user);
+				throw new Error('Объект данных пользователя не определён');
+			const response = await this.userService.deleteUser(token, this.user);
 			if (response.error)
-				throw Error(response.error);
+				throw new Error(response.error);
 			if (!response.success)
-				throw Error('Ошибка удаления пользователя');
+				throw new Error('Ошибка удаления пользователя');
 			this.router.navigate(['/users']);
 		} catch (error) {
 			console.error('Error updating password:', error);
 			// TODO: notice
+		} finally {
+			this.isLoading = false;
+			this.cdr.detectChanges();
 		}
 	}
 }

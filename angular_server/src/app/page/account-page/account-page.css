@@ -1,0 +1,12 @@
+@import url(../../app-header/app-header.css);
+@import url(../../file-search-header/file-search-header.css);
+
+
+@import url(../../../styles/AccountPage.css);
+
+@media screen and (width < 576px) {
+	.MainContent .account-container {
+		padding: 0;
+		margin: 0;
+	}
+}

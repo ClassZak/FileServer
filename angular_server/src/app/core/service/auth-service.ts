@@ -2,36 +2,66 @@ import { Injectable } from '@angular/core';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { User } from '../model/user';
 import { CreateConfig } from './create-config';
+import { DefaultServiceResult, DefaultServiceResultWithData } from '../model/default-server-result';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 
 
 export interface LoginResult {
-	success: boolean;
 	token?: string;
 	refreshToken?: string;
 	user?: User;
-	message?: string;
 }
 
 export interface CheckAuthResult {
 	authenticated: boolean;
 	user?: User;
-	message?: string;
 }
 
 
 
 
-@Injectable({
-	providedIn: 'root',
-})
+/**
+ * Interface for /api/auth/login and /api/auth/login-by-snp requests
+ */
+interface LoginResultServerResponse {
+	error?: string;
+	token?: string;
+	refreshToken?: string;
+	user?: User;
+}
+
+/**
+ * Interface for /api/auth/verify requests
+ */
+interface ApiAuthVerifyServerResponse {
+	valid: boolean;
+	user?: User;
+}
+
+/**
+ * Interface for /api/auth/refresh requests
+ */
+interface ApiAuthRefreshServerResponse {
+	error?: string;
+	token?: string;
+	refreshToken?: string;
+	user?: User;
+}
+
+
+
+
+@Injectable({ providedIn: 'root' })
 export class AuthService {
+	constructor(private http: HttpClient) {}
 	/**
 	 * Method for login by email
 	 * @param email Email for login
 	 * @param password User password
 	 * @returns 
 	 */
-	public static async loginByEmail(email: string, password: string): Promise<LoginResult>{
+	public static async loginByEmailStatic(email: string, password: string): Promise<DefaultServiceResultWithData<LoginResult>>{
 		try{
 			const response = await axios.post('/api/auth/login', {
 				email,
@@ -43,20 +73,22 @@ export class AuthService {
 				localStorage.setItem('refreshToken', response.data.refreshToken);
 				return {
 					success: true,
-					token: response.data.token,
-					refreshToken: response.data.refreshToken,
-					user: response.data.user
+					data: {
+						token: response.data.token,
+						refreshToken: response.data.refreshToken,
+						user: response.data.user
+					}
 				};
 			}
 			return {
 				success: false,
-				message: 'Ошибка сервера. Попробуйте позже'
+				error: 'Ошибка сервера. Попробуйте позже'
 			};
 		} catch (error) {
 			console.log('login error:', error);
 			return {
 				success: false,
-				message: this.getErrorMessage(error, 'Ошибка входа по email')
+				error: this.getErrorMessage(error, 'Ошибка входа по email')
 			}
 		}
 	}
@@ -68,7 +100,7 @@ export class AuthService {
 	 * @param password User password
 	 * @returns 
 	 */
-	public static async loginBySnp(surname: string, name: string, patronymic: string, password: string): Promise<LoginResult>{
+	public static async loginBySnpStatic(surname: string, name: string, patronymic: string, password: string): Promise<DefaultServiceResultWithData<LoginResult>>{
 		try{
 			const response = await axios.post('/api/auth/login-by-snp', {
 				surname,
@@ -82,20 +114,22 @@ export class AuthService {
 				localStorage.setItem('refreshToken', response.data.refreshToken);
 				return {
 					success: true,
-					token: response.data.token,
-					refreshToken: response.data.refreshToken,
-					user: response.data.user
+					data: {
+						token: response.data.token,
+						refreshToken: response.data.refreshToken,
+						user: response.data.user
+					}
 				};
 			}
 			return {
 				success: false,
-				message: 'Ошибка сервера. Попробуйте позже'
+				error: 'Ошибка сервера. Попробуйте позже'
 			};
 		} catch (error) {
 			console.log('login error:', error);
 			return {
 				success: false,
-				message: this.getErrorMessage(error, 'Ошибка входа по ФИО')
+				error: this.getErrorMessage(error, 'Ошибка входа по ФИО')
 			}
 		}
 	}
@@ -106,34 +140,37 @@ export class AuthService {
 	 * Function to chech auth token
 	 * @returns CheckAuthResult
 	 */
-	public static async checkAuth(): Promise<CheckAuthResult>{
+	public static async checkAuthStatic(): Promise<DefaultServiceResultWithData<CheckAuthResult>>{
 		try{
 			const token = this.getToken();
 			if (!token) {
 				return { 
-					authenticated: false, 
-					message: 'Токен отсутствует' 
+					success: false,
+					error: 'Токен отсутствует',
 				};
 			}
 			const response = await axios.get('/api/auth/verify', CreateConfig.createAuthConfig(token));
 			if (response.data.valid && response.data.user) {
 				return {
-					authenticated: true,
-					user: response.data.user,
-					message: 'Токен действителен'
+					success: true,
+					message: 'Токен действителен',
+					data: {
+						authenticated: true,
+						user: response.data.user,
+					}
 				};
 			} else {
-				return await this.tryRefreshToken();
+				return await this.tryRefreshTokenStatic();
 			}
 		} catch(error: any) {
 			console.error('Check auth error:', error);
 			if (error.response?.status === 401) {
-				return await this.tryRefreshToken();
+				return await this.tryRefreshTokenStatic();
 			}
 			
 			return {
-				authenticated: false,
-				message: this.getErrorMessage(error, 'Ошибка проверки токена')
+				success: false,
+				error: this.getErrorMessage(error, 'Ошибка проверки токена'),
 			}
 		}
 	}
@@ -141,14 +178,14 @@ export class AuthService {
 	 * Function for refresh the token
 	 * @returns CheckAuthResult
 	 */
-	public static async tryRefreshToken(): Promise<CheckAuthResult> {
+	public static async tryRefreshTokenStatic(): Promise<DefaultServiceResultWithData<CheckAuthResult>> {
 		try {
 			const refreshToken = localStorage.getItem('refreshToken');
 			
 			if (!refreshToken) {
-				return { 
-					authenticated: false,
-					message: 'Refresh token отсутствует' 
+				return {
+					success: false,
+					error: 'Refresh token отсутствует',
 				};
 			}
 
@@ -163,9 +200,12 @@ export class AuthService {
 				const userResponse = await axios.get('/api/auth/verify', CreateConfig.createAuthConfig(response.data.token));
 				
 				return {
-					authenticated: true,
-					user: userResponse.data.user,
-					message: 'Токен обновлен'
+					success: true,
+					message: 'Токен обновлен',
+					data: {
+						authenticated: true,
+						user: userResponse.data.user,
+					}
 				};
 			}
 		} catch (refreshError) {
@@ -174,8 +214,8 @@ export class AuthService {
 
 		this.clearAuthData();
 		return {
-			authenticated: false,
-			message: 'Требуется повторный вход'
+			success: false,
+			error: 'Требуется повторный вход',
 		};
 	}
 
@@ -216,7 +256,7 @@ export class AuthService {
 	/**
 	 * Function for user logout
 	 */
-	static logout() {
+	static logoutStatic() {
 		try {
 			axios.post('/api/auth/logout');
 			this.clearAuthData();
@@ -224,6 +264,224 @@ export class AuthService {
 		}
 	}
 
+
+
+
+
+
+
+
+
+	/**
+	 * Method for login by email
+	 * @param email Email for login
+	 * @param password User password
+	 * @returns 
+	 */
+	public async loginByEmail(email: string, password: string): Promise<DefaultServiceResultWithData<LoginResult>>{
+		try{
+			const response = await firstValueFrom(
+				this.http.post<LoginResultServerResponse>(
+					'/api/auth/login', {
+						email,
+						password
+					}
+				)
+			);
+			
+			if (response.token && response.refreshToken && response.user) {
+				localStorage.setItem('token', response.token);
+				localStorage.setItem('refreshToken', response.refreshToken);
+				return {
+					success: true,
+					data: {
+						token: response.token,
+						refreshToken: response.refreshToken,
+						user: response.user
+					}
+				};
+			}
+
+			return {
+				success: false,
+				error: 'Ошибка сервера. Попробуйте позже'
+			};
+		} catch (error) {
+			console.error('login error:', error);
+			return {
+				success: false,
+				error: error instanceof HttpErrorResponse ? 
+					(error.error as any)?.error || error.error?.message || 'Ошибка входа по email' : 
+					'Ошибка входа по email'
+			}
+		}
+	}
+	/**
+	 * Method for login by surname, name and patronymic
+	 * @param surname Surname for login
+	 * @param name Name for login
+	 * @param patronymic Patronymic for login
+	 * @param password User password
+	 * @returns 
+	 */
+	public async loginBySnp(surname: string, name: string, patronymic: string, password: string): Promise<DefaultServiceResultWithData<LoginResult>>{
+		try{
+			const response = await firstValueFrom(
+				this.http.post<LoginResultServerResponse>(
+					'/api/auth/login-by-snp', {
+						surname,
+						name,
+						patronymic,
+						password
+					}
+				)
+			);
+			
+			if (response.token && response.refreshToken && response.user){
+				localStorage.setItem('token', response.token);
+				localStorage.setItem('refreshToken', response.refreshToken);
+				return {
+					success: true,
+					data: {
+						token: response.token,
+						refreshToken: response.refreshToken,
+						user: response.user
+					}
+				};
+			}
+
+			return {
+				success: false,
+				error: 'Ошибка сервера. Попробуйте позже'
+			};
+		} catch (error) {
+			console.error('login error:', error);
+			return {
+				success: false,
+				error: error instanceof HttpErrorResponse ? 
+					(error.error as any)?.error || error.error?.message || 'Ошибка входа по ФИО' : 
+					'Ошибка входа по ФИО'
+			}
+		}
+	}
+
+
+
+	/**
+	 * Function to chech auth token
+	 * @returns CheckAuthResult
+	 */
+	public async checkAuth(): Promise<DefaultServiceResultWithData<CheckAuthResult>>{
+		try{
+			const token = AuthService.getToken();
+			if (!token) {
+				return { 
+					success: false,
+					error: 'Токен отсутствует',
+				};
+			}
+			const response = await firstValueFrom(
+				this.http.get<ApiAuthVerifyServerResponse>(
+					'/api/auth/verify',
+					CreateConfig.createAuthConfigNew(token)
+				)
+			);
+			if (response.valid && response.user) {
+				return {
+					success: true,
+					message: 'Токен действителен',
+					data: {
+						authenticated: true,
+						user: response.user,
+					}
+				};
+			} else {
+				return await this.tryRefreshToken();
+			}
+		} catch(error) {
+			console.error('Check auth error:', error);
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 401)
+					return await this.tryRefreshToken();
+			}
+			
+			return {
+				success: false,
+				error: error instanceof HttpErrorResponse ? 
+					(error.error as any)?.error || error.error?.message || 'Ошибка проверки токена' : 
+					'Ошибка проверки токена'
+			}
+		}
+	}
+	/**
+	 * Function for refresh the token
+	 * @returns CheckAuthResult
+	 */
+	public async tryRefreshToken(): Promise<DefaultServiceResultWithData<CheckAuthResult>> {
+		try {
+			const refreshToken = localStorage.getItem('refreshToken');
+			
+			if (!refreshToken) {
+				return {
+					success: false,
+					error: 'Refresh token отсутствует',
+				};
+			}
+
+			const response =
+			await firstValueFrom(
+				this.http.post<ApiAuthRefreshServerResponse>(
+					'/api/auth/refresh', {
+						refreshToken
+					}
+				)
+			);
+
+			if (response.token && response.refreshToken && response.user) {
+				localStorage.setItem('token', response.token);
+				localStorage.setItem('refreshToken', response.refreshToken);
+				
+				const userResponse =
+				await firstValueFrom(this.http.get<ApiAuthVerifyServerResponse>(
+					'/api/auth/verify',
+					CreateConfig.createAuthConfigNew(response.token)
+				));
+				
+				return {
+					success: true,
+					message: 'Токен обновлен',
+					data: {
+						authenticated: true,
+						user: userResponse.user,
+					}
+				};
+			}
+		} catch (refreshError) {
+			console.error('Refresh token error:', refreshError);
+		}
+
+		AuthService.clearAuthData();
+		return {
+			success: false,
+			error: 'Требуется повторный вход',
+		};
+	}
+
+
+
+	/**
+	 * Function for user logout
+	 */
+	logout() {
+		try {
+			const response = firstValueFrom(this.http.post<DefaultServiceResult>(
+				'/api/auth/logout',
+				{}
+			));
+			AuthService.clearAuthData();
+		} finally {
+		}
+	}
 
 
 
@@ -252,82 +510,5 @@ export class AuthService {
 		localStorage.removeItem('token');
 		localStorage.removeItem('refreshToken');
 		localStorage.removeItem('user');
-	}
-
-
-
-
-
-
-
-
-
-
-	/**
-	 * Изменение пароля пользователя
-	 * @param {string} email - Email пользователя
-	 * @param {string} authToken - Токен авторизации (например, "eyJhbGciOi...")
-	 * @param {string} oldPassword - Текущий пароль
-	 * @param {string} newPassword - Новый пароль
-	 * @returns {Promise<Object>} - Результат операции
-	 */
-	static async updatePassword(email: string, authToken: string, oldPassword: string, newPassword: string){
-		try {
-			const response = await axios.put(
-				`/api/users/update-password/${encodeURIComponent(email)}`, 
-				{
-					'oldPassword': oldPassword, 
-					'newPassword': newPassword
-				},
-				{
-					headers:{
-						'Authorization': `Bearer ${authToken}`,
-						'Content-Type': 'application/json'
-					}
-				}
-			);
-
-			return response.data;
-		} catch (error){
-			const axiosError = error as AxiosError<{
-				message?: string;
-				error?: string;
-			}>;
-			console.error('Update password error:', axiosError);
-			if (axiosError.response) {
-				// Сервер ответил с ошибкой
-				const status = axiosError.response.status;
-				const data = axiosError.response.data;
-				
-				let message = data?.message || 'Ошибка сервера';
-				
-				if (status === 403) {
-					message = data?.message || 'Недостаточно прав для изменения пароля';
-				} else if (status === 404) {
-					message = data?.message || 'Пользователь не найден';
-				} else if (status === 401) {
-					message = 'Требуется авторизация';
-				}
-				
-				return {
-					success: false,
-					message: message,
-					status: status
-				};
-				
-			} else if (axiosError.request) {
-				// Запрос был сделан, но ответа нет
-				return {
-					success: false,
-					message: 'Ошибка сети: не удалось получить ответ от сервера'
-				};
-			} else {
-				// Ошибка настройки запроса
-				return {
-					success: false,
-					message: axiosError.message || 'Ошибка при отправке запроса'
-				};
-			}
-		}
 	}
 }

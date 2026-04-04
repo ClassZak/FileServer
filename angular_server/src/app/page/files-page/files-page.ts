@@ -7,24 +7,22 @@ import { AuthService } from '../../core/service/auth-service';
 import { FileService, DirectoryList, SearchResults } from '../../core/service/file-service';
 import { FileInfo } from '../../core/model/file-info';
 import { FolderInfo } from '../../core/model/folder-info';
-import { ErrorContainer } from '../../core/model/error-container';
 
 // UI Components (adjust paths as needed in your project)
 import { AppHeader } from '../../app-header/app-header';
 import { AppFooter } from '../../app-footer/app-footer';
 import { LoadingSpinner } from '../../component/loading-spinner/loading-spinner';
-import { BreadcrumbsComponent } from '../../component/breadcrumbs/breadcrumbs'; // renamed
+import { BreadcrumbsComponent } from '../../component/breadcrumbs/breadcrumbs';
+import { ModelTable } from '../../component/model-table/model-table';
+import { ModelTableTileComponent } from '../../component/model-table-tile-component/model-table-tile-component';
+import { ActionType, ActionsConfig, ActionConfig, ColumnDefinition, ModelTableDataObject } from '../../core/model/model-table-types';
 import { FileSearchComponent } from '../../component/file-search-component/file-search-component';
-import { ErrorMessageComponent } from '../../component/error-message-component/error-message-component';
-import { FileTableComponent } from '../../component/file-table-component/file-table-component';
-import { FolderTableComponent } from '../../component/folder-table-component/folder-table-component';
-import { FoundFilesTableComponent } from '../../component/found-files-table-component/found-files-table-component';
-import { FoundFoldersTableComponent } from '../../component/found-folders-table-component/found-folders-table-component';
 import { CreateFolderModalComponent } from '../../component/modal/file/create-folder-modal-component/create-folder-modal-component';
 import { DeleteConfirmationModalComponent } from '../../component/modal/file/delete-confirmation-modal-component/delete-confirmation-modal-component';
 import { RedirectionButton } from '../../component/redirection-button/redirection-button';
 import { User } from '../../core/model/user';
 import AdminService from '../../core/service/admin-service';
+import { IconManager } from '../../component/icon-manager/icon-manager';
 
 @Component({
 	selector: 'app-files-page',
@@ -37,12 +35,11 @@ import AdminService from '../../core/service/admin-service';
 		AppFooter,
 		LoadingSpinner,
 		BreadcrumbsComponent,
+
+		ModelTable,
+		ModelTableTileComponent,
+
 		FileSearchComponent,
-		ErrorMessageComponent,
-		FileTableComponent,
-		FolderTableComponent,
-		FoundFilesTableComponent,
-		FoundFoldersTableComponent,
 		CreateFolderModalComponent,
 		DeleteConfirmationModalComponent,
 		RedirectionButton,
@@ -51,15 +48,123 @@ import AdminService from '../../core/service/admin-service';
 	styleUrls: ['./files-page.css'],
 })
 export class FilesPageComponent implements OnInit, OnDestroy {
+	// Static references
+	IconManager = IconManager;
+
 	// Data states
-	files: FileInfo[] = [];
-	folders: FolderInfo[] = [];
 	isLoading = false;
 	uploading = false;
 	isAuthenticated: boolean = false;
 	authorizedUser?: User;
 	isAdmin: boolean = false;
 	error = '';
+	files = new Array<FileInfo>();
+	folders = new Array<FolderInfo>();
+
+	// ModelTable
+	filesModelTableDataObject: ModelTableDataObject<FileInfo> = new ModelTableDataObject(
+		[
+			{header:'Имя', field:'name', icon:((item: FileInfo)=>IconManager.getFileIcon(item.extension))},
+			{header:'Расширение', field:'extension', icon:((item: FileInfo)=>IconManager.getFileIcon(item.extension))},
+			{header:'Размер', field:'readableSize'},
+			{header:'Дата изменения', field:'lastModified'},
+		],
+		[],
+		{
+			actionsHeader: 'Действия',
+			actionsConfigs: [
+				{
+					type: ActionType.ACTION,
+					label: 'Скачать',
+					class: 'btn btn-blue',
+					onClick: (file: FileInfo) => this.handleFileDownload(file)
+				},
+				{
+					type: ActionType.ACTION,
+					label: 'Удалить',
+					class: 'btn btn-red',
+					onClick: (file: FileInfo) => this.handleFileDelete(file)
+				}
+			]
+		}
+	);
+	foldersModelTableDataObject: ModelTableDataObject<FolderInfo> = new ModelTableDataObject(
+		[
+			{header: 'Имя', field: 'name', icon:((item: FolderInfo)=>IconManager.getFileIcon('folder'))},
+			{header: 'Дата изменения', field:'lastModified'},
+			{header: 'Размер', field:'readableSize'}
+		],
+		[],
+		{
+			actionsHeader: 'Действия', 
+			actionsConfigs: [
+				{
+					type: ActionType.LINK,
+					label: 'Открыть',
+					class: 'btn btn-blue',
+					href: (item: FolderInfo)=>{return `/files/${item.fullPath}`}
+				},
+				{
+					type: ActionType.ACTION,
+					label: 'Удалить',
+					class: 'btn btn-red',
+					onClick: (item: FolderInfo) => this.prepareDelete(item.fullPath, item.name)
+				}
+			]
+		}
+	);
+	filesFoundModelTableDataObject: ModelTableDataObject<FileInfo> = new ModelTableDataObject(
+		[
+			{header:'Путь', field:((item: FileInfo)=>{return FileInfo.getRelativePath(item,this.searchPath)}), icon:((item: FileInfo)=>IconManager.getFileIcon(item.extension))},
+			{header:'Имя', field:'name', icon:((item: FileInfo)=>IconManager.getFileIcon(item.extension))},
+			{header:'Расширение', field:'extension', icon:((item: FileInfo)=>IconManager.getFileIcon(item.extension))},
+			{header:'Размер', field:'readableSize'},
+			{header:'Дата изменения', field:'lastModified'},
+		],
+		[],
+		{
+			actionsHeader: 'Действия',
+			actionsConfigs: [
+				{
+					type: ActionType.ACTION,
+					label: 'Скачать',
+					class: 'btn btn-blue',
+					onClick: (file: FileInfo) => this.handleFileDownload(file)
+				},
+				{
+					type: ActionType.ACTION,
+					label: 'Удалить',
+					class: 'btn btn-red',
+					onClick: (file: FileInfo) => this.handleFileDelete(file)
+				}
+			]
+		}
+	);
+	foldersFoundModelTableDataObject: ModelTableDataObject<FolderInfo> = new ModelTableDataObject(
+		[
+			{header: 'Имя', field: 'name', icon:((item: FolderInfo)=>IconManager.getFileIcon('folder'))},
+			{header: 'Дата изменения', field:'lastModified'},
+			{header: 'Размер', field:'readableSize'}
+		],
+		[],
+		{
+			actionsHeader: 'Действия', 
+			actionsConfigs: [
+				{
+					type: ActionType.LINK,
+					label: 'Открыть',
+					class: 'btn btn-blue',
+					href: (item: FolderInfo)=>{return `/files/${item.fullPath}`}
+				},
+				{
+					type: ActionType.ACTION,
+					label: 'Удалить',
+					class: 'btn btn-red',
+					onClick: (item: FolderInfo) => this.prepareDelete(item.fullPath, item.name)
+				}
+			]
+		}
+	);
 
 	// Navigation state
 	currentPath = '';
@@ -84,29 +189,36 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 	constructor(
 		private route: ActivatedRoute,
 		private router: Router,
-		private cdr: ChangeDetectorRef
+		private cdr: ChangeDetectorRef,
+
+		private authService: AuthService,
+		private adminService: AdminService,
+		private fileService: FileService
 	) {}
 
 	async ngOnInit(): Promise<void> {
 		try{
 			await this.checkAuthentication();
+			this.initSubscriptions();
 		} catch (error) {
 			console.error('Ошибка при загрузке страницы:', error); // TODO: notice
 		}
-		// Подписка на изменение сегментов URL (часть после /files/)
+	}
+
+	private initSubscriptions(): void {
+		// URL segment subscribtion (/files/**)
 		this.routeParamsSubscription = this.route.url.subscribe((segments: UrlSegment[]) => {
-			// Убираем первый сегмент 'files'
+			// remove the 'files'
 			const pathSegments = segments.slice(1).map(s => s.path);
 			const path = pathSegments.join('/');
 			this.currentPath = path;
 			this.pathInput = path;
-			// Загружаем директорию только если не в режиме поиска
-			if (!this.isSearchMode) {
+			// Download directory in default mode
+			if (!this.isSearchMode)
 				this.loadDirectory();
-			}
 		});
 
-		// Подписка на query-параметры (для поиска)
+		// URL query params subscribtion (for search)
 		this.queryParamsSubscription = this.route.queryParamMap.subscribe((queryMap) => {
 			const q = queryMap.get('q');
 			const newIsSearchMode = !!q;
@@ -120,13 +232,16 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				this.searchPath = queryMap.get('searchPath') || '';
 				this.performSearch();
 			} else {
-				// При выходе из поиска загружаем текущую директорию
+				// Load current durectory
 				this.loadDirectory();
 			}
 		});
 	}
 
 	ngOnDestroy(): void {
+		this.unsubscribeAll();
+	}
+	unsubscribeAll(): void {
 		this.routeParamsSubscription?.unsubscribe();
 		this.queryParamsSubscription?.unsubscribe();
 	}
@@ -134,21 +249,26 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 
 	private async checkAuthentication(): Promise<void> {
 		try {
-			const authResult = await AuthService.checkAuth();
+			const authResult = await this.authService.checkAuth();
 			
-			if (authResult.authenticated) {
+			if (!authResult.success || !authResult.data?.authenticated) {
+				const message = `Аутентификация не пройдена: ${authResult.error}`;
+				console.error(message);
+				this.unsubscribeAll();
+				this.router.navigate(['/login']);
+				throw new Error(message);
+			} else {
 				console.log('Аутентификация прошла успешно');
 				this.isAuthenticated = true;
-				this.authorizedUser = authResult.user;
-
+				this.authorizedUser = authResult.data.user;
+				
 				await this.checkAdminStatus();
-			} else {
-				console.log('Аутентификация не пройдена:', authResult.message);
-				this.router.navigate(['/login']);
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
+			this.unsubscribeAll();
 			this.router.navigate(['/login']);
+			return;
 		} finally {
 			this.isLoading = false;
 		}
@@ -159,7 +279,14 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			const token = AuthService.getToken();
 			if(token === null)
 				throw "У вас нет токена авторизации";
-			this.isAdmin = await AdminService.isAdmin(token);
+			const result = await this.adminService.isAdmin(token);
+			if (result.success)
+				this.isAdmin = true;
+			else
+				throw new Error(
+					result.error ?
+					result.error : 'Не удалось проверить статус администратора'
+				);
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
 		}
@@ -186,26 +313,38 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 		try {
 			const token = AuthService.getToken();
 			if (!token) {
+				this.unsubscribeAll();
 				this.router.navigate(['/login']);
 				return;
 			}
+			const result = await this.fileService.loadDirectory(token, this.currentPath);
 
-			const result = await FileService.loadDirectory(token, this.currentPath);
-
-			if ('error' in result) {
-				this.error = (result as ErrorContainer).error || 'Unknown error';
+			if (!result.success) {
+				this.error = result.error || 'Unknown error';
 				this.files = [];
 				this.folders = [];
+				this.filesModelTableDataObject.models = this.files;
+				this.foldersModelTableDataObject.models = this.folders;
+				this.filesFoundModelTableDataObject.models = this.files;
+				this.foldersFoundModelTableDataObject.models = this.folders;
 			} else {
-				const dirList = result as DirectoryList;
+				const dirList = result.data as DirectoryList;
 				this.files = dirList.files;
 				this.folders = dirList.folders;
+				this.filesModelTableDataObject.models = this.files;
+				this.foldersModelTableDataObject.models = this.folders;
+				this.filesFoundModelTableDataObject.models = this.files;
+				this.foldersFoundModelTableDataObject.models = this.folders;
 			}
 		} catch (err: any) {
 			console.error('Load directory error:', err);
 			this.error = err.message || 'Failed to load directory.';
 			this.files = [];
 			this.folders = [];
+			this.filesModelTableDataObject.models = this.files;
+			this.foldersModelTableDataObject.models = this.folders;
+			this.filesFoundModelTableDataObject.models = this.files;
+			this.foldersFoundModelTableDataObject.models = this.folders;
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
@@ -222,16 +361,23 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 		try {
 			const token = AuthService.getToken();
 			if (!token) {
+				this.unsubscribeAll();
 				this.router.navigate(['/login']);
 				return;
 			}
 
-			const results = await FileService.find(token, this.searchQuery, this.searchPath);
-			this.searchResults = results;
+			const results = await this.fileService.find(token, this.searchQuery, this.searchPath);
+			if (!results.success)
+				throw results.error;
+			this.searchResults = results.data!;
+			this.filesFoundModelTableDataObject.models = this.searchResults.files;
+			this.foldersFoundModelTableDataObject.models = this.searchResults.folders;
 		} catch (err: any) {
 			console.error('Search error:', err);
 			this.error = err.message || 'Search failed.';
 			this.searchResults = null;
+			this.filesFoundModelTableDataObject.models = [];
+			this.foldersFoundModelTableDataObject.models = [];
 		} finally {
 			this.searchLoading = false;
 			this.cdr.detectChanges();
@@ -281,14 +427,16 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 		}
 
 		try {
-			const exists = await FileService.exists(token, cleanPath);
-			if (exists) {
+			const exists = await this.fileService.exists(token, cleanPath);
+			if (exists.success) {
 				this.router.navigate(['/files', cleanPath]);
+				return;
 			} else {
 				this.error = 'Path does not exist.';
 			}
 		} catch (err: any) {
 			this.error = err.message || 'Failed to check path.';
+			// TODO: notice
 		}
 	}
 
@@ -309,7 +457,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				return;
 			}
 
-			await FileService.upload(token, file, this.currentPath);
+			await this.fileService.upload(token, file, this.currentPath);
 			await this.loadDirectory();
 		} catch (err: any) {
 			this.error = typeof err === 'string' ? err : err.message || 'Upload failed.';
@@ -334,11 +482,12 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 		try {
 			const token = AuthService.getToken();
 			if (!token) {
+				this.unsubscribeAll();
 				this.router.navigate(['/login']);
 				return;
 			}
 
-			await FileService.createFolder(token, this.currentPath, folderName);
+			await this.fileService.createFolder(token, this.currentPath, folderName);
 
 			this.showCreateFolderModal = false;
 			await this.loadDirectory();
@@ -351,6 +500,9 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 	}
 
 	// ========== Delete ==========
+	handleFileDelete(file: FileInfo): void {
+		this.prepareDelete(file.fullPath, file.name);
+	}
 
 	prepareDelete(path: string, name: string): void {
 		this.itemToDelete = { path, name };
@@ -362,17 +514,22 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 		this.itemToDelete = null;
 	}
 
+	get encodedCurrentPath(): string {
+		return encodeURIComponent(this.currentPath);
+	}
+
 	async handleDelete(): Promise<void> {
 		if (!this.itemToDelete) return;
 
 		try {
 			const token = AuthService.getToken();
 			if (!token) {
+				this.unsubscribeAll();
 				this.router.navigate(['/login']);
 				return;
 			}
 
-			await FileService.deleteItem(token, this.itemToDelete.path);
+			await this.fileService.deleteItem(token, this.itemToDelete.path);
 
 			this.showDeleteModal = false;
 			this.itemToDelete = null;
@@ -386,30 +543,26 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 	}
 
 	// ========== Download ==========
-
+	handleFileDownload(file: FileInfo): void {
+		this.handleDownload(file.fullPath, file.name);
+	}
 	async handleDownload(path: string, name: string): Promise<void> {
 		try {
 			const token = AuthService.getToken();
 			if (!token) {
+				this.unsubscribeAll();
 				this.router.navigate(['/login']);
 				return;
 			}
 
-			const { blob, contentType } = await FileService.downloadFile(token, path);
+			const { blob, contentType } = (await this.fileService.downloadFile(token, path)).data!;
 
 			// Check if the response is actually an error JSON
 			if (contentType && contentType.includes('application/json')) {
-				const reader = new FileReader();
-				reader.onload = () => {
-					try {
-						const errorData = JSON.parse(reader.result as string);
-						this.error = errorData.error || 'Download failed.';
-					} catch {
-						this.error = 'Download failed.';
-					}
-					this.cdr.detectChanges();
-				};
-				reader.readAsText(blob);
+				const text = await blob.text();
+				const errorData = JSON.parse(text);
+				this.error = errorData.error || 'Ошибка загрузки.';
+				this.cdr.detectChanges();
 				return;
 			}
 
@@ -424,7 +577,8 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			window.URL.revokeObjectURL(url);
 		} catch (err: any) {
 			console.error('Download error:', err);
-			this.error = typeof err === 'string' ? err : err.message || 'Download failed.';
+			this.error = typeof err === 'string' ? err : err.message || 'Ошибка загрузки.';
+			this.cdr.detectChanges();
 		}
 	}
 }

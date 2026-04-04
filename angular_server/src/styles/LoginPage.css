@@ -12,7 +12,7 @@
 }
 
 .login-card {
-	background: #242424;
+	background: var(--color-bg-surface);
 	backdrop-filter: blur(10px);
 	border-radius: 12px;
 	padding: 2.5rem;
@@ -24,13 +24,13 @@
 	font-size: 2rem;
 	text-align: center;
 	margin-bottom: 2rem;
-	color: var(--accent-gold);
+	color: var(--color-accent-primary);
 }
 
 /* Переключатель типа входа */
 .auth-switcher {
 	display: flex;
-	background: #333;
+	background: var(--color-border-default);
 	border-radius: 8px;
 	margin-bottom: 2rem;
 	padding: 4px;
@@ -41,7 +41,7 @@
 	padding: 0.75rem 1rem;
 	background: transparent;
 	border: none;
-	color: #aaa;
+	color: var(--color-text-primary);
 	font-weight: 600;
 	font-size: 0.95rem;
 	cursor: pointer;
@@ -50,13 +50,13 @@
 }
 
 .auth-switcher button.active {
-	background: #444;
-	color: var(--accent-gold);
+	background: var(--color-bg-button);
+	color: var(--color-accent-primary);
 }
 
 .auth-switcher button:hover:not(.active):not(:disabled) {
-	background: #3a3a3a;
-	color: #ddd;
+	background: var(--color-border-muted);
+	color: var(--color-accent-primary);
 }
 
 .auth-switcher button:disabled {
@@ -77,30 +77,31 @@
 .auth-form label {
 	display: block;
 	margin-bottom: 0.5rem;
-	color: var(--accent-gold);
+	color: var(--color-accent-primary);
 	font-weight: 500;
 	font-size: 0.95rem;
 }
 
 .auth-form input, .auth-form input[type="text"]{
 	width: 100%;
-	padding: 0.75rem 1rem;
-	background: #333;
-	border: 1px solid #444;
+	box-sizing: border-box;
+	padding: 0.75rem;
+	background: var(--color-border-default);
+	border: 1px solid var(--color-border-default);
 	border-radius: 6px;
-	color: #edf2f7;
+	color: var(--color-input-text);
 	font-size: 1rem;
 	transition: all 0.3s ease;
 }
 
 .auth-form input:focus {
 	outline: none;
-	border-color: var(--accent-gold);
+	border-color: var(--color-accent-primary);
 	box-shadow: 0 0 0 2px rgba(236, 201, 75, 0.1);
 }
 
 .auth-form input::placeholder {
-	color: #777;
+	color: var(--color-text-auth-form);
 }
 
 .auth-form input:disabled {
@@ -120,14 +121,14 @@
 	transform: translateY(-50%);
 	background: none;
 	border: none;
-	color: #aaa;
+	color: var(--color-text-secondary);
 	cursor: pointer;
 	padding: 0.25rem;
 	font-size: 0.9rem;
 }
 
 .password-toggle:hover {
-	color: #ddd;
+	color: var(--color-accent-primary);
 }
 
 .password-toggle:disabled {
@@ -139,8 +140,8 @@
 .auth-submit-btn {
 	width: 100%;
 	padding: 0.875rem 1.5rem;
-	background: linear-gradient(135deg, var(--accent-gold), #d69e2e);
-	color: #1a1a1a;
+	background: linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-secondary));
+	color: black;
 	border: none;
 	border-radius: 6px;
 	font-size: 1rem;
@@ -153,7 +154,7 @@
 .auth-submit-btn:hover:not(:disabled) {
 	transform: translateY(-2px);
 	box-shadow: 0 4px 12px rgba(236, 201, 75, 0.2);
-	background: linear-gradient(135deg, #f6e05e, var(--accent-gold));
+	background: linear-gradient(135deg, var(--color-accent-secondary), var(--color-accent-primary));
 }
 
 .auth-submit-btn:disabled {
@@ -164,15 +165,15 @@
 
 /* Сообщение об ошибке */
 .auth-error {
-	background: rgba(220, 38, 38, 0.1);
-	border: 1px solid rgba(220, 38, 38, 0.3);
+	background: var(--color-danger-bg);
+	border: 1px solid var(--color-danger-border);
 	border-radius: 6px;
 	padding: 1rem;
 	margin-bottom: 1.5rem;
 }
 
 .auth-error p {
-	color: #fca5a5;
+	color: var(--color-danger-text);
 	margin: 0;
 	font-size: 0.95rem;
 }
@@ -190,8 +191,8 @@
 	text-align: center;
 	margin-top: 2rem;
 	padding-top: 1.5rem;
-	border-top: 1px solid #444;
-	color: #aaa;
+	border-top: 1px solid var(--color-border-default);
+	color: var(--color-text-secondary);
 	font-size: 0.9rem;
 }
 
@@ -205,8 +206,8 @@
 	width: 20px;
 	height: 20px;
 	margin-right: 8px;
-	border: 2px solid rgba(26, 26, 26, 0.3);
-	border-top-color: #1a1a1a;
+	border: 2px solid var(--color-border-default);
+	border-top-color: black;
 	border-radius: 50%;
 	animation: spin 1s linear infinite;
 	vertical-align: middle;
@@ -219,7 +220,7 @@
 }
 
 /* Адаптивность */
-@media (max-width: 640px) {
+@media screen and (width < 576px) {
 	.login-container {
 		padding: 1rem;
 	}
@@ -243,10 +244,10 @@
 .password-container input[type="text"]{
 	width: 100%;
 	padding: 0.75rem 1rem;
-	background: #333;
-	border: 1px solid #444;
+	background: var(--color-border-default);
+	border: 1px solid var(--color-border-default);
 	border-radius: 6px;
-	color: #edf2f7;
+	color: var(--color-input-text);
 	font-size: 1rem;
 	transition: all 0.3s ease;
 }

@@ -1,0 +1,83 @@
+@if (modelTableDataObject && modelTableDataObject.models.length > 0) {
+<div class="model-table-container" #tableContainer>
+	<table class="model-table" #table>
+		<thead>
+			<tr>
+				@for (col of modelTableDataObject.columnDefinitions; track $index; let colIndex = $index) {
+					<th [class]="col.headerClass" #headerCell>
+						<div class="cell">
+							{{ col.header}}
+						</div>
+						@if (!isLastColumn(colIndex)) {
+							<span class="resize-handle" (mousedown)="startResize($event, colIndex)"></span>
+						}
+					</th>
+				}
+				@if (modelTableDataObject.actionsConfig) {
+					<th [class]="modelTableDataObject.actionsConfig.actionsHeaderClassName">
+						<div class="cell">
+							{{ modelTableDataObject.actionsConfig.actionsHeader }}
+						</div>
+					</th>
+				}
+			</tr>
+		</thead>
+		<tbody>
+			@for (model of modelTableDataObject.models; track $index) {
+				<tr>
+					@for (col of modelTableDataObject.columnDefinitions; track $index; let colIndex = $index) {
+						<td [class]="col.cellClass" [class.resize-active]="resizing && resizingColIndex === colIndex">
+							@if (col.icon) {
+								<div class="cell icon-container">
+									<ng-icon [name]="getIcon(model, col)"></ng-icon>
+									{{ getCellValue(model, col)}}</div>
+							} @else {
+								<div class="cell">
+									{{ getCellValue(model, col) }}
+								</div>
+							}@if (!isLastColumn(colIndex)) {
+								<span class="border-span"></span>
+							}
+						</td>
+					}
+					@if (modelTableDataObject.actionsConfig) {
+						<td>
+							<div class="buttons-row cell">
+								@for (action of modelTableDataObject.actionsConfig.actionsConfigs; track $index) {
+									@switch (action.type) {
+										@case (ActionType.LINK) {
+											<app-redirection-button
+												[title]="getActionLabel(action, model)"
+												[reference]="getActionHref(action, model)"
+												[className]="getActionClass(action, model)"
+											></app-redirection-button>
+										}
+										@case (ActionType.ACTION) {
+											<button
+												[ngClass]="getActionClass(action, model)"
+												(click)="handleAction(action, model)"
+											>
+												{{ getActionLabel(action, model) }}
+											</button>
+										}
+										@case (ActionType.DATA_ACTION) {
+											<button
+												[ngClass]="getActionClass(action, model)"
+												(click)="handleAction(action, model)"
+											>
+												{{ getActionLabel(action, model) }}
+											</button>
+										}
+									}
+								}
+							</div>
+						</td>
+					}
+				</tr>
+			}
+		</tbody>
+	</table>
+	<!-- Resize line --><!--[style.left.px]="resizeLineLeft"-->
+	<div class="resize-line" id="resize-line" [style.display]="resizing ? 'block' : 'none'" #resizeLine></div>
+</div>
+}

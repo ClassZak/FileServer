@@ -1,11 +1,12 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ModalComponent } from '../../modal/modal';
+import { FormsModule } from '@angular/forms';
 
 @Component({
 	selector: 'app-delete-user-modal',
 	standalone: true,
-	imports: [CommonModule, ModalComponent],
+	imports: [CommonModule, ModalComponent, FormsModule],
 	templateUrl: './delete-user-modal.html',
 	styleUrls: ['./delete-user-modal.css']
 })

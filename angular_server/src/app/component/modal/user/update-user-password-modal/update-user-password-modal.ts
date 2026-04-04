@@ -19,6 +19,7 @@ export class UpdateUserPasswordModalComponent {
 
 	submitting: boolean = false;
 	formData: UpdatePasswordModalModel = new UpdatePasswordModalModel();
+	error?: string;
 
 	onInputChangeOldPassword(value: string): void {
 		this.formData.oldPassword = value;
@@ -35,12 +36,29 @@ export class UpdateUserPasswordModalComponent {
 		
 		this.submitting = true;
 		try {
-			await this.onConfirm.emit(this.formData);
+			if (this.formData.newPassword != this.formData.newPasswordConfirm)
+				throw new Error('Ошибка. Новый пароль и подтверждение нового пароля не совпадают');
+			this.onConfirm.emit(this.formData);
 		} catch (error: any) {
 			console.error(error);
+			this.error = (error as Error).message;
+			// TODO: notice
 		} finally {
 			this.submitting = false;
 		}
+	}
+
+	/**
+	 * Function for new password check
+	 * @returns {boolean} false if invalid
+	 * @throws {Error} 
+	 */
+	getNewPasswordMessage() : string | undefined {
+		if (this.formData.newPassword != this.formData.newPasswordConfirm)
+			return 'Ошибка. Новый пароль и подтверждение нового пароля не совпадают';
+		// TODO: other errors
+
+		return undefined;
 	}
 
 	closeModal(): void {

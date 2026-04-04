@@ -6,12 +6,12 @@ a.RedirectionButton {
 
 a.DefaultButton {
 	padding: 0px 12px;
-	background-color: var(--accent-gold);
+	background-color: var(--color-accent-primary);
 	color: black;
 	text-decoration: none;
 	text-align: center;
 	border-radius: 5px;
-	border: 2px solid var(--secondary-olive);
+	border: 2px solid var(--color-accent-muted);
 	cursor: pointer;
 	transition: all 0.3s ease;
 

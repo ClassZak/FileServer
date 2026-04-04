@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { AppHeader } from "../../app-header/app-header";
 import { AppFooter } from '../../app-footer/app-footer';
 import { AuthService, CheckAuthResult } from '../../core/service/auth-service';
+import { DefaultServiceResult, DefaultServiceResultWithData } from '../../core/model/default-server-result';
 
 enum LoginFormType {
 	Email,
@@ -12,7 +13,7 @@ enum LoginFormType {
 
 @Component({
 	selector: 'app-login-page',
-	imports: [AppHeader, AppFooter, FormsModule], // Добавлен FormsModule
+	imports: [AppHeader, AppFooter, FormsModule], // Add FormsModule
 	templateUrl: './login-page.html',
 	styleUrl: './login-page.css',
 })
@@ -24,43 +25,48 @@ export class LoginPage {
 	patronymic: string = '';
 	error?: string;
 	showPassword: boolean = false;
+	LoginFormType = LoginFormType;
 	formType: LoginFormType = LoginFormType.Email;
 	isSubmiting: boolean = false;
 
 	constructor(
 		private router: Router,
-		private cdr: ChangeDetectorRef
+		private cdr: ChangeDetectorRef,
+		private authService: AuthService
 	) {}
 
 	async ngOnInit(): Promise<void> {
-		setTimeout(async () => {
-			await this.checkAuthentication();
-		}, 1000);
+		this.checkAuthentication();
 	}
 
 	async handleEmailLogin(e: Event) {
 		e.preventDefault();
 		this.isSubmiting = true;
-		console.log('Login attempt with:', this.email, this.password);
 		
 		try {
-			const result = await AuthService.loginByEmail(this.email, this.password);
+			const result = await this.authService.loginByEmail(this.email, this.password);
 			if (result.success) {
-				const authResult = await AuthService.checkAuth();
-				if (authResult.authenticated) {
-					this.router.navigate(['/account']);
-				} else {
-					this.error = 'Ошибка авторизации после входа';
+				const authResult = await this.authService.checkAuth();
+				if (!authResult.success)
+					this.error = authResult.error;
+				else
+				{
+					if (authResult.data?.authenticated) {
+						this.router.navigate(['/account']);
+						return;
+					} else
+						this.error = 'Ошибка авторизации после входа';
 				}
 			} else {
-				if (result.message)
-					this.error = result.message;
+				if (result.error)
+					this.error = result.error;
 				else
 					this.error = 'Неверный email или пароль';
 			}
 		} catch (error) {
-			console.log('Login failed:', error);
+			console.error('Login failed:', error);
 			this.error = 'Произошла ошибка при входе';
+			// TODO: notice
 		} finally {
 			this.isSubmiting = false;
 		}
@@ -69,24 +75,27 @@ export class LoginPage {
 	async handleSNPLogin(e: Event) {
 		this.isSubmiting = true;
 		e.preventDefault();
-		console.log('Login attempt with:',this.surname,this.name,this.patronymic,this.password);
 		
 		try {
-			const result = await AuthService.loginBySnp(
+			const result = await this.authService.loginBySnp(
 				this.surname, this.name, this.patronymic, this.password
 			);
 			if (result.success) {
-				const authResult = await AuthService.checkAuth();
-				if (authResult.authenticated) {
+				const authResult = await this.authService.checkAuth();
+				if (!authResult.success)
+					this.error = 'Ошибка авторизации после входа';
+				else
+				if (authResult.data?.authenticated) {
 					this.router.navigate(['/account']);
+					return;
 				} else {
 					this.error = 'Ошибка авторизации после входа';
 				}
 			} else {
-				this.error = 'Неверные учётные данные или пароль';
+				this.error = result.error;
 			}
 		} catch (error) {
-			console.log('Login failed:', error);
+			console.log('Авторизация не удалась:', error);
 			this.error = 'Произошла ошибка при входе';
 		} finally {
 			this.isSubmiting = false;
@@ -96,16 +105,18 @@ export class LoginPage {
 
 	private async checkAuthentication(): Promise<void> {
 		try {
-			const authResult: CheckAuthResult = await AuthService.checkAuth();
+			const authResult: DefaultServiceResultWithData<CheckAuthResult> = await this.authService.checkAuth();
 			
-			if (authResult.authenticated) {
+			if (!authResult.success || !authResult.data?.authenticated)
+				throw new Error(`Аутентификация не пройдена:${authResult.error}`);
+			else {
 				this.router.navigate(['/account']);
-			} else {
-				console.log('Аутентификация не пройдена:', authResult.message);
-				
+				return;
 			}
 		} catch (error) {
-			this.router.navigate(['/account']);
+			console.error(error);
+			return;
+			// TODO: notice
 		}
 	}
 

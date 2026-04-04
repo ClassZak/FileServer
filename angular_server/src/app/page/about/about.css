@@ -1,7 +1,5 @@
-@import url(../../../styles/MainContent.css);
-@import url(../../../styles/indented.css);
 @import url(../../app-header/app-header.css);
-@import url(../../file-search/file-search.css);
+@import url(../../file-search-header/file-search-header.css);
 
 
 .about-page, .MainContent .about-page{
@@ -69,7 +67,7 @@
 	transition: all 0.2s ease;
 	
 	object-fit: contain;
-	background-color: #1a1a1a; /* подложка на случай, если изображение с прозрачностью */
+	background-color: black; /* подложка на случай, если изображение с прозрачностью */
 }
 
 .about-page img:hover {

@@ -1,45 +1,67 @@
 .model-table {
-	min-width: 100%;
-	background-color: #242424;
-	border: 1px solid #333;
+	width: 100%;
+	background-color: var(--color-bg-surface);
+	border: 1px solid var(--color-border-default);
 	border-collapse: collapse;
 }
 
 .model-table thead {
-	background-color: var(--secondary-olive);
+	background-color: var(--color-accent-muted);
 }
-
-.model-table td{
-	padding: 0.75rem 1rem;
-	border-top: 1px solid #333;
-	vertical-align: middle;
-}
-
 .model-table th {
 	padding: 0.75rem 1rem;
 	text-align: left;
 	font-weight: 600;
-	border-bottom: 2px solid #333;
+	border-bottom: 2px solid var(--color-border-default);
 }
-@media screen and (width< 1000px) {
+
+.model-table th{
+	border-left: 2px solid var(--color-border-default);
+}
+.model-table th:first-child {
+	border-left: none;
+}
+
+
+.model-table td, .model-table th{
+	overflow:hidden;
+	white-space: nowrap;
+}
+
+.model-table td{
+	padding: 0.75rem 1rem;
+	border-top: 1px solid var(--color-border-default);
+	vertical-align: middle;
+	overflow-x: auto;
+	overflow: hidden;
+}
+@media screen and (width < 1200px) {
 	.model-table th, .model-table td{
-		text-wrap-mode: nowrap;
 		padding: 0.25rem 0.5rem;
-		border-bottom: 2px solid #333;
+		border-bottom: 2px solid var(--color-border-default);
 	}
 }
-@media screen and (width< 880px) {
+@media screen and (width < 922px) {
 	.model-table *{
+		padding: 0;
+	}
+	td {
 		text-wrap-mode:wrap;
 		font-size: smaller;
 		padding: 0;
+		border: 2px solid var(--color-border-default);
+	}
+	.model-table td.buttons-row > *{
+		padding: 3px !important;
 	}
 }
-@media screen and (width< 615px) {
+@media screen and (width < 576px) {
 	.model-table *{
-		text-wrap-mode:wrap;
-		font-size:xx-small;
-		padding: 0;
+		text-overflow:clip;
+		font-size:x-small;
+	}
+	.model-table td, .model-table tr{
+		overflow-x: auto;
 	}
 }
 
@@ -49,5 +71,45 @@
 }
 
 .model-table tbody tr:hover {
-	background-color: #484848;
+	background-color: var(--color-bg-hover);
 }
+
+
+
+
+
+.model-table-container {
+	/*overflow-x: auto;*/
+}
+@media screen and (width < 576px){
+	.MainContent .model-table-container {
+		margin: 0;
+	}
+}
+
+td{
+	padding: 0.75rem 1rem;
+	border-top: 1px solid var(--color-border-default);
+	vertical-align: middle;
+}
+@media screen and (width < 576px) {
+	td, th{
+		text-wrap-mode:wrap;
+		font-size:xx-small;
+		word-wrap: anywhere;
+		overflow-wrap: anywhere;
+		padding: 0;
+		border-left: 2px solid var(--color-border-default);
+	}
+	td:first-child, th:first-child{
+		border-left: none;
+	}
+}
+
+
+
+
+
+
+
+

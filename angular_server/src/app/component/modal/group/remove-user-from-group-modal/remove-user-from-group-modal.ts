@@ -2,11 +2,12 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ModalComponent } from '../../modal/modal';
 import { User } from '../../../../core/model/user';
+import { FormsModule } from '@angular/forms';
 
 @Component({
 	selector: 'app-remove-user-from-group-modal',
 	standalone: true,
-	imports: [CommonModule, ModalComponent],
+	imports: [CommonModule, ModalComponent, FormsModule],
 	templateUrl: './remove-user-from-group-modal.html',
 	styleUrls: ['./remove-user-from-group-modal.css']
 })
