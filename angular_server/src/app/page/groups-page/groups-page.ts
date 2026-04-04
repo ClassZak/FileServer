@@ -192,9 +192,9 @@ export class GroupsPage implements OnInit {
 
 			this.setIsCreateGroupModalComponentOpen(false);
 			await this.loadGroups();
-		} catch (error: any) {
+		} catch (error) {
 			console.error('Error updating password:', error);
-			this.error = error.toString();
+			this.error = (error as Error).message;
 			// TODO: notice
 		} finally {
 			this.isLoading = false;

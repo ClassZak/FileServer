@@ -171,47 +171,6 @@ export class UserService {
 	}
 
 	/**
-	 * Read all users (admin only)
-	 * @param {string} authToken - JWT token
-	 * @returns {Promise<ReadUsersResponse>} Response with array of users or error
-	 */
-	static async readAllUsersStatic(authToken: string): Promise<DefaultServiceResultWithData<ReadUsersResponse>> {
-		try {
-			const response = await axios.get(
-				'/api/users/users',
-				CreateConfig.createAuthConfig(authToken)
-			);
-
-			const usersData = response.data.users;
-			const userModels = usersData.map((u: any) =>
-				new UserAdminModel(
-					u.surname,
-					u.name,
-					u.patronymic,
-					u.email,
-					new Date(u.createdAt)
-				)
-			);
-
-			return {
-				success: true,
-				data: {
-					users: userModels
-				}
-			};
-		} catch (error) {
-			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
-			if (axiosError.response?.status === 403) {
-				return {
-					success: false,
-					error: axiosError.response.data.error,
-				}
-			}
-			throw axiosError;
-		}
-	}
-
-	/**
 	 * Update user password (admin only)
 	 * @param {string} authToken - JWT token
 	 * @param {string} email - Email of the user

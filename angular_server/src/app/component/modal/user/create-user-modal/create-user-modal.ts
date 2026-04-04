@@ -58,9 +58,9 @@ export class CreateUserModalComponent {
 		this.submitting = true;
 		try {
 			this.onConfirm.emit(this.formData);
-		} catch (error: any) {
+		} catch (error) {
 			console.error('Ошибка создания пользователя:', error);
-			this.errors['server'] = error.message || 'Ошибка создания пользователя';
+			this.errors['server'] = (error as Error).message || 'Ошибка создания пользователя';
 		} finally {
 			this.submitting = false;
 			this.cdr.detectChanges();

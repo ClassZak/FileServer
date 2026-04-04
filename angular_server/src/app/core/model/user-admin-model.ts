@@ -11,9 +11,13 @@ export class UserAdminModel extends User {
 	) {
 		super(surname, name, patronymic, email);
 		this.createdAt = createdAt;
+		if (!(createdAt instanceof Date))
+			this.createdAt = new Date(this.createdAt);
 	}
 
 	override toString(): string{
+		console.log(this);
+		console.log(this.createdAt instanceof Date);
 		return `${super.toString()} ${UserAdminModel.DATE_FORMATTER.format(this.createdAt).replace(',', '')}`;
 	}
 

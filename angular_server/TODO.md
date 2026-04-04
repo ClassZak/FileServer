@@ -2,9 +2,9 @@
 
 ## Code Quality & Refactoring
 - [✓] **Unify service response format**: All API methods should return an object with `success: boolean`, `error?: string`, and `data?: any`. Update components to rely on this consistent structure.
-- [✖] **Replace `any` types**: Gradually replace all `any` with proper interfaces/models to improve type safety. Keep it for ModelTable component.
+- [✓] **Replace `any` types**: Gradually replace all `any` with proper interfaces/models to improve type safety. Keep it for ModelTable component.
 - [✖] **Centralize error handling**: Create a global error handler service to capture and display errors uniformly.
-- [✖] **Refactor API workflow**: Use Angular HttpClient instead of axios for server requests.
+- [✓] **Refactor API workflow**: Use Angular HttpClient instead of axios for server requests.
 
 ## Features & UX
 - [✖] **Global notification system**: Implement toast notifications (e.g., using a library or custom service) to inform users about operation results (success, error, info).
@@ -12,7 +12,7 @@
 - [✖] **Accessibility improvements**: Add ARIA labels, ensure keyboard navigation works (focus trapping in modals, etc.).
 
 ## Testing
-- [✖] **Unit tests**: Write tests for critical services (`AuthService`, `GroupService`, `UserService`, `FileService`).
+- [✓] **Unit tests**: Write tests for critical services (`AuthService`, `GroupService`, `UserService`, `FileService`).
 - [✖] **E2E tests**: Cover main user flows (login, file browsing, group management) with Cypress or Playwright.
 
 ## Performance & Security

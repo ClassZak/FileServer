@@ -72,7 +72,7 @@ export class GroupPage implements OnInit, OnDestroy {
 		} as User));
 	}
 
-	currentUserModelTableDataObjectRef?: any;
+	currentUserModelTableDataObjectRef: any;
 	defaultUserModelTableDataObject: ModelTableDataObject<User> = new ModelTableDataObject<User>(
 		[
 			{header: 'Фамилия', field: 'surname'},
@@ -239,9 +239,9 @@ export class GroupPage implements OnInit, OnDestroy {
 				this.currentUserModelTableDataObjectRef = this.defaultUserModelTableDataObject;
 				this.currentUserModelTableDataObjectRef.models = userData.group.members;
 			}
-		} catch (error: any) {
+		} catch (error) {
 			console.error('Ошибка при загрузки данных группы:', error);
-			this.error = error.toString();
+			this.error = (error as Error).message;
 			// TODO: notice
 		} finally {
 		}
@@ -277,9 +277,9 @@ export class GroupPage implements OnInit, OnDestroy {
 
 			this.isAddUserToGroupModalComponentOpen = false;
 			this.cdr.detectChanges();
-		} catch (error: any) {
+		} catch (error) {
 			console.error(error);
-			this.error = error.toString();
+			this.error = (error as Error).message;
 			// TODO: notice
 		}
 	}
@@ -299,9 +299,9 @@ export class GroupPage implements OnInit, OnDestroy {
 
 			this.setIsDeleteGroupModalComponentOpen(false);
 			this.cdr.detectChanges();
-		} catch (error: any) {
+		} catch (error) {
 			console.error(error);
-			this.error = error.toString();
+			this.error = (error as Error).message;
 			// TODO: notice
 		}
 	}
@@ -326,9 +326,9 @@ export class GroupPage implements OnInit, OnDestroy {
 
 			this.isRemoveUserFromGroupModalComponentOpen = false;
 			this.cdr.detectChanges();
-		} catch (error: any) {
+		} catch (error) {
 			console.error(error);
-			this.error = error.toString();
+			this.error = (error as Error).message;
 			// TODO: notice
 		} finally {
 			this.selectedUserEmail = '';
@@ -353,9 +353,9 @@ export class GroupPage implements OnInit, OnDestroy {
 			await this.loadGroupData();
 			this.isUpdateGroupModalComponentOpen = false;
 			this.cdr.detectChanges();
-		} catch (error: any) {
+		} catch (error) {
 			console.error(error);
-			this.error = error.toString();
+			this.error = (error as Error).message;
 			// TODO: notice
 		}
 	}

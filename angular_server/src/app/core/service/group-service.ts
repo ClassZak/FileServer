@@ -75,215 +75,6 @@ export class GroupService {
 
 
 	/**
-	 * Get detailed group information with members (for group page)
-	 * If user doesn't have access, returns null
-	 *
-	 * @param {string} authToken JWT token
-	 * @param {string} groupName Group name
-	 * @returns {Promise<DefaultServiceResultWithData<GroupFullDetailsResponse>>} Object with "group" key or null if no access
-	 */
-	static async getGroupFullDetailsStatic(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<GroupFullDetailsResponse>> {
-		try {
-			const response = await axios.get(
-				`/api/groups/name/${encodeURIComponent(groupName)}/full`,
-				CreateConfig.createAuthConfig(authToken)
-			);
-
-			const groupData = response.data.group;
-
-			// Transform creator (no date fields in User model)
-			const creator = new User(
-				groupData.creator.surname,
-				groupData.creator.name,
-				groupData.creator.patronymic,
-				groupData.creator.email
-			);
-
-			// Transform members (no date fields)
-			const members = groupData.members.map((member: any) =>
-				new User(
-					member.surname,
-					member.name,
-					member.patronymic,
-					member.email
-				)
-			);
-
-			return {
-				success: true,
-				data: {
-					group: new GroupDetails(
-						groupData.name,
-						groupData.membersCount,
-						creator,
-						members
-					)
-				}
-			};
-		} catch (error) {
-			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
-			// Handle 404 as "group doesn't exist or no access"
-			if (axiosError.response && axiosError.response.status === 404) {
-				return {
-					success: false,
-					error: `Группа ${groupName} не найдена, либо у вас нет доуступа к ней`
-				};
-			}
-			// Handle 403 as permission denied
-			if (axiosError.response && axiosError.response.status === 403) {
-				return {
-					success: false,
-					error: 'Недостаточно прав'
-				};
-			}
-			throw axiosError;
-		}
-	}
-
-	/**
-	 * Get detailed group information with members (for group page, admin view)
-	 * If user doesn't have access, returns null
-	 *
-	 * @param {string} authToken JWT token
-	 * @param {string} groupName Group name
-	 * @returns {Promise<DefaultServiceResultWithData<GroupFullDetailsAdminResponse>>} Object with "group" key or null if no access or error object
-	 */
-	static async getGroupFullDetailsAdminStatic(authToken: string, groupName: string): Promise<DefaultServiceResultWithData<GroupFullDetailsAdminResponse>> {
-		try {
-			const response = await axios.get(
-				`/api/groups/name/${encodeURIComponent(groupName)}/full`,
-				CreateConfig.createAuthConfig(authToken)
-			);
-
-			const groupData = response.data.group;
-
-			// Helper to convert date string to Date object (assuming server sends ISO without timezone)
-			const toDate = (dateStr: string): Date => new Date(dateStr);
-
-			// Transform creator with date conversion
-			const creator = new UserAdminModel(
-				groupData.creator.surname,
-				groupData.creator.name,
-				groupData.creator.patronymic,
-				groupData.creator.email,
-				toDate(groupData.creator.createdAt)
-			);
-
-			// Transform members with date conversion
-			const members = groupData.members.map((member: any) =>
-				new UserAdminModel(
-					member.surname,
-					member.name,
-					member.patronymic,
-					member.email,
-					toDate(member.createdAt)
-				)
-			);
-
-			return {
-				success: true,
-				data: {
-					group: new GroupDetails(
-						groupData.name,
-						groupData.membersCount,
-						creator,
-						members
-					)
-				}
-			};
-		} catch (error) {
-			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
-			// Handle 404 as "group doesn't exist or no access"
-			if (axiosError.response && axiosError.response.status === 404) {
-				return {
-					success: false,
-					error: `Группа ${groupName} не найдена, либо у вас нет доуступа к ней`
-				};
-			}
-			// Handle 403 as permission denied
-			if (axiosError.response && axiosError.response.status === 403) {
-				return {
-					success: false,
-					error: `Недостаточно прав`
-				};
-			}
-			throw axiosError;
-		}
-	}
-
-	/**
-	 * Get list of user's groups (without members)
-	 *
-	 * @param {string} authToken JWT token
-	 * @returns {Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>>} Array of groups or error object
-	 */
-	static async getMyGroupsStatic(authToken: string): Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>> {
-		try {
-			const response = await axios.get(
-				'/api/groups/my',
-				CreateConfig.createAuthConfig(authToken)
-			);
-
-			return {
-				success: true,
-				data:
-					response.data.groups.map((group: any) =>
-					new GroupBasicInfo(
-						group.name,
-						group.membersCount,
-						group.creatorEmail
-					)
-				)
-			};
-		} catch (error) {
-			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
-			if (axiosError.response && axiosError.response.status === 403) {
-				return {
-					success: false,
-					error: 'Недостаточно прав'
-				};
-			}
-			throw axiosError;
-		}
-	}
-
-	/**
-	 * Get all groups (admin only, without members)
-	 *
-	 * @param {string} authToken JWT token
-	 * @returns {Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>>} Array of groups or error object
-	 */
-	static async getAllGroupsStatic(authToken: string): Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>> {
-		try {
-			const response = await axios.get(
-				'/api/groups',
-				CreateConfig.createAuthConfig(authToken)
-			);
-
-			return {
-				success: true,
-				data: 
-					response.data.groups.map((group: any) =>
-					new GroupBasicInfo(
-						group.name,
-						group.membersCount,
-						group.creatorEmail
-					)
-				)
-			};
-		} catch (error) {
-			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
-			if (axiosError.response && axiosError.response.status === 403) {
-				return {
-					success: false,
-					error: 'Недостаточно прав'
-				};
-			}
-			throw axiosError;
-		}
-	}
-
-	/**
 	 * Create new group (admin only)
 	 *
 	 * @param {string} authToken JWT token
@@ -475,42 +266,6 @@ export class GroupService {
 	}
 
 	/**
-	 * Search groups by name pattern (admin only)
-	 *
-	 * @param {string} authToken JWT token
-	 * @param {string} pattern Search pattern
-	 * @returns {Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>>} Array of groups or error object
-	 */
-	static async searchGroupsStatic(authToken: string, pattern: string): Promise<DefaultServiceResultWithData<Array<GroupBasicInfo>>> {
-		try {
-			const response = await axios.get(
-				`/api/groups/search/${encodeURIComponent(pattern)}`,
-				CreateConfig.createAuthConfig(authToken)
-			);
-
-			return {
-				success: true,
-				data: response.data.groups.map((group: any) =>
-					new GroupBasicInfo(
-						group.name,
-						group.membersCount,
-						group.creatorEmail
-					)
-				)
-			};
-		} catch (error) {
-			const axiosError = error as AxiosError<{ message?: string; error?: string }>;
-			if (axiosError.response && axiosError.response.status === 403) {
-				return {
-					success: false,
-					error: `Требуются права администратора`
-				};
-			}
-			throw axiosError;
-		}
-	}
-
-	/**
 	 * Check membership in group
 	 *
 	 * @param {string} authToken JWT token
@@ -583,7 +338,7 @@ export class GroupService {
 			);
 
 			// Transform members (no date fields)
-			const members = groupData.members.map((member: any) =>
+			const members = groupData.members.map((member: User) =>
 				new User(
 					member.surname,
 					member.name,
@@ -655,17 +410,6 @@ export class GroupService {
 				groupData.creator.createdAt
 			);
 
-			// Transform members with date conversion
-			const members = groupData.members.map((member: any) =>
-				new UserAdminModel(
-					member.surname,
-					member.name,
-					member.patronymic,
-					member.email,
-					toDate(member.createdAt)
-				)
-			);
-
 			return {
 				success: true,
 				data: {
@@ -673,7 +417,7 @@ export class GroupService {
 						groupData.name,
 						groupData.membersCount,
 						creator,
-						members
+						groupData.members
 					)
 				}
 			};
@@ -1005,13 +749,7 @@ export class GroupService {
 
 			return {
 				success: true,
-				data: response.groups.map((group: any) =>
-					new GroupBasicInfo(
-						group.name,
-						group.membersCount,
-						group.creatorEmail
-					)
-				)
+				data: response.groups
 			};
 		} catch (error) {
 			if (error instanceof HttpErrorResponse) {
