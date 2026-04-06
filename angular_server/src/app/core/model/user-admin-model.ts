@@ -16,8 +16,6 @@ export class UserAdminModel extends User {
 	}
 
 	override toString(): string{
-		console.log(this);
-		console.log(this.createdAt instanceof Date);
 		return `${super.toString()} ${UserAdminModel.DATE_FORMATTER.format(this.createdAt).replace(',', '')}`;
 	}
 

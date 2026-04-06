@@ -98,13 +98,16 @@ export class GroupPage implements OnInit, OnDestroy {
 					type: ActionType.LINK,
 					label: 'Изменить данные',
 					class: 'btn btn-blue',
-					href: (item: UserAdminModel) => (!item.email) ? '/users' : `/user/${encodeURI(item.email)}`
+					href: (item: UserAdminModel) =>
+						(!item.email) ?
+						'/users' :
+						`/user/${encodeURI(item.email)}`
 				},
 				{
-					type: ActionType.DATA_ACTION,
+					type: ActionType.ACTION,
 					label: 'Исключить',
 					class: 'btn btn-red',
-					onClick: async (item: UserAdminModel) => { 
+					onClick: (item: UserAdminModel) => {
 						this.selectedUserEmail = item.email;
 						this.setIsRemoveUserFromGroupModalComponentOpen(true); 
 					}
@@ -197,6 +200,7 @@ export class GroupPage implements OnInit, OnDestroy {
 			this.router.navigate(['/login']);
 			return;
 		} finally {
+			// TODO: notice
 		}
 		this.cdr.detectChanges();
 	}
@@ -313,9 +317,8 @@ export class GroupPage implements OnInit, OnDestroy {
 			if(!token)
 				throw new Error('Отсутствует токен авторизации');
 			if (!this.selectedUserEmail || this.selectedUserEmail=='') {
-				this.isRemoveUserFromGroupModalComponentOpen = false;
-				this.cdr.detectChanges();
 				this.selectedUserEmail = '';
+				this.cdr.detectChanges();
 				return;
 			}
 			const response = await this.groupService.removeUserFromGroup(token, this.groupName, this.selectedUserEmail);
@@ -323,9 +326,6 @@ export class GroupPage implements OnInit, OnDestroy {
 				throw new Error(response.error);
 			if (response.success)
 				await this.loadGroupData();
-
-			this.isRemoveUserFromGroupModalComponentOpen = false;
-			this.cdr.detectChanges();
 		} catch (error) {
 			console.error(error);
 			this.error = (error as Error).message;
@@ -333,6 +333,7 @@ export class GroupPage implements OnInit, OnDestroy {
 		} finally {
 			this.selectedUserEmail = '';
 			this.isRemoveUserFromGroupModalComponentOpen = false;
+			this.cdr.detectChanges();
 		}
 	}
 	public async handleConfirmUpdateGroupModalComponent(updateGroupModel: GroupUpdateModel) : Promise<void>{
@@ -344,9 +345,11 @@ export class GroupPage implements OnInit, OnDestroy {
 			if (response.error)
 				throw new Error(response.error);
 			if (response.success && this.groupName != updateGroupModel.newName){
-				this.groupName = updateGroupModel.newName;
-				this.paramSubscription?.unsubscribe();
-				this.router.navigate([`/group/${encodeURIComponent(this.groupName)}`]);
+				this.groupName = updateGroupModel.newName; // ✅ сначала обновляем
+				this.isUpdateGroupModalComponentOpen = false;
+				this.router.navigate([`/group/${encodeURIComponent(this.groupName)}`]); // ✅ новый URL
+				await this.loadGroupData();
+				this.cdr.detectChanges();
 				return;
 			}
 
