@@ -116,7 +116,7 @@ export class UsersPage implements OnInit {
 				throw "У вас нет токена авторизации";
 			const result = await this.adminService.isAdmin(token);
 			if (result.success)
-				this.isAdmin = true;
+				this.isAdmin = result.data!.isAdmin;
 			else if (!result.success && !result.error)
 				this.router.navigate(['/account']);
 			else

@@ -281,7 +281,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				throw "У вас нет токена авторизации";
 			const result = await this.adminService.isAdmin(token);
 			if (result.success)
-				this.isAdmin = true;
+				this.isAdmin = result.data!.isAdmin;
 			else
 				throw new Error(
 					result.error ?

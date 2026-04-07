@@ -211,7 +211,7 @@ export class GroupPage implements OnInit, OnDestroy {
 				throw "У вас нет токена авторизации";
 			const result = await this.adminService.isAdmin(token);
 			if (result.success)
-				this.isAdmin = true;
+				this.isAdmin = result.data!.isAdmin;
 			else
 				throw new Error(
 					result.error ?
@@ -345,9 +345,9 @@ export class GroupPage implements OnInit, OnDestroy {
 			if (response.error)
 				throw new Error(response.error);
 			if (response.success && this.groupName != updateGroupModel.newName){
-				this.groupName = updateGroupModel.newName; // ✅ сначала обновляем
+				this.groupName = updateGroupModel.newName;
 				this.isUpdateGroupModalComponentOpen = false;
-				this.router.navigate([`/group/${encodeURIComponent(this.groupName)}`]); // ✅ новый URL
+				this.router.navigate([`/group/${encodeURIComponent(this.groupName)}`]);
 				await this.loadGroupData();
 				this.cdr.detectChanges();
 				return;

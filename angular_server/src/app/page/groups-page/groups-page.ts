@@ -121,7 +121,7 @@ export class GroupsPage implements OnInit {
 				throw "У вас нет токена авторизации";
 			const result = await this.adminService.isAdmin(token);
 			if (result.success)
-				this.isAdmin = true;
+				this.isAdmin = result.data!.isAdmin;
 			else if (!result.success && !result.error)
 				this.router.navigate(['/account']);
 			else
@@ -190,8 +190,8 @@ export class GroupsPage implements OnInit {
 			if (!response.success)
 				throw new Error('Не удалось создать группу');
 
-			this.setIsCreateGroupModalComponentOpen(false);
 			await this.loadGroups();
+			this.setIsCreateGroupModalComponentOpen(false);
 		} catch (error) {
 			console.error('Error updating password:', error);
 			this.error = (error as Error).message;

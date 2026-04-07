@@ -43,6 +43,7 @@ import { ModelTable } from '../../component/model-table/model-table';
 export class AccountPage implements OnInit {
 	public isLoading: boolean = true;
 	isLoadingGroups: boolean = true;
+	isLoadingMyGroups: boolean = true;
 	isAuthenticated: boolean = false;
 	isAdmin: boolean = false;
 	isPasswordModalOpen: boolean = false;
@@ -149,7 +150,7 @@ export class AccountPage implements OnInit {
 				throw "У вас нет токена авторизации";
 			const result = await this.adminService.isAdmin(token);
 			if (result.success)
-				this.isAdmin = true;
+				this.isAdmin = result.data!.isAdmin;
 			else
 				throw new Error(
 					result.error ?
@@ -163,6 +164,7 @@ export class AccountPage implements OnInit {
 
 	private async loadMyGroups(): Promise<void> {
 		try {
+			this.isLoadingMyGroups = true;
 			const token = AuthService.getToken();
 			if (!token)
 				throw new Error('У вас нет токена авторизации');
@@ -180,6 +182,9 @@ export class AccountPage implements OnInit {
 		} catch (error) {
 			console.error('Ошибка при загрузке групп:', error);
 			// TODO: notice
+		} finally {
+			this.isLoadingMyGroups = false;
+			this.cdr.detectChanges();
 		}
 	}
 	private async loadGroups(){

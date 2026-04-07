@@ -12,7 +12,8 @@
 					<p><strong>Создатель:</strong>{{group?.creator?.toString()}}</p>
 				</div>
 			</div>
-			@if (currentUserModelTableDataObjectRef && currentUserModelTableDataObjectRef.models.length) {			
+			@if (currentUserModelTableDataObjectRef && currentUserModelTableDataObjectRef.models.length) {
+				<h1>Участники группы</h1>
 				<div class="model-table-container">
 					<app-model-table
 						[modelTableDataObject]="currentUserModelTableDataObjectRef"
@@ -62,7 +63,7 @@
 					<p><strong>Количество участников:</strong>{{group?.membersCount}}</p>
 					<p><strong>Создатель:</strong>{{group?.creator?.toString()}}</p>
 				</div>
-				<h2>Участники группы</h2>
+				<h1>Участники группы</h1>
 				@if (currentUserModelTableDataObjectRef && currentUserModelTableDataObjectRef.models.length) {			
 					<div class="model-table-container">
 						<app-model-table

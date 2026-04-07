@@ -130,7 +130,7 @@ export class UserPage implements OnInit, OnDestroy {
 				throw "У вас нет токена авторизации";
 			const result = await this.adminService.isAdmin(token);
 			if (result.success)
-				this.isAdmin = true;
+				this.isAdmin = result.data!.isAdmin;
 			else if (!result.success && !result.error)
 				this.router.navigate(['/account']);
 			else
@@ -173,13 +173,31 @@ export class UserPage implements OnInit, OnDestroy {
 			const token = AuthService.getToken();
 			if (!token)
 				throw new Error('Отсутствует токен авторизации');
-			const response = await this.userService.updateUser(token, this.userEmail, newUserData as User);
-			if (response.error)
-				throw new Error(response.error);
+			const response = await this.userService.updateUser(
+				token, this.userEmail, newUserData as User
+			);
 			if (!response.success)
-				throw new Error('Ошибка Обновления данных пользователя');
-			else if (this.userEmail != newUserData.email){
-				this.router.navigate([`/user/${encodeURIComponent(newUserData.email)}`]);
+				throw new Error(response.error || 'Ошибка Обновления данных пользователя');
+			else {
+				if (!this.user) {
+					this.user = new UserAdminModel(
+						newUserData.surname,
+						newUserData.name,
+						newUserData.patronymic,
+						newUserData.email
+					);
+				} else {
+					this.user.surname = newUserData.surname;
+					this.user.name = newUserData.name;
+					this.user.patronymic = newUserData.patronymic;
+					this.user.email = newUserData.email;
+				}
+			}
+			if (this.userEmail != this.user.email) {
+				this.userEmail = this.user.email;
+				this.setIsUpdateUserModalOpen(false);
+				this.router.navigate([`/user/${(this.userEmail)}`]);
+				this.cdr.detectChanges();
 				return;
 			}
 			else

@@ -6,11 +6,11 @@
 		<div class="account-card">
 			<h2>Информация о пользователе</h2>
 			<div class="account-info">
-				<p><strong>Email:</strong> {{user?.email}}</p>
-				<p><strong>Фамилия:</strong> {{user?.surname}}</p>
-				<p><strong>Имя:</strong> {{user?.name}}</p>
-				<p><strong>Отчество:</strong> {{user?.patronymic}}</p>
-				<p><strong>Создан:</strong> {{user?.createdAt | date:'dd.MM.yyyy HH:mm:ss'}}</p>
+				<p><strong>Email:</strong>{{user?.email}}</p>
+				<p><strong>Фамилия:</strong>{{user?.surname}}</p>
+				<p><strong>Имя:</strong>{{user?.name}}</p>
+				<p><strong>Отчество:</strong>{{user?.patronymic}}</p>
+				<p><strong>Создан:</strong>{{user?.createdAt | date:'dd.MM.yyyy HH:mm:ss'}}</p>
 			</div>
 		</div>
 		@if (error) {
