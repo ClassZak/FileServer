@@ -40,10 +40,7 @@ class AdministratorController(
 		val isAdmin = administratorService.isAdmin(userId)
 		val body = mapOf("isAdmin" to isAdmin)
 		
-		return if (isAdmin)
-			ResponseEntity.ok(body)
-		else
-			ResponseEntity.status(HttpStatus.NOT_FOUND).body(body)
+		return ResponseEntity.ok(body)
 	}
 	
 }
