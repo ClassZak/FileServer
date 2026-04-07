@@ -52,6 +52,29 @@ class GroupController(
 	}
 	
 	/**
+	 * Получить список групп пользователя (только основные данные без участников)
+	 */
+	@GetMapping("/for-user/{email}")
+	@PreAuthorize("isAuthenticated()")
+	fun getGroupsForUser(
+		@RequestHeader("Authorization") authHeader: String,
+		@PathVariable email: String,
+	): ResponseEntity<Map<String, Any>> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		if (!currentUser.isAdmin)
+			return errorResponse(HttpStatus.FORBIDDEN, "Требуются права администратора")
+		
+		val user = userService.getUserByEmail(email) ?: return errorResponse(
+			HttpStatus.NOT_FOUND,
+			"Пользователь с почтой \"$email\" не найден "
+		)
+		
+		val groups = groupService.getUserGroups(user.id!!)
+		
+		return successResponse(mapOf("groups" to groups))
+	}
+	
+	/**
 	 * Получить все группы (только для администраторов, без участников)
 	 */
 	@GetMapping
@@ -59,9 +82,8 @@ class GroupController(
 	fun getAllGroups(@RequestHeader("Authorization") authHeader: String): ResponseEntity<Map<String, Any>> {
 		val currentUser = getCurrentUserFromJwt(authHeader)
 		
-		if (!currentUser.isAdmin) {
+		if (!currentUser.isAdmin)
 			return errorResponse(HttpStatus.FORBIDDEN, "Требуются права администратора")
-		}
 		
 		val groups = groupService.getAllGroupsForAdmin()
 		return successResponse(mapOf("groups" to groups))
