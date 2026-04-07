@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.web.bind.annotation.*
+import org.zak.dto.GroupBasicInfoDto
 import org.zak.service.FileSystemService
 
 /**
@@ -112,8 +113,13 @@ class GroupController(
 				?: throw EntityNotFoundException()
 			
 			val group = groupService.create(request.name, userCreator.id!!)
+			val resultForClient = GroupBasicInfoDto(
+				name = group.name,
+				membersCount = group.members.size,
+				creatorEmail = group.creator.email
+			)
 			fileSystemService.createGroupFolder(group.name)
-			ResponseEntity.status(HttpStatus.CREATED).body(mapOf("group" to group))
+			ResponseEntity.status(HttpStatus.CREATED).body(mapOf("group" to resultForClient))
 		} catch (e: IllegalArgumentException) {
 			errorResponse(HttpStatus.BAD_REQUEST, e.message ?: "Ошибка создания группы")
 		} catch (e: EntityNotFoundException) {
