@@ -16,21 +16,24 @@ import { UserService } from '../../core/service/user-service';
 import { UpdatePasswordRequest } from '../../core/model/update-password-request';
 import { UpdatePasswordModalModel } from '../../core/model/update-password-modal-model';
 import { RedirectionButton } from '../../component/redirection-button/redirection-button';
+import { GroupBasicInfo } from '../../core/model/group_basic_info';
+import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
+import { GroupService } from '../../core/service/group-service';
+import { ModelTable } from "../../component/model-table/model-table";
 
 @Component({
 	selector: 'app-user-page',
 	imports: [
-		CommonModule,
-		AppHeader,
-		AppFooter,
-		LoadingSpinner,
-
-		UpdateUserModalComponent,
-		UpdateUserPasswordModalComponent,
-		DeleteUserModalComponent,
-		
-		RedirectionButton
-	],
+    CommonModule,
+    AppHeader,
+    AppFooter,
+    LoadingSpinner,
+    UpdateUserModalComponent,
+    UpdateUserPasswordModalComponent,
+    DeleteUserModalComponent,
+    RedirectionButton,
+    ModelTable
+],
 	templateUrl: './user-page.html',
 	styleUrl: './user-page.css',
 })
@@ -42,11 +45,30 @@ export class UserPage implements OnInit, OnDestroy {
 	isAuthenticated: boolean = false;
 	authorizedUser?: User;
 	user?: UserAdminModel;
+	userGroups: Array<GroupBasicInfo> = [];
 	userEmail: string = '';
-	myUserData?: User;
 	isAdmin: boolean = false;
 	private paramSubscription?: Subscription;
 	error: string = '';
+	currentGroupModelTableDataObject: ModelTableDataObject<GroupBasicInfo> = new ModelTableDataObject(
+		[
+			{header: 'Название', field: 'name'},
+			{header: 'Число участников', field: 'membersCount'},
+			{header: 'Почта создателя', field: 'creatorEmail'},
+		],
+		[],
+		{
+			actionsHeader: 'Действия',
+			actionsConfigs: [
+				{
+					type: ActionType.LINK,
+					label: 'Изменить данные',
+					class: 'btn btn-blue',
+					href: (item: GroupBasicInfo) => !item.name ? '/groups' :`/group/${item.name}`
+				}
+			]
+		}
+	);
 
 	setIsUpdateUserModalOpen(status: boolean){
 		this.isUpdateUserModalOpen = status;
@@ -66,7 +88,8 @@ export class UserPage implements OnInit, OnDestroy {
 
 		private authService: AuthService,
 		private adminService: AdminService,
-		private userService: UserService
+		private userService: UserService,
+		private groupService: GroupService
 	) {}
 
 	async ngOnInit(): Promise<void> {
@@ -84,8 +107,14 @@ export class UserPage implements OnInit, OnDestroy {
 		});
 		try{
 			await this.checkAdminStatus();
-			await this.loadUserData();
-			this.checkIsSelfUserForAdmin()
+			if(!this.isAdmin) {
+				Promise.resolve().then(()=>{this.router.navigate(['/account']);});
+				this.paramSubscription.unsubscribe();
+				return;
+			}
+			await this.loadUserData()
+			await this.loadUserGroups();
+			this.checkIsSelfUserForAdmin();
 		} catch (error) {
 			// TODO: notice
 		} finally {
@@ -120,7 +149,7 @@ export class UserPage implements OnInit, OnDestroy {
 		}
 	}
 	private checkIsSelfUserForAdmin(): void{
-		if (this.myUserData?.email === this.user?.email && this.isAdmin)
+		if (this.authorizedUser?.email === this.user?.email && this.isAdmin)
 			this.router.navigate(['/account']);
 	}
 	private async checkAdminStatus(): Promise<void> {
@@ -163,6 +192,29 @@ export class UserPage implements OnInit, OnDestroy {
 			console.error('Ошибка при загрузки данных пользователя:', error);
 			this.error = (error as Error).message;
 			// TODO: notice
+		}
+	}
+	private async loadUserGroups(): Promise<void> {
+		try {
+			const token = AuthService.getToken();
+			if(token === null)
+				throw new Error("У вас нет токена авторизации");
+			if(this.isAdmin) {
+				const response = await this.groupService.getGroupsForUser(token, this.user?.email!);
+				if (!response.success)
+					throw new Error(response.error);
+				if (Array.isArray(response.data)) {
+					this.userGroups = response.data;
+					this.currentGroupModelTableDataObject.models = response.data;
+				}
+			} else {
+				return;
+			}
+		} catch (error) {
+			console.error('Ошибка при загрузке групп', error);
+			// TODO: notice
+		} finally {
+			this.cdr.detectChanges();
 		}
 	}
 
