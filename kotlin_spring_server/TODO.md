@@ -1,51 +1,90 @@
-# Backend TODO
+# TODO.md
 
-## Phase 1: Database Redesign & Migration
-- [ ] **Design new schema** (see DDL above) and review with team.
-- [ ] **Create Flyway/Liquibase migration scripts**:
-	- [ ] V2__create_file_folder_entities.sql
-	- [ ] V3__create_permission_tables.sql
-	- [ ] V4__create_deleted_version_tables.sql
-	- [ ] V5__migrate_data_from_old_tables.sql
-	- [ ] V6__drop_old_metadata_tables.sql
-- [ ] **Write data migration script** with validation steps.
-- [ ] **Test migration on a copy of production database**.
+## Database & Migration (Phase 1)
+- [ ] **Execute new DDL script** to create tables `FileEntity`, `FolderEntity`, `FilePermission`, `FolderPermission`, `DeletedFile`, `DeletedFolder`, `OperationType`, `WorkHistory` (with `Path`, `IsFile`, `Details`).
+- [ ] **Add initial `OperationType` records**: `'CREATE'`, `'READ'`, `'UPDATE'`, `'DELETE'`, `'RESTORE'`, `'CHANGE_PERMISSIONS'`, `'MOVE'`, `'RENAME'`, `'DOWNLOAD'`, `'UPLOAD'`.
+- [ ] **Drop old tables** (`FileMetadata`, `DirectoryMetadata`, old `DeletedFile`, old `WorkHistory`) **after** data migration (if any existing data needs preservation).
+- [ ] **Update `application.properties`** with new database name `FileServer1` and connection settings.
 
-## Phase 2: Core Services Refactoring
-- [ ] **Create new JPA entities**: `FileEntity`, `FolderEntity`, `FilePermission`, `FolderPermission`, `DeletedFile`, `DeletedFolder`.
-- [ ] **Rewrite `FileSystemService`**:
-	- [ ] Replace `FileMetadataRepository` with `FileEntityRepository` and `FilePermissionRepository`.
-	- [ ] Replace `DirectoryMetadataRepository` with `FolderEntityRepository` and `FolderPermissionRepository`.
-	- [ ] Update permission checking logic to use new tables and inheritance.
-	- [ ] Modify delete methods to create `DeletedFile`/`DeletedFolder` with versioning.
-	- [ ] Implement `restoreFile` and `restoreFolder` using entity IDs.
-- [ ] **Update `WorkHistory` recording** in all relevant service methods.
+## Core JPA Entities (Phase 2)
+- [ ] **Create new Kotlin entity classes** matching the new schema:
+	- `FileEntity.kt` (`id`, `path`, `createdAt`, `isDeleted`)
+	- `FolderEntity.kt` (`id`, `path`, `createdAt`, `isDeleted`)
+	- `FilePermission.kt` (`id`, `fileEntity`, `user`, `group`, `mode`)
+	- `FolderPermission.kt` (`id`, `folderEntity`, `user`, `group`, `mode`)
+	- `DeletedFile.kt` (`id`, `fileEntity`, `originalPath`, `deletedByUser`, `deletedAt`, `version`)
+	- `DeletedFolder.kt` (`id`, `folderEntity`, `originalPath`, `deletedByUser`, `deletedAt`, `version`)
+	- `OperationType.kt` (already exists, but ensure it matches new table)
+	- `WorkHistory.kt` (update fields: `workTime`, `operationType`, `user`, `fileEntity`, `folderEntity`, `path`, `isFile`, `details`)
+- [ ] **Update relationships** in `User`, `Group`, `Administrator` to remove old mappings (`fileMetadata`, `directoryMetadata`) and add new ones (`fileEntities`, `folderEntities`, `filePermissions`, etc.) as needed.
 
-## Phase 3: API Enhancements
-- [ ] **Permissions API**:
-	- [ ] `GET /api/permissions/folders` – list folder permissions with filters.
-	- [ ] `GET /api/permissions/files` – list file permissions with filters.
-	- [ ] `PUT /api/permissions/folder` – add/update folder permission.
-	- [ ] `DELETE /api/permissions/folder/{id}` – remove folder permission.
-	- [ ] (Same for files)
-- [ ] **Deleted files API**:
-	- [ ] `GET /api/files/deleted` – supports `?userId=`, `?groupId=`, `?pathPrefix=`.
-	- [ ] `POST /api/files/restore/{deletedFileId}` – restore specific version.
-	- [ ] `GET /api/files/deleted/versions/{fileId}` – list all deleted versions of a file.
-- [ ] **Work history API**:
-	- [ ] `GET /api/history` – with filters (`userId`, `groupId`, `operationType`, `from`, `to`, `pathPrefix`).
+## Repository Layer (Phase 3)
+- [ ] **Create/update repository interfaces**:
+	- `FileEntityRepository` (extends `JpaRepository`)
+	- `FolderEntityRepository`
+	- `FilePermissionRepository`
+	- `FolderPermissionRepository`
+	- `DeletedFileRepository` (new methods: `findByFileEntityIdOrderByVersionDesc`, `findByDeletedByUserId`, etc.)
+	- `DeletedFolderRepository`
+	- `WorkHistoryRepository` (update queries to use `path`, `isFile`, `details`)
+- [ ] **Add custom query methods** for permission checking (e.g., finding all permissions for a path prefix).
 
-## Phase 4: Testing & Validation
-- [ ] **Unit tests** for all new repositories and service methods.
-- [ ] **Integration tests** for file operations with new schema.
-- [ ] **Performance testing** for permission checks with many records.
-- [ ] **Verify data integrity** after migration (spot checks).
+## Service Layer Refactoring (Phase 4) – Critical
+- [ ] **Rewrite `FileSystemService`** to use new entities and repositories:
+	- [ ] Replace `fileMetadataRepository`/`directoryMetadataRepository` with `FileEntityRepository`/`FolderEntityRepository` and permission repositories.
+	- [ ] **Permission checking logic**: implement `checkAccessForDirectory`/`checkAccessForFile` using `FolderPermission` and `FilePermission` (with path prefix search and inheritance).
+	- [ ] **Create/update methods**:
+		- `uploadFile` → create `FileEntity` and optionally `FilePermission`.
+		- `createFolder` → create `FolderEntity` and optionally `FolderPermission`.
+		- `deleteByPermissionsAndSaveCopy` → set `isDeleted=true`, create `DeletedFile`/`DeletedFolder` record, move file physically.
+		- `restoreFile` → use `DeletedFile` to restore; set `isDeleted=false`, delete `DeletedFile` record.
+	- [ ] **Work history recording**: insert `WorkHistory` records on every significant operation (create, delete, restore, change permissions, move, download).
+	- [ ] **Group folder management**: `createGroupFolder`, `deleteGroupFolder`, `moveGroupFolder` – update to work with `FolderEntity` and permission logic.
+- [ ] **Refactor `GroupService` and `UserService`** to remove dependencies on old metadata entities.
+- [ ] **Create new service methods for permission management**:
+	- `setFilePermission(path, userId?, groupId?, mode)`
+	- `setFolderPermission(path, userId?, groupId?, mode)`
+	- `deleteFilePermission(permissionId)`
+	- `deleteFolderPermission(permissionId)`
+- [ ] **Create service methods for history and deleted items retrieval**:
+	- `getDeletedFiles(userId, isAdmin, filters)`
+	- `getDeletedFolders(...)`
+	- `getWorkHistory(filters)`
 
-## Phase 5: Documentation & Cleanup
-- [ ] **Update Swagger/OpenAPI** documentation.
-- [ ] **Remove deprecated code** (old services, repositories).
+## API Endpoints (Phase 5)
+- [ ] **Update existing file endpoints** to use new service methods (no breaking changes expected from client perspective).
+- [ ] **Add new endpoints in `FileController`**:
+	- `GET /api/files/deleted` – list deleted files (with query params: `?type=file|folder`, `?userId=`, `?groupId=`, `?pathPrefix=`).
+	- `POST /api/files/restore/{deletedFileId}` – restore a specific deleted file version.
+	- `GET /api/files/deleted/versions/{fileId}` – list all deleted versions of a file.
+- [ ] **Add permission management endpoints** (admin only):
+	- `GET /api/permissions/folders` – list folder permissions (filters by path, user, group).
+	- `GET /api/permissions/files` – list file permissions.
+	- `PUT /api/permissions/folder` – set/update folder permission.
+	- `DELETE /api/permissions/folder/{id}` – delete folder permission.
+	- (Same for `/api/permissions/file`)
+- [ ] **Add history endpoint**:
+	- `GET /api/history` – retrieve work history with filters (`?userId=`, `?groupId=`, `?operationType=`, `?from=`, `?to=`, `?pathPrefix=`).
 
-## Future Improvements
-- [ ] **Implement folder restore** with full hierarchy reconstruction.
-- [ ] **Cache permission results** with Redis or in-memory cache.
-- [ ] **Add WebSocket notifications** for file changes.
+## Security & Access Control (Phase 6)
+- [ ] **Implement permission inheritance** logic in `checkAccessForDirectory`/`checkAccessForFile`:
+	- Traverse path components upwards, collect permissions from `FolderPermission` tables.
+	- For group folders (`groups/<groupName>`), default to `ALL` for members, `NONE` otherwise.
+- [ ] **Restrict non-admin users** from viewing other users' deleted files/history unless they share group access.
+- [ ] **Add `@PreAuthorize` checks** for admin-only endpoints (permission management, viewing all history).
+
+## Testing (Phase 7)
+- [ ] **Update existing unit tests** (`FileSystemServiceTest`) to mock new repositories.
+- [ ] **Write integration tests** for new permission and history endpoints.
+- [ ] **Test data migration** script (if any old data needs to be preserved).
+
+## Documentation & Cleanup (Phase 8)
+- [ ] **Update Swagger/OpenAPI documentation** with new endpoints.
+- [ ] **Remove deprecated code** (old entities, repositories, services).
+- [ ] **Update README** with new database setup instructions.
+
+## Future Improvements (Backlog)
+- [ ] **Implement folder restore** (currently only file restore is planned).
+- [ ] **Add automatic cleanup** of old deleted file versions (e.g., keep last 5 versions).
+- [ ] **Cache permission results** using Spring Cache.
+- [ ] **Add WebSocket notifications** for real-time file updates.

@@ -1,10 +1,10 @@
--- DROP DATABASE FileServer2;
-CREATE DATABASE FileServer2;
-USE FileServer2;
+-- DROP DATABASE FileServer1;
+CREATE DATABASE FileServer1;
+USE FileServer1;
 
 
 -- -----------------------------------------------------
--- Пользователь
+-- Пользователь и администратор
 -- -----------------------------------------------------
 CREATE TABLE `User` (
 	Id				INT AUTO_INCREMENT PRIMARY KEY,
@@ -12,99 +12,170 @@ CREATE TABLE `User` (
 	`Name`			VARCHAR(45) NOT NULL,
 	Patronymic		VARCHAR(45) NOT NULL,
 	Email			VARCHAR(60) NOT NULL,
-	PasswordHash	CHAR(60) NOT NULL ,
+	PasswordHash	CHAR(60) NOT NULL,
 	CreatedAt		TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
--- -----------------------------------------------------
--- Администратор
--- -----------------------------------------------------
-CREATE TABLE Administrator(
-	Id		INT AUTO_INCREMENT PRIMARY KEY,
-	IdUser	INT NOT NULL,
-	
-	FOREIGN KEY (IdUser) REFERENCES `User`(Id)
+
+CREATE TABLE Administrator (
+	Id	INT NOT NULL PRIMARY KEY,
+
+	FOREIGN KEY (Id) REFERENCES `User`(Id)
 );
+
+
+
+
 -- -----------------------------------------------------
--- Группа
+-- Группа и её участники
 -- -----------------------------------------------------
 CREATE TABLE `Group` (
 	Id			INT AUTO_INCREMENT PRIMARY KEY,
 	`Name`		NVARCHAR(64) UNIQUE NOT NULL,
 	IdCreator	INT NOT NULL,
-	
+
 	FOREIGN KEY (IdCreator) REFERENCES `User`(Id)
 );
--- -----------------------------------------------------
--- Участник группы
--- -----------------------------------------------------
+
 CREATE TABLE GroupMember (
 	IdGroup	INT NOT NULL,
 	IdUser	INT NOT NULL,
-	
+
 	PRIMARY KEY (IdGroup, IdUser),
 	FOREIGN KEY (IdGroup) REFERENCES `Group`(Id),
-	FOREIGN KEY (IdUser) REFERENCES `User`(Id)
+	FOREIGN KEY (IdUser)  REFERENCES `User`(Id)
 );
+
+
+
+
 -- -----------------------------------------------------
--- Метаданные папок
+-- Файлы и папки (с флагом мягкого удаления)
 -- -----------------------------------------------------
-CREATE TABLE DirectoryMetadata (
+CREATE TABLE FileEntity (
 	Id			BIGINT AUTO_INCREMENT PRIMARY KEY,
-	`Path`		NVARCHAR(4096) NOT NULL,
-	IdUser		INT,
-	IdGroup		INT,
-	`Mode`		SMALLINT UNSIGNED NOT NULL,
-	
-	FOREIGN KEY (IdUser)	REFERENCES `User`(Id),
-	FOREIGN KEY (IdGroup)	REFERENCES `Group`(Id),
-	INDEX path_index (path(768)), -- Префиксный индекс для длинных путей
-	
-	CONSTRAINT CHK_DirectoryMetadata_is_used_for_subject
-	CHECK (IdGroup != NULL OR IdUser != NULL)
+	Path		NVARCHAR(4096) NOT NULL UNIQUE,
+	CreatedAt	TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	IsDeleted	BOOLEAN NOT NULL DEFAULT FALSE,
+
+	INDEX path_index (Path(768))
 );
--- -----------------------------------------------------
--- Метаданные файлов
--- -----------------------------------------------------
-CREATE TABLE FileMetadata (
+
+CREATE TABLE FolderEntity (
 	Id			BIGINT AUTO_INCREMENT PRIMARY KEY,
-	`Path`		NVARCHAR(4096) NOT NULL,
-	IdUser		INT,
-	IdGroup		INT,
-	`Mode`		SMALLINT UNSIGNED NOT NULL,
-	
-	FOREIGN KEY (IdUser)	REFERENCES `User`(Id),
-	FOREIGN KEY (IdGroup)	REFERENCES `Group`(Id),
-	INDEX path_index (path(768)), -- Префиксный индекс для длинных путей
-	
-	CONSTRAINT CHK_FileMetadata_is_used_for_subject
-	CHECK (IdGroup != NULL OR IdUser != NULL)
+	Path		NVARCHAR(4096) NOT NULL UNIQUE,
+	CreatedAt	TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	IsDeleted	BOOLEAN NOT NULL DEFAULT FALSE,
+
+	INDEX path_index (Path(768))
 );
+
+
+
+
 -- -----------------------------------------------------
--- Удалённый файл
+-- Удалённые версии
 -- -----------------------------------------------------
-CREATE TABLE DeletedFile(
-	IdFileMetaData		BIGINT AUTO_INCREMENT NOT NULL PRIMARY KEY,
-	WorkTime			DATETIME NOT NULL,
-	
-	FOREIGN KEY			(IdFileMetaData) REFERENCES FileMetadata(Id)	
+CREATE TABLE DeletedFile (
+	Id				BIGINT AUTO_INCREMENT PRIMARY KEY,
+	IdFile			BIGINT NOT NULL,
+	OriginalPath	NVARCHAR(4096) NOT NULL,
+	IdDeletedByUser	INT NOT NULL,
+	DeletedAt		DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	Version			INT NOT NULL,
+
+	FOREIGN KEY (IdFile)			REFERENCES FileEntity(Id),
+	FOREIGN KEY (IdDeletedByUser)	REFERENCES `User`(Id),
+
+	INDEX idx_deleted_file (IdFile, Version),
+	INDEX idx_deleted_by_user (IdDeletedByUser)
 );
--- -----------------------------------------------------
--- Тип операции
--- -----------------------------------------------------
-CREATE TABLE OperationType(
-	Id					INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
-	`Name`				NVARCHAR(45) NOT NULL
+
+CREATE TABLE DeletedFolder (
+	Id				BIGINT AUTO_INCREMENT PRIMARY KEY,
+	IdFolder		BIGINT NOT NULL,
+	OriginalPath	NVARCHAR(4096) NOT NULL,
+	IdDeletedByUser	INT NOT NULL,
+	DeletedAt		DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	Version			INT NOT NULL,
+
+	FOREIGN KEY (IdFolder)			REFERENCES FolderEntity(Id),
+	FOREIGN KEY (IdDeletedByUser)	REFERENCES `User`(Id),
+
+	INDEX idx_deleted_folder (IdFolder, Version)
 );
+
+
+
+
 -- -----------------------------------------------------
--- История работы
+-- Права доступа
 -- -----------------------------------------------------
-CREATE TABLE WorkHistory(
+CREATE TABLE FilePermission (
+	Id				BIGINT AUTO_INCREMENT PRIMARY KEY,
+	IdFileEntity	BIGINT NOT NULL,
+	IdUser			INT NULL,
+	IdGroup			INT NULL,
+	Mode			SMALLINT UNSIGNED NOT NULL,
+
+	FOREIGN KEY (IdFileEntity)	REFERENCES FileEntity(Id)	ON DELETE CASCADE,
+	FOREIGN KEY (IdUser)		REFERENCES `User`(Id)		ON DELETE CASCADE,
+	FOREIGN KEY (IdGroup)		REFERENCES `Group`(Id)		ON DELETE CASCADE,
+
+	INDEX idx_file_user		(IdFileEntity, IdUser),
+	INDEX idx_file_group	(IdFileEntity, IdGroup),
+
+	CONSTRAINT permission_is_useful CHECK ((IdUser IS NOT NULL) != (IdGroup IS NOT NULL))
+);
+
+CREATE TABLE FolderPermission (
+	Id				BIGINT AUTO_INCREMENT PRIMARY KEY,
+	IdFolderEntity	BIGINT NOT NULL,
+	IdUser			INT NULL,
+	IdGroup			INT NULL,
+	Mode			SMALLINT UNSIGNED NOT NULL,
+
+	FOREIGN KEY (IdFolderEntity)	REFERENCES FolderEntity(Id)	ON DELETE CASCADE,
+	FOREIGN KEY (IdUser)			REFERENCES `User`(Id)		ON DELETE CASCADE,
+	FOREIGN KEY (IdGroup)			REFERENCES `Group`(Id)		ON DELETE CASCADE,
+
+	INDEX idx_folder_user	(IdFolderEntity, IdUser),
+	INDEX idx_folder_group	(IdFolderEntity, IdGroup),
+
+	CONSTRAINT permission_is_useful CHECK ((IdUser IS NOT NULL) != (IdGroup IS NOT NULL))
+);
+
+
+
+
+-- -----------------------------------------------------
+-- История работы (с сохранением пути и типа объекта)
+-- -----------------------------------------------------
+CREATE TABLE OperationType (
+	Id		INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
+	`Name`	NVARCHAR(45) NOT NULL
+);
+
+CREATE TABLE WorkHistory (
 	Id					BIGINT AUTO_INCREMENT NOT NULL PRIMARY KEY,
-	WorkTime			DATETIME NOT NULL,
-	Path				NVARCHAR(4096) NOT NULL,
+	WorkTime			DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	IdOperationType		INT NOT NULL,
 	IdUser				INT NOT NULL,
-	
-	FOREIGN KEY (IdOperationType)	REFERENCES `OperationType`(Id),
-	FOREIGN KEY (IdUser)			REFERENCES `User`(Id)
-)
+	IdFileEntity		BIGINT NULL,
+	IdFolderEntity		BIGINT NULL,
+	Path				NVARCHAR(4096) NOT NULL,
+	IsFile				BOOLEAN NOT NULL,
+	Details				TEXT NULL,
+
+	FOREIGN KEY (IdOperationType)	REFERENCES OperationType(Id),
+	FOREIGN KEY (IdUser)			REFERENCES `User`(Id),
+	FOREIGN KEY (IdFileEntity)		REFERENCES FileEntity(Id)	ON DELETE SET NULL,
+	FOREIGN KEY (IdFolderEntity)	REFERENCES FolderEntity(Id)	ON DELETE SET NULL,
+
+	INDEX idx_history_user_time	(IdUser, WorkTime),
+	INDEX idx_history_path		(Path(768))
+);
+
+
+
+
+SHOW TABLES;
