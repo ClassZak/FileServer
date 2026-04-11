@@ -428,11 +428,13 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 
 		try {
 			const exists = await this.fileService.exists(token, cleanPath);
-			if (exists.success) {
+			if (!exists.success)
+				throw new Error(exists.error || 'Path does not exist.');
+			if (exists.data?.exists) {
 				this.router.navigate(['/files', cleanPath]);
 				return;
 			} else {
-				this.error = 'Path does not exist.';
+				this.error = '.';
 			}
 		} catch (error) {
 			this.error = (error as Error).message || 'Failed to check path.';

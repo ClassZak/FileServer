@@ -1,5 +1,3 @@
-# TODO
-
 ## Code Quality & Refactoring
 - [✓] **Unify service response format**: All API methods should return an object with `success: boolean`, `error?: string`, and `data?: any`. Update components to rely on this consistent structure.
 - [✓] **Replace `any` types**: Gradually replace all `any` with proper interfaces/models to improve type safety. Keep it for ModelTable component.
@@ -21,6 +19,6 @@
 - [✖] **Virtual scrolling**: For large file lists, consider virtual scrolling to improve performance.
 
 ## UI
-- [✖] **Fix spinner dots animation**: Use CSS pseudo-elements or Angular dynamic text for the animated dots.
+- [✓] **Fix spinner dots animation**: Use CSS pseudo-elements or Angular dynamic text for the animated dots.
 - [✖] **Responsive design**: Test and improve layout on very small screens (below 400px).
 - [✖] **Consistent error display**: Replace all inline error messages with the reusable `error-message-component`.
