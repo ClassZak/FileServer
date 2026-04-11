@@ -179,3 +179,63 @@ CREATE TABLE WorkHistory (
 
 
 SHOW TABLES;
+
+
+
+INSERT INTO OperationType (`Name`) VALUES
+('CREATE'),
+('READ'),
+('UPDATE'),
+('DELETE'),
+('RESTORE'),
+('CHANGE_PERMISSIONS'),
+('MOVE'),
+('RENAME'),
+('DOWNLOAD'),
+('UPLOAD');
+SELECT * FROM OperationType;
+
+
+
+
+DELIMITER //
+
+CREATE PROCEDURE AddUser(
+    IN p_Surname      VARCHAR(45),
+    IN p_Name         VARCHAR(45),
+    IN p_Patronymic   VARCHAR(45),
+    IN p_Email        VARCHAR(60),
+    IN p_PasswordHash CHAR(60),        -- BCrypt-хеш
+    IN p_IsAdmin      BOOLEAN
+)
+BEGIN
+    DECLARE newUserId INT;
+
+    INSERT INTO `User` (Surname, `Name`, Patronymic, Email, PasswordHash, CreatedAt)
+    VALUES (p_Surname, p_Name, p_Patronymic, p_Email, p_PasswordHash, NOW());
+
+    SET newUserId = LAST_INSERT_ID();
+
+    IF p_IsAdmin THEN
+        INSERT INTO Administrator (Id) VALUES (newUserId);
+    END IF;
+
+    SELECT newUserId AS NewUserId;
+END //
+
+DELIMITER ;
+
+
+
+
+CALL AddUser(
+	'Иванов',
+    'Артем',
+    'Сергеевич',
+    'Ivanov.AS@example.com',
+    '$2b$12$jD2Wp2GTzmZgQy.eFloEBeSPEsC1/uI8TR6aCQdzbHlJnXRlq4gHq', -- 123456a
+    TRUE
+);
+SELECT * FROM `User`;
+SELECT * FROM Administrator;
+
