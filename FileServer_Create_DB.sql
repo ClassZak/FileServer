@@ -77,31 +77,31 @@ CREATE TABLE FolderEntity (
 -- -----------------------------------------------------
 CREATE TABLE DeletedFile (
 	Id				BIGINT AUTO_INCREMENT PRIMARY KEY,
-	IdFile			BIGINT NOT NULL,
+	IdFileEntity	BIGINT NOT NULL,
 	OriginalPath	NVARCHAR(4096) NOT NULL,
 	IdDeletedByUser	INT NOT NULL,
 	DeletedAt		DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	Version			INT NOT NULL,
+	Version			INT NOT NULL DEFAULT 1 ,
 
-	FOREIGN KEY (IdFile)			REFERENCES FileEntity(Id),
+	FOREIGN KEY (IdFileEntity)		REFERENCES FileEntity(Id),
 	FOREIGN KEY (IdDeletedByUser)	REFERENCES `User`(Id),
 
-	INDEX idx_deleted_file (IdFile, Version),
+	INDEX idx_deleted_file (IdFileEntity, Version),
 	INDEX idx_deleted_by_user (IdDeletedByUser)
 );
 
 CREATE TABLE DeletedFolder (
 	Id				BIGINT AUTO_INCREMENT PRIMARY KEY,
-	IdFolder		BIGINT NOT NULL,
+	IdFolderEntity	BIGINT NOT NULL,
 	OriginalPath	NVARCHAR(4096) NOT NULL,
 	IdDeletedByUser	INT NOT NULL,
 	DeletedAt		DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	Version			INT NOT NULL,
+	Version			INT NOT NULL DEFAULT 1,
 
-	FOREIGN KEY (IdFolder)			REFERENCES FolderEntity(Id),
+	FOREIGN KEY (IdFolderEntity)	REFERENCES FolderEntity(Id),
 	FOREIGN KEY (IdDeletedByUser)	REFERENCES `User`(Id),
 
-	INDEX idx_deleted_folder (IdFolder, Version)
+	INDEX idx_deleted_folder (IdFolderEntity, Version)
 );
 
 
@@ -163,7 +163,7 @@ CREATE TABLE WorkHistory (
 	IdFileEntity		BIGINT NULL,
 	IdFolderEntity		BIGINT NULL,
 	Path				NVARCHAR(4096) NOT NULL,
-	IsFile				BOOLEAN NOT NULL,
+	IsFile				BOOLEAN NOT NULL DEFAULT TRUE,
 	Details				TEXT NULL,
 
 	FOREIGN KEY (IdOperationType)	REFERENCES OperationType(Id),

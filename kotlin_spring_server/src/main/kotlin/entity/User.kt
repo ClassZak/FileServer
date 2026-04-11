@@ -34,9 +34,4 @@ class User(
 	@ManyToMany(mappedBy = "members")
 	val groups: MutableSet<Group> = mutableSetOf()
 	
-	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-	val fileMetadata: MutableSet<FileMetadata> = mutableSetOf()
-	
-	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-	val directoryMetadata: MutableSet<DirectoryMetadata> = mutableSetOf()
 }

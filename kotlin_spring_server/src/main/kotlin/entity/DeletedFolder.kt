@@ -3,11 +3,11 @@ package org.zak.entity
 import jakarta.persistence.*
 import java.time.LocalDateTime
 @Entity
-@Table(name = "DeletedFile")
-class DeletedFile (
+@Table(name = "DeletedFolder")
+class DeletedFolder (
 	@ManyToOne(fetch = FetchType.LAZY, optional = true)
-	@JoinColumn(name = "IdFileEntity", nullable = false)
-	var fileEntity: FileEntity,
+	@JoinColumn(name = "IdFolderEntity", nullable = false)
+	var folderEntity: FolderEntity,
 	
 	@Column(name = "OriginalPath", nullable = false, length = 4096)
 	var originalPath: String,

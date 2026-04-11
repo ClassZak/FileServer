@@ -6,6 +6,7 @@ import jakarta.persistence.*
 @Table(name = "Administrator")
 class Administrator(
 	@OneToOne(fetch = FetchType.LAZY, optional = false)
-	@JoinColumn(name = "IdUser", nullable = false, unique = true)
+	@MapsId
+	@JoinColumn(name = "Id")
 	var user: User
 ) : BaseEntity<Int>()
