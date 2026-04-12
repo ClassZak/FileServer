@@ -169,7 +169,7 @@ export class UsersPage implements OnInit {
 			this.error = (error as Error).message;
 			// TODO: notice
 		} finally {
-			this.isLoading = true;
+			this.isLoading = false;
 			this.cdr.detectChanges();
 		}
 	}
