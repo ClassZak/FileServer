@@ -526,7 +526,7 @@ class FileSystemService(
 	}
 	
 	/** Генерирует путь для удалённого файла с меткой версии и временной меткой. */
-	private fun generateDeletedFilePath(originalPath: String, timestamp: Long, version: Int): String {
+	fun generateDeletedFilePath(originalPath: String, timestamp: Long, version: Int): String {
 		val baseName = Paths.get(originalPath).fileName.toString()
 		val nameWithoutExt = baseName.substringBeforeLast(".")
 		val ext = if (baseName.contains(".")) ".${baseName.substringAfterLast(".")}" else ""
@@ -536,7 +536,7 @@ class FileSystemService(
 	}
 	
 	/** Генерирует путь для удалённой папки с меткой версии и временной меткой. */
-	private fun generateDeletedFolderPath(originalPath: String, timestamp: Long, version: Int): String {
+	fun generateDeletedFolderPath(originalPath: String, timestamp: Long, version: Int): String {
 		val folderName = Paths.get(originalPath).fileName.toString()
 		val parentDir = Paths.get(originalPath).parent?.toString() ?: ""
 		val newName = "${folderName}_v${version}_$timestamp"
@@ -544,7 +544,7 @@ class FileSystemService(
 	}
 	
 	/** Перемещает файл или папку в корзину с возможностью переименования. */
-	private fun moveItemWithVersioning(sourcePath: String, targetDir: File, sourceBaseDir: File, targetRelativePath: String): Boolean {
+	fun moveItemWithVersioning(sourcePath: String, targetDir: File, sourceBaseDir: File, targetRelativePath: String): Boolean {
 		val sourceFile = File(sourcePath)
 		if (!sourceFile.exists()) return false
 		val targetFile = targetDir.toPath().resolve(targetRelativePath).toFile()
@@ -678,7 +678,7 @@ class FileSystemService(
 	}
 	
 	/** Находит физический путь к удалённому файлу в корзине по записи DeletedFile. */
-	private fun findDeletedFilePath(deleted: DeletedFile): Path {
+	fun findDeletedFilePath(deleted: DeletedFile): Path {
 		val originalPath = deleted.originalPath
 		val version = deleted.version
 		val baseName = Paths.get(originalPath).fileName.toString()
@@ -690,7 +690,7 @@ class FileSystemService(
 	}
 	
 	/** Находит физический путь к удалённой папке в корзине по записи DeletedFolder. */
-	private fun findDeletedFolderPath(deleted: DeletedFolder): Path {
+	fun findDeletedFolderPath(deleted: DeletedFolder): Path {
 		val originalPath = deleted.originalPath
 		val version = deleted.version
 		val folderName = Paths.get(originalPath).fileName.toString()

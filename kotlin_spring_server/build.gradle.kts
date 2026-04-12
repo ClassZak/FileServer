@@ -45,6 +45,8 @@ dependencies {
 	// Mockito for Kotlin (critical)
 	testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
 	testImplementation("org.mockito:mockito-junit-jupiter:5.8.0")
+	// Additional
+	testImplementation("org.mockito:mockito-inline:5.2.0")
 	
 	
 	// Security
