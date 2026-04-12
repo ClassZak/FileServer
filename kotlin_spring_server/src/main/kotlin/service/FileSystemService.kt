@@ -208,7 +208,7 @@ class FileSystemService(
 		val safePath = getRelativePath(getSafePath(path))
 		val userId = currentUser.id!!
 		
-		if (safePath.isEmpty()) return AccessType.NONE.value
+		if (safePath.isEmpty()) return AccessType.READ.value
 		if (safePath == groupsDir) return AccessType.READ.value
 		
 		if (isGroupDirectory(safePath)) {
@@ -285,6 +285,9 @@ class FileSystemService(
 	
 	/** Проверяет, находится ли путь внутри директории `groups`. */
 	private fun isGroupDirectory(path: String): Boolean = path.startsWith("$groupsDir/")
+	/** Проверяет, является ли путь папкой внутри директории `groups` (/groups/<group_name>). */
+	private fun isGroupRootDirectory(path: String): Boolean =
+		path.startsWith("$groupsDir/") and (path.count { it == '/' } == 1)
 	
 	/** Извлекает имя группы из пути вида `groups/groupName/...`. */
 	private fun extractGroupFromPath(pathString: String): String? {
@@ -777,6 +780,9 @@ class FileSystemService(
 		
 		val folderEntity = folderEntityRepository.findByPath(path)
 			?: throw EntityNotFoundException("Папка не найдена: $path")
+		// Запрет на ограничение прав группы в групповой папке и создание прав для других групп в групповой папке
+		if (groupId != null && isGroupDirectory(path))
+			throw SecurityException("Группы должны иметь полный доступ к своим папкам. Путь '$path' принадлежит группе")
 		
 		val user = userId?.let { userService.getUserEntityById(it) }
 		val group = groupId?.let { groupService.read(it) ?: throw EntityNotFoundException("Группа не найдена") }
@@ -826,6 +832,10 @@ class FileSystemService(
 		require((userId != null) xor (groupId != null)) { "Укажите ровно одно: userId или groupId" }
 		val fileEntity = fileEntityRepository.findByPath(path)
 			?: throw EntityNotFoundException("Файл не найден: $path")
+		// Запрет на ограничение прав группы в групповой папке и создание прав для других групп в групповой папке
+		if (groupId != null && isGroupDirectory(Paths.get(path).parent?.toString() ?: "")) {
+			throw SecurityException("Нельзя ограничивать права группы на файлы внутри её папки")
+		}
 		val parentPath = Paths.get(path).parent?.toString() ?: ""
 		val permissions = checkAccessForDirectory(currentUser, parentPath)
 		if ((permissions and AccessType.UPDATE.value) == 0) {
@@ -928,9 +938,9 @@ class FileSystemService(
 	 * @return пара: файл и его MIME-тип.
 	 */
 	fun downloadFileByPermissions(currentUser: CurrentUser, relativePath: String): Pair<File, String> {
-		val permissions = checkAccessForFile(currentUser,
-			Paths.get(relativePath).parent?.toString() ?: "",
-			Paths.get(relativePath).fileName.toString())
+		val parentPath = Paths.get(relativePath).parent?.toString() ?: ""
+		val fileName = Paths.get(relativePath).fileName.toString()
+		val permissions = checkAccessForFile(currentUser, parentPath, fileName)
 		if ((permissions and AccessType.READ.value) == 0) {
 			throw SecurityException("Нет прав на чтение файла: $relativePath")
 		}
@@ -982,7 +992,9 @@ class FileSystemService(
 		return if (file.isDirectory) {
 			(checkAccessForDirectory(currentUser, relativePath) and AccessType.READ.value) != 0
 		} else {
-			(checkAccessForFile(currentUser, relativePath.substringBeforeLast("/"), file.name) and AccessType.READ.value) != 0
+			val parentPath = Paths.get(relativePath).parent?.toString() ?: ""
+			val fileName = file.name
+			(checkAccessForFile(currentUser, parentPath, fileName) and AccessType.READ.value) != 0
 		}
 	}
 	
