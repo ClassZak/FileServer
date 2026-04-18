@@ -21,6 +21,8 @@ import { UserService } from '../../core/service/user-service';
 import { UpdatePasswordRequest } from '../../core/model/update-password-request';
 import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
 import { ModelTable } from '../../component/model-table/model-table';
+import { NoticeService } from '../../core/view-core/service/notice-service';
+import { Notification, NotificationType } from '../../core/view-core/model/notification';
 
 @Component({
 	selector: 'app-account-page',
@@ -98,10 +100,19 @@ export class AccountPage implements OnInit {
 		private adminService: AdminService,
 		private groupService: GroupService,
 		private userService: UserService,
+
+
+		private noticeService: NoticeService
 	) {}
 
 	async ngOnInit(): Promise<void> {
 		try {
+			this.noticeService.addNotification(new Notification(NotificationType.Info, 'Amogus', false));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, 'Amogus', false));
+			this.noticeService.addNotification(new Notification(NotificationType.Success, 'Amogus', false));
+			this.noticeService.addNotification(new Notification(NotificationType.Warning, 'Amogus', false));
+			this.noticeService.addNotification(new Notification(NotificationType.Info, 'Amogus', false));
+			this.noticeService.addNotification(new Notification(NotificationType.Info, 'Amogus', false));
 			await this.checkAuthentication();
 			if (this.isAdmin)
 				await this.loadGroups();

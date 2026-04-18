@@ -6,7 +6,7 @@
 
 .path-submit-button {
 	padding: 8px 16px;
-	background-color: var(--color-info-bg);
+	background-color: var(--color-info-bg-button);
 	color: var(--color-info-text);
 	border: 1px solid var(--color-border-default);
 	border-left: none;
@@ -92,7 +92,7 @@ div.upload-buttons{
 
 .return-button {
 	padding: 10px 20px;
-	background-color: var(--color-info-bg);
+	background-color: var(--color-info-bg-button);
 	color: var(--color-info-text);
 	border: 1px solid var(--color-border-default);
 	border-radius: 4px;
