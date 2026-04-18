@@ -5,6 +5,7 @@ import { AppHeader } from "../../app-header/app-header";
 import { AppFooter } from '../../app-footer/app-footer';
 import { AuthService, CheckAuthResult } from '../../core/service/auth-service';
 import { DefaultServiceResult, DefaultServiceResultWithData } from '../../core/model/default-server-result';
+import { NoticeService } from '../../core/view-core/service/notice-service';
 
 enum LoginFormType {
 	Email,
@@ -32,7 +33,10 @@ export class LoginPage {
 	constructor(
 		private router: Router,
 		private cdr: ChangeDetectorRef,
-		private authService: AuthService
+		private authService: AuthService,
+
+
+		private noticeService: NoticeService
 	) {}
 
 	async ngOnInit(): Promise<void> {

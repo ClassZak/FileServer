@@ -23,6 +23,7 @@ import { RedirectionButton } from '../../component/redirection-button/redirectio
 import { User } from '../../core/model/user';
 import AdminService from '../../core/service/admin-service';
 import { IconManager } from '../../component/icon-manager/icon-manager';
+import { NoticeService } from '../../core/view-core/service/notice-service';
 
 @Component({
 	selector: 'app-files-page',
@@ -193,7 +194,10 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 
 		private authService: AuthService,
 		private adminService: AdminService,
-		private fileService: FileService
+		private fileService: FileService,
+
+
+		private noticeService: NoticeService
 	) {}
 
 	async ngOnInit(): Promise<void> {

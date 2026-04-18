@@ -10,13 +10,13 @@
 		(touchmove)="onTouchMove($event)"
 		(touchend)="onTouchEnd($event)"
 	>
+		@if (currentNotification.autoClose) {
+			<div class="progress-bar" [style.animation-duration]="currentNotification.duration + 'ms'"></div>
+		}
 		<div class="notification-content">
 			<img class="icon" alt="" [src]="getIcon()" />
 			<span class="message">{{currentNotification.message}}</span>
 			<button [classList]="getButtonClass()" (click)="close()">✕</button>
 		</div>
-		@if (currentNotification.autoClose) {
-			<div class="progress-bar" [style.animation-duration]="currentNotification.duration + 'ms'"></div>
-		}
 	</div>
 }

@@ -18,6 +18,7 @@ import { UserAdminModel } from '../../core/model/user-admin-model';
 import { RedirectionButton } from '../../component/redirection-button/redirection-button';
 import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
 import { ModelTable } from "../../component/model-table/model-table";
+import { NoticeService } from '../../core/view-core/service/notice-service';
 
 @Component({
 	selector: 'app-users-page',
@@ -69,7 +70,10 @@ export class UsersPage implements OnInit {
 
 		private authService: AuthService,
 		private adminService: AdminService,
-		private userService: UserService
+		private userService: UserService,
+
+
+		private noticeService: NoticeService
 	) {}
 
 	async ngOnInit(): Promise<void> {

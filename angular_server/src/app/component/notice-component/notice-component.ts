@@ -31,9 +31,9 @@ export class NoticeComponent implements OnInit, OnDestroy {
 	private isSwiping: boolean = false;
 	private readonly SWIPE_THRESHOLD = 80; // px
 
-	// Флаг для управления отображением и анимацией
+	// Animation visibility flag
 	isVisible: boolean = false;
-	// Состояние для CSS-классов
+	// CSS-classes states
 	animationState: 'enter' | 'leave' | '' = '';
 
 	@ViewChild('notificationContainer', { static: false }) containerRef!: ElementRef<HTMLElement>;
@@ -52,7 +52,7 @@ export class NoticeComponent implements OnInit, OnDestroy {
 				this.animationState = 'enter';
 				this.startAutoCloseTimer();
 			} else {
-				// Начинаем анимацию ухода
+				// Start leave animation
 				this.animationState = 'leave';
 				this.clearAutoCloseTimer();
 			}

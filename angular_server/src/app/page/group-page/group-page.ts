@@ -21,6 +21,7 @@ import { GroupUpdateModel } from '../../core/model/group-update-model';
 import { RedirectionButton } from '../../component/redirection-button/redirection-button';
 import { ModelTable } from '../../component/model-table/model-table';
 import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
+import { NoticeService } from '../../core/view-core/service/notice-service';
 
 @Component({
 	selector: 'app-group-page',
@@ -146,7 +147,10 @@ export class GroupPage implements OnInit, OnDestroy {
 		private authService: AuthService,
 		private adminService: AdminService,
 		private groupService: GroupService,
-		private userService: UserService
+		private userService: UserService,
+
+
+		private noticeService: NoticeService
 	) {}
 	
 	async ngOnInit(): Promise<void> {

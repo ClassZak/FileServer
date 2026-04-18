@@ -20,6 +20,7 @@ import { GroupCreateModel } from '../../core/model/group-create-model';
 import { CreateGroupModalComponent } from '../../component/modal/group/create-group-modal/create-group-modal';
 import { UserAdminModel } from '../../core/model/user-admin-model';
 import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
+import { NoticeService } from '../../core/view-core/service/notice-service';
 
 @Component({
 	selector: 'app-groups-page',
@@ -73,7 +74,10 @@ export class GroupsPage implements OnInit {
 		private authService: AuthService,
 		private adminService: AdminService,
 		private groupService: GroupService,
-		private userService: UserService
+		private userService: UserService,
+
+
+		private noticeService: NoticeService
 	) {}
 
 	async ngOnInit(): Promise<void> {

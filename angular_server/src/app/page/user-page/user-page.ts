@@ -20,6 +20,7 @@ import { GroupBasicInfo } from '../../core/model/group_basic_info';
 import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
 import { GroupService } from '../../core/service/group-service';
 import { ModelTable } from "../../component/model-table/model-table";
+import { NoticeService } from '../../core/view-core/service/notice-service';
 
 @Component({
 	selector: 'app-user-page',
@@ -89,7 +90,10 @@ export class UserPage implements OnInit, OnDestroy {
 		private authService: AuthService,
 		private adminService: AdminService,
 		private userService: UserService,
-		private groupService: GroupService
+		private groupService: GroupService,
+
+
+		private noticeService: NoticeService
 	) {}
 
 	async ngOnInit(): Promise<void> {

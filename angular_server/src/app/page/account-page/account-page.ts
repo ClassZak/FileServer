@@ -107,12 +107,12 @@ export class AccountPage implements OnInit {
 
 	async ngOnInit(): Promise<void> {
 		try {
-			this.noticeService.addNotification(new Notification(NotificationType.Info, 'Amogus', false));
-			this.noticeService.addNotification(new Notification(NotificationType.Error, 'Amogus', false));
-			this.noticeService.addNotification(new Notification(NotificationType.Success, 'Amogus', false));
-			this.noticeService.addNotification(new Notification(NotificationType.Warning, 'Amogus', false));
-			this.noticeService.addNotification(new Notification(NotificationType.Info, 'Amogus', false));
-			this.noticeService.addNotification(new Notification(NotificationType.Info, 'Amogus', false));
+			this.noticeService.addNotification(new Notification(NotificationType.Info, 'Amogus234234234234 sdf dfg dfg 3453 345345435', true, 1000));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, 'Amogus234234234234 sdf dfg dfg 3453 345345435', true, 1000));
+			this.noticeService.addNotification(new Notification(NotificationType.Success, 'Amogus234234234234 sdf dfg dfg 3453 345345435', true, 1000));
+			this.noticeService.addNotification(new Notification(NotificationType.Warning, 'Amogus234234234234 sdf dfg dfg 3453 345345435', true, 1000));
+			this.noticeService.addNotification(new Notification(NotificationType.Info, 'Amogus234234234234 sdf dfg dfg 3453 345345435', true, 1000));
+			this.noticeService.addNotification(new Notification(NotificationType.Info, 'Amogus234234234234 sdf dfg dfg 3453 345345435', true, 1000));
 			await this.checkAuthentication();
 			if (this.isAdmin)
 				await this.loadGroups();
