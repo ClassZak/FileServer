@@ -34,7 +34,7 @@ export class AdminService {
 			const response = await firstValueFrom(
 				this.http.get<IsAdminServerResponse>(
 					'/api/admin/is-admin',
-					CreateConfig.createAuthConfigNew(authToken)
+					CreateConfig.createAuthConfig(authToken)
 				)
 			);
 			

@@ -3,6 +3,9 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
+import { NoticeService } from '../core/view-core/service/notice-service';
+import { Notification, NotificationType } from '../core/view-core/model/notification';
+
 @Component({
 	selector: 'app-file-search-header',
 	imports: [CommonModule, FormsModule],
@@ -14,7 +17,10 @@ export class FileSearchHeader {
 	public searchQuery: string = '';
 
 	constructor (
-		private router: Router
+		private router: Router,
+
+
+		private noticeService: NoticeService
 	){}
 	
 	handleSearch(): void {
@@ -33,7 +39,7 @@ export class FileSearchHeader {
 				}
 			});
 		} catch (error) {
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, (error as Error).message));
 		} finally {
 			this.isSearching = false;
 		}

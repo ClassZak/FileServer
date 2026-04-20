@@ -4,22 +4,13 @@ import { HttpHeaders } from "@angular/common/http"
  * Static class for axios config creation
  */
 export class CreateConfig {
-	/**
-	 * Function to create configuration for request
-	 * @param {string} authToken 
-	 * @returns {object} Configuration object with headers: {'Authorization': `Bear ...`}
-	 */
-	public static createAuthConfig(authToken: string): object {
-		return { 
-			headers: { 'Authorization': `Bearer ${authToken}` }
-		}
-	}
+
 	/**
 	 * Function to create configuration for HttpClient request
 	 * @param {string} authToken 
 	 * @returns {object} Configuration object with headers: {'Authorization': `Bear ...`}
 	 */
-	public static createAuthConfigNew(authToken: string): { headers: HttpHeaders } {
+	public static createAuthConfig(authToken: string): { headers: HttpHeaders } {
 		return {
 			headers: new HttpHeaders({
 				'Authorization': `Bearer ${authToken}`,
@@ -33,7 +24,7 @@ export class CreateConfig {
 	 * @param authToken - JWT token.
 	 * @returns AxiosRequestConfig for file uploads.
 	 */
-	static createFileUploadConfigNew(authToken: string): { headers: HttpHeaders } {
+	static createFileUploadConfig(authToken: string): { headers: HttpHeaders } {
 		return {
 			headers: new HttpHeaders({
 				'Authorization': `Bearer ${authToken}`,
@@ -46,7 +37,7 @@ export class CreateConfig {
 	 * @param {string} authToken 
 	 * @returns {object} Configuration object with headers: {'Authorization': `Bear ...`}
 	 */
-	public static createAuthConfigBlobNew(authToken: string): {headers: HttpHeaders,responseType: string} {
+	public static createAuthConfigBlob(authToken: string): {headers: HttpHeaders,responseType: string} {
 		return {
 			headers: new HttpHeaders({
 				'Authorization': `Bearer ${authToken}`,

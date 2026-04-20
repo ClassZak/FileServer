@@ -95,6 +95,7 @@ export class ModelTable<TModel>
 	 */
 	ngOnDestroy(): void {
 		this.removeGlobalListeners();
+		this.resizing = false;
 		if (this.resizeTimer) {
 			clearTimeout(this.resizeTimer);
 		}

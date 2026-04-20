@@ -219,8 +219,14 @@ export class AccountPage implements OnInit {
 		}
 	}
 
-	public handleLogout(): void {
-		this.authService.logout();
+	public async handleLogout(): Promise<void> {
+		try {
+			const result = await this.authService.logout();
+			if (!result.success)
+				throw new Error(result.error ?? 'Ошибка при выходе из системы');
+		} catch (error) {
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при выходе из системы: ${error}`));
+		}
 		this.router.navigate(['/login']);
 	}
 

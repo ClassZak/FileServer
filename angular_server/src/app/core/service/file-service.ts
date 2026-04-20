@@ -122,7 +122,7 @@ export class FileService {
 			const response = await firstValueFrom(
 				this.http.get<ApiFilesExistsWithPathServerResponse>(
 					`/api/files/exists?path=${encodeURIComponent(path)}`,
-					CreateConfig.createAuthConfigNew(token)
+					CreateConfig.createAuthConfig(token)
 				)
 			);
 			return { success: true, data: {exists: response.exists} };
@@ -144,7 +144,7 @@ export class FileService {
 			const response = await firstValueFrom(
 				this.http.get<ApiFilesListWithPathServerResponse>(
 					`/api/files/list?path=${encodeURIComponent(path)}`,
-					CreateConfig.createAuthConfigNew(token)
+					CreateConfig.createAuthConfig(token)
 				)
 			);
 			if (response.error || (!response.files || !response.folders)) {
@@ -182,7 +182,7 @@ export class FileService {
 			const response = await firstValueFrom(
 				this.http.get<SearchResults>(
 					`/api/files/search?q=${encodeURIComponent(query)}&path=${encodeURIComponent(path)}`,
-					CreateConfig.createAuthConfigNew(token)
+					CreateConfig.createAuthConfig(token)
 				)
 			);
 			return {
@@ -221,7 +221,7 @@ export class FileService {
 				this.http.post<FileInfo>(
 					`/api/files/upload?path=${encodeURIComponent(currentPath)}`,
 					formData,
-					CreateConfig.createFileUploadConfigNew(token)
+					CreateConfig.createFileUploadConfig(token)
 				)
 			);
 			return {
@@ -258,7 +258,7 @@ export class FileService {
 				this.http.post(
 					'/api/files/create-folder',
 					{ path, folderName: folderName.trim() },
-					CreateConfig.createAuthConfigNew(token)
+					CreateConfig.createAuthConfig(token)
 				)
 			);
 			return { success: true };
@@ -291,7 +291,7 @@ export class FileService {
 			await firstValueFrom(
 				this.http.delete(
 					`/api/files/delete?path=${encodeURIComponent(itemPath)}`,
-					CreateConfig.createAuthConfigNew(token)
+					CreateConfig.createAuthConfig(token)
 				)
 			);
 			return { success: true };
@@ -326,7 +326,7 @@ export class FileService {
 				this.http.get(
 					`/api/files/download?path=${encodeURIComponent(filePath)}`,
 					{
-						headers: CreateConfig.createAuthConfigNew(token).headers,
+						headers: CreateConfig.createAuthConfig(token).headers,
 						responseType: 'blob',
 						observe: 'response'
 					}
@@ -369,7 +369,7 @@ export class FileService {
 			const response = await firstValueFrom(
 				this.http.get<{ deletedFiles: DeletedFileInfo[] }>(
 					'/api/files/deleted/files',
-					CreateConfig.createAuthConfigNew(token)
+					CreateConfig.createAuthConfig(token)
 				)
 			);
 			return { success: true, data: response.deletedFiles };
@@ -389,7 +389,7 @@ export class FileService {
 			const response = await firstValueFrom(
 				this.http.get<{ deletedFolders: DeletedFolderInfo[] }>(
 					'/api/files/deleted/folders',
-					CreateConfig.createAuthConfigNew(token)
+					CreateConfig.createAuthConfig(token)
 				)
 			);
 			return { success: true, data: response.deletedFolders };
@@ -411,7 +411,7 @@ export class FileService {
 				this.http.post(
 					`/api/files/restore/file/${deletedId}`,
 					{},
-					CreateConfig.createAuthConfigNew(token)
+					CreateConfig.createAuthConfig(token)
 				)
 			);
 			return { success: true };
@@ -433,7 +433,7 @@ export class FileService {
 				this.http.post(
 					`/api/files/restore/folder/${deletedId}`,
 					{},
-					CreateConfig.createAuthConfigNew(token)
+					CreateConfig.createAuthConfig(token)
 				)
 			);
 			return { success: true };
@@ -454,7 +454,7 @@ export class FileService {
 			await firstValueFrom(
 				this.http.delete(
 					`/api/files/permanent/file/${deletedId}`,
-					CreateConfig.createAuthConfigNew(token)
+					CreateConfig.createAuthConfig(token)
 				)
 			);
 			return { success: true };
@@ -475,7 +475,7 @@ export class FileService {
 			await firstValueFrom(
 				this.http.delete(
 					`/api/files/permanent/folder/${deletedId}`,
-					CreateConfig.createAuthConfigNew(token)
+					CreateConfig.createAuthConfig(token)
 				)
 			);
 			return { success: true };
@@ -496,7 +496,7 @@ export class FileService {
 	async setFolderPermission(token: string, request: SetPermissionRequest): Promise<DefaultServiceResult> {
 		try {
 			await firstValueFrom(
-				this.http.put('/api/files/permissions/folder', request, CreateConfig.createAuthConfigNew(token))
+				this.http.put('/api/files/permissions/folder', request, CreateConfig.createAuthConfig(token))
 			);
 			return { success: true };
 		} catch (error) {
@@ -514,7 +514,7 @@ export class FileService {
 	async deleteFolderPermission(token: string, permissionId: number): Promise<DefaultServiceResult> {
 		try {
 			await firstValueFrom(
-				this.http.delete(`/api/files/permissions/folder/${permissionId}`, CreateConfig.createAuthConfigNew(token))
+				this.http.delete(`/api/files/permissions/folder/${permissionId}`, CreateConfig.createAuthConfig(token))
 			);
 			return { success: true };
 		} catch (error) {
@@ -532,7 +532,7 @@ export class FileService {
 	async setFilePermission(token: string, request: SetPermissionRequest): Promise<DefaultServiceResult> {
 		try {
 			await firstValueFrom(
-				this.http.put('/api/files/permissions/file', request, CreateConfig.createAuthConfigNew(token))
+				this.http.put('/api/files/permissions/file', request, CreateConfig.createAuthConfig(token))
 			);
 			return { success: true };
 		} catch (error) {
@@ -550,7 +550,7 @@ export class FileService {
 	async deleteFilePermission(token: string, permissionId: number): Promise<DefaultServiceResult> {
 		try {
 			await firstValueFrom(
-				this.http.delete(`/api/files/permissions/file/${permissionId}`, CreateConfig.createAuthConfigNew(token))
+				this.http.delete(`/api/files/permissions/file/${permissionId}`, CreateConfig.createAuthConfig(token))
 			);
 			return { success: true };
 		} catch (error) {
@@ -578,7 +578,7 @@ export class FileService {
 			if (filters?.isFile !== undefined) params = params.set('isFile', filters.isFile);
 			const response = await firstValueFrom(
 				this.http.get<{ history: WorkHistoryEntry[] }>('/api/files/history', {
-					headers: CreateConfig.createAuthConfigNew(token).headers,
+					headers: CreateConfig.createAuthConfig(token).headers,
 					params
 				})
 			);

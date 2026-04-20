@@ -94,7 +94,7 @@ export class GroupService {
 			const response = await firstValueFrom(
 				this.http.get<GroupFullDetailsResponse>(
 					`/api/groups/name/${encodeURIComponent(groupName)}/full`,
-					CreateConfig.createAuthConfigNew(authToken)	
+					CreateConfig.createAuthConfig(authToken)	
 				)
 			);
 
@@ -163,7 +163,7 @@ export class GroupService {
 			const response = await firstValueFrom(
 				this.http.get<GroupFullDetailsAdminResponse>(
 					`/api/groups/name/${encodeURIComponent(groupName)}/full`,
-					CreateConfig.createAuthConfigNew(authToken)
+					CreateConfig.createAuthConfig(authToken)
 				)
 			);
 
@@ -226,7 +226,7 @@ export class GroupService {
 			const response = await firstValueFrom(
 				this.http.get<ApiGroupsMyServerResponse>(
 					'/api/groups/my',
-					CreateConfig.createAuthConfigNew(authToken)
+					CreateConfig.createAuthConfig(authToken)
 				)
 			);
 
@@ -264,7 +264,7 @@ export class GroupService {
 			const response = await firstValueFrom(
 				this.http.get<ApiGroupsForuserWithEmail>(
 					`/api/groups/for-user/${encodeURIComponent(userEmail)}`,
-					CreateConfig.createAuthConfigNew(authToken)
+					CreateConfig.createAuthConfig(authToken)
 				)
 			);
 
@@ -299,7 +299,7 @@ export class GroupService {
 			const response = await firstValueFrom(
 				this.http.get<ApiGroupsServerResponse>(
 					'/api/groups',
-					CreateConfig.createAuthConfigNew(authToken)	
+					CreateConfig.createAuthConfig(authToken)	
 				)
 			);
 
@@ -336,7 +336,7 @@ export class GroupService {
 				this.http.post(
 					'/api/groups',
 					groupCreateModel,
-					CreateConfig.createAuthConfigNew(authToken)
+					CreateConfig.createAuthConfig(authToken)
 				)
 			);
 
@@ -371,7 +371,7 @@ export class GroupService {
 				this.http.put<DefaultServiceResult>(
 					`/api/groups/name/${encodeURIComponent(groupName)}`,
 					updateData,
-					CreateConfig.createAuthConfigNew(authToken)
+					CreateConfig.createAuthConfig(authToken)
 				)
 			);
 
@@ -407,7 +407,7 @@ export class GroupService {
 			const response = await firstValueFrom(
 				this.http.delete<DefaultServiceResult>(
 					`/api/groups/name/${encodeURIComponent(groupName)}`,
-					CreateConfig.createAuthConfigNew(authToken)
+					CreateConfig.createAuthConfig(authToken)
 				)
 			);
 
@@ -445,7 +445,7 @@ export class GroupService {
 				this.http.post<DefaultServiceResult>(
 					`/api/groups/name/${encodeURIComponent(groupName)}/users/${encodeURIComponent(userEmail)}`,
 					{},
-					CreateConfig.createAuthConfigNew(authToken)
+					CreateConfig.createAuthConfig(authToken)
 				)
 			);
 
@@ -482,7 +482,7 @@ export class GroupService {
 			const response = await firstValueFrom(
 				this.http.delete<DefaultServiceResult>(
 					`/api/groups/name/${encodeURIComponent(groupName)}/users/${encodeURIComponent(userEmail)}`,
-					CreateConfig.createAuthConfigNew(authToken)
+					CreateConfig.createAuthConfig(authToken)
 				)
 			);
 
@@ -518,7 +518,7 @@ export class GroupService {
 			const response = await firstValueFrom(
 				this.http.get<ApiGroupsNameGroupNameCheckAccessServerResponse>(
 					`/api/groups/name/${encodeURIComponent(groupName)}/check-access`,
-					CreateConfig.createAuthConfigNew(authToken)
+					CreateConfig.createAuthConfig(authToken)
 				)
 			);
 			const checkGroupAccessResult = new CheckGroupAccessResult(
@@ -552,7 +552,7 @@ export class GroupService {
 			const response = await firstValueFrom(
 				this.http.get<ApiGroupsSearchPatternServerResponse>(
 					`/api/groups/search/${encodeURIComponent(pattern)}`,
-					CreateConfig.createAuthConfigNew(authToken)
+					CreateConfig.createAuthConfig(authToken)
 				)
 			);
 
@@ -588,7 +588,7 @@ export class GroupService {
 			const response = await firstValueFrom(
 				this.http.get<ApiGroupsNameGroupNameMemberShipServerResponse>(
 					`/api/groups/name/${encodeURIComponent(groupName)}/membership`,
-					CreateConfig.createAuthConfigNew(authToken)
+					CreateConfig.createAuthConfig(authToken)
 				)
 			);
 

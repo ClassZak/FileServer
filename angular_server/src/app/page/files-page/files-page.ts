@@ -480,11 +480,14 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				return;
 			}
 
-			await this.fileService.upload(token, file, this.currentPath);
-			await this.loadDirectory();
-			this.noticeService.addNotification(new Notification(NotificationType.Success, 'Новый файл успешно создан'));
+			const result = await this.fileService.upload(token, file, this.currentPath);
+			if (result.success) {
+				await this.loadDirectory();
+				this.noticeService.addNotification(new Notification(NotificationType.Success, 'Новый файл успешно создан'));
+			} else
+				throw new Error(result.error ?? 'Загрузка файла не удалась')
 		} catch (error) {
-			this.error = (error as Error).message || 'Upload failed.';
+			this.error = (error as Error).message || 'Загрузка файла не удалась';
 			this.noticeService.addNotification(new Notification(NotificationType.Error, this.error));
 		} finally {
 			this.uploading = false;
@@ -512,14 +515,16 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				return;
 			}
 
-			await this.fileService.createFolder(token, this.currentPath, folderName);
-
-			this.showCreateFolderModal = false;
-			await this.loadDirectory();
-			this.noticeService.addNotification(new Notification(NotificationType.Success, 'Новая папка успешно добавлена'));
+			const result = await this.fileService.createFolder(token, this.currentPath, folderName);
+			if (result.success) {
+				this.showCreateFolderModal = false;
+				await this.loadDirectory();
+				this.noticeService.addNotification(new Notification(NotificationType.Success, 'Новая папка успешно добавлена'));
+			} else
+				throw new Error(result.error ?? 'Ошибка создания папки')
 		} catch (error) {
 			console.error('Create folder error:', error);
-			this.error = (error as Error).message || 'Failed to create folder.';
+			this.error = (error as Error).message || 'Ошибка создания папки';
 			this.noticeService.addNotification(new Notification(NotificationType.Error, this.error));
 		} finally {
 			this.cdr.detectChanges();

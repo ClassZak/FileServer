@@ -167,7 +167,7 @@ export class AuthService {
 			const response = await firstValueFrom(
 				this.http.get<ApiAuthVerifyServerResponse>(
 					'/api/auth/verify',
-					CreateConfig.createAuthConfigNew(token)
+					CreateConfig.createAuthConfig(token)
 				)
 			);
 			if (response.valid && response.user) {
@@ -228,7 +228,7 @@ export class AuthService {
 				const userResponse =
 				await firstValueFrom(this.http.get<ApiAuthVerifyServerResponse>(
 					'/api/auth/verify',
-					CreateConfig.createAuthConfigNew(response.token)
+					CreateConfig.createAuthConfig(response.token)
 				));
 				
 				return {
@@ -256,14 +256,20 @@ export class AuthService {
 	/**
 	 * Function for user logout
 	 */
-	logout() {
+	async logout(): Promise<DefaultServiceResult> {
 		try {
-			const response = firstValueFrom(this.http.post<DefaultServiceResult>(
+			AuthService.clearAuthData();
+			const response = await firstValueFrom(this.http.post<DefaultServiceResult>(
 				'/api/auth/logout',
 				{}
 			));
-			AuthService.clearAuthData();
-		} finally {
+
+			return {success: response.success};
+		} catch(error) {
+			return {
+				success: false,
+				error: (error as Error).message
+			};
 		}
 	}
 

@@ -58,7 +58,7 @@ export class UserService {
 				this.http.post<DefaultServiceResult>(
 					'/api/users/new',
 					user,
-					CreateConfig.createAuthConfigNew(authToken)
+					CreateConfig.createAuthConfig(authToken)
 				)
 			);
 
@@ -90,7 +90,7 @@ export class UserService {
 			const response = await firstValueFrom(
 				this.http.get<ApiUsersUserUserEmailServerResponse>(
 					`/api/users/user/${encodeURIComponent(userEmail)}`,
-					CreateConfig.createAuthConfigNew(authToken)
+					CreateConfig.createAuthConfig(authToken)
 				)
 			);
 
@@ -132,7 +132,7 @@ export class UserService {
 				this.http.put(
 					`/api/users/update/${encodeURIComponent(email)}`,
 					user,
-					CreateConfig.createAuthConfigNew(authToken)
+					CreateConfig.createAuthConfig(authToken)
 				)
 			);
 			return {
@@ -165,7 +165,7 @@ export class UserService {
 			const response = await firstValueFrom(
 				this.http.delete<DefaultServiceResult>(
 					`/api/users/delete/${encodeURIComponent(user.email)}`,
-					CreateConfig.createAuthConfigNew(authToken)
+					CreateConfig.createAuthConfig(authToken)
 				)
 			);
 
@@ -196,7 +196,7 @@ export class UserService {
 			const response = await firstValueFrom(
 				this.http.get<ApiUsersUsersServerResponse>(
 					'/api/users/users',
-					CreateConfig.createAuthConfigNew(authToken)
+					CreateConfig.createAuthConfig(authToken)
 				)
 			);
 			if (response.error || !response.users)
@@ -255,7 +255,7 @@ export class UserService {
 				this.http.put<DefaultServiceResult>(
 					`/api/users/update-password/${encodeURIComponent(email)}`,
 					passwordData,
-					CreateConfig.createAuthConfigNew(authToken)
+					CreateConfig.createAuthConfig(authToken)
 				)
 			);
 			return response as DefaultServiceResult;

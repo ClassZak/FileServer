@@ -48,11 +48,24 @@ export class LoginPage {
 	}
 
 	async handleEmailLogin(e: Event) {
+		this.handleLogin(e);
+	}
+	async handleSNPLogin(e: Event) {
+		this.handleLogin(e, false);
+	}
+	async handleLogin(e: Event, loginByEmail: boolean = true) {
 		e.preventDefault();
 		this.isSubmiting = true;
 		
 		try {
-			const result = await this.authService.loginByEmail(this.email, this.password);
+			const result = loginByEmail ? 
+				await this.authService.loginByEmail(this.email, this.password) :
+				await this.authService.loginBySnp(
+					this.surname, this.name, this.patronymic, this.password
+				);
+
+			const defaultErrorMessage = loginByEmail ? 'Неверный email или пароль' : 'Неверные учётные данные';
+
 			if (result.success) {
 				const authResult = await this.authService.checkAuth();
 				if (!authResult.success)
@@ -65,45 +78,14 @@ export class LoginPage {
 				} else
 					throw new Error('Ошибка авторизации после входа');
 			} else {
-				const errorMessage = result.error ?? 'Неверный email или пароль';
+				const errorMessage = result.error ?? defaultErrorMessage;
 				this.noticeService.addNotification(new Notification(NotificationType.Error, errorMessage));
 
 				throw new Error(errorMessage);
 			}
 		} catch (error) {
-			console.error('Login failed:', error);
-			this.error = 'Произошла ошибка при входе';
+			this.error = `Произошла ошибка при входе: ${error}`;
 			this.noticeService.addNotification(new Notification(NotificationType.Error, this.error));
-		} finally {
-			this.isSubmiting = false;
-		}
-		this.cdr.detectChanges();
-	}
-	async handleSNPLogin(e: Event) {
-		this.isSubmiting = true;
-		e.preventDefault();
-		
-		try {
-			const result = await this.authService.loginBySnp(
-				this.surname, this.name, this.patronymic, this.password
-			);
-			if (result.success) {
-				const authResult = await this.authService.checkAuth();
-				if (!authResult.success)
-					throw new Error(authResult.error ?? 'Ошибка авторизации после входа');
-				else
-				if (authResult.data?.authenticated) {
-					this.noticeService.addNotification(new Notification(NotificationType.Success, 'Вы успешно авторизировались'));
-					this.router.navigate(['/account']);
-					return;
-				} else
-					throw new Error('Ошибка авторизации после входа');
-			} else
-				throw new Error(result.error);
-		} catch (error) {
-			console.log('Авторизация не удалась:', error);
-			this.error = 'Произошла ошибка при входе';
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Авторизация не удалась: ${error}`));
 		} finally {
 			this.isSubmiting = false;
 		}

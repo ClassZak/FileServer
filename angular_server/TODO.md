@@ -5,8 +5,8 @@
 - [✓] **Refactor API workflow**: Use Angular HttpClient instead of axios for server requests.
 
 ## Features & UX
-- [✖] **Global notification system**: Implement toast notifications (e.g., using a library or custom service) to inform users about operation results (success, error, info).
-- [✖] **Loading state management**: Add loading indicators for all async actions (button spinners, disabling inputs) – already partially done, but needs completion (e.g., `FileSearchHeader`).
+- [✓] **Global notification system**: Implement toast notifications (e.g., using a library or custom service) to inform users about operation results (success, error, info).
+- [✓] **Loading state management**: Add loading indicators for all async actions (button spinners, disabling inputs) – already partially done, but needs completion (e.g., `FileSearchHeader`).
 - [✖] **Accessibility improvements**: Add ARIA labels, ensure keyboard navigation works (focus trapping in modals, etc.).
 
 ## Testing
@@ -21,4 +21,4 @@
 ## UI
 - [✓] **Fix spinner dots animation**: Use CSS pseudo-elements or Angular dynamic text for the animated dots.
 - [✖] **Responsive design**: Test and improve layout on very small screens (below 400px).
-- [✖] **Consistent error display**: Replace all inline error messages with the reusable `error-message-component`.
+- [✓] **Consistent error display**: Replace all inline error messages with the reusable `error-message-component`.
