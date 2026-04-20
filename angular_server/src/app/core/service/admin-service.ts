@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import axios, { AxiosError } from "axios";
 import { CreateConfig } from './create-config';
 import { DefaultServiceResult, DefaultServiceResultWithData } from '../model/default-server-result';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';

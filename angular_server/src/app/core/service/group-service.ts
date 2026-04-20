@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import axios, { AxiosError } from 'axios';
 import { User } from '../model/user';
 import { GroupDetails } from '../model/group-details';
 import { UserAdminModel } from '../model/user-admin-model';
