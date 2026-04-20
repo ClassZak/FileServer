@@ -4,6 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { ModalComponent } from '../../modal/modal';
 import { User } from '../../../../core/model/user';
 
+
+import { NoticeService } from '../../../../core/view-core/service/notice-service';
+import { Notification, NotificationType } from '../../../../core/view-core/model/notification';
+
+
 export interface GroupCreateModel {
 	name: string;
 	creatorEmail: string;
@@ -30,6 +35,10 @@ export class CreateGroupModalComponent implements OnChanges {
 	searchQuery = '';
 	filteredUsers: User[] = [];
 	errors: { [key: string]: string | null } = {};
+
+	constructor (
+		private noticeService: NoticeService
+	) {}
 
 	ngOnChanges(changes: SimpleChanges): void {
 		if (changes['isOpen'] && !this.isOpen) {
@@ -88,6 +97,9 @@ export class CreateGroupModalComponent implements OnChanges {
 		}
 
 		this.errors = newErrors;
+		Object.entries(this.errors).forEach(([field, message])=>{
+			this.noticeService.addNotification(new Notification(NotificationType.Error, message?? 'Ошибка создания группы'));
+		});
 		return Object.keys(newErrors).length === 0;
 	}
 
@@ -102,6 +114,7 @@ export class CreateGroupModalComponent implements OnChanges {
 		} catch (error) {
 			console.error('Ошибка создания группы:', error);
 			this.errors['server'] = (error as Error).message || 'Ошибка создания группы';
+			this.noticeService.addNotification(new Notification(NotificationType.Error, this.errors['server']));
 		} finally {
 			this.submitting = false;
 		}

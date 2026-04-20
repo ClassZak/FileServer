@@ -126,10 +126,10 @@
 	background: var(--color-bg-overlay-light);
 	width: 100%;
 	animation: shrink linear forwards;
-	border-top-left-radius:  5px;
-	border-top-right-radius: 5px;
-	margin-left:  2px;
-	margin-right: 2px;
+	border-top-left-radius:		5px;
+	border-top-right-radius:	5px;
+	margin-left:	2px;
+	margin-right:	2px;
 }
 
 @keyframes shrink {

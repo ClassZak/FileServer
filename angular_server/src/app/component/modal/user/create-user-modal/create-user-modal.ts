@@ -3,7 +3,15 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ModalComponent } from '../../modal/modal';
 
+
+import { NoticeService } from '../../../../core/view-core/service/notice-service';
+import { Notification, NotificationType } from '../../../../core/view-core/model/notification';
+
+
 import { CreateUserModel } from '../../../../core/model/create-user-model';
+
+
+
 
 @Component({
 	selector: 'app-create-user-modal',
@@ -21,8 +29,10 @@ export class CreateUserModalComponent {
 	formData: CreateUserModel = new CreateUserModel();
 	errors: { [key: string]: string | null } = {};
 	
-	constructor(private cdr: ChangeDetectorRef){
-	}
+	constructor(
+		private cdr: ChangeDetectorRef,
+		private noticeService: NoticeService
+	) {}
 
 	validateForm(): boolean {
 		const newErrors: typeof this.errors = {};
@@ -48,6 +58,9 @@ export class CreateUserModalComponent {
 		}
 
 		this.errors = newErrors;
+		Object.entries(this.errors).forEach(([filed, message]) => {
+			this.noticeService.addNotification(new Notification(NotificationType.Error, message?? 'Ошибка создания пользователя'));
+		})
 		return Object.keys(newErrors).length === 0;
 	}
 
@@ -60,6 +73,7 @@ export class CreateUserModalComponent {
 			this.onConfirm.emit(this.formData);
 		} catch (error) {
 			console.error('Ошибка создания пользователя:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, (error as Error).message));
 			this.errors['server'] = (error as Error).message || 'Ошибка создания пользователя';
 		} finally {
 			this.submitting = false;

@@ -23,7 +23,9 @@ import { RedirectionButton } from '../../component/redirection-button/redirectio
 import { User } from '../../core/model/user';
 import AdminService from '../../core/service/admin-service';
 import { IconManager } from '../../component/icon-manager/icon-manager';
+
 import { NoticeService } from '../../core/view-core/service/notice-service';
+import { Notification, NotificationType } from '../../core/view-core/model/notification';
 
 @Component({
 	selector: 'app-files-page',
@@ -205,7 +207,8 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			await this.checkAuthentication();
 			this.initSubscriptions();
 		} catch (error) {
-			console.error('Ошибка при загрузке страницы:', error); // TODO: notice
+			console.error('Ошибка при загрузке страницы:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке страницы:', ${error}`));
 		}
 	}
 
@@ -270,6 +273,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке аутентификации:', ${error}`));
 			this.unsubscribeAll();
 			this.router.navigate(['/login']);
 			return;
@@ -293,6 +297,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				);
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке статуса администратора:', ${error}`));
 		}
 	}
 
@@ -349,6 +354,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			this.foldersModelTableDataObject.models = this.folders;
 			this.filesFoundModelTableDataObject.models = this.files;
 			this.foldersFoundModelTableDataObject.models = this.folders;
+			this.noticeService.addNotification(new Notification(NotificationType.Error, this.error));
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
@@ -376,9 +382,20 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			this.searchResults = results.data!;
 			this.filesFoundModelTableDataObject.models = this.searchResults.files;
 			this.foldersFoundModelTableDataObject.models = this.searchResults.folders;
+			if (this.foldersFoundModelTableDataObject.models.length == this.filesFoundModelTableDataObject.models.length && this.filesFoundModelTableDataObject.models.length == 0)
+				this.noticeService.addNotification(
+					new Notification(
+						NotificationType.Info,
+						`По поисковому запросу "${this.searchQuery}" в ${
+							(
+								this.searchPath ?
+								('директории ' + this.searchPath) :
+								'корневой директории'
+							)} ничего не найдено`));
 		} catch (error) {
 			console.error('Search error:', error);
 			this.error = (error as Error).message || 'Search failed.';
+			this.noticeService.addNotification(new Notification(NotificationType.Error, this.error));
 			this.searchResults = null;
 			this.filesFoundModelTableDataObject.models = [];
 			this.foldersFoundModelTableDataObject.models = [];
@@ -442,7 +459,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			}
 		} catch (error) {
 			this.error = (error as Error).message || 'Failed to check path.';
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, this.error));
 		}
 	}
 
@@ -465,9 +482,10 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 
 			await this.fileService.upload(token, file, this.currentPath);
 			await this.loadDirectory();
+			this.noticeService.addNotification(new Notification(NotificationType.Success, 'Новый файл успешно создан'));
 		} catch (error) {
 			this.error = (error as Error).message || 'Upload failed.';
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, this.error));
 		} finally {
 			this.uploading = false;
 			input.value = '';
@@ -498,9 +516,11 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 
 			this.showCreateFolderModal = false;
 			await this.loadDirectory();
+			this.noticeService.addNotification(new Notification(NotificationType.Success, 'Новая папка успешно добавлена'));
 		} catch (error) {
 			console.error('Create folder error:', error);
 			this.error = (error as Error).message || 'Failed to create folder.';
+			this.noticeService.addNotification(new Notification(NotificationType.Error, this.error));
 		} finally {
 			this.cdr.detectChanges();
 		}
@@ -541,9 +561,11 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			this.showDeleteModal = false;
 			this.itemToDelete = null;
 			await this.loadDirectory();
+			this.noticeService.addNotification(new Notification(NotificationType.Success, 'Элемент успешно удалён'));
 		} catch (error) {
 			console.error('Delete error:', error);
 			this.error = (error as Error).message || 'Deletion failed.';
+			this.noticeService.addNotification(new Notification(NotificationType.Error, this.error));
 		} finally {
 			this.cdr.detectChanges();
 		}
@@ -585,6 +607,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 		} catch (error) {
 			console.error('Download error:', error);
 			this.error = (error as Error).message || 'Ошибка загрузки.';
+			this.noticeService.addNotification(new Notification(NotificationType.Error, this.error));
 			this.cdr.detectChanges();
 		}
 	}

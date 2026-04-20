@@ -107,17 +107,12 @@ export class AccountPage implements OnInit {
 
 	async ngOnInit(): Promise<void> {
 		try {
-			this.noticeService.addNotification(new Notification(NotificationType.Info, 'Amogus234234234234 sdf dfg dfg 3453 345345435', true, 1000));
-			this.noticeService.addNotification(new Notification(NotificationType.Error, 'Amogus234234234234 sdf dfg dfg 3453 345345435', true, 1000));
-			this.noticeService.addNotification(new Notification(NotificationType.Success, 'Amogus234234234234 sdf dfg dfg 3453 345345435', true, 1000));
-			this.noticeService.addNotification(new Notification(NotificationType.Warning, 'Amogus234234234234 sdf dfg dfg 3453 345345435', true, 1000));
-			this.noticeService.addNotification(new Notification(NotificationType.Info, 'Amogus234234234234 sdf dfg dfg 3453 345345435', true, 1000));
-			this.noticeService.addNotification(new Notification(NotificationType.Info, 'Amogus234234234234 sdf dfg dfg 3453 345345435', true, 1000));
 			await this.checkAuthentication();
 			if (this.isAdmin)
 				await this.loadGroups();
 		} catch (error) {
 			console.error('Ошибка при загрузке страницы:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке страницы:', ${error}`));
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
@@ -149,6 +144,7 @@ export class AccountPage implements OnInit {
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке аутентификации:', ${error}`));
 			this.router.navigate(['/login']);
 			return;
 		}
@@ -169,7 +165,7 @@ export class AccountPage implements OnInit {
 				);
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке статуса администратора: ${error}`));
 		}
 	}
 
@@ -191,8 +187,8 @@ export class AccountPage implements OnInit {
 				this.currentGroupModelTableDataObjectRef.models = groupsResult.data;
 			}
 		} catch (error) {
-			console.error('Ошибка при загрузке групп:', error);
-			// TODO: notice
+			console.error('Ошибка при загрузке ваших групп:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке ваших групп: ${error}`));
 		} finally {
 			this.isLoadingMyGroups = false;
 			this.cdr.detectChanges();
@@ -216,7 +212,7 @@ export class AccountPage implements OnInit {
 			}
 		} catch (error) {
 			console.error('Ошибка при загрузке групп', error);
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке групп: ${error}`));
 		} finally {
 			this.isLoadingGroups = false;
 			this.cdr.detectChanges();
@@ -271,11 +267,10 @@ export class AccountPage implements OnInit {
 			else
 				console.error(result.error);
 			this.setPasswordModalIsOpen(false);
-
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Success, 'Пароль успешно изменён'));
 		} catch (error) {
 			console.error('Error updating password:', error);
-			alert('Ошибка при обновлении пароля');
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при обновлении пароля: ${error}`));
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
@@ -310,16 +305,16 @@ export class AccountPage implements OnInit {
 			this.setIsAddAdminToGroupModalOpen(false);
 
 			if (result.success)
-				console.log(`Вы успешно добавлены в группу «${selectedGroupName}»`);
+				this.noticeService.addNotification(new Notification(NotificationType.Success, `Вы успешно добавлены в группу «${selectedGroupName}»`));
 			else
-				console.error(result.error);
-			// TODO: notice
+				throw new Error(result.error);
+
 			await this.loadMyGroups();
 			await this.loadGroups();
 			this.cdr.detectChanges();
 		} catch (error) {
 			console.error('Ошибка при добавлении себя в группу:', error);
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при добавлении себя в группу: ${error}`));
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();

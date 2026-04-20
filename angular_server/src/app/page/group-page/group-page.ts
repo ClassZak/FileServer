@@ -22,6 +22,7 @@ import { RedirectionButton } from '../../component/redirection-button/redirectio
 import { ModelTable } from '../../component/model-table/model-table';
 import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
 import { NoticeService } from '../../core/view-core/service/notice-service';
+import { Notification, NotificationType } from '../../core/view-core/model/notification';
 
 @Component({
 	selector: 'app-group-page',
@@ -158,7 +159,8 @@ export class GroupPage implements OnInit, OnDestroy {
 			await this.checkAuthentication();
 			await this.checkAdminStatus();
 		} catch (error) {
-			console.error('Ошибка аутентификации при загрузке страницы:', error); // TODO: notice
+			console.error('Ошибка аутентификации при загрузке страницы:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка аутентификации при загрузке страницы: ${error}`));
 		}
 		try{
 			this.paramSubscription = this.route.paramMap.subscribe(params => {
@@ -171,7 +173,7 @@ export class GroupPage implements OnInit, OnDestroy {
 			});
 			await Promise.all([this.loadGroupData(), this.loadUsers()]);
 		} catch (error) {
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка аутентификации при загрузке страницы: ${error}`));
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
@@ -200,11 +202,10 @@ export class GroupPage implements OnInit, OnDestroy {
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке аутентификации: ${error}`));
 			this.paramSubscription?.unsubscribe();
 			this.router.navigate(['/login']);
 			return;
-		} finally {
-			// TODO: notice
 		}
 		this.cdr.detectChanges();
 	}
@@ -223,6 +224,7 @@ export class GroupPage implements OnInit, OnDestroy {
 				);
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке статуса администратора: ${error}`));
 		}
 	}
 	private async loadGroupData(): Promise<void> {
@@ -250,8 +252,7 @@ export class GroupPage implements OnInit, OnDestroy {
 		} catch (error) {
 			console.error('Ошибка при загрузки данных группы:', error);
 			this.error = (error as Error).message;
-			// TODO: notice
-		} finally {
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузки данных группы: ${error}`));
 		}
 	}
 	private async loadUsers(){
@@ -267,7 +268,7 @@ export class GroupPage implements OnInit, OnDestroy {
 			}
 		} catch (error) {
 			console.error('Ошибка при загрузке пользователей', error);
-		} finally {
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке пользователей: ${error}`));
 		}
 	}
 
@@ -285,10 +286,11 @@ export class GroupPage implements OnInit, OnDestroy {
 
 			this.isAddUserToGroupModalComponentOpen = false;
 			this.cdr.detectChanges();
+			this.noticeService.addNotification(new Notification(NotificationType.Success, `Пользователь с почтой "${email}" был добавлен в группу "${this.groupName}"`));
 		} catch (error) {
 			console.error(error);
 			this.error = (error as Error).message;
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, (error as Error).message));
 		}
 	}
 	public async handleConfirmDeleteGroupModalComponent() : Promise<void>{
@@ -310,11 +312,12 @@ export class GroupPage implements OnInit, OnDestroy {
 		} catch (error) {
 			console.error(error);
 			this.error = (error as Error).message;
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, (error as Error).message));
 		}
 	}
 	public async handleConfirmRemoveUserFromGroupModalComponent() : Promise<void>{
 		try {
+			const selectedUserEmail = this.selectedUserEmail;
 			if (this.group && this.selectedUserEmail == this.group?.creator.email)
 				throw new Error('Вы не можете исключить из группы её создателя');
 			const token = AuthService.getToken();
@@ -330,10 +333,11 @@ export class GroupPage implements OnInit, OnDestroy {
 				throw new Error(response.error);
 			if (response.success)
 				await this.loadGroupData();
+			this.noticeService.addNotification(new Notification(NotificationType.Success, `Пользователь с почтой "${selectedUserEmail}" был исключён из группы`));
 		} catch (error) {
 			console.error(error);
 			this.error = (error as Error).message;
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, (error as Error).message));
 		} finally {
 			this.selectedUserEmail = '';
 			this.isRemoveUserFromGroupModalComponentOpen = false;
@@ -360,10 +364,11 @@ export class GroupPage implements OnInit, OnDestroy {
 			await this.loadGroupData();
 			this.isUpdateGroupModalComponentOpen = false;
 			this.cdr.detectChanges();
+			this.noticeService.addNotification(new Notification(NotificationType.Success, 'Данные группы успешно обновлены'));
 		} catch (error) {
 			console.error(error);
 			this.error = (error as Error).message;
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, (error as Error).message));
 		}
 	}
 }

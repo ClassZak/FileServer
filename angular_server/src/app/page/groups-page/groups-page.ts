@@ -21,6 +21,7 @@ import { CreateGroupModalComponent } from '../../component/modal/group/create-gr
 import { UserAdminModel } from '../../core/model/user-admin-model';
 import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
 import { NoticeService } from '../../core/view-core/service/notice-service';
+import { Notification, NotificationType } from '../../core/view-core/model/notification';
 
 @Component({
 	selector: 'app-groups-page',
@@ -88,7 +89,7 @@ export class GroupsPage implements OnInit {
 			await this.loadUsers();
 		} catch (error) {
 			console.error('Ошибка при загрузке страницы:', error);
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке страницы: ${error}`));
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
@@ -113,6 +114,7 @@ export class GroupsPage implements OnInit {
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке аутентификации: ${error}`));
 			this.router.navigate(['/login']);
 			return;
 		}
@@ -132,6 +134,7 @@ export class GroupsPage implements OnInit {
 				throw new Error(result.error);
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке статуса администратора: ${error}`));
 			this.isAdmin = false;
 			Promise.resolve().then(()=>{this.router.navigate(['/account']);});
 		}
@@ -157,7 +160,7 @@ export class GroupsPage implements OnInit {
 			}
 		} catch (error) {
 			console.error('Ошибка при загрузке групп', error);
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке групп: ${error}`));
 		} finally {
 			this.cdr.detectChanges();
 		}
@@ -176,7 +179,7 @@ export class GroupsPage implements OnInit {
 			}
 		} catch (error) {
 			console.error('Ошибка при загрузке пользователей', error);
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке пользователей: ${error}`));
 		} finally {
 			this.cdr.detectChanges();
 		}
@@ -196,10 +199,11 @@ export class GroupsPage implements OnInit {
 
 			await this.loadGroups();
 			this.setIsCreateGroupModalComponentOpen(false);
+			this.noticeService.addNotification(new Notification(NotificationType.Success, `Группа "${groupData.name}" успешно создана`));
 		} catch (error) {
 			console.error('Error updating password:', error);
 			this.error = (error as Error).message;
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при создании группы: ${(error as Error).message}`));
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();

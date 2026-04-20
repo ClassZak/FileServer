@@ -5,7 +5,11 @@ import { AppHeader } from "../../app-header/app-header";
 import { AppFooter } from '../../app-footer/app-footer';
 import { AuthService, CheckAuthResult } from '../../core/service/auth-service';
 import { DefaultServiceResult, DefaultServiceResultWithData } from '../../core/model/default-server-result';
+
+
 import { NoticeService } from '../../core/view-core/service/notice-service';
+import { Notification, NotificationType } from '../../core/view-core/model/notification';
+
 
 enum LoginFormType {
 	Email,
@@ -52,25 +56,24 @@ export class LoginPage {
 			if (result.success) {
 				const authResult = await this.authService.checkAuth();
 				if (!authResult.success)
-					this.error = authResult.error;
-				else
-				{
-					if (authResult.data?.authenticated) {
-						this.router.navigate(['/account']);
-						return;
-					} else
-						this.error = 'Ошибка авторизации после входа';
-				}
+					throw new Error(authResult.error ?? 'Ошибка авторизации после входа');
+				
+				if (authResult.data?.authenticated) {
+					this.noticeService.addNotification(new Notification(NotificationType.Success, 'Вы успешно авторизировались'));
+					this.router.navigate(['/account']);
+					return;
+				} else
+					throw new Error('Ошибка авторизации после входа');
 			} else {
-				if (result.error)
-					this.error = result.error;
-				else
-					this.error = 'Неверный email или пароль';
+				const errorMessage = result.error ?? 'Неверный email или пароль';
+				this.noticeService.addNotification(new Notification(NotificationType.Error, errorMessage));
+
+				throw new Error(errorMessage);
 			}
 		} catch (error) {
 			console.error('Login failed:', error);
 			this.error = 'Произошла ошибка при входе';
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, this.error));
 		} finally {
 			this.isSubmiting = false;
 		}
@@ -87,20 +90,20 @@ export class LoginPage {
 			if (result.success) {
 				const authResult = await this.authService.checkAuth();
 				if (!authResult.success)
-					this.error = 'Ошибка авторизации после входа';
+					throw new Error(authResult.error ?? 'Ошибка авторизации после входа');
 				else
 				if (authResult.data?.authenticated) {
+					this.noticeService.addNotification(new Notification(NotificationType.Success, 'Вы успешно авторизировались'));
 					this.router.navigate(['/account']);
 					return;
-				} else {
-					this.error = 'Ошибка авторизации после входа';
-				}
-			} else {
-				this.error = result.error;
-			}
+				} else
+					throw new Error('Ошибка авторизации после входа');
+			} else
+				throw new Error(result.error);
 		} catch (error) {
 			console.log('Авторизация не удалась:', error);
 			this.error = 'Произошла ошибка при входе';
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Авторизация не удалась: ${error}`));
 		} finally {
 			this.isSubmiting = false;
 		}
@@ -120,7 +123,6 @@ export class LoginPage {
 		} catch (error) {
 			console.error(error);
 			return;
-			// TODO: notice
 		}
 	}
 

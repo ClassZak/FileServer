@@ -25,15 +25,15 @@ import { NoticeService } from '../../core/view-core/service/notice-service';
 @Component({
 	selector: 'app-user-page',
 	imports: [
-    CommonModule,
-    AppHeader,
-    AppFooter,
-    LoadingSpinner,
-    UpdateUserModalComponent,
-    UpdateUserPasswordModalComponent,
-    DeleteUserModalComponent,
-    RedirectionButton,
-    ModelTable
+	CommonModule,
+	AppHeader,
+	AppFooter,
+	LoadingSpinner,
+	UpdateUserModalComponent,
+	UpdateUserPasswordModalComponent,
+	DeleteUserModalComponent,
+	RedirectionButton,
+	ModelTable
 ],
 	templateUrl: './user-page.html',
 	styleUrl: './user-page.css',

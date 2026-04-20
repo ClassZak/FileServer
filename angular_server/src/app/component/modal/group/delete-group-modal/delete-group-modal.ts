@@ -37,7 +37,7 @@ export class DeleteGroupModalComponent {
 		try {
 			this.onConfirm.emit();
 		} catch (error) {
-			console.error('Ошибка создания пользователя:', error);
+			console.error('Ошибка удаления группы:', error);
 		} finally {
 			this.submitting = false;
 			this.cdr.detectChanges();

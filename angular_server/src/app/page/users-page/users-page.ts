@@ -18,7 +18,11 @@ import { UserAdminModel } from '../../core/model/user-admin-model';
 import { RedirectionButton } from '../../component/redirection-button/redirection-button';
 import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
 import { ModelTable } from "../../component/model-table/model-table";
+
+// Notifications
 import { NoticeService } from '../../core/view-core/service/notice-service';
+import { Notification, NotificationType } from '../../core/view-core/model/notification';
+
 
 @Component({
 	selector: 'app-users-page',
@@ -83,7 +87,7 @@ export class UsersPage implements OnInit {
 			await this.loadUsers();
 		} catch (error) {
 			console.error('Ошибка при загрузке страницы:', error);
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, (error as Error).message));
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
@@ -108,6 +112,7 @@ export class UsersPage implements OnInit {
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке аутентификации:, ${error}`));
 			this.router.navigate(['/login']);
 			return;
 		}
@@ -127,6 +132,7 @@ export class UsersPage implements OnInit {
 				throw new Error(result.error);
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке статуса администратора:, ${error}`));
 			this.isAdmin = false;
 			Promise.resolve().then(()=>{this.router.navigate(['/account']);});
 		}
@@ -146,6 +152,7 @@ export class UsersPage implements OnInit {
 			}
 		} catch (error) {
 			console.error('Ошибка при загрузке пользователей', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке пользователей:, ${error}`));
 		} finally {
 			this.cdr.detectChanges();
 		}
@@ -171,7 +178,7 @@ export class UsersPage implements OnInit {
 		} catch (error) {
 			console.error('Error updating password:', error);
 			this.error = (error as Error).message;
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, (error as Error).message));
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
