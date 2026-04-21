@@ -18,4 +18,6 @@ interface DeletedFolderRepository : JpaRepository<DeletedFolder, Long> {
 	
 	@Query("SELECT df FROM DeletedFolder df WHERE df.folderEntity = :folderEntity ORDER BY df.version DESC")
 	fun findByFolderEntityOrderByVersionDesc(@Param("folderEntity") folderEntity: FolderEntity): List<DeletedFolder>
+	
+	fun findByOriginalPath(originalPath: String): List<DeletedFolder>
 }

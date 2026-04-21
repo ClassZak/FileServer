@@ -53,18 +53,20 @@
 
 ## API Endpoints (Phase 5)
 - [✅] **Update existing file endpoints** to use new service methods (no breaking changes expected from client perspective).
-- [⚠️] **Add new endpoints in `FileController`**:
-	- `GET /api/files/deleted` – list deleted files (with query params: `?type=file|folder`, `?userId=`, `?groupId=`, `?pathPrefix=`). *(Implemented as 2 independent: `/deleted/files` and `/deleted/folders`)*
-	- [✅] `POST /api/files/restore/{deletedFileId}` – restore a specific deleted file version.
-	- [❌] `GET /api/files/deleted/versions/{fileId}` – list all deleted versions of a file. *(Not implemented)*
+- [✅] **Add new endpoints in `FileController`**:
+	- `GET /api/files/deleted/files` – list deleted files.
+	- `GET /api/files/deleted/folders` – list deleted folders.
+	- `POST /api/files/restore/file/{id}` – restore a specific deleted file version.
+	- `POST /api/files/restore/folder/{id}` – restore a specific deleted folder version.
+	- `GET /api/files/deleted/file/versions/` – list all deleted versions of a file (by `path` and `filename`).
+	- `GET /api/files/deleted/folders/versions/` – list all deleted versions of a folder (by `path`).
 - [✅] **Add permission management endpoints** (admin only):
-	- `GET /api/permissions/folders` – list folder permissions (filters by path, user, group). *(Maybe added later)*
-	- `GET /api/permissions/files` – list file permissions.
-	- `PUT /api/permissions/folder` – set/update folder permission.
-	- `DELETE /api/permissions/folder/{id}` – delete folder permission.
-	- (Same for `/api/permissions/file`)
+	- `PUT /api/files/permissions/folder` – set/update folder permission.
+	- `DELETE /api/files/permissions/folder/{id}` – delete folder permission.
+	- `PUT /api/files/permissions/file` – set/update file permission.
+	- `DELETE /api/files/permissions/file/{id}` – delete file permission.
 - [✅] **Add history endpoint**:
-	- `GET /api/history` – retrieve work history with filters (`?userId=`, `?groupId=`, `?operationType=`, `?from=`, `?to=`, `?pathPrefix=`). *(Implemented as `/api/files/history`)*
+	- `GET /api/files/history` – retrieve work history with filters (`?userId=`, `?pathPrefix=`, `?isFile=`).
 
 ## Security & Access Control (Phase 6)
 - [✅] **Implement permission inheritance** logic in `checkAccessForDirectory`/`checkAccessForFile`:
@@ -72,6 +74,7 @@
 	- For group folders (`groups/<groupName>`), default to `ALL` for members, `NONE` otherwise.
 - [✅] **Restrict non-admin users** from viewing other users' deleted files/history unless they share group access.
 - [✅] **Add `@PreAuthorize` checks** for admin-only endpoints (permission management, viewing all history).
+- [❌] **Replace numeric IDs with path-based identifiers for trash operations**: Modify `restoreFile`, `restoreFolder`, `permanentDeleteFile`, `permanentDeleteFolder` to accept `originalPath` and `version` instead of `deletedId`. This prevents predictable numeric IDs in URLs/requests.
 
 ## Testing (Phase 7)
 - [✅] **Update existing unit tests** (`FileSystemServiceTest`) to mock new repositories.
@@ -80,11 +83,11 @@
 
 ## Documentation & Cleanup (Phase 8)
 - [❌] **Update Swagger/OpenAPI documentation** with new endpoints.
-- [⚠️] **Remove deprecated code** (old entities, repositories, services). *(Checking is need)*
+- [⚠️] **Remove deprecated code** (old entities, repositories, services). *(Checking is needed – old code may still exist in project but is unused)*
 - [❌] **Update README** with new database setup instructions.
 
 ## Future Improvements (Backlog)
-- [✅] **Implement folder restore** (currently only file restore is planned).
+- [✅] **Implement folder restore** (already done).
 - [❌] **Add automatic cleanup** of old deleted file versions (e.g., keep last 5 versions).
 - [❌] **Cache permission results** using Spring Cache.
 - [❌] **Add WebSocket notifications** for real-time file updates.

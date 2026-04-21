@@ -129,7 +129,7 @@ class FileController(
 		} catch (e: Exception) {
 			logger.error("Ошибка при загрузке файла", e)
 			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-				.body(mapOf("error" to "Ошибка при загрузке файла"))
+				.body(mapOf("error" to (e.message ?: "Ошибка при загрузке файла")))
 		}
 	}
 	
@@ -198,7 +198,7 @@ class FileController(
 		} catch (e: Exception) {
 			logger.error("Ошибка при создании директории", e)
 			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-				.body(mapOf("error" to "Ошибка при создании директории"))
+				.body(mapOf("error" to (e.message ?: "Ошибка при создании директории")))
 		}
 	}
 	
@@ -234,7 +234,7 @@ class FileController(
 		} catch (e: Exception) {
 			logger.error("Ошибка при удалении", e)
 			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-				.body(mapOf("error" to "Ошибка при удалении"))
+				.body(mapOf("error" to (e.message ?: "Ошибка при удалении")))
 		}
 	}
 	
@@ -277,7 +277,7 @@ class FileController(
 		} catch (e: Exception) {
 			logger.error("Ошибка при поиске файлов", e)
 			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-				.body(mapOf("error" to "Внутренняя ошибка сервера при поиске"))
+				.body(mapOf("error" to (e.message ?: "Внутренняя ошибка сервера при поиске")))
 		}
 	}
 	
@@ -307,6 +307,47 @@ class FileController(
 		val currentUser = getCurrentUserFromJwt(authHeader)
 		val deleted = fileSystemService.getDeletedFoldersForUser(currentUser)
 		return ResponseEntity.ok(mapOf("deletedFolders" to deleted))
+	}
+	
+	/**
+	 * Получить список версий удалённого файла, доступного текущему пользователю.
+	 *
+	 * @return `{ "versions": [ DeletedFileInfo, ... ] }`.
+	 */
+	@GetMapping("/api/files/deleted/file/versions/")
+	@PreAuthorize("isAuthenticated()")
+	fun getDeletedFileVersions(
+		@RequestHeader("Authorization") authHeader: String,
+		@RequestParam path: String,
+		@RequestParam filename: String
+	): ResponseEntity<Any> {
+		try {
+			val currentUser = getCurrentUserFromJwt(authHeader)
+			val versions = fileSystemService.getDeletedFileVersionsForUser(currentUser, path, filename)
+			return ResponseEntity.ok(mapOf("versions" to versions))
+		} catch (e: Exception) {
+			return handleException(e)
+		}
+	}
+	
+	/**
+	 * Получить список версий удалённой папки, доступной текущему пользователю.
+	 *
+	 * @return `{ 'versions": [ DeletedFolderInfo, ... ] }`.
+	 */
+	@GetMapping("/api/files/deleted/folders/versions/")
+	@PreAuthorize("isAuthenticated()")
+	fun getDeletedFolderVersions(
+		@RequestHeader("Authorization") authHeader: String,
+		@RequestParam path: String
+	): ResponseEntity<Any> {
+		try {
+			val currentUser = getCurrentUserFromJwt(authHeader)
+			val versions = fileSystemService.getDeletedFolderVersionsForUser(currentUser, path)
+			return ResponseEntity.ok(mapOf("versions" to versions))
+		} catch (e: Exception) {
+			return handleException(e)
+		}
 	}
 	
 	/**

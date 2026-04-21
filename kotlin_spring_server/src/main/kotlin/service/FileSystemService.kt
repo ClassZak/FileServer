@@ -23,6 +23,7 @@ import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
 import java.time.LocalDateTime
 import java.util.*
+import kotlin.io.path.Path
 import kotlin.io.path.absolute
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
@@ -176,11 +177,11 @@ class FileSystemService(
 	private fun checkNotDeleted(path: String) {
 		val file = fileEntityRepository.findByPath(path)
 		if (file != null && file.isDeleted) {
-			throw IllegalStateException("Файл был ранее удалён")
+			throw IllegalStateException("Файл '${file.path}' был ранее удалён")
 		}
 		val folder = folderEntityRepository.findByPath(path)
 		if (folder != null && folder.isDeleted) {
-			throw IllegalStateException("Папка была ранее удалена")
+			throw IllegalStateException("Папка '${folder.path}' была ранее удалена")
 		}
 	}
 	
@@ -915,6 +916,65 @@ class FileSystemService(
 	fun getDeletedFoldersForUser(currentUser: CurrentUser): List<DeletedFolderInfo> {
 		val all = deletedFolderRepository.findAllOrderByDeletedAtDesc()
 		return all.filter { df ->
+			currentUser.isAdmin || df.deletedByUser.id == currentUser.id ||
+					(isGroupPath(df.originalPath) && groupService.hasUserAccessToGroup(currentUser.id!!, extractGroupFromPath(df.originalPath)!!))
+		}.map { df ->
+			DeletedFolderInfo(
+				id = df.id!!,
+				originalPath = df.originalPath,
+				deletedAt = df.deletedAt,
+				version = df.version,
+				deletedByUserId = df.deletedByUser.id!!,
+				deletedByUserEmail = df.deletedByUser.email
+			)
+		}
+	}
+	
+	// ================== ПОЛУЧЕНИЕ ВЕРСИЙ УДАЛЁННЫХ ФАЙЛОВ И ПАПОК ==================
+	
+	/**
+	 * Возвращает список версий удалённого файла, доступного текущему пользователю.
+	 * Администратор видит все, обычный пользователь — только свои или из своих групп.
+	 */
+	fun getDeletedFileVersionsForUser(currentUser: CurrentUser, parentPath: String, fileName: String): List<DeletedFileInfo> {
+		val fullPath = Path(parentPath, fileName).toString()
+		if (fileEntityRepository.findByPath(fullPath) == null)
+			throw EntityNotFoundException("Файл '$fullPath' не найден")
+		val permissions = checkAccessForFile(currentUser, parentPath, fileName)
+		if ((permissions and AccessType.READ.value) == 0)
+			throw SecurityException("Нет прав на чтение файла: $fullPath")
+		
+		
+		val versions = deletedFileRepository.findByOriginalPath(fullPath)
+		if (versions.isEmpty())
+			throw EntityNotFoundException("Файл '$fullPath' не был удалён")
+		return versions.filter { df ->
+			currentUser.isAdmin || df.deletedByUser.id == currentUser.id ||
+					(isGroupPath(df.originalPath) && groupService.hasUserAccessToGroup(currentUser.id!!, extractGroupFromPath(df.originalPath)!!))
+		}.map { df ->
+			DeletedFileInfo(
+				id = df.id!!,
+				originalPath = df.originalPath,
+				deletedAt = df.deletedAt,
+				version = df.version,
+				deletedByUserId = df.deletedByUser.id!!,
+				deletedByUserEmail = df.deletedByUser.email
+			)
+		}
+	}
+	
+	/** Возвращает список версий удалённой папки, доступных текущему пользователю. */
+	fun getDeletedFolderVersionsForUser(currentUser: CurrentUser, path: String): List<DeletedFolderInfo> {
+		if (folderEntityRepository.findByPath(path) == null)
+			throw EntityNotFoundException("Папка '$path' не найдена")
+		if ((checkAccessForDirectory(currentUser, path) and AccessType.READ.value) == 0)
+			throw SecurityException("Нет прав на чтение папки: $path")
+		
+		
+		val versions = deletedFolderRepository.findByOriginalPath(path)
+		if (versions.isEmpty())
+			throw EntityNotFoundException("Папка '$path' не была удалена")
+		return versions.filter { df ->
 			currentUser.isAdmin || df.deletedByUser.id == currentUser.id ||
 					(isGroupPath(df.originalPath) && groupService.hasUserAccessToGroup(currentUser.id!!, extractGroupFromPath(df.originalPath)!!))
 		}.map { df ->
