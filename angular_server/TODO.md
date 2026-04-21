@@ -10,6 +10,10 @@
 - [✅] **Global notification system**: Implement toast notifications (e.g., using a library or custom service) to inform users about operation results (success, error, info).
 - [✅] **Loading state management**: Add loading indicators for all async actions (button spinners, disabling inputs) – fully implemented.
 - [✅] **Accessibility improvements**: Add ARIA labels, ensure keyboard navigation works (focus trapping in modals, etc.).
+- [❌] **New pages**:
+  - **Trash / Deleted Items page** – list deleted files and folders, allow restore and permanent delete.
+  - **Work History page** – display operations history with filters.
+  - **Permissions Management page** – UI for setting/revoking folder/file permissions.
 
 ## Testing
 - [✅] **Unit tests**: Write tests for critical services (`AuthService`, `GroupService`, `UserService`, `FileService`).
@@ -19,6 +23,7 @@
 - [❌] **Move tokens to httpOnly cookies**: Replace `localStorage` with secure cookies to mitigate XSS risks. *(Требует изменений на бэке, фронтенд готов)*
 - [✅] **Lazy loading**: Implement lazy loading for feature modules to reduce initial bundle size.
 - [❌] **Virtual scrolling**: For large file lists, consider virtual scrolling to improve performance.
+- [❌] **Replace numeric IDs with path-based identifiers for trash operations**: Modify `restoreFile`, `restoreFolder`, `permanentDeleteFile`, `permanentDeleteFolder` methods to use `originalPath` and `version` instead of `deletedId`. Update backend endpoints accordingly to avoid predictable numeric IDs.
 
 ## UI
 - [✅] **Fix spinner dots animation**: Use CSS pseudo-elements or Angular dynamic text for the animated dots.
