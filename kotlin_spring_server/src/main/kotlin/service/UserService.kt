@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import org.zak.dto.CreateUserRequest
 import org.zak.dto.CurrentUser
 import org.zak.dto.LoginBySNPRequest
@@ -79,6 +80,7 @@ class UserService(
 			administratorService.isAdmin(currentUser.id)
 	}
 	
+	@Transactional
 	fun validatePasswordChange(
 		currentUser: CurrentUser,
 		targetUserId: Int,
@@ -133,6 +135,7 @@ class UserService(
 		return ValidationResult(valid = true, message = "OK")
 	}
 	
+	@Transactional
 	fun createUser(request: CreateUserRequest): User{
 		if (userRepository.existsByEmail(request.email))
 			throw IllegalArgumentException("Пользователь с email ${request.email} уже существует")
@@ -153,6 +156,7 @@ class UserService(
 	
 	// Метод для обновления профиля
 	
+	@Transactional
 	fun updateUser(userId: Int, request: UpdateUserRequest): User {
 		val user = userRepository.findById(userId)
 			.orElseThrow { EntityNotFoundException("Пользователь не найден") }
@@ -172,17 +176,20 @@ class UserService(
 		return savedUser
 	}
 	
+	@Transactional
 	fun deleteUser(user: User){
 		userRepository.delete(user)
 	}
 	
 	// Методы для изменения пароля
+	@Transactional
 	fun updatePassword(currentUser: CurrentUser, userId: Int, request: UpdatePasswordRequest) {
 		val editUser = userRepository.findById(userId)
 			.orElseThrow { Exception("Пользователь не найден") }
 		
 		return updatePassword(currentUser, editUser, request)
 	}
+	@Transactional
 	fun updatePassword(currentUser: CurrentUser, editUser: User, request: UpdatePasswordRequest){
 		// Проверка старого пароля
 		if (!administratorService.isAdmin(currentUser.id!!)){

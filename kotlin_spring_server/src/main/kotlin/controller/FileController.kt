@@ -1,10 +1,8 @@
 package org.zak.controller
 
-
-import jakarta.servlet.http.HttpServletResponse
+import jakarta.persistence.EntityNotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.core.io.FileSystemResource
-import org.springframework.core.io.InputStreamResource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -12,22 +10,28 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
-import org.zak.dto.file.CreateFolderRequest
-import org.zak.dto.file.FileSystemResponse
-import org.zak.dto.file.FileUploadResponse
-import org.zak.dto.file.DeleteRequest
-import org.zak.service.FileSystemService
-import org.zak.service.UserService
-import java.io.FileInputStream
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-import org.springframework.web.bind.annotation.*
 import org.zak.dto.CurrentUser
 import org.zak.service.AdministratorService
+import org.zak.service.FileSystemService
+import org.zak.service.UserService
 import org.zak.util.JwtUtil
 import java.io.File
 
+/**
+ * Контроллер для работы с файловой системой через REST API.
+ * Все эндпоинты требуют аутентификации (JWT-токен в заголовке Authorization).
+ *
+ * Основные возможности:
+ * - Просмотр содержимого директорий с учётом прав.
+ * - Загрузка и скачивание файлов.
+ * - Создание папок.
+ * - Удаление в корзину с версионированием.
+ * - Восстановление из корзины.
+ * - Окончательное удаление (только для администратора).
+ * - Управление правами доступа к папкам и файлам.
+ * - Просмотр истории операций.
+ * - Просмотр списка удалённых файлов и папок.
+ */
 @RestController
 @RequestMapping("/api/files")
 class FileController(
@@ -39,6 +43,17 @@ class FileController(
 	
 	private val logger = LoggerFactory.getLogger(FileController::class.java)
 	
+	// ================== ОСНОВНЫЕ ОПЕРАЦИИ С ФАЙЛАМИ ==================
+	
+	/**
+	 * Получить список файлов и папок в заданной директории.
+	 *
+	 * @param path относительный путь к директории (по умолчанию "" – корень).
+	 * @param authHeader заголовок Authorization с Bearer токеном.
+	 * @return JSON с полями `files` (массив FileInfo) и `folders` (массив FolderInfo).
+	 * @throws 400 Bad Request – если директория не существует.
+	 * @throws 403 Forbidden – нет прав на чтение.
+	 */
 	@GetMapping("/list")
 	@PreAuthorize("isAuthenticated()")
 	fun listDirectory(
@@ -50,11 +65,9 @@ class FileController(
 			val (files, folders) = fileSystemService.listDirectoryByPermissions(currentUser, path)
 			ResponseEntity.ok(mapOf("files" to files, "folders" to folders))
 		} catch (e: IllegalArgumentException) {
-			// Директория не существует
 			ResponseEntity.status(HttpStatus.BAD_REQUEST)
 				.body(mapOf("error" to (e.message ?: "Директория не найдена")))
 		} catch (e: SecurityException) {
-			// Нет прав доступа
 			ResponseEntity.status(HttpStatus.FORBIDDEN)
 				.body(mapOf("error" to (e.message ?: "У вас нет прав доступа к этой директории")))
 		} catch (e: Exception) {
@@ -64,11 +77,17 @@ class FileController(
 		}
 	}
 	
+	/**
+	 * Проверить существование файла или папки по указанному пути.
+	 *
+	 * @param path путь для проверки.
+	 * @return `{ "exists": true/false }`.
+	 */
 	@GetMapping("/exists")
 	fun existsFileOrDirectory(
 		@RequestParam path: String = "",
 		@RequestHeader("Authorization") authHeader: String
-	) : ResponseEntity<Any> {
+	): ResponseEntity<Any> {
 		try {
 			val currentUser = getCurrentUserFromJwt(authHeader)
 			val exists = fileSystemService.pathExistsByPermissions(currentUser, path)
@@ -82,6 +101,15 @@ class FileController(
 		}
 	}
 	
+	/**
+	 * Загрузить файл в указанную директорию.
+	 *
+	 * @param path целевая директория.
+	 * @param file MultipartFile – загружаемый файл.
+	 * @return JSON с информацией о загруженном файле (FileInfo).
+	 * @throws 400 Bad Request – ошибка валидации (например, файл уже существует).
+	 * @throws 403 Forbidden – нет прав на создание.
+	 */
 	@PostMapping("/upload")
 	fun uploadFile(
 		@RequestParam path: String = "",
@@ -101,10 +129,124 @@ class FileController(
 		} catch (e: Exception) {
 			logger.error("Ошибка при загрузке файла", e)
 			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-				.body(mapOf("error" to "Ошибка при загрузке файла"))
+				.body(mapOf("error" to (e.message ?: "Ошибка при загрузке файла")))
 		}
 	}
 	
+	/**
+	 * Скачать файл по указанному пути.
+	 *
+	 * @param path путь к файлу.
+	 * @return поток файла с соответствующим Content-Type и заголовком Content-Disposition.
+	 * @throws 404 Not Found – файл не найден.
+	 * @throws 403 Forbidden – нет прав на чтение.
+	 */
+	@GetMapping("/download")
+	fun downloadFile(
+		@RequestParam path: String,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Any> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		return try {
+			val (file, contentType) = fileSystemService.downloadFileByPermissions(currentUser, path)
+			
+			val resource = FileSystemResource(file)
+			
+			ResponseEntity.ok()
+				.contentType(MediaType.parseMediaType(contentType))
+				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${file.name}\"")
+				.body(resource)
+		} catch (e: IllegalArgumentException) {
+			ResponseEntity.status(HttpStatus.NOT_FOUND)
+				.body(mapOf("error" to (e.message ?: "Файл не найден")))
+		} catch (e: SecurityException) {
+			ResponseEntity.status(HttpStatus.FORBIDDEN)
+				.body(mapOf("error" to (e.message ?: "Нет прав доступа для скачивания файла")))
+		} catch (e: Exception) {
+			logger.error("Ошибка при скачивании файла", e)
+			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(mapOf("error" to "Ошибка при скачивании файла"))
+		}
+	}
+	
+	/**
+	 * Создать новую папку.
+	 *
+	 * @param request тело запроса с полями `path` (родительская директория) и `folderName` (имя папки).
+	 * @return JSON с информацией о созданной папке (FolderInfo).
+	 * @throws 400 Bad Request – ошибка валидации (например, папка уже существует).
+	 * @throws 403 Forbidden – нет прав на создание.
+	 */
+	@PostMapping("/create-folder")
+	fun createFolder(
+		@RequestBody request: Map<String, String>,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Any> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		val path = request["path"] ?: ""
+		val folderName = request["folderName"] ?: ""
+		
+		return try {
+			val folderInfo = fileSystemService.createFolderByPermissions(currentUser, path, folderName)
+			ResponseEntity.ok(folderInfo)
+		} catch (e: IllegalArgumentException) {
+			ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				.body(mapOf("error" to (e.message ?: "Ошибка при создании директории")))
+		} catch (e: SecurityException) {
+			ResponseEntity.status(HttpStatus.FORBIDDEN)
+				.body(mapOf("error" to (e.message ?: "Нет прав доступа для создания директории")))
+		} catch (e: Exception) {
+			logger.error("Ошибка при создании директории", e)
+			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(mapOf("error" to (e.message ?: "Ошибка при создании директории")))
+		}
+	}
+	
+	/**
+	 * Удалить файл или папку (переместить в корзину).
+	 *
+	 * @param path путь к удаляемому элементу.
+	 * @return `{ "message": "Удалено успешно" }`.
+	 * @throws 400 Bad Request – элемент не найден.
+	 * @throws 403 Forbidden – нет прав на удаление.
+	 */
+	@DeleteMapping("/delete")
+	fun deleteFile(
+		@RequestParam path: String,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Any> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		
+		return try {
+			val success = fileSystemService.deleteByPermissionsAndSaveCopy(currentUser, path)
+			if (success) {
+				ResponseEntity.ok(mapOf("message" to "Удалено успешно"))
+			} else {
+				ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(mapOf("error" to "Не удалось удалить файл/директорию"))
+			}
+		} catch (e: IllegalArgumentException) {
+			ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				.body(mapOf("error" to (e.message ?: "Файл или директория не найдены")))
+		} catch (e: SecurityException) {
+			ResponseEntity.status(HttpStatus.FORBIDDEN)
+				.body(mapOf("error" to (e.message ?: "Нет прав доступа для удаления")))
+		} catch (e: Exception) {
+			logger.error("Ошибка при удалении", e)
+			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(mapOf("error" to (e.message ?: "Ошибка при удалении")))
+		}
+	}
+	
+	/**
+	 * Поиск файлов и папок по подстроке в имени.
+	 *
+	 * @param q строка поиска (обязательно).
+	 * @param path базовая директория для поиска (по умолчанию корень).
+	 * @return JSON с полями `files`, `folders`, `query`, `path`, `totalResults`.
+	 * @throws 400 Bad Request – пустой поисковый запрос.
+	 * @throws 403 Forbidden – нет прав на чтение в базовой директории.
+	 */
 	@GetMapping("/search")
 	fun searchFilesAndFolders(
 		@RequestParam q: String,
@@ -135,91 +277,271 @@ class FileController(
 		} catch (e: Exception) {
 			logger.error("Ошибка при поиске файлов", e)
 			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-				.body(mapOf("error" to "Внутренняя ошибка сервера при поиске"))
+				.body(mapOf("error" to (e.message ?: "Внутренняя ошибка сервера при поиске")))
 		}
 	}
 	
-	@PostMapping("/create-folder")
-	fun createFolder(
-		@RequestBody request: Map<String, String>,
-		@RequestHeader("Authorization") authHeader: String
-	): ResponseEntity<Any> {
+	// ================== КОРЗИНА И ВОССТАНОВЛЕНИЕ ==================
+	
+	/**
+	 * Получить список удалённых файлов, доступных текущему пользователю.
+	 *
+	 * @return `{ "deletedFiles": [ DeletedFileInfo, ... ] }`.
+	 */
+	@GetMapping("/deleted/files")
+	@PreAuthorize("isAuthenticated()")
+	fun getDeletedFiles(@RequestHeader("Authorization") authHeader: String): ResponseEntity<Any> {
 		val currentUser = getCurrentUserFromJwt(authHeader)
-		val path = request["path"] ?: ""
-		val folderName = request["folderName"] ?: ""
-		
-		return try {
-			val folderInfo = fileSystemService.createFolderByPermissions(currentUser, path, folderName)
-			ResponseEntity.ok(folderInfo)
-		} catch (e: IllegalArgumentException) {
-			ResponseEntity.status(HttpStatus.BAD_REQUEST)
-				.body(mapOf("error" to (e.message ?: "Ошибка при создании директории")))
-		} catch (e: SecurityException) {
-			ResponseEntity.status(HttpStatus.FORBIDDEN)
-				.body(mapOf("error" to (e.message ?: "Нет прав доступа для создания директории")))
-		} catch (e: Exception) {
-			logger.error("Ошибка при создании директории", e)
-			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-				.body(mapOf("error" to "Ошибка при создании директории"))
-		}
+		val deleted = fileSystemService.getDeletedFilesForUser(currentUser)
+		return ResponseEntity.ok(mapOf("deletedFiles" to deleted))
 	}
 	
-	@DeleteMapping("/delete")
-	fun deleteFile(
+	/**
+	 * Получить список удалённых папок, доступных текущему пользователю.
+	 *
+	 * @return `{ "deletedFolders": [ DeletedFolderInfo, ... ] }`.
+	 */
+	@GetMapping("/deleted/folders")
+	@PreAuthorize("isAuthenticated()")
+	fun getDeletedFolders(@RequestHeader("Authorization") authHeader: String): ResponseEntity<Any> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		val deleted = fileSystemService.getDeletedFoldersForUser(currentUser)
+		return ResponseEntity.ok(mapOf("deletedFolders" to deleted))
+	}
+	
+	/**
+	 * Получить список версий удалённого файла, доступного текущему пользователю.
+	 *
+	 * @return `{ "versions": [ DeletedFileInfo, ... ] }`.
+	 */
+	@GetMapping("/api/files/deleted/file/versions/")
+	@PreAuthorize("isAuthenticated()")
+	fun getDeletedFileVersions(
+		@RequestHeader("Authorization") authHeader: String,
 		@RequestParam path: String,
-		@RequestHeader("Authorization") authHeader: String
+		@RequestParam filename: String
 	): ResponseEntity<Any> {
-		val currentUser = getCurrentUserFromJwt(authHeader)
-		
-		return try {
-			val success = fileSystemService.deleteByPermissionsAndSaveCopy(currentUser, path)
-			if (success) {
-				ResponseEntity.ok(mapOf("message" to "Удалено успешно"))
-			} else {
-				ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body(mapOf("error" to "Не удалось удалить файл/директорию"))
-			}
-		} catch (e: IllegalArgumentException) {
-			ResponseEntity.status(HttpStatus.BAD_REQUEST)
-				.body(mapOf("error" to (e.message ?: "Файл или директория не найдены")))
-		} catch (e: SecurityException) {
-			ResponseEntity.status(HttpStatus.FORBIDDEN)
-				.body(mapOf("error" to (e.message ?: "Нет прав доступа для удаления")))
+		try {
+			val currentUser = getCurrentUserFromJwt(authHeader)
+			val versions = fileSystemService.getDeletedFileVersionsForUser(currentUser, path, filename)
+			return ResponseEntity.ok(mapOf("versions" to versions))
 		} catch (e: Exception) {
-			logger.error("Ошибка при удалении", e)
-			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-				.body(mapOf("error" to "Ошибка при удалении"))
+			return handleException(e)
 		}
 	}
 	
-	@GetMapping("/download")
-	fun downloadFile(
-		@RequestParam path: String,
-		@RequestHeader("Authorization") authHeader: String
+	/**
+	 * Получить список версий удалённой папки, доступной текущему пользователю.
+	 *
+	 * @return `{ 'versions": [ DeletedFolderInfo, ... ] }`.
+	 */
+	@GetMapping("/api/files/deleted/folders/versions/")
+	@PreAuthorize("isAuthenticated()")
+	fun getDeletedFolderVersions(
+		@RequestHeader("Authorization") authHeader: String,
+		@RequestParam path: String
 	): ResponseEntity<Any> {
-		val currentUser = getCurrentUserFromJwt(authHeader)
-		return try {
-			val (file, contentType) = fileSystemService.downloadFileByPermissions(currentUser, path)
-			
-			val resource = FileSystemResource(file)
-			
-			ResponseEntity.ok()
-				.contentType(MediaType.parseMediaType(contentType))
-				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${file.name}\"")
-				.body(resource)
-		} catch (e: IllegalArgumentException) {
-			ResponseEntity.status(HttpStatus.NOT_FOUND)
-				.body(mapOf("error" to (e.message ?: "Файл не найден")))
-		} catch (e: SecurityException) {
-			ResponseEntity.status(HttpStatus.FORBIDDEN)
-				.body(mapOf("error" to (e.message ?: "Нет прав доступа для скачивания файла")))
+		try {
+			val currentUser = getCurrentUserFromJwt(authHeader)
+			val versions = fileSystemService.getDeletedFolderVersionsForUser(currentUser, path)
+			return ResponseEntity.ok(mapOf("versions" to versions))
 		} catch (e: Exception) {
-			logger.error("Ошибка при скачивании файла", e)
-			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-				.body(mapOf("error" to "Ошибка при скачивании файла"))
+			return handleException(e)
 		}
 	}
 	
+	/**
+	 * Восстановить файл из корзины по идентификатору удалённой записи.
+	 *
+	 * @param id идентификатор удалённого файла.
+	 * @return `{ "success": true, "message": "Файл восстановлен" }`.
+	 * @throws 404 Not Found – запись не найдена.
+	 * @throws 403 Forbidden – нет прав на восстановление.
+	 * @throws 409 Conflict – файл уже восстановлен или оригинальный путь занят.
+	 */
+	@PostMapping("/restore/file/{id}")
+	@PreAuthorize("isAuthenticated()")
+	fun restoreFile(@PathVariable id: Long, @RequestHeader("Authorization") authHeader: String): ResponseEntity<Any> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		return try {
+			val success = fileSystemService.restoreFile(id, currentUser)
+			ResponseEntity.ok(mapOf("success" to success, "message" to "Файл восстановлен"))
+		} catch (e: Exception) {
+			handleException(e)
+		}
+	}
+	
+	/**
+	 * Восстановить папку из корзины по идентификатору удалённой записи.
+	 *
+	 * @param id идентификатор удалённой папки.
+	 * @return `{ "success": true, "message": "Папка восстановлена" }`.
+	 */
+	@PostMapping("/restore/folder/{id}")
+	@PreAuthorize("isAuthenticated()")
+	fun restoreFolder(@PathVariable id: Long, @RequestHeader("Authorization") authHeader: String): ResponseEntity<Any> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		return try {
+			val success = fileSystemService.restoreFolder(id, currentUser)
+			ResponseEntity.ok(mapOf("success" to success, "message" to "Папка восстановлена"))
+		} catch (e: Exception) {
+			handleException(e)
+		}
+	}
+	
+	/**
+	 * Окончательно удалить файл из корзины (только для администратора).
+	 *
+	 * @param id идентификатор удалённого файла.
+	 * @return `{ "success": true, "message": "Файл окончательно удалён" }`.
+	 * @throws 403 Forbidden – не администратор.
+	 * @throws 404 Not Found – запись не найдена.
+	 */
+	@DeleteMapping("/permanent/file/{id}")
+	@PreAuthorize("isAuthenticated()")
+	fun permanentDeleteFile(@PathVariable id: Long, @RequestHeader("Authorization") authHeader: String): ResponseEntity<Any> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		return try {
+			fileSystemService.permanentDeleteFile(id, currentUser)
+			ResponseEntity.ok(mapOf("success" to true, "message" to "Файл окончательно удалён"))
+		} catch (e: Exception) {
+			handleException(e)
+		}
+	}
+	
+	/**
+	 * Окончательно удалить папку из корзины (только для администратора).
+	 *
+	 * @param id идентификатор удалённой папки.
+	 * @return `{ "success": true, "message": "Папка окончательно удалена" }`.
+	 */
+	@DeleteMapping("/permanent/folder/{id}")
+	@PreAuthorize("isAuthenticated()")
+	fun permanentDeleteFolder(@PathVariable id: Long, @RequestHeader("Authorization") authHeader: String): ResponseEntity<Any> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		return try {
+			fileSystemService.permanentDeleteFolder(id, currentUser)
+			ResponseEntity.ok(mapOf("success" to true, "message" to "Папка окончательно удалена"))
+		} catch (e: Exception) {
+			handleException(e)
+		}
+	}
+	
+	// ================== УПРАВЛЕНИЕ ПРАВАМИ ==================
+	
+	/**
+	 * Установить или обновить права доступа на папку.
+	 *
+	 * @param request объект SetPermissionRequest с полями path, userId, groupId, mode.
+	 * @return `{ "success": true }`.
+	 * @throws 400 Bad Request – неверные параметры (например, указаны оба userId и groupId).
+	 * @throws 403 Forbidden – нет прав на изменение разрешений.
+	 * @throws 404 Not Found – папка не найдена.
+	 */
+	@PutMapping("/permissions/folder")
+	@PreAuthorize("isAuthenticated()")
+	fun setFolderPermission(@RequestBody request: SetPermissionRequest, @RequestHeader("Authorization") authHeader: String): ResponseEntity<Any> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		return try {
+			fileSystemService.setFolderPermission(request.path, request.userId, request.groupId, request.mode, currentUser)
+			ResponseEntity.ok(mapOf("success" to true))
+		} catch (e: Exception) {
+			handleException(e)
+		}
+	}
+	
+	/**
+	 * Удалить явное разрешение на папку.
+	 *
+	 * @param id идентификатор разрешения (FolderPermission).
+	 * @return `{ "success": true }`.
+	 */
+	@DeleteMapping("/permissions/folder/{id}")
+	@PreAuthorize("isAuthenticated()")
+	fun deleteFolderPermission(@PathVariable id: Long, @RequestHeader("Authorization") authHeader: String): ResponseEntity<Any> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		return try {
+			fileSystemService.deleteFolderPermission(id, currentUser)
+			ResponseEntity.ok(mapOf("success" to true))
+		} catch (e: Exception) {
+			handleException(e)
+		}
+	}
+	
+	/**
+	 * Установить или обновить права доступа на файл.
+	 *
+	 * @param request объект SetPermissionRequest с полями path, userId, groupId, mode.
+	 * @return `{ "success": true }`.
+	 */
+	@PutMapping("/permissions/file")
+	@PreAuthorize("isAuthenticated()")
+	fun setFilePermission(@RequestBody request: SetPermissionRequest, @RequestHeader("Authorization") authHeader: String): ResponseEntity<Any> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		return try {
+			fileSystemService.setFilePermission(request.path, request.userId, request.groupId, request.mode, currentUser)
+			ResponseEntity.ok(mapOf("success" to true))
+		} catch (e: Exception) {
+			handleException(e)
+		}
+	}
+	
+	/**
+	 * Удалить явное разрешение на файл.
+	 *
+	 * @param id идентификатор разрешения (FilePermission).
+	 * @return `{ "success": true }`.
+	 */
+	@DeleteMapping("/permissions/file/{id}")
+	@PreAuthorize("isAuthenticated()")
+	fun deleteFilePermission(@PathVariable id: Long, @RequestHeader("Authorization") authHeader: String): ResponseEntity<Any> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		return try {
+			fileSystemService.deleteFilePermission(id, currentUser)
+			ResponseEntity.ok(mapOf("success" to true))
+		} catch (e: Exception) {
+			handleException(e)
+		}
+	}
+	
+	// ================== ИСТОРИЯ ==================
+	
+	/**
+	 * Получить историю операций с возможностью фильтрации.
+	 *
+	 * @param userId (опционально) фильтр по ID пользователя.
+	 * @param pathPrefix (опционально) фильтр по префиксу пути.
+	 * @param isFile (опционально) фильтр по типу: true – файлы, false – папки.
+	 * @return `{ "history": [ WorkHistoryEntry, ... ] }`.
+	 * @throws 403 Forbidden – попытка просмотра чужой истории неадминистратором.
+	 */
+	@GetMapping("/history")
+	@PreAuthorize("isAuthenticated()")
+	fun getHistory(
+		@RequestParam(required = false) userId: Int?,
+		@RequestParam(required = false) pathPrefix: String?,
+		@RequestParam(required = false) isFile: Boolean?,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Any> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		if (!currentUser.isAdmin && userId != null && userId != currentUser.id) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(mapOf("error" to "Нет прав на просмотр чужой истории"))
+		}
+		val filter = FileSystemService.HistoryFilter(
+			userId = userId ?: if (!currentUser.isAdmin) currentUser.id else null,
+			pathPrefix = pathPrefix,
+			isFile = isFile
+		)
+		val history = fileSystemService.getWorkHistory(filter)
+		return ResponseEntity.ok(mapOf("history" to history))
+	}
+	
+	// ================== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ==================
+	
+	/**
+	 * Глобальный обработчик исключений для данного контроллера.
+	 * Преобразует исключения в соответствующие HTTP-статусы и сообщения.
+	 */
 	@ExceptionHandler(Exception::class)
 	fun handleGlobalException(ex: Exception): ResponseEntity<Map<String, String>> {
 		logger.error("Необработанная ошибка", ex)
@@ -240,10 +562,21 @@ class FileController(
 		}
 	}
 	
+	/** Обрабатывает исключения, специфичные для операций с файлами. */
+	private fun handleException(e: Exception): ResponseEntity<Any> {
+		return when (e) {
+			is IllegalArgumentException -> ResponseEntity.badRequest().body(mapOf("error" to e.message))
+			is SecurityException -> ResponseEntity.status(HttpStatus.FORBIDDEN).body(mapOf("error" to e.message))
+			is EntityNotFoundException -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf("error" to e.message))
+			is IllegalStateException -> ResponseEntity.status(HttpStatus.CONFLICT).body(mapOf("error" to e.message))
+			else -> {
+				logger.error("Внутренняя ошибка", e)
+				ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf("error" to "Внутренняя ошибка сервера"))
+			}
+		}
+	}
 	
-	
-	
-	
+	/** Извлекает JWT-токен из заголовка Authorization. */
 	private fun extractTokenFromHeader(authHeader: String): String {
 		return if (authHeader.startsWith("Bearer ")) {
 			authHeader.substring(7)
@@ -251,6 +584,8 @@ class FileController(
 			throw IllegalArgumentException("Неверный формат заголовка Authorization")
 		}
 	}
+	
+	/** Получает объект CurrentUser из JWT-токена. */
 	private fun getCurrentUserFromJwt(authHeader: String): CurrentUser {
 		val jwtToken = extractTokenFromHeader(authHeader)
 		
@@ -272,5 +607,14 @@ class FileController(
 			userDetails = user
 		)
 	}
-	
 }
+
+/**
+ * DTO для запроса на установку прав доступа.
+ */
+data class SetPermissionRequest(
+	val path: String,
+	val userId: Int?,
+	val groupId: Int?,
+	val mode: Int
+)

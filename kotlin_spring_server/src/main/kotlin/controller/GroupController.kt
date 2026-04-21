@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import jakarta.persistence.EntityNotFoundException
 import org.springframework.web.bind.annotation.*
+import org.zak.dto.GroupBasicInfoDto
 import org.zak.service.FileSystemService
 
 /**
@@ -51,6 +52,29 @@ class GroupController(
 	}
 	
 	/**
+	 * Получить список групп пользователя (только основные данные без участников)
+	 */
+	@GetMapping("/for-user/{email}")
+	@PreAuthorize("isAuthenticated()")
+	fun getGroupsForUser(
+		@RequestHeader("Authorization") authHeader: String,
+		@PathVariable email: String,
+	): ResponseEntity<Map<String, Any>> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		if (!currentUser.isAdmin)
+			return errorResponse(HttpStatus.FORBIDDEN, "Требуются права администратора")
+		
+		val user = userService.getUserByEmail(email) ?: return errorResponse(
+			HttpStatus.NOT_FOUND,
+			"Пользователь с почтой \"$email\" не найден "
+		)
+		
+		val groups = groupService.getUserGroups(user.id!!)
+		
+		return successResponse(mapOf("groups" to groups))
+	}
+	
+	/**
 	 * Получить все группы (только для администраторов, без участников)
 	 */
 	@GetMapping
@@ -58,9 +82,8 @@ class GroupController(
 	fun getAllGroups(@RequestHeader("Authorization") authHeader: String): ResponseEntity<Map<String, Any>> {
 		val currentUser = getCurrentUserFromJwt(authHeader)
 		
-		if (!currentUser.isAdmin) {
+		if (!currentUser.isAdmin)
 			return errorResponse(HttpStatus.FORBIDDEN, "Требуются права администратора")
-		}
 		
 		val groups = groupService.getAllGroupsForAdmin()
 		return successResponse(mapOf("groups" to groups))
@@ -112,8 +135,13 @@ class GroupController(
 				?: throw EntityNotFoundException()
 			
 			val group = groupService.create(request.name, userCreator.id!!)
+			val resultForClient = GroupBasicInfoDto(
+				name = group.name,
+				membersCount = group.members.size,
+				creatorEmail = group.creator.email
+			)
 			fileSystemService.createGroupFolder(group.name)
-			ResponseEntity.status(HttpStatus.CREATED).body(mapOf("group" to group))
+			ResponseEntity.status(HttpStatus.CREATED).body(mapOf("group" to resultForClient))
 		} catch (e: IllegalArgumentException) {
 			errorResponse(HttpStatus.BAD_REQUEST, e.message ?: "Ошибка создания группы")
 		} catch (e: EntityNotFoundException) {

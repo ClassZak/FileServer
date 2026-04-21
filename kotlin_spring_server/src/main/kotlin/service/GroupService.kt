@@ -207,6 +207,7 @@ class GroupService(
 	 * Чтение группы (базовый метод)
 	 */
 	fun read(name: String): Group? = groupRepository.findByName(name)
+	fun read(id: Int): Group? = groupRepository.findById(id).orElse(null)
 	
 	/**
 	 * Создание группы
