@@ -342,11 +342,10 @@ export class GroupService {
 			return {success: true};
 		} catch (error) {
 			if (error instanceof HttpErrorResponse) {
-				if (error.status === 403 || error.status === 400)
-					return {
-						success: false,
-						error: error.error.error || error.message
-					};
+				return {
+					success: false,
+					error: error.error.error || error.message
+				};
 			}
 
 			return {
@@ -380,11 +379,10 @@ export class GroupService {
 			};
 		} catch (error) {
 			if (error instanceof HttpErrorResponse) {
-				if (error.status === 404 || error.status === 403 || error.status === 400)
-					return {
-						success: false,
-						error: error.error.error || error.message
-					};
+				return {
+					success: false,
+					error: error.error.error || error.message
+				};
 			}
 
 			return {
@@ -416,11 +414,10 @@ export class GroupService {
 			};
 		} catch (error) {
 			if (error instanceof HttpErrorResponse) {
-				if (error.status === 404 || error.status === 403 || error.status === 400)
-					return {
-						success: false,
-						error: error.error.error || error.message
-					};
+				return {
+					success: false,
+					error: error.error.error || error.message
+				};
 			}
 
 			return {
@@ -454,11 +451,10 @@ export class GroupService {
 			};
 		} catch (error) {
 			if (error instanceof HttpErrorResponse) {
-				if (error.status === 404 || error.status === 403 || error.status === 400)
-					return {
-						success: false,
-						error: error.error.error || error.message
-					};
+				return {
+					success: false,
+					error: error.error.error || error.message
+				};
 			}
 
 			return {
@@ -491,11 +487,10 @@ export class GroupService {
 			};
 		} catch (error) {
 			if (error instanceof HttpErrorResponse) {
-				if (error.status === 404 || error.status === 403 || error.status === 400)
-					return {
-						success: false,
-						error: error.error.error || error.message
-					};
+				return {
+					success: false,
+					error: error.error.error || error.message
+				};
 			}
 
 			return {
