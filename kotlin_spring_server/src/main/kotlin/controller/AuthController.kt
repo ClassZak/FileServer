@@ -158,8 +158,8 @@ class AuthController(
 	}
 	
 	@PostMapping("/logout")
-	fun logout(): ResponseEntity<Map<String, String>> {
-		return ResponseEntity.ok(mapOf("message" to "Logged out successfully"))
+	fun logout(): ResponseEntity<Map<String, Boolean>> {
+		return ResponseEntity.ok(mapOf("success" to true))
 	}
 	
 	@GetMapping("/check-auth")
