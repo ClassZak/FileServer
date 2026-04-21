@@ -234,7 +234,7 @@ export class FileService {
 				if (error.error?.message) errorMessage = error.error.message;
 				if (error.message) errorMessage = error.message;
 				if (error.status === 403) errorMessage = 'У вас нет прав на загрузку файлов в эту директорию.';
-				if (error.status === 400) errorMessage = error?.error || 'неизвестная ошибка';
+				if (error.status === 400) errorMessage = error?.error?.error || 'неизвестная ошибка';
 			}
 			errorMessage = !errorMessage ? 'Ошибка отправки файла.' : `Ошибка отправки файла: ${errorMessage}`;
 			return {

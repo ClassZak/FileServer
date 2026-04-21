@@ -1,10 +1,10 @@
-import { 
-	Component, 
-	Input, 
-	Output, 
-	EventEmitter, 
-	OnDestroy, 
-	ElementRef, 
+import {
+	Component,
+	Input,
+	Output,
+	EventEmitter,
+	OnDestroy,
+	ElementRef,
 	ViewChild,
 	OnChanges,
 	SimpleChanges
@@ -25,6 +25,7 @@ export class ModalComponent implements OnDestroy, OnChanges {
 	@ViewChild('modalContent') modalContent!: ElementRef<HTMLDivElement>;
 
 	private escapeListener: ((event: KeyboardEvent) => void) | null = null;
+	private previouslyFocusedElement: HTMLElement | null = null;
 
 	ngOnChanges(changes: SimpleChanges): void {
 		if (changes['isOpen']) {
@@ -40,9 +41,11 @@ export class ModalComponent implements OnDestroy, OnChanges {
 		if (this.isOpen) {
 			this.addBodyScrollLock();
 			this.addEscapeListener();
+			this.trapFocus();
 		} else {
 			this.removeBodyScrollLock();
 			this.removeEscapeListener();
+			this.restoreFocus();
 		}
 	}
 
@@ -70,14 +73,29 @@ export class ModalComponent implements OnDestroy, OnChanges {
 		}
 	}
 
+	private trapFocus(): void {
+		this.previouslyFocusedElement = document.activeElement as HTMLElement;
+		setTimeout(() => {
+			this.modalContent?.nativeElement.focus();
+		});
+	}
+
+	private restoreFocus(): void {
+		if (this.previouslyFocusedElement) {
+			this.previouslyFocusedElement.focus();
+			this.previouslyFocusedElement = null;
+		}
+	}
+
 	closeModal(): void {
 		this.onClose.emit();
 	}
 
 	handleOverlayClick(event: MouseEvent): void {
-		/*if (event.target === event.currentTarget) {
-			this.closeModal();
-		}*/
+		// Optional: close on overlay click
+		// if (event.target === event.currentTarget) {
+		// 	this.closeModal();
+		// }
 	}
 
 	private cleanup(): void {

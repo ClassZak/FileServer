@@ -103,12 +103,15 @@
 		(onConfirm)="handleConfirmRemoveUserFromGroupModalComponent()"
 	>
 	</app-remove-user-from-group-modal>
-	<app-update-group-modal
+	<!-- adminGroup must be valid every time -->
+	@if (adminGroup) {
+		<app-update-group-modal
 		[isOpen]="isUpdateGroupModalComponentOpen"
 		(onClose)="setIsUpdateGroupModalComponentOpen(false)"
 		[users]="users!"
-		[currentGroup]="adminGroup!"
+		[currentGroup]="adminGroup"
 		(onConfirm)="handleConfirmUpdateGroupModalComponent($event)"
-	>
-	</app-update-group-modal>
+		>
+		</app-update-group-modal>
+	}
 }

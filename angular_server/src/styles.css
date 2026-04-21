@@ -26,6 +26,7 @@
 	--color-bg-header:				 #293629;
 	--color-bg-hover:				 #484848;
 	--color-bg-hover-alt:			 #404040;
+	--color-border-header:			 #48bb78;
 	
 
 	--color-text-primary:			 #dbdbdb;
@@ -87,6 +88,7 @@
 
 
 
+	--breakpoint-smaller:			 380px;
 	--breakpoint-sm:				 576px;
 	--breakpoint-md:				 768px;
 	--breakpoint-lg:				 992px;

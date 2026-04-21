@@ -5,6 +5,7 @@
 		[class]="getTypeClass()"
 		[class.enter]="animationState === 'enter'"
 		[class.leave]="animationState === 'leave'"
+		(transitionend)="onTransitionEnd($event)"
 		(touchstart)="onTouchStart($event)"
 		(touchmove)="onTouchMove($event)"
 		(touchend)="onTouchEnd($event)"

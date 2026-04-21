@@ -21,7 +21,7 @@ app-app-header > form{
 	gap: 5px;
 	width: 100%;
 }
-.header-content nav{
+.header-content nav {
 	display: flex;
 	align-items: center;
 	width: auto;
@@ -29,15 +29,50 @@ app-app-header > form{
 }
 .header-content nav > *{
 	display: inline;
+	text-wrap: nowrap;
 }
 
 
 @media screen and (width < 576px) {
-	.header-content a {
-		font-size: 0.7rem;
+	.header-content {
+		width: 97%;
 	}
-	.header-content input{
+	.header-content a, .header-content input {
 		font-size: 0.7rem;
+		height: 100%;
+		/* border-left: 2px solid ; */
+	}
+	
+	.header-content a {
+		position: relative;
+		border-radius: 2px;
+		padding: 2px;
+	}
+
+	.header-content a::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		padding: 2px;
+		background: linear-gradient(to bottom, transparent 0%, transparent 50%, var(--color-border-header) 100%);
+		-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+		mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+		-webkit-mask-composite: xor;
+		mask-composite: exclude;
+		pointer-events: none;
+	}
+	app-app-header{
+		padding: 0;
+	}
+
+	.header-content nav {
+		gap: 2px;
+	}
+}
+@media screen and (width < 380px) {
+	.header-content {
+		flex-direction: column;
 	}
 }
 

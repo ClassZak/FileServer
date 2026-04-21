@@ -21,6 +21,7 @@ import { ActionType, ModelTableDataObject } from '../../core/model/model-table-t
 import { GroupService } from '../../core/service/group-service';
 import { ModelTable } from "../../component/model-table/model-table";
 import { NoticeService } from '../../core/view-core/service/notice-service';
+import { Notification, NotificationBuilder, NotificationType } from '../../core/view-core/model/notification';
 
 @Component({
 	selector: 'app-user-page',
@@ -100,7 +101,8 @@ export class UserPage implements OnInit, OnDestroy {
 		try{
 			await this.checkAuthentication();
 		} catch (error) {
-			console.error('Ошибка аутентификации при загрузке страницы:', error); // TODO: notice
+			console.error('Ошибка аутентификации при загрузке страницы:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка аутентификации при загрузке страницы: ${error}`));
 		}
 		this.paramSubscription = this.route.paramMap.subscribe(params => {
 			this.userEmail = params.get('email') || '';
@@ -120,7 +122,7 @@ export class UserPage implements OnInit, OnDestroy {
 			await this.loadUserGroups();
 			this.checkIsSelfUserForAdmin();
 		} catch (error) {
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка аутентификации при загрузке страницы: ${(error as Error).message}`));
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
@@ -195,7 +197,7 @@ export class UserPage implements OnInit, OnDestroy {
 		} catch (error) {
 			console.error('Ошибка при загрузки данных пользователя:', error);
 			this.error = (error as Error).message;
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузки данных пользователя: ${this.error}`));
 		}
 	}
 	private async loadUserGroups(): Promise<void> {
@@ -216,7 +218,7 @@ export class UserPage implements OnInit, OnDestroy {
 			}
 		} catch (error) {
 			console.error('Ошибка при загрузке групп', error);
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке групп: ${(error as Error).message}`));
 		} finally {
 			this.cdr.detectChanges();
 		}
@@ -259,12 +261,12 @@ export class UserPage implements OnInit, OnDestroy {
 			else
 				await this.loadUserData();
 			console.log('Данные пользователя успешно обновлены');
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Success, 'Данные пользователя успешно обновлены'));
 			this.setIsUpdateUserModalOpen(false);
 			await this.loadUserData();
 		} catch (error) {
 			console.error('Error updating user data:', error);
-			// TODO: notice
+			this.noticeService.addNotificationErrorTypeByMessage(`Ошибка обноаления данных пользователя: ${(error as Error).message}`);
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
@@ -291,8 +293,8 @@ export class UserPage implements OnInit, OnDestroy {
 			this.setIsUpdateUserPasswordModalOpen(false);
 			await this.loadUserData();
 		} catch (error) {
-			console.error('Error updating password:', error);
-			// TODO: notice
+			console.error('Ошибка обноаления пароля:', error);
+			this.noticeService.addNotificationErrorTypeByMessage(`Ошибка обноаления пароля: ${(error as Error).message}`);
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
@@ -314,8 +316,8 @@ export class UserPage implements OnInit, OnDestroy {
 				throw new Error('Ошибка удаления пользователя');
 			this.router.navigate(['/users']);
 		} catch (error) {
-			console.error('Error updating password:', error);
-			// TODO: notice
+			console.error('Ошибка удаления пользователя:', error);
+			this.noticeService.addNotificationErrorTypeByMessage(`Ошибка удаления пользователя: ${(error as Error).message}`);
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();

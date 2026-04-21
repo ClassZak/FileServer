@@ -75,6 +75,21 @@ export class NoticeComponent implements OnInit, OnDestroy {
 		this.cdr.detectChanges();
 	}
 
+
+	/**
+	 * Called when CSS transition ends.
+	 */
+	onTransitionEnd(event: TransitionEvent): void {
+		if (event.target !== this.containerRef?.nativeElement) return;
+
+		if (this.animationState === 'leave') {
+			this.isVisible = false;
+			this.currentNotification = null;
+			this.noticeService.onAnimationDone();
+		}
+		this.cdr.detectChanges();
+	}
+
 	/**
 	 * Returns CSS class based on notification type.
 	 */

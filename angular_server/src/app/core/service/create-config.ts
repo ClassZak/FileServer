@@ -1,7 +1,7 @@
 import { HttpHeaders } from "@angular/common/http"
 
 /**
- * Static class for axios config creation
+ * Static class for config creation
  */
 export class CreateConfig {
 

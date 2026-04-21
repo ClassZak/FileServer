@@ -565,8 +565,8 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 
 			this.showDeleteModal = false;
 			this.itemToDelete = null;
-			await this.loadDirectory();
 			this.noticeService.addNotification(new Notification(NotificationType.Success, 'Элемент успешно удалён'));
+			await this.loadDirectory();
 		} catch (error) {
 			console.error('Delete error:', error);
 			this.error = (error as Error).message || 'Deletion failed.';
