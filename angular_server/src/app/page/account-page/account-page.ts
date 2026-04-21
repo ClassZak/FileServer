@@ -21,6 +21,8 @@ import { UserService } from '../../core/service/user-service';
 import { UpdatePasswordRequest } from '../../core/model/update-password-request';
 import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
 import { ModelTable } from '../../component/model-table/model-table';
+import { NoticeService } from '../../core/view-core/service/notice-service';
+import { Notification, NotificationType } from '../../core/view-core/model/notification';
 
 @Component({
 	selector: 'app-account-page',
@@ -43,6 +45,7 @@ import { ModelTable } from '../../component/model-table/model-table';
 export class AccountPage implements OnInit {
 	public isLoading: boolean = true;
 	isLoadingGroups: boolean = true;
+	isLoadingMyGroups: boolean = true;
 	isAuthenticated: boolean = false;
 	isAdmin: boolean = false;
 	isPasswordModalOpen: boolean = false;
@@ -97,6 +100,9 @@ export class AccountPage implements OnInit {
 		private adminService: AdminService,
 		private groupService: GroupService,
 		private userService: UserService,
+
+
+		private noticeService: NoticeService
 	) {}
 
 	async ngOnInit(): Promise<void> {
@@ -106,6 +112,7 @@ export class AccountPage implements OnInit {
 				await this.loadGroups();
 		} catch (error) {
 			console.error('Ошибка при загрузке страницы:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке страницы:', ${error}`));
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
@@ -137,6 +144,7 @@ export class AccountPage implements OnInit {
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке аутентификации:', ${error}`));
 			this.router.navigate(['/login']);
 			return;
 		}
@@ -149,7 +157,7 @@ export class AccountPage implements OnInit {
 				throw "У вас нет токена авторизации";
 			const result = await this.adminService.isAdmin(token);
 			if (result.success)
-				this.isAdmin = true;
+				this.isAdmin = result.data!.isAdmin;
 			else
 				throw new Error(
 					result.error ?
@@ -157,12 +165,13 @@ export class AccountPage implements OnInit {
 				);
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке статуса администратора: ${error}`));
 		}
 	}
 
 	private async loadMyGroups(): Promise<void> {
 		try {
+			this.isLoadingMyGroups = true;
 			const token = AuthService.getToken();
 			if (!token)
 				throw new Error('У вас нет токена авторизации');
@@ -178,8 +187,11 @@ export class AccountPage implements OnInit {
 				this.currentGroupModelTableDataObjectRef.models = groupsResult.data;
 			}
 		} catch (error) {
-			console.error('Ошибка при загрузке групп:', error);
-			// TODO: notice
+			console.error('Ошибка при загрузке ваших групп:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке ваших групп: ${error}`));
+		} finally {
+			this.isLoadingMyGroups = false;
+			this.cdr.detectChanges();
 		}
 	}
 	private async loadGroups(){
@@ -200,15 +212,21 @@ export class AccountPage implements OnInit {
 			}
 		} catch (error) {
 			console.error('Ошибка при загрузке групп', error);
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке групп: ${error}`));
 		} finally {
 			this.isLoadingGroups = false;
 			this.cdr.detectChanges();
 		}
 	}
 
-	public handleLogout(): void {
-		this.authService.logout();
+	public async handleLogout(): Promise<void> {
+		try {
+			const result = await this.authService.logout();
+			if (!result.success)
+				throw new Error(result.error ?? 'Ошибка при выходе из системы');
+		} catch (error) {
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при выходе из системы: ${error}`));
+		}
 		this.router.navigate(['/login']);
 	}
 
@@ -255,11 +273,10 @@ export class AccountPage implements OnInit {
 			else
 				console.error(result.error);
 			this.setPasswordModalIsOpen(false);
-
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Success, 'Пароль успешно изменён'));
 		} catch (error) {
 			console.error('Error updating password:', error);
-			alert('Ошибка при обновлении пароля');
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при обновлении пароля: ${error}`));
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
@@ -294,16 +311,16 @@ export class AccountPage implements OnInit {
 			this.setIsAddAdminToGroupModalOpen(false);
 
 			if (result.success)
-				console.log(`Вы успешно добавлены в группу «${selectedGroupName}»`);
+				this.noticeService.addNotification(new Notification(NotificationType.Success, `Вы успешно добавлены в группу «${selectedGroupName}»`));
 			else
-				console.error(result.error);
-			// TODO: notice
+				throw new Error(result.error);
+
 			await this.loadMyGroups();
 			await this.loadGroups();
 			this.cdr.detectChanges();
 		} catch (error) {
 			console.error('Ошибка при добавлении себя в группу:', error);
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при добавлении себя в группу: ${error}`));
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();

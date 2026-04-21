@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ModalComponent } from '../../modal/modal';
 import { User } from '../../../../core/model/user';
@@ -11,18 +11,28 @@ import { FormsModule } from '@angular/forms';
 	templateUrl: './remove-user-from-group-modal.html',
 	styleUrls: ['./remove-user-from-group-modal.css']
 })
-export class RemoveUserFromGroupModalComponent {
+export class RemoveUserFromGroupModalComponent implements OnChanges {
 	@Input() isOpen: boolean = false;
 	@Input() groupName: string = '';
-	@Input() user!: User | string; // can be full user object or just email
+	@Input() user!: User | string;
 	@Output() onClose = new EventEmitter<void>();
 	@Output() onConfirm = new EventEmitter<void>();
 
-	get userDisplay(): string {
-		if (typeof this.user === 'string') {
-			return this.user;
+	userDisplay: string = '';
+
+	ngOnChanges(changes: SimpleChanges): void {
+		if (changes['user']) {
+			this.updateUserDisplay();
 		}
-		return `${this.user.surname} ${this.user.name} ${this.user.patronymic} (${this.user.email})`;
+	}
+
+	private updateUserDisplay(): void {
+		if (typeof this.user === 'string')
+			this.userDisplay = this.user;
+		else if (this.user)
+			this.userDisplay = `${this.user.surname} ${this.user.name} ${this.user.patronymic} (${this.user.email})`;
+		else
+			this.userDisplay = '';
 	}
 
 	closeModal(): void {

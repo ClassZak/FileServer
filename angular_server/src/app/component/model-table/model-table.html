@@ -5,9 +5,7 @@
 			<tr>
 				@for (col of modelTableDataObject.columnDefinitions; track $index; let colIndex = $index) {
 					<th [class]="col.headerClass" #headerCell>
-						<div class="cell">
-							{{ col.header}}
-						</div>
+						<div class="cell">{{ col.header}}</div>
 						@if (!isLastColumn(colIndex)) {
 							<span class="resize-handle" (mousedown)="startResize($event, colIndex)"></span>
 						}
@@ -29,12 +27,9 @@
 						<td [class]="col.cellClass" [class.resize-active]="resizing && resizingColIndex === colIndex">
 							@if (col.icon) {
 								<div class="cell icon-container">
-									<ng-icon [name]="getIcon(model, col)"></ng-icon>
-									{{ getCellValue(model, col)}}</div>
+									<ng-icon [name]="getIcon(model, col)"></ng-icon>{{ getCellValue(model, col)}}</div>
 							} @else {
-								<div class="cell">
-									{{ getCellValue(model, col) }}
-								</div>
+								<div class="cell">{{ getCellValue(model, col) }}</div>
 							}@if (!isLastColumn(colIndex)) {
 								<span class="border-span"></span>
 							}

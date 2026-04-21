@@ -1,17 +1,18 @@
 @if (isOpen) {
-	<div 
-		class="modal-overlay" 
+	<div
+		class="modal-overlay"
 		(click)="handleOverlayClick($event)"
 		role="dialog"
 		aria-modal="true"
 		[attr.aria-labelledby]="title ? 'modal-title' : null"
 	>
-		<div 
+		<div
 			#modalContent
 			[class]="'modal-content ' + className"
+			tabindex="-1"
 		>
 			@if (title) {
-				<h3 
+				<h3
 					id="modal-title"
 					class="text-xl font-semibold mb-4"
 				>

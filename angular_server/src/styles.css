@@ -26,6 +26,7 @@
 	--color-bg-header:				 #293629;
 	--color-bg-hover:				 #484848;
 	--color-bg-hover-alt:			 #404040;
+	--color-border-header:			 #48bb78;
 	
 
 	--color-text-primary:			 #dbdbdb;
@@ -42,21 +43,28 @@
 	--color-accent-muted:			 #6a6a57;
 
 	
-	--color-info-bg:				 #000e16;
+	--color-info-bg:				 #0f557d;
+	--color-info-bg-button:			 #000e16;
 	--color-info-hover:				 #90cdf4;
 	--color-info-text:				 #2b6cb0;
+	--color-success-bg:				 #2e7d32;
 	--color-success-text:			 #48bb78;
 	--color-orange-button:			 #bb7248;
 
 
 	--color-danger-bg:				 #dc143c;
-	--color-danger-bg-secondary:		 #b91c1c;
+	--color-danger-bg-secondary:	 #b91c1c;
 	--color-danger-hover:			 #fe365e;
 	--color-danger-hover-secondary:	 #dc2626;
 	--color-danger-text:			 #fafad2;
 	--color-danger-border:			 #dc2626;
 
+
+	--color-warning-bg:				 #f57c00;
+	--color-warning-bg-secondary:	 #f29539;
+
 	--color-bg-overlay:				 rgba(0, 0, 0, 0.5);
+	--color-bg-overlay-light:		 rgba(255, 255, 255, 0.5);
 	--color-text-overlay:			 #777;
 
 	--color-text-auth-form:			 #777;
@@ -80,6 +88,7 @@
 
 
 
+	--breakpoint-smaller:			 380px;
 	--breakpoint-sm:				 576px;
 	--breakpoint-md:				 768px;
 	--breakpoint-lg:				 992px;
@@ -90,6 +99,7 @@
 	/*box-sizing: border-box;*/
 	margin: 0;
 	padding: 0;
+	-webkit-tap-highlight-color: transparent;
 }
 
 html, body, #root, app-root{

@@ -24,6 +24,9 @@ import { User } from '../../core/model/user';
 import AdminService from '../../core/service/admin-service';
 import { IconManager } from '../../component/icon-manager/icon-manager';
 
+import { NoticeService } from '../../core/view-core/service/notice-service';
+import { Notification, NotificationType } from '../../core/view-core/model/notification';
+
 @Component({
 	selector: 'app-files-page',
 	standalone: true,
@@ -193,7 +196,10 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 
 		private authService: AuthService,
 		private adminService: AdminService,
-		private fileService: FileService
+		private fileService: FileService,
+
+
+		private noticeService: NoticeService
 	) {}
 
 	async ngOnInit(): Promise<void> {
@@ -201,7 +207,8 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			await this.checkAuthentication();
 			this.initSubscriptions();
 		} catch (error) {
-			console.error('Ошибка при загрузке страницы:', error); // TODO: notice
+			console.error('Ошибка при загрузке страницы:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке страницы:', ${error}`));
 		}
 	}
 
@@ -266,6 +273,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке аутентификации:', ${error}`));
 			this.unsubscribeAll();
 			this.router.navigate(['/login']);
 			return;
@@ -281,7 +289,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				throw "У вас нет токена авторизации";
 			const result = await this.adminService.isAdmin(token);
 			if (result.success)
-				this.isAdmin = true;
+				this.isAdmin = result.data!.isAdmin;
 			else
 				throw new Error(
 					result.error ?
@@ -289,6 +297,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				);
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке статуса администратора:', ${error}`));
 		}
 	}
 
@@ -345,6 +354,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			this.foldersModelTableDataObject.models = this.folders;
 			this.filesFoundModelTableDataObject.models = this.files;
 			this.foldersFoundModelTableDataObject.models = this.folders;
+			this.noticeService.addNotification(new Notification(NotificationType.Error, this.error));
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
@@ -372,9 +382,20 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			this.searchResults = results.data!;
 			this.filesFoundModelTableDataObject.models = this.searchResults.files;
 			this.foldersFoundModelTableDataObject.models = this.searchResults.folders;
+			if (this.foldersFoundModelTableDataObject.models.length == this.filesFoundModelTableDataObject.models.length && this.filesFoundModelTableDataObject.models.length == 0)
+				this.noticeService.addNotification(
+					new Notification(
+						NotificationType.Info,
+						`По поисковому запросу "${this.searchQuery}" в ${
+							(
+								this.searchPath ?
+								('директории ' + this.searchPath) :
+								'корневой директории'
+							)} ничего не найдено`));
 		} catch (error) {
 			console.error('Search error:', error);
 			this.error = (error as Error).message || 'Search failed.';
+			this.noticeService.addNotification(new Notification(NotificationType.Error, this.error));
 			this.searchResults = null;
 			this.filesFoundModelTableDataObject.models = [];
 			this.foldersFoundModelTableDataObject.models = [];
@@ -428,15 +449,17 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 
 		try {
 			const exists = await this.fileService.exists(token, cleanPath);
-			if (exists.success) {
+			if (!exists.success)
+				throw new Error(exists.error || 'Path does not exist.');
+			if (exists.data?.exists) {
 				this.router.navigate(['/files', cleanPath]);
 				return;
 			} else {
-				this.error = 'Path does not exist.';
+				this.error = '.';
 			}
 		} catch (error) {
 			this.error = (error as Error).message || 'Failed to check path.';
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, this.error));
 		}
 	}
 
@@ -457,11 +480,15 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				return;
 			}
 
-			await this.fileService.upload(token, file, this.currentPath);
-			await this.loadDirectory();
+			const result = await this.fileService.upload(token, file, this.currentPath);
+			if (result.success) {
+				await this.loadDirectory();
+				this.noticeService.addNotification(new Notification(NotificationType.Success, 'Новый файл успешно создан'));
+			} else
+				throw new Error(result.error ?? 'Загрузка файла не удалась')
 		} catch (error) {
-			this.error = (error as Error).message || 'Upload failed.';
-			// TODO: notice
+			this.error = (error as Error).message || 'Загрузка файла не удалась';
+			this.noticeService.addNotification(new Notification(NotificationType.Error, this.error));
 		} finally {
 			this.uploading = false;
 			input.value = '';
@@ -488,13 +515,17 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				return;
 			}
 
-			await this.fileService.createFolder(token, this.currentPath, folderName);
-
-			this.showCreateFolderModal = false;
-			await this.loadDirectory();
+			const result = await this.fileService.createFolder(token, this.currentPath, folderName);
+			if (result.success) {
+				this.showCreateFolderModal = false;
+				await this.loadDirectory();
+				this.noticeService.addNotification(new Notification(NotificationType.Success, 'Новая папка успешно добавлена'));
+			} else
+				throw new Error(result.error ?? 'Ошибка создания папки')
 		} catch (error) {
 			console.error('Create folder error:', error);
-			this.error = (error as Error).message || 'Failed to create folder.';
+			this.error = (error as Error).message || 'Ошибка создания папки';
+			this.noticeService.addNotification(new Notification(NotificationType.Error, this.error));
 		} finally {
 			this.cdr.detectChanges();
 		}
@@ -534,10 +565,12 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 
 			this.showDeleteModal = false;
 			this.itemToDelete = null;
+			this.noticeService.addNotification(new Notification(NotificationType.Success, 'Элемент успешно удалён'));
 			await this.loadDirectory();
 		} catch (error) {
 			console.error('Delete error:', error);
 			this.error = (error as Error).message || 'Deletion failed.';
+			this.noticeService.addNotification(new Notification(NotificationType.Error, this.error));
 		} finally {
 			this.cdr.detectChanges();
 		}
@@ -579,6 +612,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 		} catch (error) {
 			console.error('Download error:', error);
 			this.error = (error as Error).message || 'Ошибка загрузки.';
+			this.noticeService.addNotification(new Notification(NotificationType.Error, this.error));
 			this.cdr.detectChanges();
 		}
 	}

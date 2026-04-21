@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ModalComponent } from '../../modal/modal';
 import { UpdatePasswordModalModel } from '../../../../core/model/update-password-modal-model';
+import { Notification, NotificationType } from '../../../../core/view-core/model/notification';
+import { NoticeService } from '../../../../core/view-core/service/notice-service';
 
 
 @Component({
@@ -20,6 +22,10 @@ export class UpdateUserPasswordModalComponent {
 	submitting: boolean = false;
 	formData: UpdatePasswordModalModel = new UpdatePasswordModalModel();
 	error?: string;
+
+	constructor (
+		private noticeService: NoticeService
+	) {}
 
 	onInputChangeOldPassword(value: string): void {
 		this.formData.oldPassword = value;
@@ -42,7 +48,7 @@ export class UpdateUserPasswordModalComponent {
 		} catch (error) {
 			console.error(error);
 			this.error = (error as Error).message;
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при обновлении пароля: ${error}`));
 		} finally {
 			this.submitting = false;
 		}

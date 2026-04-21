@@ -16,21 +16,26 @@ import { UserService } from '../../core/service/user-service';
 import { UpdatePasswordRequest } from '../../core/model/update-password-request';
 import { UpdatePasswordModalModel } from '../../core/model/update-password-modal-model';
 import { RedirectionButton } from '../../component/redirection-button/redirection-button';
+import { GroupBasicInfo } from '../../core/model/group_basic_info';
+import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
+import { GroupService } from '../../core/service/group-service';
+import { ModelTable } from "../../component/model-table/model-table";
+import { NoticeService } from '../../core/view-core/service/notice-service';
+import { Notification, NotificationBuilder, NotificationType } from '../../core/view-core/model/notification';
 
 @Component({
 	selector: 'app-user-page',
 	imports: [
-		CommonModule,
-		AppHeader,
-		AppFooter,
-		LoadingSpinner,
-
-		UpdateUserModalComponent,
-		UpdateUserPasswordModalComponent,
-		DeleteUserModalComponent,
-		
-		RedirectionButton
-	],
+	CommonModule,
+	AppHeader,
+	AppFooter,
+	LoadingSpinner,
+	UpdateUserModalComponent,
+	UpdateUserPasswordModalComponent,
+	DeleteUserModalComponent,
+	RedirectionButton,
+	ModelTable
+],
 	templateUrl: './user-page.html',
 	styleUrl: './user-page.css',
 })
@@ -42,11 +47,30 @@ export class UserPage implements OnInit, OnDestroy {
 	isAuthenticated: boolean = false;
 	authorizedUser?: User;
 	user?: UserAdminModel;
+	userGroups: Array<GroupBasicInfo> = [];
 	userEmail: string = '';
-	myUserData?: User;
 	isAdmin: boolean = false;
 	private paramSubscription?: Subscription;
 	error: string = '';
+	currentGroupModelTableDataObject: ModelTableDataObject<GroupBasicInfo> = new ModelTableDataObject(
+		[
+			{header: 'Название', field: 'name'},
+			{header: 'Число участников', field: 'membersCount'},
+			{header: 'Почта создателя', field: 'creatorEmail'},
+		],
+		[],
+		{
+			actionsHeader: 'Действия',
+			actionsConfigs: [
+				{
+					type: ActionType.LINK,
+					label: 'Изменить данные',
+					class: 'btn btn-blue',
+					href: (item: GroupBasicInfo) => !item.name ? '/groups' :`/group/${item.name}`
+				}
+			]
+		}
+	);
 
 	setIsUpdateUserModalOpen(status: boolean){
 		this.isUpdateUserModalOpen = status;
@@ -66,14 +90,19 @@ export class UserPage implements OnInit, OnDestroy {
 
 		private authService: AuthService,
 		private adminService: AdminService,
-		private userService: UserService
+		private userService: UserService,
+		private groupService: GroupService,
+
+
+		private noticeService: NoticeService
 	) {}
 
 	async ngOnInit(): Promise<void> {
 		try{
 			await this.checkAuthentication();
 		} catch (error) {
-			console.error('Ошибка аутентификации при загрузке страницы:', error); // TODO: notice
+			console.error('Ошибка аутентификации при загрузке страницы:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка аутентификации при загрузке страницы: ${error}`));
 		}
 		this.paramSubscription = this.route.paramMap.subscribe(params => {
 			this.userEmail = params.get('email') || '';
@@ -84,10 +113,16 @@ export class UserPage implements OnInit, OnDestroy {
 		});
 		try{
 			await this.checkAdminStatus();
-			await this.loadUserData();
-			this.checkIsSelfUserForAdmin()
+			if(!this.isAdmin) {
+				Promise.resolve().then(()=>{this.router.navigate(['/account']);});
+				this.paramSubscription.unsubscribe();
+				return;
+			}
+			await this.loadUserData()
+			await this.loadUserGroups();
+			this.checkIsSelfUserForAdmin();
 		} catch (error) {
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка аутентификации при загрузке страницы: ${(error as Error).message}`));
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
@@ -120,7 +155,7 @@ export class UserPage implements OnInit, OnDestroy {
 		}
 	}
 	private checkIsSelfUserForAdmin(): void{
-		if (this.myUserData?.email === this.user?.email && this.isAdmin)
+		if (this.authorizedUser?.email === this.user?.email && this.isAdmin)
 			this.router.navigate(['/account']);
 	}
 	private async checkAdminStatus(): Promise<void> {
@@ -130,7 +165,7 @@ export class UserPage implements OnInit, OnDestroy {
 				throw "У вас нет токена авторизации";
 			const result = await this.adminService.isAdmin(token);
 			if (result.success)
-				this.isAdmin = true;
+				this.isAdmin = result.data!.isAdmin;
 			else if (!result.success && !result.error)
 				this.router.navigate(['/account']);
 			else
@@ -162,7 +197,30 @@ export class UserPage implements OnInit, OnDestroy {
 		} catch (error) {
 			console.error('Ошибка при загрузки данных пользователя:', error);
 			this.error = (error as Error).message;
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузки данных пользователя: ${this.error}`));
+		}
+	}
+	private async loadUserGroups(): Promise<void> {
+		try {
+			const token = AuthService.getToken();
+			if(token === null)
+				throw new Error("У вас нет токена авторизации");
+			if(this.isAdmin) {
+				const response = await this.groupService.getGroupsForUser(token, this.user?.email!);
+				if (!response.success)
+					throw new Error(response.error);
+				if (Array.isArray(response.data)) {
+					this.userGroups = response.data;
+					this.currentGroupModelTableDataObject.models = response.data;
+				}
+			} else {
+				return;
+			}
+		} catch (error) {
+			console.error('Ошибка при загрузке групп', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке групп: ${(error as Error).message}`));
+		} finally {
+			this.cdr.detectChanges();
 		}
 	}
 
@@ -173,24 +231,42 @@ export class UserPage implements OnInit, OnDestroy {
 			const token = AuthService.getToken();
 			if (!token)
 				throw new Error('Отсутствует токен авторизации');
-			const response = await this.userService.updateUser(token, this.userEmail, newUserData as User);
-			if (response.error)
-				throw new Error(response.error);
+			const response = await this.userService.updateUser(
+				token, this.userEmail, newUserData as User
+			);
 			if (!response.success)
-				throw new Error('Ошибка Обновления данных пользователя');
-			else if (this.userEmail != newUserData.email){
-				this.router.navigate([`/user/${encodeURIComponent(newUserData.email)}`]);
+				throw new Error(response.error || 'Ошибка Обновления данных пользователя');
+			else {
+				if (!this.user) {
+					this.user = new UserAdminModel(
+						newUserData.surname,
+						newUserData.name,
+						newUserData.patronymic,
+						newUserData.email
+					);
+				} else {
+					this.user.surname = newUserData.surname;
+					this.user.name = newUserData.name;
+					this.user.patronymic = newUserData.patronymic;
+					this.user.email = newUserData.email;
+				}
+			}
+			if (this.userEmail != this.user.email) {
+				this.userEmail = this.user.email;
+				this.setIsUpdateUserModalOpen(false);
+				this.router.navigate([`/user/${(this.userEmail)}`]);
+				this.cdr.detectChanges();
 				return;
 			}
 			else
 				await this.loadUserData();
 			console.log('Данные пользователя успешно обновлены');
-			// TODO: notice
+			this.noticeService.addNotification(new Notification(NotificationType.Success, 'Данные пользователя успешно обновлены'));
 			this.setIsUpdateUserModalOpen(false);
 			await this.loadUserData();
 		} catch (error) {
 			console.error('Error updating user data:', error);
-			// TODO: notice
+			this.noticeService.addNotificationErrorTypeByMessage(`Ошибка обноаления данных пользователя: ${(error as Error).message}`);
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
@@ -217,8 +293,8 @@ export class UserPage implements OnInit, OnDestroy {
 			this.setIsUpdateUserPasswordModalOpen(false);
 			await this.loadUserData();
 		} catch (error) {
-			console.error('Error updating password:', error);
-			// TODO: notice
+			console.error('Ошибка обноаления пароля:', error);
+			this.noticeService.addNotificationErrorTypeByMessage(`Ошибка обноаления пароля: ${(error as Error).message}`);
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
@@ -240,8 +316,8 @@ export class UserPage implements OnInit, OnDestroy {
 				throw new Error('Ошибка удаления пользователя');
 			this.router.navigate(['/users']);
 		} catch (error) {
-			console.error('Error updating password:', error);
-			// TODO: notice
+			console.error('Ошибка удаления пользователя:', error);
+			this.noticeService.addNotificationErrorTypeByMessage(`Ошибка удаления пользователя: ${(error as Error).message}`);
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();

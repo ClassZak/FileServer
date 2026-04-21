@@ -38,7 +38,7 @@ describe('AdminService (instance)', () => {
 		expect(result.success).toBe(true);
 	});
 
-	it('should return success false when user is not admin', async () => {
+	it('should return success true and isAdmin false when user is not admin', async () => {
 		const token = 'fake-token';
 
 		const resultPromise = service.isAdmin(token);
@@ -47,7 +47,8 @@ describe('AdminService (instance)', () => {
 		req.flush({ isAdmin: false });
 
 		const result = await resultPromise;
-		expect(result.success).toBe(false);
+		expect(result.success).toBe(true);
+		expect(result.data?.isAdmin).toBe(false);
 	});
 
 	it('should handle error and return failure', async () => {

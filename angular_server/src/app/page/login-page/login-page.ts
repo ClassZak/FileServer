@@ -6,6 +6,11 @@ import { AppFooter } from '../../app-footer/app-footer';
 import { AuthService, CheckAuthResult } from '../../core/service/auth-service';
 import { DefaultServiceResult, DefaultServiceResultWithData } from '../../core/model/default-server-result';
 
+
+import { NoticeService } from '../../core/view-core/service/notice-service';
+import { Notification, NotificationType } from '../../core/view-core/model/notification';
+
+
 enum LoginFormType {
 	Email,
 	SNP
@@ -32,7 +37,10 @@ export class LoginPage {
 	constructor(
 		private router: Router,
 		private cdr: ChangeDetectorRef,
-		private authService: AuthService
+		private authService: AuthService,
+
+
+		private noticeService: NoticeService
 	) {}
 
 	async ngOnInit(): Promise<void> {
@@ -40,63 +48,44 @@ export class LoginPage {
 	}
 
 	async handleEmailLogin(e: Event) {
-		e.preventDefault();
-		this.isSubmiting = true;
-		
-		try {
-			const result = await this.authService.loginByEmail(this.email, this.password);
-			if (result.success) {
-				const authResult = await this.authService.checkAuth();
-				if (!authResult.success)
-					this.error = authResult.error;
-				else
-				{
-					if (authResult.data?.authenticated) {
-						this.router.navigate(['/account']);
-						return;
-					} else
-						this.error = 'Ошибка авторизации после входа';
-				}
-			} else {
-				if (result.error)
-					this.error = result.error;
-				else
-					this.error = 'Неверный email или пароль';
-			}
-		} catch (error) {
-			console.error('Login failed:', error);
-			this.error = 'Произошла ошибка при входе';
-			// TODO: notice
-		} finally {
-			this.isSubmiting = false;
-		}
-		this.cdr.detectChanges();
+		this.handleLogin(e);
 	}
 	async handleSNPLogin(e: Event) {
-		this.isSubmiting = true;
+		this.handleLogin(e, false);
+	}
+	async handleLogin(e: Event, loginByEmail: boolean = true) {
 		e.preventDefault();
+		this.isSubmiting = true;
 		
 		try {
-			const result = await this.authService.loginBySnp(
-				this.surname, this.name, this.patronymic, this.password
-			);
+			const result = loginByEmail ? 
+				await this.authService.loginByEmail(this.email, this.password) :
+				await this.authService.loginBySnp(
+					this.surname, this.name, this.patronymic, this.password
+				);
+
+			const defaultErrorMessage = loginByEmail ? 'Неверный email или пароль' : 'Неверные учётные данные';
+
 			if (result.success) {
 				const authResult = await this.authService.checkAuth();
 				if (!authResult.success)
-					this.error = 'Ошибка авторизации после входа';
-				else
+					throw new Error(authResult.error ?? 'Ошибка авторизации после входа');
+				
 				if (authResult.data?.authenticated) {
+					this.noticeService.addNotification(new Notification(NotificationType.Success, 'Вы успешно авторизировались'));
 					this.router.navigate(['/account']);
 					return;
-				} else {
-					this.error = 'Ошибка авторизации после входа';
-				}
+				} else
+					throw new Error('Ошибка авторизации после входа');
 			} else {
-				this.error = result.error;
+				const errorMessage = result.error ?? defaultErrorMessage;
+				this.noticeService.addNotification(new Notification(NotificationType.Error, errorMessage));
+
+				throw new Error(errorMessage);
 			}
 		} catch (error) {
-			console.log('Авторизация не удалась:', error);
-			this.error = 'Произошла ошибка при входе';
+			this.error = `Произошла ошибка при входе: ${error}`;
+			this.noticeService.addNotification(new Notification(NotificationType.Error, this.error));
 		} finally {
 			this.isSubmiting = false;
 		}
@@ -116,7 +105,6 @@ export class LoginPage {
 		} catch (error) {
 			console.error(error);
 			return;
-			// TODO: notice
 		}
 	}
 

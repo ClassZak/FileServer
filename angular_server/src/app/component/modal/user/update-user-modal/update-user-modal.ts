@@ -4,6 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { ModalComponent } from '../../modal/modal';
 import { User } from '../../../../core/model/user'; // adjust path if needed
 
+
+import { NoticeService } from '../../../../core/view-core/service/notice-service';
+import { Notification, NotificationType } from '../../../../core/view-core/model/notification';
+
+
 export interface UpdateUserModel {
 	surname: string;
 	name: string;
@@ -34,6 +39,10 @@ export class UpdateUserModalComponent implements OnChanges {
 		password: ''
 	};
 	errors: { [key: string]: string | null } = {};
+
+	constructor (
+		private noticeService: NoticeService
+	) {}
 
 	ngOnChanges(changes: SimpleChanges): void {
 		if (changes['isOpen'] && this.isOpen && this.currentUser) {
@@ -72,6 +81,10 @@ export class UpdateUserModalComponent implements OnChanges {
 		}
 
 		this.errors = newErrors;
+		Object.entries(this.errors).forEach(([field, message]) => {
+			this.noticeService.addNotification(new Notification(NotificationType.Error, message?? 'Ошибка изменения пароля'));
+		})
+		
 		return Object.keys(newErrors).length === 0;
 	}
 
@@ -84,6 +97,7 @@ export class UpdateUserModalComponent implements OnChanges {
 			this.onConfirm.emit(this.formData);
 		} catch (error) {
 			console.error('Ошибка обновления пользователя:', error);
+			this.noticeService.addNotification(new Notification(NotificationType.Error, (error as Error).message));
 			this.errors['server'] = (error as Error).message || 'Ошибка обновления пользователя';
 		} finally {
 			this.submitting = false;

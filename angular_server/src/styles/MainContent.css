@@ -14,6 +14,24 @@
 		width: 100%;
 		padding: 2rem 0 2rem;
 	}
+	.MainContent > * {
+		margin: 0.5rem;
+	}
+	.MainContent app-model-table, .MainContent .model-table-container {
+		margin: 0 !important;
+	}
+}
+@media screen and (width < 380px) {
+	.MainContent {
+		width: 100%;
+		padding: 4rem 0 2rem;
+	}
+	.MainContent > * {
+		margin: 0.5rem;
+	}
+	.MainContent app-model-table, .MainContent .model-table-container {
+		margin: 0 !important;
+	}
 }
 
 /* Default margin for all primary children */

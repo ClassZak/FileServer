@@ -34,7 +34,7 @@ table.model-table th div.cell{
 	overflow-x: auto;
 	vertical-align: middle;
 	white-space: nowrap;
-	display: block;
+	display: inline-block;
 }
 
 
@@ -134,14 +134,19 @@ table.model-table td div.icon-container * {
 	table.model-table td:first-child, table.model-table th:first-child{
 		border-left: none;
 	}
+	.model-table td,
+	.model-table th {
+		font-size: 0.65rem;
+		padding: 0.15rem;
+	}
 }
 
 
 
 /* MainContent style for small screens */
 @media screen and (width < 576px){
-	.MainContent app-model-table {
-		margin: 0;
+	.MainContent app-model-table, .MainContent .model-table-container {
+		margin: 0 !important;
 	}
 }
 

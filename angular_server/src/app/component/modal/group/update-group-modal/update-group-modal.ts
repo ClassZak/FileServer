@@ -7,6 +7,11 @@ import { UserAdminModel } from '../../../../core/model/user-admin-model';
 import { GroupDetails } from '../../../../core/model/group-details';
 import { GroupUpdateModel } from '../../../../core/model/group-update-model';
 
+
+import { NoticeService } from '../../../../core/view-core/service/notice-service';
+import { Notification, NotificationType } from '../../../../core/view-core/model/notification';
+
+
 @Component({
 	selector: 'app-update-group-modal',
 	standalone: true,
@@ -26,6 +31,10 @@ export class UpdateGroupModalComponent implements OnChanges {
 	searchQuery = '';
 	filteredUsers: User[] = [];
 	errors: { [key: string]: string | null } = {};
+
+	constructor(
+		private noticeService: NoticeService
+	) {}
 
 	ngOnChanges(changes: SimpleChanges): void {
 		if (changes['isOpen'] && this.isOpen && this.currentGroup) {
@@ -92,6 +101,9 @@ export class UpdateGroupModalComponent implements OnChanges {
 		}
 
 		this.errors = newErrors;
+		Object.entries(this.errors).forEach(([field, message])=>{
+			this.noticeService.addNotification(new Notification(NotificationType.Error, message?? 'Ошибка обновления группы'));
+		})
 		return Object.keys(newErrors).length === 0;
 	}
 
@@ -105,6 +117,7 @@ export class UpdateGroupModalComponent implements OnChanges {
 		} catch (error) {
 			console.error('Ошибка обновления группы:', error);
 			this.errors['server'] = (error as Error).message || 'Ошибка обновления группы';
+			this.noticeService.addNotification(new Notification(NotificationType.Error, this.errors['server']));
 		} finally {
 			this.submitting = false;
 		}

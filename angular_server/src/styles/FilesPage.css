@@ -202,7 +202,7 @@ div.navigation-panel{
 		flex-direction: column;
 	}
 }
-div.navigation-panel .path-form input[type="text"]{
+div.navigation-panel .path-form input[type="text"] {
 	width: 100%;
 	padding: 0.75rem 1rem;
 	background: var(--color-border-default);
@@ -211,4 +211,10 @@ div.navigation-panel .path-form input[type="text"]{
 	color: var(--color-input-text);
 	font-size: 1rem;
 	transition: all 0.3s ease;
+}
+@media screen and (width < 576px) {
+	div.navigation-panel .path-form input[type="text"] {
+		padding: 4px 8px;
+		font-size: 0.7em;
+	}
 }

@@ -27,7 +27,7 @@
 
 
 .btn-blue, .btn-cancel {
-	background-color: var(--color-info-bg);
+	background-color: var(--color-info-bg-button);
 	color: var(--color-info-text);
 }
 .btn-blue:hover, .btn-cancel:hover {
@@ -55,7 +55,7 @@
 }
 
 .btn-cancel {
-	background-color: var(--color-info-bg);
+	background-color: var(--color-info-bg-button);
 	color: var(--color-info-text);
 }
 .btn-cancel:hover {

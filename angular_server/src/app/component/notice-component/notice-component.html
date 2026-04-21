@@ -1,0 +1,22 @@
+@if (isVisible && currentNotification) {
+	<div
+		#notificationContainer
+		class="notification-container"
+		[class]="getTypeClass()"
+		[class.enter]="animationState === 'enter'"
+		[class.leave]="animationState === 'leave'"
+		(transitionend)="onTransitionEnd($event)"
+		(touchstart)="onTouchStart($event)"
+		(touchmove)="onTouchMove($event)"
+		(touchend)="onTouchEnd($event)"
+	>
+		@if (currentNotification.autoClose) {
+			<div class="progress-bar" [style.animation-duration]="currentNotification.duration + 'ms'"></div>
+		}
+		<div class="notification-content">
+			<img class="icon" alt="" [src]="getIcon()" />
+			<span class="message">{{currentNotification.message}}</span>
+			<button [classList]="getButtonClass()" (click)="close()">✕</button>
+		</div>
+	</div>
+}

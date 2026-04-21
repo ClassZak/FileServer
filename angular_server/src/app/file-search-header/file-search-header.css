@@ -13,3 +13,11 @@ form input[type="text"] {
 	background: white;
 	color: var(--color-bg-header);
 }
+
+@media screen and (width < 576px) {
+	form input[type="text"] {
+		padding: 1px;
+		font-size: 0.7rem;
+		border-radius: 5px;
+	}
+}
