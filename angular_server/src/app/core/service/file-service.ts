@@ -53,11 +53,9 @@ interface ApiFilesExistsWithPathServerResponse {
  * Information about a deleted file.
  */
 export interface DeletedFileInfo {
-	id: number;
 	originalPath: string;
 	deletedAt: string;
 	version: number;
-	deletedByUserId: number;
 	deletedByUserEmail: string;
 }
 
@@ -65,11 +63,9 @@ export interface DeletedFileInfo {
  * Information about a deleted folder.
  */
 export interface DeletedFolderInfo {
-	id: number;
 	originalPath: string;
 	deletedAt: string;
 	version: number;
-	deletedByUserId: number;
 	deletedByUserEmail: string;
 }
 
@@ -77,15 +73,12 @@ export interface DeletedFolderInfo {
  * Entry in the work history log.
  */
 export interface WorkHistoryEntry {
-	id: number;
-	workTime: string;
-	operationType: { id: number; name: string };
-	user: { id: number; email: string };
-	fileEntity: { id: number; path: string } | null;
-	folderEntity: { id: number; path: string } | null;
-	path: string;
-	isFile: boolean;
-	details: string | null;
+    workTime: string;          // ISO-date
+    operationType: string;     // operation name (CREATE, DELETE, …)
+    userEmail: string;
+    path: string;
+    isFile: boolean;
+    details: string | null;
 }
 
 /**
@@ -564,18 +557,18 @@ export class FileService {
 	 * Retrieves work history entries based on optional filters.
 	 *
 	 * @param token - JWT authentication token.
-	 * @param filters - Optional filters: userId, pathPrefix, isFile.
+	 * @param filters - Optional filters: userEmail, pathPrefix, isFile.
 	 * @returns Promise resolving to an array of WorkHistoryEntry.
 	 */
 	async getHistory(
 		token: string,
-		filters?: { userId?: number; pathPrefix?: string; isFile?: boolean }
+		filters?: { userEmail?: string; pathPrefix?: string; isFile?: boolean }
 	): Promise<DefaultServiceResultWithData<WorkHistoryEntry[]>> {
 		try {
 			let params = new HttpParams();
-			if (filters?.userId) params = params.set('userId', filters.userId);
+			if (filters?.userEmail) params = params.set('userEmail', filters.userEmail);
 			if (filters?.pathPrefix) params = params.set('pathPrefix', filters.pathPrefix);
-			if (filters?.isFile !== undefined) params = params.set('isFile', filters.isFile);
+			if (filters?.isFile !== undefined) params = params.set('isFile', String(filters.isFile));
 			const response = await firstValueFrom(
 				this.http.get<{ history: WorkHistoryEntry[] }>('/api/files/history', {
 					headers: CreateConfig.createAuthConfig(token).headers,
