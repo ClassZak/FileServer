@@ -490,20 +490,27 @@ class FileController(
 	}
 	
 	/**
-	 * Удалить явное разрешение на папку по идентификатору.
+	 * Удалить явное разрешение на папку.
 	 *
-	 * @param id идентификатор разрешения (FolderPermission).
+	 * @param path путь к папке.
+	 * @param userEmail почта пользователя, для которого удаляется запись (опционально).
+	 * @param groupName имя группы, для которой удаляется запись (опционально).
 	 * @param authHeader заголовок Authorization с Bearer токеном.
 	 * @return JSON с сообщением об успехе.
 	 * @throws 403 Forbidden – нет прав на изменение разрешений.
 	 * @throws 404 Not Found – разрешение не найдено.
 	 */
-	@DeleteMapping("/permissions/folder/{id}")
+	@DeleteMapping("/permissions/folder")
 	@PreAuthorize("isAuthenticated()")
-	fun deleteFolderPermission(@PathVariable id: Long, @RequestHeader("Authorization") authHeader: String): ResponseEntity<Any> {
+	fun deleteFolderPermission(
+		@RequestParam path: String,
+		@RequestParam userEmail: String?,
+		@RequestParam groupName: String?,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Any> {
 		val currentUser = getCurrentUserFromJwt(authHeader)
 		return try {
-			fileSystemService.deleteFolderPermission(id, currentUser)
+			fileSystemService.deleteFolderPermission(path, userEmail, groupName, currentUser)
 			ResponseEntity.ok(mapOf("success" to true))
 		} catch (e: Exception) {
 			handleException(e)
@@ -535,18 +542,25 @@ class FileController(
 	/**
 	 * Удалить явное разрешение на файл по идентификатору.
 	 *
-	 * @param id идентификатор разрешения (FilePermission).
+	 * @param path путь разрешения (FilePermission).
+	 * @param userEmail пользователь, для которого удаляется запись
+	 * @param groupName группа, для которой удаляется запись
 	 * @param authHeader заголовок Authorization с Bearer токеном.
 	 * @return JSON с сообщением об успехе.
 	 * @throws 403 Forbidden – нет прав на изменение разрешений.
 	 * @throws 404 Not Found – разрешение не найдено.
 	 */
-	@DeleteMapping("/permissions/file/{id}")
+	@DeleteMapping("/permissions/file")
 	@PreAuthorize("isAuthenticated()")
-	fun deleteFilePermission(@PathVariable id: Long, @RequestHeader("Authorization") authHeader: String): ResponseEntity<Any> {
+	fun deleteFilePermission(
+		@RequestParam path: String,
+		@RequestParam userEmail: String?,
+		@RequestParam groupName: String?,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Any> {
 		val currentUser = getCurrentUserFromJwt(authHeader)
 		return try {
-			fileSystemService.deleteFilePermission(id, currentUser)
+			fileSystemService.deleteFilePermission(path, userEmail, groupName, currentUser)
 			ResponseEntity.ok(mapOf("success" to true))
 		} catch (e: Exception) {
 			handleException(e)

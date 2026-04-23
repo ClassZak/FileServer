@@ -979,22 +979,43 @@ class FileSystemService(
 	/**
 	 * Удаляет явное разрешение для папки.
 	 *
-	 * @param permissionId идентификатор разрешения
+	 * @param path путь к папке
+	 * @param userEmail почта пользователя (если указано – удаляет права пользователя)
+	 * @param groupName имя группы (если указано – удаляет права группы)
 	 * @param currentUser аутентифицированный пользователь
 	 * @throws SecurityException если нет прав на изменение разрешений
-	 * @throws EntityNotFoundException если разрешение не найдено
+	 * @throws IllegalArgumentException если не указан ни пользователь, ни группа, или указаны оба
+	 * @throws EntityNotFoundException если папка или разрешение не найдены
 	 */
 	@Transactional
-	fun deleteFolderPermission(permissionId: Long, currentUser: CurrentUser) {
-		val perm = folderPermissionRepository.findById(permissionId).orElseThrow()
-		val path = perm.folderEntity.path
-		val permissions = checkAccessForDirectory(currentUser, path)
-		if ((permissions and AccessType.UPDATE.value) == 0) {
-			throw SecurityException("Нет прав на изменение разрешений для '$path'")
-		}
+	fun deleteFolderPermission(path: String, userEmail: String?, groupName: String?, currentUser: CurrentUser) {
+		if (!currentUser.isAdmin)
+			throw SecurityException("Нет прав на изменение правил доступа для папки '$path'")
+		if (userEmail == null && groupName == null)
+			throw IllegalArgumentException("Необходимо указать почту пользователя или имя группы для удаления прав")
+		if (userEmail != null && groupName != null)
+			throw IllegalArgumentException("Необходимо указать что-то одно: почту пользователя или имя группы")
+		
+		val folderEntity = folderEntityRepository.findByPath(path)
+			?: throw EntityNotFoundException("Папка '$path' не найдена")
+		
+		val user = userEmail?.let { userService.getUserEntityByEmail(it) }
+		val group = groupName?.let { groupService.findByName(it) }
+		
+		val perm = if (user != null) {
+			folderPermissionRepository.findByFolderEntityAndUser(folderEntity, user)
+		} else {
+			folderPermissionRepository.findByFolderEntityAndGroup(folderEntity, group!!)
+		} ?: throw EntityNotFoundException("Запись о правах доступа к папке '$path' не найдена")
+		
+		val permissionId = perm.id
+		
 		folderPermissionRepository.delete(perm)
-		recordHistory("CHANGE_PERMISSIONS", currentUser.userDetails!!, folderEntity = perm.folderEntity, path = path, isFile = false,
-			details = "{\"action\": \"delete\", \"permissionId\": $permissionId}")
+		recordHistory(
+			"CHANGE_PERMISSIONS", currentUser.userDetails!!,
+			folderEntity = folderEntity, path = path, isFile = false,
+			details = "{\"action\": \"delete\", \"permissionId\": ${permissionId}}"
+		)
 	}
 	
 	/**
@@ -1047,20 +1068,36 @@ class FileSystemService(
 	/**
 	 * Удаляет явное разрешение для файла.
 	 *
-	 * @param permissionId идентификатор разрешения
+	 * @param path путь для файла
+	 * @param userEmail почта пользователя
+	 * @param groupName имя группы
 	 * @param currentUser аутентифицированный пользователь
 	 * @throws SecurityException если нет прав на изменение разрешений
 	 * @throws EntityNotFoundException если разрешение не найдено
 	 */
 	@Transactional
-	fun deleteFilePermission(permissionId: Long, currentUser: CurrentUser) {
-		val perm = filePermissionRepository.findById(permissionId).orElseThrow()
-		val path = perm.fileEntity.path
-		val parentPath = Paths.get(path).parent?.toString() ?: ""
-		val permissions = checkAccessForDirectory(currentUser, parentPath)
-		if ((permissions and AccessType.UPDATE.value) == 0) {
-			throw SecurityException("Нет прав на изменение разрешений для '$path'")
-		}
+	fun deleteFilePermission(path: String, userEmail: String?, groupName: String?, currentUser: CurrentUser) {
+		if (!currentUser.isAdmin)
+			throw SecurityException("Нет прав на изменения правил доступа для файла $path")
+		if (userEmail == null && groupName == null)
+			throw IllegalArgumentException("Необходимо указать почту пользователя или имя группы для удаления прав")
+		if (userEmail != null && groupName != null)
+			throw IllegalArgumentException("Необходимо указать что-то одно: почту пользователя или имя группы")
+		
+		val fileEntity = fileEntityRepository.findByPath(path) ?:
+			throw EntityNotFoundException("Файл '$path' не найден")
+		
+		val user = if (userEmail != null) userService.findByEmail(userEmail) else null
+		val group = if (groupName != null) groupService.findByName(groupName) else null
+		val perm = if (userEmail != null)
+			filePermissionRepository.findByFileEntityAndUser(fileEntity, user = user!!)
+		else
+			filePermissionRepository.findByFileEntityAndGroup(fileEntity, group = group!!)
+		if (perm == null)
+			throw EntityNotFoundException("Запись о правах доступа к файлу по пути '$path' не найдена")
+		
+		val permissionId = perm.id
+		
 		filePermissionRepository.delete(perm)
 		recordHistory("CHANGE_PERMISSIONS", currentUser.userDetails!!, fileEntity = perm.fileEntity, path = path, isFile = true,
 			details = "{\"action\": \"delete\", \"permissionId\": $permissionId}")
