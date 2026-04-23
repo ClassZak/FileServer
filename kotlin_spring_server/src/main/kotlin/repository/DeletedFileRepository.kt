@@ -19,5 +19,7 @@ interface DeletedFileRepository : JpaRepository<DeletedFile, Long> {
 	@Query("SELECT df FROM DeletedFile df WHERE df.fileEntity = :fileEntity ORDER BY df.version DESC")
 	fun findByFileEntityOrderByVersionDesc(@Param("fileEntity") fileEntity: FileEntity): List<DeletedFile>
 	
+	fun findByFileEntityAndVersion(fileEntity: FileEntity, version: Int): DeletedFile?
+	
 	fun findByOriginalPath(originalPath: String): List<DeletedFile>
 }

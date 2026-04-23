@@ -78,10 +78,11 @@ class FileController(
 	}
 	
 	/**
-	 * Проверить существование файла или папки по указанному пути.
+	 * Проверить существование файла или папки по указанному пути с учётом прав текущего пользователя.
 	 *
 	 * @param path путь для проверки.
-	 * @return `{ "exists": true/false }`.
+	 * @param authHeader заголовок Authorization с Bearer токеном.
+	 * @return JSON с полем `exists` (true/false). В случае ошибки также возвращается `exists: false`.
 	 */
 	@GetMapping("/exists")
 	fun existsFileOrDirectory(
@@ -104,8 +105,9 @@ class FileController(
 	/**
 	 * Загрузить файл в указанную директорию.
 	 *
-	 * @param path целевая директория.
+	 * @param path целевая директория (по умолчанию корень).
 	 * @param file MultipartFile – загружаемый файл.
+	 * @param authHeader заголовок Authorization с Bearer токеном.
 	 * @return JSON с информацией о загруженном файле (FileInfo).
 	 * @throws 400 Bad Request – ошибка валидации (например, файл уже существует).
 	 * @throws 403 Forbidden – нет прав на создание.
@@ -137,6 +139,7 @@ class FileController(
 	 * Скачать файл по указанному пути.
 	 *
 	 * @param path путь к файлу.
+	 * @param authHeader заголовок Authorization с Bearer токеном.
 	 * @return поток файла с соответствующим Content-Type и заголовком Content-Disposition.
 	 * @throws 404 Not Found – файл не найден.
 	 * @throws 403 Forbidden – нет прав на чтение.
@@ -173,6 +176,7 @@ class FileController(
 	 * Создать новую папку.
 	 *
 	 * @param request тело запроса с полями `path` (родительская директория) и `folderName` (имя папки).
+	 * @param authHeader заголовок Authorization с Bearer токеном.
 	 * @return JSON с информацией о созданной папке (FolderInfo).
 	 * @throws 400 Bad Request – ошибка валидации (например, папка уже существует).
 	 * @throws 403 Forbidden – нет прав на создание.
@@ -203,10 +207,11 @@ class FileController(
 	}
 	
 	/**
-	 * Удалить файл или папку (переместить в корзину).
+	 * Удалить файл или папку (переместить в корзину с версионированием).
 	 *
 	 * @param path путь к удаляемому элементу.
-	 * @return `{ "message": "Удалено успешно" }`.
+	 * @param authHeader заголовок Authorization с Bearer токеном.
+	 * @return JSON с сообщением об успехе.
 	 * @throws 400 Bad Request – элемент не найден.
 	 * @throws 403 Forbidden – нет прав на удаление.
 	 */
@@ -243,6 +248,7 @@ class FileController(
 	 *
 	 * @param q строка поиска (обязательно).
 	 * @param path базовая директория для поиска (по умолчанию корень).
+	 * @param authHeader заголовок Authorization с Bearer токеном.
 	 * @return JSON с полями `files`, `folders`, `query`, `path`, `totalResults`.
 	 * @throws 400 Bad Request – пустой поисковый запрос.
 	 * @throws 403 Forbidden – нет прав на чтение в базовой директории.
@@ -286,7 +292,8 @@ class FileController(
 	/**
 	 * Получить список удалённых файлов, доступных текущему пользователю.
 	 *
-	 * @return `{ "deletedFiles": [ DeletedFileInfo, ... ] }`.
+	 * @param authHeader заголовок Authorization с Bearer токеном.
+	 * @return JSON с полем `deletedFiles` (массив DeletedFileInfo).
 	 */
 	@GetMapping("/deleted/files")
 	@PreAuthorize("isAuthenticated()")
@@ -299,7 +306,8 @@ class FileController(
 	/**
 	 * Получить список удалённых папок, доступных текущему пользователю.
 	 *
-	 * @return `{ "deletedFolders": [ DeletedFolderInfo, ... ] }`.
+	 * @param authHeader заголовок Authorization с Bearer токеном.
+	 * @return JSON с полем `deletedFolders` (массив DeletedFolderInfo).
 	 */
 	@GetMapping("/deleted/folders")
 	@PreAuthorize("isAuthenticated()")
@@ -310,20 +318,25 @@ class FileController(
 	}
 	
 	/**
-	 * Получить список версий удалённого файла, доступного текущему пользователю.
+	 * Получить список версий удалённого файла, доступных текущему пользователю.
 	 *
-	 * @return `{ "versions": [ DeletedFileInfo, ... ] }`.
+	 * @param parentPath родительская папка файла.
+	 * @param fileName имя файла.
+	 * @param authHeader заголовок Authorization с Bearer токеном.
+	 * @return JSON с полем `versions` (массив DeletedFileInfo).
+	 * @throws 404 Not Found – файл не найден или не был удалён.
+	 * @throws 403 Forbidden – нет прав на чтение файла.
 	 */
-	@GetMapping("/api/files/deleted/file/versions/")
+	@GetMapping("/deleted/file/versions")
 	@PreAuthorize("isAuthenticated()")
 	fun getDeletedFileVersions(
 		@RequestHeader("Authorization") authHeader: String,
-		@RequestParam path: String,
-		@RequestParam filename: String
+		@RequestParam parentPath: String,
+		@RequestParam fileName: String
 	): ResponseEntity<Any> {
 		try {
 			val currentUser = getCurrentUserFromJwt(authHeader)
-			val versions = fileSystemService.getDeletedFileVersionsForUser(currentUser, path, filename)
+			val versions = fileSystemService.getDeletedFileVersionsForUser(currentUser, parentPath, fileName)
 			return ResponseEntity.ok(mapOf("versions" to versions))
 		} catch (e: Exception) {
 			return handleException(e)
@@ -331,11 +344,15 @@ class FileController(
 	}
 	
 	/**
-	 * Получить список версий удалённой папки, доступной текущему пользователю.
+	 * Получить список версий удалённой папки, доступных текущему пользователю.
 	 *
-	 * @return `{ 'versions": [ DeletedFolderInfo, ... ] }`.
+	 * @param path путь к папке.
+	 * @param authHeader заголовок Authorization с Bearer токеном.
+	 * @return JSON с полем `versions` (массив DeletedFolderInfo).
+	 * @throws 404 Not Found – папка не найдена или не была удалена.
+	 * @throws 403 Forbidden – нет прав на чтение папки.
 	 */
-	@GetMapping("/api/files/deleted/folders/versions/")
+	@GetMapping("/deleted/folder/versions")
 	@PreAuthorize("isAuthenticated()")
 	fun getDeletedFolderVersions(
 		@RequestHeader("Authorization") authHeader: String,
@@ -351,20 +368,24 @@ class FileController(
 	}
 	
 	/**
-	 * Восстановить файл из корзины по идентификатору удалённой записи.
+	 * Восстановить файл из корзины по указанному пути и версии.
 	 *
-	 * @param id идентификатор удалённого файла.
-	 * @return `{ "success": true, "message": "Файл восстановлен" }`.
+	 * @param request объект RestoreFileRequest с полями originalPath, version.
+	 * @param authHeader заголовок Authorization с Bearer токеном.
+	 * @return JSON с сообщением об успехе.
 	 * @throws 404 Not Found – запись не найдена.
 	 * @throws 403 Forbidden – нет прав на восстановление.
 	 * @throws 409 Conflict – файл уже восстановлен или оригинальный путь занят.
 	 */
-	@PostMapping("/restore/file/{id}")
+	@PostMapping("/restore/file")
 	@PreAuthorize("isAuthenticated()")
-	fun restoreFile(@PathVariable id: Long, @RequestHeader("Authorization") authHeader: String): ResponseEntity<Any> {
+	fun restoreFile(
+		@RequestBody request: RestoreFileRequest,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Any> {
 		val currentUser = getCurrentUserFromJwt(authHeader)
 		return try {
-			val success = fileSystemService.restoreFile(id, currentUser)
+			val success = fileSystemService.restoreFile(currentUser, request.originalPath, request.version)
 			ResponseEntity.ok(mapOf("success" to success, "message" to "Файл восстановлен"))
 		} catch (e: Exception) {
 			handleException(e)
@@ -372,17 +393,24 @@ class FileController(
 	}
 	
 	/**
-	 * Восстановить папку из корзины по идентификатору удалённой записи.
+	 * Восстановить папку из корзины по указанному пути и версии.
 	 *
-	 * @param id идентификатор удалённой папки.
-	 * @return `{ "success": true, "message": "Папка восстановлена" }`.
+	 * @param request объект RestoreFolderRequest с полями originalPath, version.
+	 * @param authHeader заголовок Authorization с Bearer токеном.
+	 * @return JSON с сообщением об успехе.
+	 * @throws 404 Not Found – запись не найдена.
+	 * @throws 403 Forbidden – нет прав на восстановление.
+	 * @throws 409 Conflict – папка уже восстановлена или оригинальный путь занят.
 	 */
-	@PostMapping("/restore/folder/{id}")
+	@PostMapping("/restore/folder")
 	@PreAuthorize("isAuthenticated()")
-	fun restoreFolder(@PathVariable id: Long, @RequestHeader("Authorization") authHeader: String): ResponseEntity<Any> {
+	fun restoreFolder(
+		@RequestBody request: RestoreFolderRequest,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Any> {
 		val currentUser = getCurrentUserFromJwt(authHeader)
 		return try {
-			val success = fileSystemService.restoreFolder(id, currentUser)
+			val success = fileSystemService.restoreFolder(currentUser, request.originalPath, request.version)
 			ResponseEntity.ok(mapOf("success" to success, "message" to "Папка восстановлена"))
 		} catch (e: Exception) {
 			handleException(e)
@@ -390,38 +418,48 @@ class FileController(
 	}
 	
 	/**
-	 * Окончательно удалить файл из корзины (только для администратора).
+	 * Окончательно удалить файл и все его версии из корзины (только для администратора).
 	 *
-	 * @param id идентификатор удалённого файла.
-	 * @return `{ "success": true, "message": "Файл окончательно удалён" }`.
+	 * @param path оригинальный путь файла.
+	 * @param authHeader заголовок Authorization с Bearer токеном.
+	 * @return JSON с сообщением об успехе.
 	 * @throws 403 Forbidden – не администратор.
-	 * @throws 404 Not Found – запись не найдена.
+	 * @throws 404 Not Found – файл не найден в БД.
 	 */
-	@DeleteMapping("/permanent/file/{id}")
+	@DeleteMapping("/permanent/file")
 	@PreAuthorize("isAuthenticated()")
-	fun permanentDeleteFile(@PathVariable id: Long, @RequestHeader("Authorization") authHeader: String): ResponseEntity<Any> {
+	fun permanentDeleteFile(
+		@RequestParam path: String,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Any> {
 		val currentUser = getCurrentUserFromJwt(authHeader)
 		return try {
-			fileSystemService.permanentDeleteFile(id, currentUser)
-			ResponseEntity.ok(mapOf("success" to true, "message" to "Файл окончательно удалён"))
+			fileSystemService.permanentDeleteFileByPath(path, currentUser)
+			ResponseEntity.ok(mapOf("success" to true, "message" to "Файл и все его версии окончательно удалены"))
 		} catch (e: Exception) {
 			handleException(e)
 		}
 	}
 	
 	/**
-	 * Окончательно удалить папку из корзины (только для администратора).
+	 * Окончательно удалить папку и все её версии из корзины (только для администратора).
 	 *
-	 * @param id идентификатор удалённой папки.
-	 * @return `{ "success": true, "message": "Папка окончательно удалена" }`.
+	 * @param path оригинальный путь папки.
+	 * @param authHeader заголовок Authorization с Bearer токеном.
+	 * @return JSON с сообщением об успехе.
+	 * @throws 403 Forbidden – не администратор.
+	 * @throws 404 Not Found – папка не найдена в БД.
 	 */
-	@DeleteMapping("/permanent/folder/{id}")
+	@DeleteMapping("/permanent/folder")
 	@PreAuthorize("isAuthenticated()")
-	fun permanentDeleteFolder(@PathVariable id: Long, @RequestHeader("Authorization") authHeader: String): ResponseEntity<Any> {
+	fun permanentDeleteFolder(
+		@RequestParam path: String,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Any> {
 		val currentUser = getCurrentUserFromJwt(authHeader)
 		return try {
-			fileSystemService.permanentDeleteFolder(id, currentUser)
-			ResponseEntity.ok(mapOf("success" to true, "message" to "Папка окончательно удалена"))
+			fileSystemService.permanentDeleteFolderByPath(path, currentUser)
+			ResponseEntity.ok(mapOf("success" to true, "message" to "Папка и все её версии окончательно удалены"))
 		} catch (e: Exception) {
 			handleException(e)
 		}
@@ -433,7 +471,8 @@ class FileController(
 	 * Установить или обновить права доступа на папку.
 	 *
 	 * @param request объект SetPermissionRequest с полями path, userId, groupId, mode.
-	 * @return `{ "success": true }`.
+	 * @param authHeader заголовок Authorization с Bearer токеном.
+	 * @return JSON с сообщением об успехе.
 	 * @throws 400 Bad Request – неверные параметры (например, указаны оба userId и groupId).
 	 * @throws 403 Forbidden – нет прав на изменение разрешений.
 	 * @throws 404 Not Found – папка не найдена.
@@ -451,10 +490,13 @@ class FileController(
 	}
 	
 	/**
-	 * Удалить явное разрешение на папку.
+	 * Удалить явное разрешение на папку по идентификатору.
 	 *
 	 * @param id идентификатор разрешения (FolderPermission).
-	 * @return `{ "success": true }`.
+	 * @param authHeader заголовок Authorization с Bearer токеном.
+	 * @return JSON с сообщением об успехе.
+	 * @throws 403 Forbidden – нет прав на изменение разрешений.
+	 * @throws 404 Not Found – разрешение не найдено.
 	 */
 	@DeleteMapping("/permissions/folder/{id}")
 	@PreAuthorize("isAuthenticated()")
@@ -472,7 +514,11 @@ class FileController(
 	 * Установить или обновить права доступа на файл.
 	 *
 	 * @param request объект SetPermissionRequest с полями path, userId, groupId, mode.
-	 * @return `{ "success": true }`.
+	 * @param authHeader заголовок Authorization с Bearer токеном.
+	 * @return JSON с сообщением об успехе.
+	 * @throws 400 Bad Request – неверные параметры (например, указаны оба userId и groupId).
+	 * @throws 403 Forbidden – нет прав на изменение разрешений.
+	 * @throws 404 Not Found – файл не найден.
 	 */
 	@PutMapping("/permissions/file")
 	@PreAuthorize("isAuthenticated()")
@@ -487,10 +533,13 @@ class FileController(
 	}
 	
 	/**
-	 * Удалить явное разрешение на файл.
+	 * Удалить явное разрешение на файл по идентификатору.
 	 *
 	 * @param id идентификатор разрешения (FilePermission).
-	 * @return `{ "success": true }`.
+	 * @param authHeader заголовок Authorization с Bearer токеном.
+	 * @return JSON с сообщением об успехе.
+	 * @throws 403 Forbidden – нет прав на изменение разрешений.
+	 * @throws 404 Not Found – разрешение не найдено.
 	 */
 	@DeleteMapping("/permissions/file/{id}")
 	@PreAuthorize("isAuthenticated()")
@@ -512,7 +561,8 @@ class FileController(
 	 * @param userId (опционально) фильтр по ID пользователя.
 	 * @param pathPrefix (опционально) фильтр по префиксу пути.
 	 * @param isFile (опционально) фильтр по типу: true – файлы, false – папки.
-	 * @return `{ "history": [ WorkHistoryEntry, ... ] }`.
+	 * @param authHeader заголовок Authorization с Bearer токеном.
+	 * @return JSON с полем `history` (массив WorkHistory).
 	 * @throws 403 Forbidden – попытка просмотра чужой истории неадминистратором.
 	 */
 	@GetMapping("/history")
@@ -547,18 +597,12 @@ class FileController(
 		logger.error("Необработанная ошибка", ex)
 		
 		return when (ex) {
-			is IllegalArgumentException -> {
-				ResponseEntity.status(HttpStatus.BAD_REQUEST)
-					.body(mapOf("error" to (ex.message ?: "Некорректный запрос")))
-			}
-			is SecurityException -> {
-				ResponseEntity.status(HttpStatus.FORBIDDEN)
-					.body(mapOf("error" to (ex.message ?: "Доступ запрещен")))
-			}
-			else -> {
-				ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-					.body(mapOf("error" to "Внутренняя ошибка сервера"))
-			}
+			is IllegalArgumentException -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				.body(mapOf("error" to (ex.message ?: "Некорректный запрос")))
+			is SecurityException -> ResponseEntity.status(HttpStatus.FORBIDDEN)
+				.body(mapOf("error" to (ex.message ?: "Доступ запрещен")))
+			else -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(mapOf("error" to "Внутренняя ошибка сервера"))
 		}
 	}
 	
@@ -592,20 +636,11 @@ class FileController(
 		if (!jwtUtil.validateToken(jwtToken)) {
 			throw SecurityException("Недействительный токен")
 		}
-		
-		val userId = jwtUtil.extractUserId(jwtToken)
-			?: throw SecurityException("User ID не найден в токене")
-		
+		val userId = jwtUtil.extractUserId(jwtToken) ?: throw SecurityException("User ID не найден в токене")
 		val email = jwtUtil.extractUsername(jwtToken)
 		val user = userService.getUserEntityById(userId)
 		val isAdmin = administratorService.isAdmin(userId)
-		
-		return CurrentUser(
-			id = userId,
-			email = email,
-			isAdmin = isAdmin,
-			userDetails = user
-		)
+		return CurrentUser(id = userId, email = email, isAdmin = isAdmin, userDetails = user)
 	}
 }
 
@@ -617,4 +652,20 @@ data class SetPermissionRequest(
 	val userId: Int?,
 	val groupId: Int?,
 	val mode: Int
+)
+
+/**
+ * DTO для запроса на восстановление файла.
+ */
+data class RestoreFileRequest(
+	val originalPath: String,
+	val version: Int = 1
+)
+
+/**
+ * DTO для запроса на восстановление папки.
+ */
+data class RestoreFolderRequest(
+	val originalPath: String,
+	val version: Int = 1
 )

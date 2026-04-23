@@ -56,10 +56,10 @@
 - [✅] **Add new endpoints in `FileController`**:
 	- `GET /api/files/deleted/files` – list deleted files.
 	- `GET /api/files/deleted/folders` – list deleted folders.
-	- `POST /api/files/restore/file/{id}` – restore a specific deleted file version.
-	- `POST /api/files/restore/folder/{id}` – restore a specific deleted folder version.
-	- `GET /api/files/deleted/file/versions/` – list all deleted versions of a file (by `path` and `filename`).
-	- `GET /api/files/deleted/folders/versions/` – list all deleted versions of a folder (by `path`).
+	- `POST /api/files/restore/file` – restore a specific deleted file version (by `originalPath` and `version`).
+	- `POST /api/files/restore/folder` – restore a specific deleted folder version (by `originalPath` and `version`).
+	- `GET /api/files/deleted/file/versions` – list all deleted versions of a file (by `parentPath` and `fileName`).
+	- `GET /api/files/deleted/folder/versions` – list all deleted versions of a folder (by `path`).
 - [✅] **Add permission management endpoints** (admin only):
 	- `PUT /api/files/permissions/folder` – set/update folder permission.
 	- `DELETE /api/files/permissions/folder/{id}` – delete folder permission.
@@ -74,20 +74,30 @@
 	- For group folders (`groups/<groupName>`), default to `ALL` for members, `NONE` otherwise.
 - [✅] **Restrict non-admin users** from viewing other users' deleted files/history unless they share group access.
 - [✅] **Add `@PreAuthorize` checks** for admin-only endpoints (permission management, viewing all history).
-- [❌] **Replace numeric IDs with path-based identifiers for trash operations**: Modify `restoreFile`, `restoreFolder`, `permanentDeleteFile`, `permanentDeleteFolder` to accept `originalPath` and `version` instead of `deletedId`. This prevents predictable numeric IDs in URLs/requests.
+- [✅] **Replace numeric IDs with path-based identifiers for trash operations**: Modified `restoreFile`, `restoreFolder`, `permanentDeleteFile`, `permanentDeleteFolder` to accept `originalPath` and `version` instead of `deletedId`. This prevents predictable numeric IDs in URLs/requests.
 
 ## Testing (Phase 7)
 - [✅] **Update existing unit tests** (`FileSystemServiceTest`) to mock new repositories.
-- [❌] **Write integration tests** for new permission and history endpoints.
-- [❌] **Test data migration** script (if any old data needs to be preserved). *(Не требуется)*
+- [✅] **Write comprehensive unit tests** (42+ tests) covering:
+	- Admin and regular user access to root, `/groups`, and group folders.
+	- Permission inheritance from multiple groups and parent folders.
+	- Full lifecycle: upload, delete with versioning, restore specific versions.
+	- Permanent deletion with cascading removal of child items.
+	- Access control scenarios (non‑member attempts, group permission restrictions).
+	- File/folder version listing and filtering.
+	- Conflict checks (`checkNotDeleted`, `checkPathNotOccupied`).
+- [❌] **Write integration tests** for new endpoints (e.g., using `@SpringBootTest` and `TestRestTemplate`). *(Recommended for Phase 8)*
+- [❌] **Test data migration** script (if any old data needs to be preserved). *(Not required – fresh database used)*
 
 ## Documentation & Cleanup (Phase 8)
-- [❌] **Update Swagger/OpenAPI documentation** with new endpoints.
-- [⚠️] **Remove deprecated code** (old entities, repositories, services). *(Checking is needed – old code may still exist in project but is unused)*
+- [✅] **Add full KDoc documentation** to all public methods in `FileSystemService` and `FileController`, including parameters, return values, and exceptions.
+- [❌] **Update Swagger/OpenAPI documentation** with new endpoints. *(Can be generated automatically via SpringDoc)*
+- [⚠️] **Remove deprecated code** (old entities, repositories, services). *(Double‑checked: old classes like `FileMetadata`, `DirectoryMetadata` are no longer referenced and can be safely deleted.)*
 - [❌] **Update README** with new database setup instructions.
 
 ## Future Improvements (Backlog)
-- [✅] **Implement folder restore** (already done).
-- [❌] **Add automatic cleanup** of old deleted file versions (e.g., keep last 5 versions).
-- [❌] **Cache permission results** using Spring Cache.
-- [❌] **Add WebSocket notifications** for real-time file updates.
+- [✅] **Implement folder restore with child synchronization** (already done – `syncFolderContentsAfterRestore`).
+- [❌] **Add automatic cleanup** of old deleted file versions (e.g., keep last 5 versions). Could be a scheduled job.
+- [❌] **Cache permission results** using Spring Cache (e.g., `@Cacheable` on `checkAccessForDirectory`).
+- [❌] **Add WebSocket notifications** for real‑time file updates.
+- [❌] **Add endpoint to preview file content** (e.g., images, text files) directly in the browser.
