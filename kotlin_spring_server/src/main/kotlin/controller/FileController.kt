@@ -466,6 +466,66 @@ class FileController(
 	
 	// ================== УПРАВЛЕНИЕ ПРАВАМИ ==================
 	
+	// ================== ПРОСМОТР ПРАВ =======================
+	@GetMapping("/permissions/folder")
+	@PreAuthorize("isAuthenticated()")
+	fun getFolderPermissions(
+		@RequestParam path: String,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Any> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		return try {
+			val permissions = fileSystemService.getFolderPermissions(path, currentUser)
+			ResponseEntity.ok(mapOf("permissions" to permissions))
+		} catch (e: Exception) {
+			handleException(e)
+		}
+	}
+	
+	@GetMapping("/permissions/file")
+	@PreAuthorize("isAuthenticated()")
+	fun getFilePermissions(
+		@RequestParam path: String,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Any> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		return try {
+			val permissions = fileSystemService.getFilePermissions(path, currentUser)
+			ResponseEntity.ok(mapOf("permissions" to permissions))
+		} catch (e: Exception) {
+			handleException(e)
+		}
+	}
+	
+	@GetMapping("/permissions/group/{groupName}")
+	@PreAuthorize("isAuthenticated()")
+	fun getGroupPermissions(
+		@PathVariable groupName: String,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Any> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		return try {
+			val permissions = fileSystemService.getGroupPermissions(groupName, currentUser)
+			ResponseEntity.ok(mapOf("permissions" to permissions))
+		} catch (e: Exception) {
+			handleException(e)
+		}
+	}
+	
+	@GetMapping("/permissions/user/{userEmail}")
+	@PreAuthorize("isAuthenticated()")
+	fun getUserPermissions(
+		@PathVariable userEmail: String,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Any> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		return try {
+			val permissions = fileSystemService.getUserPermissions(userEmail, currentUser)
+			ResponseEntity.ok(mapOf("permissions" to permissions))
+		} catch (e: Exception) {
+			handleException(e)
+		}
+	}
 	/**
 	 * Установить или обновить права доступа на папку.
 	 *

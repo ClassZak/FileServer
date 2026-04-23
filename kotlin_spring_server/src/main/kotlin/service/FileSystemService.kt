@@ -76,6 +76,37 @@ data class HistoryInfo(
 )
 
 /**
+ * Информация о праве доступа на папку для ответа клиенту.
+ */
+data class FolderPermissionInfo(
+	val id: Long?,
+	val userEmail: String?,
+	val groupName: String?,
+	val mode: Int
+)
+
+/**
+ * Информация о праве доступа на файл для ответа клиенту.
+ */
+data class FilePermissionInfo(
+	val id: Long?,
+	val userEmail: String?,
+	val groupName: String?,
+	val mode: Int
+)
+
+/**
+ * Универсальная информация о праве доступа (используется для групп и пользователей).
+ */
+data class PermissionInfo(
+	val type: String,         // "file" или "folder"
+	val path: String,
+	val userEmail: String?,
+	val groupName: String?,
+	val mode: Int
+)
+
+/**
  * Сервис для управления файловой системой с учётом прав доступа, версионирования удалений
  * и ведения истории операций.
  *
@@ -930,6 +961,105 @@ class FileSystemService(
 	
 	// ================== УПРАВЛЕНИЕ ПРАВАМИ ==================
 	
+	// ================== ПРОСМОТР ПРАВ =======================
+	/**
+	 * Возвращает список прав, назначенных на папку.
+	 * Доступно только администратору.
+	 *
+	 * @param path путь к папке
+	 * @param currentUser аутентифицированный пользователь
+	 * @return список FolderPermissionInfo
+	 * @throws SecurityException если пользователь не администратор
+	 * @throws EntityNotFoundException если папка не найдена
+	 */
+	fun getFolderPermissions(path: String, currentUser: CurrentUser): List<FolderPermissionInfo> {
+		if (!currentUser.isAdmin)
+			throw SecurityException("Только администратор может просматривать все права на папки")
+		val folder = folderEntityRepository.findByPath(path)
+			?: throw EntityNotFoundException("Папка '$path' не найдена")
+		return folderPermissionRepository.findByFolderEntity(folder).map { fp ->
+			FolderPermissionInfo(
+				id = fp.id,
+				userEmail = fp.user?.email,
+				groupName = fp.group?.name,
+				mode = fp.mode.toInt()
+			)
+		}
+	}
+	
+	/**
+	 * Возвращает список прав, назначенных на файл.
+	 * Доступно только администратору.
+	 *
+	 * @param path путь к файлу
+	 * @param currentUser аутентифицированный пользователь
+	 * @return список FilePermissionInfo
+	 * @throws SecurityException если пользователь не администратор
+	 * @throws EntityNotFoundException если файл не найден
+	 */
+	fun getFilePermissions(path: String, currentUser: CurrentUser): List<FilePermissionInfo> {
+		if (!currentUser.isAdmin)
+			throw SecurityException("Только администратор может просматривать все права на файлы")
+		val file = fileEntityRepository.findByPath(path)
+			?: throw EntityNotFoundException("Файл '$path' не найден")
+		return filePermissionRepository.findByFileEntity(file).map { fp ->
+			FilePermissionInfo(
+				id = fp.id,
+				userEmail = fp.user?.email,
+				groupName = fp.group?.name,
+				mode = fp.mode.toInt()
+			)
+		}
+	}
+	
+	/**
+	 * Возвращает все права, выданные группе.
+	 * Администратор видит всё, участник группы – права своей группы.
+	 *
+	 * @param groupName имя группы
+	 * @param currentUser аутентифицированный пользователь
+	 * @return список PermissionInfo (тип, путь, email, группа, маска прав)
+	 * @throws EntityNotFoundException если группа не найдена
+	 * @throws SecurityException если пользователь не администратор и не участник группы
+	 */
+	fun getGroupPermissions(groupName: String, currentUser: CurrentUser): List<PermissionInfo> {
+		val group = groupService.findByName(groupName)
+			?: throw EntityNotFoundException("Группа '$groupName' не найдена")
+		if (!currentUser.isAdmin && !groupService.hasUserAccessToGroup(currentUser.id!!, groupName))
+			throw SecurityException("Нет доступа к правам группы '$groupName'")
+		
+		return folderPermissionRepository.findAll()
+			.filter { it.group?.name == groupName }
+			.map { PermissionInfo("folder", it.folderEntity.path, null, groupName, it.mode.toInt()) } +
+				filePermissionRepository.findAll()
+					.filter { it.group?.name == groupName }
+					.map { PermissionInfo("file", it.fileEntity.path, null, groupName, it.mode.toInt()) }
+	}
+	
+	/**
+	 * Возвращает все права, выданные конкретному пользователю.
+	 * Администратор может запрашивать любые, обычный пользователь – только свои.
+	 *
+	 * @param userEmail email пользователя
+	 * @param currentUser аутентифицированный пользователь
+	 * @return список PermissionInfo (тип, путь, email, группа, маска прав)
+	 * @throws SecurityException если обычный пользователь запрашивает чужие права
+	 * @throws EntityNotFoundException если пользователь не найден
+	 */
+	fun getUserPermissions(userEmail: String, currentUser: CurrentUser): List<PermissionInfo> {
+		if (!currentUser.isAdmin && currentUser.email != userEmail)
+			throw SecurityException("Вы можете просматривать только свои права")
+		val user = userService.getUserEntityByEmail(userEmail)
+			?: throw EntityNotFoundException("Пользователь '$userEmail' не найден")
+		
+		return folderPermissionRepository.findAll()
+			.filter { it.user?.email == userEmail }
+			.map { PermissionInfo("folder", it.folderEntity.path, userEmail, null, it.mode.toInt()) } +
+				filePermissionRepository.findAll()
+					.filter { it.user?.email == userEmail }
+					.map { PermissionInfo("file", it.fileEntity.path, userEmail, null, it.mode.toInt()) }
+	}
+	
 	/**
 	 * Устанавливает или обновляет явное разрешение для папки.
 	 *
@@ -1083,8 +1213,8 @@ class FileSystemService(
 		val fileEntity = fileEntityRepository.findByPath(path) ?:
 			throw EntityNotFoundException("Файл '$path' не найден")
 		
-		val user = if (userEmail != null) userService.findByEmail(userEmail) else null
-		val group = if (groupName != null) groupService.findByName(groupName) else null
+		val user = userEmail?.let { userService.getUserEntityByEmail(it) }
+		val group = groupName?.let { groupService.findByName(it) }
 		val perm = if (userEmail != null)
 			filePermissionRepository.findByFileEntityAndUser(fileEntity, user = user!!)
 		else

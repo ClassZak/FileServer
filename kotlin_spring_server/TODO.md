@@ -37,7 +37,8 @@
 	- `DELETE /api/files/permissions/file/{id}`
 	- ❌ `GET /api/files/permissions/folder?path=` – *не добавлен*
 	- ❌ `GET /api/files/permissions/file?path=` – *не добавлен*
-	- ❌ `GET /api/files/permissions/group/{groupId}` – *не добавлен*
+	- ❌ `GET /api/files/permissions/group/{groupName}` – *не добавлен*
+    - ❌ `GET /api/files/permissions/user/{userEmail}` – *не добавлен*
 - [✅] **Add history endpoint**:
 	- `GET /api/files/history` – *обновлён: фильтр `userEmail`, ответ возвращает `HistoryInfo` без ID сущностей.*
 

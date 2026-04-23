@@ -1,5 +1,6 @@
 package service.test
 
+import jakarta.persistence.EntityNotFoundException
 import org.mockito.kotlin.argumentCaptor
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -873,6 +874,270 @@ class FileSystemServiceTest {
 		}
 		verify(folderPermissionRepository).save(any<FolderPermission>())
 	}
+	
+	// --------------------------------------------------
+// PERMISSION READING TESTS
+// --------------------------------------------------
+	
+	@Test
+	fun `admin can get folder permissions`() {
+		val admin = CurrentUser(id = 1, email = "admin@t.com", isAdmin = true, userDetails = createUser(1))
+		val folder = FolderEntity(path = "folder", isDeleted = false)
+		val permission = FolderPermission(folder, createUser(2), null, AccessType.READ.value.toShort())
+		whenever(folderEntityRepository.findByPath("folder")).thenReturn(folder)
+		whenever(folderPermissionRepository.findByFolderEntity(folder)).thenReturn(listOf(permission))
+		val result = spiedService.getFolderPermissions("folder", admin)
+		assertEquals(1, result.size)
+		assertEquals("user2@test.com", result[0].userEmail)
+	}
+	
+	@Test
+	fun `non-admin cannot get folder permissions`() {
+		val user = CurrentUser(id = 1, email = "u@t.com", isAdmin = false, userDetails = createUser(1))
+		assertThrows(SecurityException::class.java) {
+			spiedService.getFolderPermissions("folder", user)
+		}
+	}
+	
+	@Test
+	fun `admin can get file permissions`() {
+		val admin = CurrentUser(id = 1, email = "admin@t.com", isAdmin = true, userDetails = createUser(1))
+		val file = FileEntity(path = "file.txt", isDeleted = false)
+		val permission = FilePermission(file, null, Group("g", createUser(2)), AccessType.CREATE.value.toShort())
+		whenever(fileEntityRepository.findByPath("file.txt")).thenReturn(file)
+		whenever(filePermissionRepository.findByFileEntity(file)).thenReturn(listOf(permission))
+		val result = spiedService.getFilePermissions("file.txt", admin)
+		assertEquals(1, result.size)
+		assertEquals("g", result[0].groupName)
+	}
+	
+	@Test
+	fun `non-admin cannot get file permissions`() {
+		val user = CurrentUser(id = 1, email = "u@t.com", isAdmin = false, userDetails = createUser(1))
+		assertThrows(SecurityException::class.java) {
+			spiedService.getFilePermissions("file.txt", user)
+		}
+	}
+	
+	@Test
+	fun `group member can get group permissions`() {
+		val group = Group("dev", createUser(2)).apply { id = 10 }
+		val member = CurrentUser(id = 1, email = "u@t.com", isAdmin = false, userDetails = createUser(1))
+		whenever(groupService.findByName("dev")).thenReturn(group)
+		whenever(groupService.hasUserAccessToGroup(1, "dev")).thenReturn(true)
+		val folder = FolderEntity(path = "folder", isDeleted = false)
+		val file = FileEntity(path = "file.txt", isDeleted = false)
+		val fp = FolderPermission(folder, null, group, AccessType.ALL.value.toShort())
+		val flp = FilePermission(file, null, group, AccessType.READ.value.toShort())
+		whenever(folderPermissionRepository.findAll()).thenReturn(listOf(fp))
+		whenever(filePermissionRepository.findAll()).thenReturn(listOf(flp))
+		val result = spiedService.getGroupPermissions("dev", member)
+		assertEquals(2, result.size)
+		assertTrue(result.any { it.type == "folder" && it.path == "folder" })
+		assertTrue(result.any { it.type == "file" && it.path == "file.txt" })
+	}
+	
+	@Test
+	fun `non-member cannot get group permissions`() {
+		val group = Group("dev", createUser(2)).apply { id = 10 }
+		val outsider = CurrentUser(id = 3, email = "outsider@t.com", isAdmin = false, userDetails = createUser(3))
+		whenever(groupService.findByName("dev")).thenReturn(group)
+		whenever(groupService.hasUserAccessToGroup(3, "dev")).thenReturn(false)
+		assertThrows(SecurityException::class.java) {
+			spiedService.getGroupPermissions("dev", outsider)
+		}
+	}
+	
+	@Test
+	fun `user can get own permissions`() {
+		val user = CurrentUser(id = 1, email = "u@t.com", isAdmin = false, userDetails = createUser(1, "u@t.com"))
+		val folder = FolderEntity(path = "folder", isDeleted = false)
+		val fp = FolderPermission(folder, user.userDetails!!, null, AccessType.DELETE.value.toShort())
+		val file = FileEntity(path = "file.txt", isDeleted = false)
+		val flp = FilePermission(file, user.userDetails!!, null, AccessType.READ.value.toShort())
+		whenever(userService.getUserEntityByEmail("u@t.com")).thenReturn(user.userDetails!!)
+		whenever(folderPermissionRepository.findAll()).thenReturn(listOf(fp))
+		whenever(filePermissionRepository.findAll()).thenReturn(listOf(flp))
+		val result = spiedService.getUserPermissions("u@t.com", user)
+		assertEquals(2, result.size)
+		assertTrue(result.any { it.type == "folder" && it.path == "folder" })
+		assertTrue(result.any { it.type == "file" && it.path == "file.txt" })
+	}
+	
+	@Test
+	fun `user cannot get others permissions`() {
+		val user = CurrentUser(id = 1, email = "u@t.com", isAdmin = false, userDetails = createUser(1))
+		val targetEmail = "other@t.com"
+		assertThrows(SecurityException::class.java) {
+			spiedService.getUserPermissions(targetEmail, user)
+		}
+	}
+	
+	@Test
+	fun `admin can get any user permissions`() {
+		val admin = CurrentUser(id = 1, email = "admin@t.com", isAdmin = true, userDetails = createUser(1))
+		val target = createUser(2, "target@t.com")
+		val folder = FolderEntity(path = "folder", isDeleted = false)
+		val fp = FolderPermission(folder, target, null, AccessType.UPDATE.value.toShort())
+		whenever(userService.getUserEntityByEmail("target@t.com")).thenReturn(target)
+		whenever(folderPermissionRepository.findAll()).thenReturn(listOf(fp))
+		whenever(filePermissionRepository.findAll()).thenReturn(emptyList())
+		val result = spiedService.getUserPermissions("target@t.com", admin)
+		assertEquals(1, result.size)
+		assertEquals("folder", result[0].path)
+	}
+
+// --------------------------------------------------
+// PERMISSION DELETION TESTS
+// --------------------------------------------------
+	
+	@Test
+	fun `admin can delete folder permission`() {
+		val admin = CurrentUser(id = 1, email = "admin@t.com", isAdmin = true, userDetails = createUser(1))
+		val folder = FolderEntity(path = "folder", isDeleted = false)
+		val user = createUser(2)
+		val permission = FolderPermission(folder, user, null, AccessType.READ.value.toShort())
+		whenever(folderEntityRepository.findByPath("folder")).thenReturn(folder)
+		whenever(userService.getUserEntityByEmail("user2@test.com")).thenReturn(user)
+		whenever(folderPermissionRepository.findByFolderEntityAndUser(folder, user)).thenReturn(permission)
+		whenever(operationTypeRepository.findByName("CHANGE_PERMISSIONS")).thenReturn(OperationType("CHANGE_PERMISSIONS"))
+		spiedService.deleteFolderPermission("folder", "user2@test.com", null, admin)
+		verify(folderPermissionRepository).delete(permission)
+		verify(workHistoryRepository).save(any<WorkHistory>())
+	}
+	
+	@Test
+	fun `delete folder permission throws when not admin`() {
+		val user = CurrentUser(id = 1, email = "u@t.com", isAdmin = false, userDetails = createUser(1))
+		assertThrows(SecurityException::class.java) {
+			spiedService.deleteFolderPermission("folder", "user2@test.com", null, user)
+		}
+	}
+	
+	@Test
+	fun `delete folder permission throws when missing params`() {
+		val admin = CurrentUser(id = 1, email = "admin@t.com", isAdmin = true, userDetails = createUser(1))
+		assertThrows(IllegalArgumentException::class.java) {
+			spiedService.deleteFolderPermission("folder", null, null, admin)
+		}
+		assertThrows(IllegalArgumentException::class.java) {
+			spiedService.deleteFolderPermission("folder", "a@b.c", "group", admin)
+		}
+	}
+	
+	@Test
+	fun `delete file permission throws when entity not found`() {
+		val admin = CurrentUser(id = 1, email = "admin@t.com", isAdmin = true, userDetails = createUser(1))
+		val file = FileEntity(path = "file.txt", isDeleted = false)
+		val user = createUser(2, "user2@test.com")
+		whenever(fileEntityRepository.findByPath("file.txt")).thenReturn(file)
+		whenever(userService.getUserEntityByEmail("user2@test.com")).thenReturn(user)
+		whenever(filePermissionRepository.findByFileEntityAndUser(file, user)).thenReturn(null)
+		assertThrows(EntityNotFoundException::class.java) {
+			spiedService.deleteFilePermission("file.txt", "user2@test.com", null, admin)
+		}
+	}
+	
+	@Test
+	fun `admin can delete file permission`() {
+		val admin = CurrentUser(id = 1, email = "admin@t.com", isAdmin = true, userDetails = createUser(1))
+		val file = FileEntity(path = "file.txt", isDeleted = false)
+		val group = Group("dev", createUser(2)).apply { id = 10 }
+		val permission = FilePermission(file, null, group, AccessType.CREATE.value.toShort())
+		whenever(fileEntityRepository.findByPath("file.txt")).thenReturn(file)
+		whenever(groupService.findByName("dev")).thenReturn(group)
+		whenever(filePermissionRepository.findByFileEntityAndGroup(file, group)).thenReturn(permission)
+		whenever(operationTypeRepository.findByName("CHANGE_PERMISSIONS")).thenReturn(OperationType("CHANGE_PERMISSIONS"))
+		spiedService.deleteFilePermission("file.txt", null, "dev", admin)
+		verify(filePermissionRepository).delete(permission)
+		verify(workHistoryRepository).save(any<WorkHistory>())
+	}
+	
+	@Test
+	fun `delete file permission throws when not admin`() {
+		val user = CurrentUser(id = 1, email = "u@t.com", isAdmin = false, userDetails = createUser(1))
+		assertThrows(SecurityException::class.java) {
+			spiedService.deleteFilePermission("file.txt", "user2@test.com", null, user)
+		}
+	}
+	
+	@Test
+	fun `delete file permission throws when missing params`() {
+		val admin = CurrentUser(id = 1, email = "admin@t.com", isAdmin = true, userDetails = createUser(1))
+		assertThrows(IllegalArgumentException::class.java) {
+			spiedService.deleteFilePermission("file.txt", null, null, admin)
+		}
+		assertThrows(IllegalArgumentException::class.java) {
+			spiedService.deleteFilePermission("file.txt", "a@b.c", "group", admin)
+		}
+	}
+	
+	@Test
+	fun `delete folder permission throws when entity not found`() {
+		val admin = CurrentUser(id = 1, email = "admin@t.com", isAdmin = true, userDetails = createUser(1))
+		val folder = FolderEntity(path = "folder", isDeleted = false)
+		val user = createUser(2, "user2@test.com")
+		whenever(folderEntityRepository.findByPath("folder")).thenReturn(folder)
+		whenever(userService.getUserEntityByEmail("user2@test.com")).thenReturn(user)   // пользователь найден
+		whenever(folderPermissionRepository.findByFolderEntityAndUser(folder, user)).thenReturn(null) // разрешение отсутствует
+		assertThrows(EntityNotFoundException::class.java) {
+			spiedService.deleteFolderPermission("folder", "user2@test.com", null, admin)
+		}
+	}
+
+// --------------------------------------------------
+// SET FILE PERMISSION TESTS
+// --------------------------------------------------
+	
+	@Test
+	fun `admin can set file permission`() {
+		val admin = CurrentUser(id = 1, email = "admin@t.com", isAdmin = true, userDetails = createUser(1))
+		val file = FileEntity(path = "file.txt", isDeleted = false)
+		val user = createUser(2)
+		whenever(fileEntityRepository.findByPath("file.txt")).thenReturn(file)
+		whenever(userService.getUserEntityByEmail("user2@test.com")).thenReturn(user)
+		whenever(filePermissionRepository.findByFileEntityAndUser(file, user)).thenReturn(null)
+		whenever(operationTypeRepository.findByName("CHANGE_PERMISSIONS")).thenReturn(OperationType("CHANGE_PERMISSIONS"))
+		spiedService.setFilePermission("file.txt", "user2@test.com", null, AccessType.READ.value, admin)
+		verify(filePermissionRepository).save(any<FilePermission>())
+	}
+	
+	@Test
+	fun `set file permission throws when mode lacks READ but not zero`() {
+		val admin = CurrentUser(id = 1, email = "admin@t.com", isAdmin = true, userDetails = createUser(1))
+		val file = FileEntity(path = "file.txt", isDeleted = false)
+		whenever(fileEntityRepository.findByPath("file.txt")).thenReturn(file)
+		assertThrows(IllegalArgumentException::class.java) {
+			spiedService.setFilePermission("file.txt", "user2@test.com", null, AccessType.CREATE.value, admin)
+		}
+	}
+	
+	@Test
+	fun `set file permission accepts mode zero`() {
+		val admin = CurrentUser(id = 1, email = "admin@t.com", isAdmin = true, userDetails = createUser(1))
+		val file = FileEntity(path = "file.txt", isDeleted = false)
+		val user = createUser(2)
+		whenever(fileEntityRepository.findByPath("file.txt")).thenReturn(file)
+		whenever(userService.getUserEntityByEmail("user2@test.com")).thenReturn(user)
+		whenever(filePermissionRepository.findByFileEntityAndUser(file, user)).thenReturn(null)
+		whenever(operationTypeRepository.findByName("CHANGE_PERMISSIONS")).thenReturn(OperationType("CHANGE_PERMISSIONS"))
+		assertDoesNotThrow {
+			spiedService.setFilePermission("file.txt", "user2@test.com", null, 0, admin)
+		}
+	}
+	
+	@Test
+	fun `set file permission throws when user lacks UPDATE on parent folder`() {
+		val user = createUser(id = 1)
+		val currentUser = CurrentUser(id = 1, email = user.email, isAdmin = false, userDetails = user)
+		val file = FileEntity(path = "file.txt", isDeleted = false)
+		whenever(fileEntityRepository.findByPath("file.txt")).thenReturn(file)
+		doReturn(AccessType.READ.value).whenever(spiedService).checkAccessForDirectory(currentUser, "")
+		assertThrows(SecurityException::class.java) {
+			spiedService.setFilePermission("file.txt", "user2@test.com", null, AccessType.ALL.value, currentUser)
+		}
+	}
+	
 	
 	// --------------------------------------------------
 	// UTILS
