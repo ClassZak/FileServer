@@ -64,6 +64,18 @@ data class DeletedFolderInfo(
 )
 
 /**
+ * Информация об удалённой папке для передачи клиенту.
+ */
+data class HistoryInfo(
+	val workTime: LocalDateTime,
+	val operationType: String,
+	val userEmail: String,
+	val path: String,
+	val isFile: Boolean,
+	val details: String?
+)
+
+/**
  * Сервис для управления файловой системой с учётом прав доступа, версионирования удалений
  * и ведения истории операций.
  *
@@ -1357,13 +1369,29 @@ class FileSystemService(
 	 * Возвращает отфильтрованный список записей истории.
 	 *
 	 * @param filters фильтры по пользователю, префиксу пути и типу (файл/папка)
-	 * @return список WorkHistory
+	 * @return список HistoryInfo
 	 */
-	fun getWorkHistory(filters: HistoryFilter): List<WorkHistory> {
+	fun getWorkHistory(filters: HistoryFilter): List<HistoryInfo> {
 		return workHistoryRepository.findAll().filter { wh ->
 			(filters.userId == null || wh.user.id == filters.userId) &&
 					(filters.pathPrefix == null || wh.path.startsWith(filters.pathPrefix)) &&
 					(filters.isFile == null || wh.isFile == filters.isFile)
+		}.map{
+			wh ->
+			val path = if (wh.fileEntity!=null)
+				wh.fileEntity!!.path
+			else if (wh.folderEntity!=null)
+				wh.folderEntity!!.path
+			else wh.path
+			
+			HistoryInfo(
+				workTime = wh.workTime,
+				operationType = wh.operationType.name,
+				userEmail = wh.user.email,
+				path = path,
+				details = wh.details,
+				isFile = wh.isFile,
+			)
 		}
 	}
 	

@@ -558,7 +558,7 @@ class FileController(
 	/**
 	 * Получить историю операций с возможностью фильтрации.
 	 *
-	 * @param userId (опционально) фильтр по ID пользователя.
+	 * @param userEmail (опционально) фильтр по почте пользователя.
 	 * @param pathPrefix (опционально) фильтр по префиксу пути.
 	 * @param isFile (опционально) фильтр по типу: true – файлы, false – папки.
 	 * @param authHeader заголовок Authorization с Bearer токеном.
@@ -568,13 +568,14 @@ class FileController(
 	@GetMapping("/history")
 	@PreAuthorize("isAuthenticated()")
 	fun getHistory(
-		@RequestParam(required = false) userId: Int?,
+		@RequestParam(required = false) userEmail: String?,
 		@RequestParam(required = false) pathPrefix: String?,
 		@RequestParam(required = false) isFile: Boolean?,
 		@RequestHeader("Authorization") authHeader: String
 	): ResponseEntity<Any> {
 		val currentUser = getCurrentUserFromJwt(authHeader)
-		if (!currentUser.isAdmin && userId != null && userId != currentUser.id) {
+		val userId = currentUser.id
+		if (!currentUser.isAdmin && userEmail != null && userEmail != currentUser.email) {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(mapOf("error" to "Нет прав на просмотр чужой истории"))
 		}
 		val filter = FileSystemService.HistoryFilter(
