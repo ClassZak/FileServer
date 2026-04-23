@@ -70,15 +70,15 @@ export interface DeletedFolderInfo {
 }
 
 /**
- * Entry in the work history log.
+ * Entry in the work history log (matches backend HistoryInfo).
  */
-export interface WorkHistoryEntry {
-    workTime: string;          // ISO-date
-    operationType: string;     // operation name (CREATE, DELETE, …)
-    userEmail: string;
-    path: string;
-    isFile: boolean;
-    details: string | null;
+export interface HistoryEntry {
+	workTime: string;
+	operationType: string;
+	userEmail: string;
+	path: string;
+	isFile: boolean;
+	details: string | null;
 }
 
 /**
@@ -86,14 +86,41 @@ export interface WorkHistoryEntry {
  */
 export interface SetPermissionRequest {
 	path: string;
-	userId?: number;
-	groupId?: number;
+	userEmail?: string | null;
+	groupName?: string | null;
 	mode: number;
 }
 
+/**
+ * Information about a folder permission returned by the API.
+ */
+export interface FolderPermissionInfo {
+	id?: number;
+	userEmail?: string;
+	groupName?: string;
+	mode: number;
+}
 
+/**
+ * Information about a file permission returned by the API.
+ */
+export interface FilePermissionInfo {
+	id?: number;
+	userEmail?: string;
+	groupName?: string;
+	mode: number;
+}
 
-
+/**
+ * Unified permission information used for group / user queries.
+ */
+export interface PermissionInfo {
+	type: 'folder' | 'file';
+	path: string;
+	userEmail?: string;
+	groupName?: string;
+	mode: number;
+}
 
 /**
  * Service for interacting with file system operations via the backend API.
@@ -392,18 +419,66 @@ export class FileService {
 	}
 
 	/**
-	 * Restores a file from trash.
+	 * Retrieves deleted file versions for a specific file.
 	 *
 	 * @param token - JWT authentication token.
-	 * @param deletedId - ID of the deleted file record.
-	 * @returns Promise resolving when restoration is complete.
+	 * @param parentPath - Parent directory of the file.
+	 * @param fileName - Name of the file.
+	 * @returns Promise resolving to an array of DeletedFileInfo.
 	 */
-	async restoreFile(token: string, deletedId: number): Promise<DefaultServiceResult> {
+	async getDeletedFileVersions(token: string, parentPath: string, fileName: string): Promise<DefaultServiceResultWithData<DeletedFileInfo[]>> {
+		try {
+			const params = new HttpParams()
+				.set('parentPath', parentPath)
+				.set('fileName', fileName);
+			const response = await firstValueFrom(
+				this.http.get<{ versions: DeletedFileInfo[] }>(
+					'/api/files/deleted/file/versions',
+					{ headers: CreateConfig.createAuthConfig(token).headers, params }
+				)
+			);
+			return { success: true, data: response.versions };
+		} catch (error) {
+			return FileService.handleError(error, 'Ошибка получения версий удалённого файла');
+		}
+	}
+
+	/**
+	 * Retrieves deleted folder versions for a specific folder.
+	 *
+	 * @param token - JWT authentication token.
+	 * @param path - Path of the folder.
+	 * @returns Promise resolving to an array of DeletedFolderInfo.
+	 */
+	async getDeletedFolderVersions(token: string, path: string): Promise<DefaultServiceResultWithData<DeletedFolderInfo[]>> {
+		try {
+			const params = new HttpParams().set('path', path);
+			const response = await firstValueFrom(
+				this.http.get<{ versions: DeletedFolderInfo[] }>(
+					'/api/files/deleted/folder/versions',
+					{ headers: CreateConfig.createAuthConfig(token).headers, params }
+				)
+			);
+			return { success: true, data: response.versions };
+		} catch (error) {
+			return FileService.handleError(error, 'Ошибка получения версий удалённой папки');
+		}
+	}
+
+	/**
+	 * Restores a file from trash by its original path and version.
+	 *
+	 * @param token - JWT authentication token.
+	 * @param originalPath - Original path of the deleted file.
+	 * @param version - Version to restore.
+	 * @returns Promise that resolves when restoration is complete.
+	 */
+	async restoreFile(token: string, originalPath: string, version: number): Promise<DefaultServiceResult> {
 		try {
 			await firstValueFrom(
 				this.http.post(
-					`/api/files/restore/file/${deletedId}`,
-					{},
+					'/api/files/restore/file',
+					{ originalPath, version },
 					CreateConfig.createAuthConfig(token)
 				)
 			);
@@ -414,18 +489,19 @@ export class FileService {
 	}
 
 	/**
-	 * Restores a folder from trash.
+	 * Restores a folder from trash by its original path and version.
 	 *
 	 * @param token - JWT authentication token.
-	 * @param deletedId - ID of the deleted folder record.
-	 * @returns Promise resolving when restoration is complete.
+	 * @param originalPath - Original path of the deleted folder.
+	 * @param version - Version to restore.
+	 * @returns Promise that resolves when restoration is complete.
 	 */
-	async restoreFolder(token: string, deletedId: number): Promise<DefaultServiceResult> {
+	async restoreFolder(token: string, originalPath: string, version: number): Promise<DefaultServiceResult> {
 		try {
 			await firstValueFrom(
 				this.http.post(
-					`/api/files/restore/folder/${deletedId}`,
-					{},
+					'/api/files/restore/folder',
+					{ originalPath, version },
 					CreateConfig.createAuthConfig(token)
 				)
 			);
@@ -436,17 +512,17 @@ export class FileService {
 	}
 
 	/**
-	 * Permanently deletes a file from trash (admin only).
+	 * Permanently deletes a file and all its versions (admin only).
 	 *
 	 * @param token - JWT authentication token.
-	 * @param deletedId - ID of the deleted file record.
-	 * @returns Promise resolving when deletion is complete.
+	 * @param path - Original path of the file.
+	 * @returns Promise that resolves when deletion is complete.
 	 */
-	async permanentDeleteFile(token: string, deletedId: number): Promise<DefaultServiceResult> {
+	async permanentDeleteFile(token: string, path: string): Promise<DefaultServiceResult> {
 		try {
 			await firstValueFrom(
 				this.http.delete(
-					`/api/files/permanent/file/${deletedId}`,
+					`/api/files/permanent/file?path=${encodeURIComponent(path)}`,
 					CreateConfig.createAuthConfig(token)
 				)
 			);
@@ -457,17 +533,17 @@ export class FileService {
 	}
 
 	/**
-	 * Permanently deletes a folder from trash (admin only).
+	 * Permanently deletes a folder and all its versions (admin only).
 	 *
 	 * @param token - JWT authentication token.
-	 * @param deletedId - ID of the deleted folder record.
-	 * @returns Promise resolving when deletion is complete.
+	 * @param path - Original path of the folder.
+	 * @returns Promise that resolves when deletion is complete.
 	 */
-	async permanentDeleteFolder(token: string, deletedId: number): Promise<DefaultServiceResult> {
+	async permanentDeleteFolder(token: string, path: string): Promise<DefaultServiceResult> {
 		try {
 			await firstValueFrom(
 				this.http.delete(
-					`/api/files/permanent/folder/${deletedId}`,
+					`/api/files/permanent/folder?path=${encodeURIComponent(path)}`,
 					CreateConfig.createAuthConfig(token)
 				)
 			);
@@ -480,10 +556,98 @@ export class FileService {
 	// ---------- Permissions ----------
 
 	/**
+	 * Retrieves permissions assigned to a specific folder (admin only).
+	 *
+	 * @param token - JWT authentication token.
+	 * @param path - Path of the folder.
+	 * @returns Promise resolving to an array of FolderPermissionInfo.
+	 */
+	async getFolderPermissions(token: string, path: string): Promise<DefaultServiceResultWithData<FolderPermissionInfo[]>> {
+		try {
+			const params = new HttpParams().set('path', path);
+			const response = await firstValueFrom(
+				this.http.get<{ permissions: FolderPermissionInfo[] }>(
+					'/api/files/permissions/folder',
+					{ headers: CreateConfig.createAuthConfig(token).headers, params }
+				)
+			);
+			return { success: true, data: response.permissions };
+		} catch (error) {
+			return FileService.handleError(error, 'Ошибка получения прав на папку');
+		}
+	}
+
+	/**
+	 * Retrieves permissions assigned to a specific file (admin only).
+	 *
+	 * @param token - JWT authentication token.
+	 * @param path - Path of the file.
+	 * @returns Promise resolving to an array of FilePermissionInfo.
+	 */
+	async getFilePermissions(token: string, path: string): Promise<DefaultServiceResultWithData<FilePermissionInfo[]>> {
+		try {
+			const params = new HttpParams().set('path', path);
+			const response = await firstValueFrom(
+				this.http.get<{ permissions: FilePermissionInfo[] }>(
+					'/api/files/permissions/file',
+					{ headers: CreateConfig.createAuthConfig(token).headers, params }
+				)
+			);
+			return { success: true, data: response.permissions };
+		} catch (error) {
+			return FileService.handleError(error, 'Ошибка получения прав на файл');
+		}
+	}
+
+	/**
+	 * Retrieves all permissions granted to a specific group.
+	 * Admin sees all, member sees their group's permissions.
+	 *
+	 * @param token - JWT authentication token.
+	 * @param groupName - Name of the group.
+	 * @returns Promise resolving to an array of PermissionInfo.
+	 */
+	async getGroupPermissions(token: string, groupName: string): Promise<DefaultServiceResultWithData<PermissionInfo[]>> {
+		try {
+			const response = await firstValueFrom(
+				this.http.get<{ permissions: PermissionInfo[] }>(
+					`/api/files/permissions/group/${groupName}`,
+					CreateConfig.createAuthConfig(token)
+				)
+			);
+			return { success: true, data: response.permissions };
+		} catch (error) {
+			return FileService.handleError(error, 'Ошибка получения прав группы');
+		}
+	}
+
+	/**
+	 * Retrieves all permissions granted to a specific user.
+	 * Admin can request any user's permissions, regular user only their own.
+	 *
+	 * @param token - JWT authentication token.
+	 * @param userEmail - Email of the user.
+	 * @returns Promise resolving to an array of PermissionInfo.
+	 */
+	async getUserPermissions(token: string, userEmail: string): Promise<DefaultServiceResultWithData<PermissionInfo[]>> {
+		try {
+			const response = await firstValueFrom(
+				this.http.get<{ permissions: PermissionInfo[] }>(
+					`/api/files/permissions/user/${userEmail}`,
+					CreateConfig.createAuthConfig(token)
+				)
+			);
+			return { success: true, data: response.permissions };
+		} catch (error) {
+			return FileService.handleError(error, 'Ошибка получения прав пользователя');
+		}
+	}
+
+	/**
 	 * Sets permissions on a folder.
 	 *
 	 * @param token - JWT authentication token.
-	 * @param request - Permission details (path, userId/groupId, mode).
+	 * @param request - Permission details (path, userEmail/groupName, mode).
 	 * @returns Promise resolving when permissions are set.
 	 */
 	async setFolderPermission(token: string, request: SetPermissionRequest): Promise<DefaultServiceResult> {
@@ -501,13 +665,21 @@ export class FileService {
 	 * Deletes explicit permissions on a folder.
 	 *
 	 * @param token - JWT authentication token.
-	 * @param permissionId - ID of the permission record.
+	 * @param path - Path of the folder.
+	 * @param userEmail - Email of the user whose permission is removed (optional).
+	 * @param groupName - Name of the group whose permission is removed (optional).
 	 * @returns Promise resolving when permissions are removed.
 	 */
-	async deleteFolderPermission(token: string, permissionId: number): Promise<DefaultServiceResult> {
+	async deleteFolderPermission(token: string, path: string, userEmail?: string, groupName?: string): Promise<DefaultServiceResult> {
 		try {
+			let params = new HttpParams().set('path', path);
+			if (userEmail) params = params.set('userEmail', userEmail);
+			if (groupName) params = params.set('groupName', groupName);
 			await firstValueFrom(
-				this.http.delete(`/api/files/permissions/folder/${permissionId}`, CreateConfig.createAuthConfig(token))
+				this.http.delete('/api/files/permissions/folder', {
+					headers: CreateConfig.createAuthConfig(token).headers,
+					params
+				})
 			);
 			return { success: true };
 		} catch (error) {
@@ -519,7 +691,7 @@ export class FileService {
 	 * Sets permissions on a file.
 	 *
 	 * @param token - JWT authentication token.
-	 * @param request - Permission details (path, userId/groupId, mode).
+	 * @param request - Permission details (path, userEmail/groupName, mode).
 	 * @returns Promise resolving when permissions are set.
 	 */
 	async setFilePermission(token: string, request: SetPermissionRequest): Promise<DefaultServiceResult> {
@@ -537,13 +709,21 @@ export class FileService {
 	 * Deletes explicit permissions on a file.
 	 *
 	 * @param token - JWT authentication token.
-	 * @param permissionId - ID of the permission record.
+	 * @param path - Path of the file.
+	 * @param userEmail - Email of the user whose permission is removed (optional).
+	 * @param groupName - Name of the group whose permission is removed (optional).
 	 * @returns Promise resolving when permissions are removed.
 	 */
-	async deleteFilePermission(token: string, permissionId: number): Promise<DefaultServiceResult> {
+	async deleteFilePermission(token: string, path: string, userEmail?: string, groupName?: string): Promise<DefaultServiceResult> {
 		try {
+			let params = new HttpParams().set('path', path);
+			if (userEmail) params = params.set('userEmail', userEmail);
+			if (groupName) params = params.set('groupName', groupName);
 			await firstValueFrom(
-				this.http.delete(`/api/files/permissions/file/${permissionId}`, CreateConfig.createAuthConfig(token))
+				this.http.delete('/api/files/permissions/file', {
+					headers: CreateConfig.createAuthConfig(token).headers,
+					params
+				})
 			);
 			return { success: true };
 		} catch (error) {
@@ -558,19 +738,19 @@ export class FileService {
 	 *
 	 * @param token - JWT authentication token.
 	 * @param filters - Optional filters: userEmail, pathPrefix, isFile.
-	 * @returns Promise resolving to an array of WorkHistoryEntry.
+	 * @returns Promise resolving to an array of HistoryEntry.
 	 */
 	async getHistory(
 		token: string,
 		filters?: { userEmail?: string; pathPrefix?: string; isFile?: boolean }
-	): Promise<DefaultServiceResultWithData<WorkHistoryEntry[]>> {
+	): Promise<DefaultServiceResultWithData<HistoryEntry[]>> {
 		try {
 			let params = new HttpParams();
 			if (filters?.userEmail) params = params.set('userEmail', filters.userEmail);
 			if (filters?.pathPrefix) params = params.set('pathPrefix', filters.pathPrefix);
 			if (filters?.isFile !== undefined) params = params.set('isFile', String(filters.isFile));
 			const response = await firstValueFrom(
-				this.http.get<{ history: WorkHistoryEntry[] }>('/api/files/history', {
+				this.http.get<{ history: HistoryEntry[] }>('/api/files/history', {
 					headers: CreateConfig.createAuthConfig(token).headers,
 					params
 				})
