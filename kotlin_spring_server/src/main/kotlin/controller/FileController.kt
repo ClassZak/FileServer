@@ -15,7 +15,6 @@ import org.zak.service.AdministratorService
 import org.zak.service.FileSystemService
 import org.zak.service.UserService
 import org.zak.util.JwtUtil
-import java.io.File
 
 /**
  * Контроллер для работы с файловой системой через REST API.
@@ -482,7 +481,7 @@ class FileController(
 	fun setFolderPermission(@RequestBody request: SetPermissionRequest, @RequestHeader("Authorization") authHeader: String): ResponseEntity<Any> {
 		val currentUser = getCurrentUserFromJwt(authHeader)
 		return try {
-			fileSystemService.setFolderPermission(request.path, request.userId, request.groupId, request.mode, currentUser)
+			fileSystemService.setFolderPermission(request.path, request.userEmail, request.groupName, request.mode, currentUser)
 			ResponseEntity.ok(mapOf("success" to true))
 		} catch (e: Exception) {
 			handleException(e)
@@ -532,7 +531,7 @@ class FileController(
 	fun setFilePermission(@RequestBody request: SetPermissionRequest, @RequestHeader("Authorization") authHeader: String): ResponseEntity<Any> {
 		val currentUser = getCurrentUserFromJwt(authHeader)
 		return try {
-			fileSystemService.setFilePermission(request.path, request.userId, request.groupId, request.mode, currentUser)
+			fileSystemService.setFilePermission(request.path, request.userEmail, request.groupName, request.mode, currentUser)
 			ResponseEntity.ok(mapOf("success" to true))
 		} catch (e: Exception) {
 			handleException(e)
@@ -664,11 +663,10 @@ class FileController(
  */
 data class SetPermissionRequest(
 	val path: String,
-	val userId: Int?,
-	val groupId: Int?,
+	val userEmail: String?,
+	val groupName: String?,
 	val mode: Int
 )
-
 /**
  * DTO для запроса на восстановление файла.
  */

@@ -368,7 +368,7 @@ class FileSystemService(
 					}
 				}
 			} catch (e: SecurityException) {
-				logger.warn("Нет доступа к: ${file.name}")
+				logger.warn("Нет доступа к: ${file.name} \n${e.message}")
 			}
 		}
 		
@@ -382,12 +382,12 @@ class FileSystemService(
 	 * доступный текущему пользователю для чтения.
 	 */
 	private fun hasAnyReadableChild(currentUser: CurrentUser, folderPath: String): Boolean {
-		val childrenFiles = fileEntityRepository.findByPathStartingWith(folderPath + "/")
+		val childrenFiles = fileEntityRepository.findByPathStartingWith("$folderPath/")
 		if (childrenFiles.any { file ->
 				!file.isDeleted && (checkAccessForFile(currentUser, file.path.substringBeforeLast("/"), file.path.substringAfterLast("/")) and AccessType.READ.value) != 0
 			}) return true
 		
-		val childrenFolders = folderEntityRepository.findByPathStartingWith(folderPath + "/")
+		val childrenFolders = folderEntityRepository.findByPathStartingWith("$folderPath/")
 		return childrenFolders.any { childFolder ->
 			!childFolder.isDeleted && (checkAccessForDirectory(currentUser, childFolder.path) and AccessType.READ.value) != 0
 		}
@@ -897,7 +897,7 @@ class FileSystemService(
 		}
 		
 		// Каскадное удаление дочерних элементов
-		val childFiles = fileEntityRepository.findByPathStartingWith(originalPath + "/")
+		val childFiles = fileEntityRepository.findByPathStartingWith("$originalPath/")
 		childFiles.forEach { file ->
 			filePermissionRepository.deleteAll(filePermissionRepository.findByFileEntity(file))
 			deletedFileRepository.findByOriginalPath(file.path).forEach { deletedFileRepository.delete(it) }
@@ -909,7 +909,7 @@ class FileSystemService(
 			fileEntityRepository.delete(file)
 		}
 		
-		val childFolders = folderEntityRepository.findByPathStartingWith(originalPath + "/")
+		val childFolders = folderEntityRepository.findByPathStartingWith("$originalPath/")
 		childFolders.forEach { folder ->
 			folderPermissionRepository.deleteAll(folderPermissionRepository.findByFolderEntity(folder))
 			deletedFolderRepository.findByOriginalPath(folder.path).forEach { deletedFolderRepository.delete(it) }
@@ -934,8 +934,8 @@ class FileSystemService(
 	 * Устанавливает или обновляет явное разрешение для папки.
 	 *
 	 * @param path путь к папке
-	 * @param userId идентификатор пользователя (если указан, groupId должен быть null)
-	 * @param groupId идентификатор группы (если указан, userId должен быть null)
+	 * @param userEmail почта пользователя (если указано, groupName должен быть null)
+	 * @param groupName имя группы (если указано, userEmail должен быть null)
 	 * @param mode битовая маска прав (0-15)
 	 * @param currentUser аутентифицированный пользователь
 	 * @throws IllegalArgumentException если указаны оба или ни одного идентификатора
@@ -943,8 +943,8 @@ class FileSystemService(
 	 * @throws EntityNotFoundException если папка или субъект не найдены
 	 */
 	@Transactional
-	fun setFolderPermission(path: String, userId: Int?, groupId: Int?, mode: Int, currentUser: CurrentUser) {
-		require((userId != null) xor (groupId != null)) { "Укажите ровно одно: userId или groupId" }
+	fun setFolderPermission(path: String, userEmail: String?, groupName: String?, mode: Int, currentUser: CurrentUser) {
+		require((userEmail != null) xor (groupName != null)) { "Укажите ровно одно: userEmail или groupName" }
 		val permissions = checkAccessForDirectory(currentUser, path)
 		if ((permissions and AccessType.UPDATE.value) == 0) {
 			throw SecurityException("Нет прав на изменение разрешений для '$path'")
@@ -953,12 +953,11 @@ class FileSystemService(
 		
 		val folderEntity = folderEntityRepository.findByPath(path)
 			?: throw EntityNotFoundException("Папка не найдена: $path")
-		// Запрет на ограничение прав группы в групповой папке и создание прав для других групп в групповой папке
-		if (groupId != null && isGroupDirectory(path))
+		if (groupName != null && isGroupDirectory(path))
 			throw SecurityException("Группы должны иметь полный доступ к своим папкам. Путь '$path' принадлежит группе")
 		
-		val user = userId?.let { userService.getUserEntityById(it) }
-		val group = groupId?.let { groupService.read(it) ?: throw EntityNotFoundException("Группа не найдена") }
+		val user = userEmail?.let { userService.getUserEntityByEmail(it) }
+		val group = groupName?.let { groupService.findByName(it) ?: throw EntityNotFoundException("Группа '$groupName' не найдена") }
 		
 		val existing = if (user != null) {
 			folderPermissionRepository.findByFolderEntityAndUser(folderEntity, user)
@@ -973,7 +972,7 @@ class FileSystemService(
 			folderPermissionRepository.save(FolderPermission(folderEntity, user, group, mode.toShort()))
 		}
 		recordHistory("CHANGE_PERMISSIONS", currentUser.userDetails!!, folderEntity = folderEntity, path = path, isFile = false,
-			details = "{\"mode\": $mode, \"userId\": $userId, \"groupId\": $groupId}")
+			details = "{\"mode\": $mode, \"userEmail\": \"${userEmail ?: ""}\", \"groupName\": \"${groupName ?: ""}\"}")
 	}
 	
 	/**
@@ -991,10 +990,9 @@ class FileSystemService(
 	fun deleteFolderPermission(path: String, userEmail: String?, groupName: String?, currentUser: CurrentUser) {
 		if (!currentUser.isAdmin)
 			throw SecurityException("Нет прав на изменение правил доступа для папки '$path'")
-		if (userEmail == null && groupName == null)
-			throw IllegalArgumentException("Необходимо указать почту пользователя или имя группы для удаления прав")
-		if (userEmail != null && groupName != null)
-			throw IllegalArgumentException("Необходимо указать что-то одно: почту пользователя или имя группы")
+		require((userEmail != null) xor (groupName != null)) {
+			"Необходимо указать либо почту пользователя, либо имя группы для удаления прав"
+		}
 		
 		val folderEntity = folderEntityRepository.findByPath(path)
 			?: throw EntityNotFoundException("Папка '$path' не найдена")
@@ -1022,8 +1020,8 @@ class FileSystemService(
 	 * Устанавливает или обновляет явное разрешение для файла.
 	 *
 	 * @param path путь к файлу
-	 * @param userId идентификатор пользователя (если указан, groupId должен быть null)
-	 * @param groupId идентификатор группы (если указан, userId должен быть null)
+	 * @param userEmail почта пользователя (если указано, groupName должен быть null)
+	 * @param groupName имя группы (если указано, userEmail должен быть null)
 	 * @param mode битовая маска прав (0-15)
 	 * @param currentUser аутентифицированный пользователь
 	 * @throws IllegalArgumentException если указаны оба или ни одного идентификатора
@@ -1031,12 +1029,11 @@ class FileSystemService(
 	 * @throws EntityNotFoundException если файл или субъект не найдены
 	 */
 	@Transactional
-	fun setFilePermission(path: String, userId: Int?, groupId: Int?, mode: Int, currentUser: CurrentUser) {
-		require((userId != null) xor (groupId != null)) { "Укажите ровно одно: userId или groupId" }
+	fun setFilePermission(path: String, userEmail: String?, groupName: String?, mode: Int, currentUser: CurrentUser) {
+		require((userEmail != null) xor (groupName != null)) { "Укажите ровно одно: userEmail или groupName" }
 		val fileEntity = fileEntityRepository.findByPath(path)
 			?: throw EntityNotFoundException("Файл не найден: $path")
-		// Запрет на ограничение прав группы в групповой папке и создание прав для других групп в групповой папке
-		if (groupId != null && isGroupDirectory(Paths.get(path).parent?.toString() ?: "")) {
+		if (groupName != null && isGroupDirectory(Paths.get(path).parent?.toString() ?: "")) {
 			throw SecurityException("Нельзя ограничивать права группы на файлы внутри её папки")
 		}
 		val parentPath = Paths.get(path).parent?.toString() ?: ""
@@ -1046,8 +1043,8 @@ class FileSystemService(
 		}
 		validateMode(mode)
 		
-		val user = userId?.let { userService.getUserEntityById(it) }
-		val group = groupId?.let { groupService.read(it) ?: throw EntityNotFoundException("Группа не найдена") }
+		val user = userEmail?.let { userService.getUserEntityByEmail(it) }
+		val group = groupName?.let { groupService.findByName(it) ?: throw EntityNotFoundException("Группа '$groupName' не найдена") }
 		
 		val existing = if (user != null) {
 			filePermissionRepository.findByFileEntityAndUser(fileEntity, user)
@@ -1062,7 +1059,7 @@ class FileSystemService(
 			filePermissionRepository.save(FilePermission(fileEntity, user, group, mode.toShort()))
 		}
 		recordHistory("CHANGE_PERMISSIONS", currentUser.userDetails!!, fileEntity = fileEntity, path = path, isFile = true,
-			details = "{\"mode\": $mode, \"userId\": $userId, \"groupId\": $groupId}")
+			details = "{\"mode\": $mode, \"userEmail\": \"${userEmail ?: ""}\", \"groupName\": \"${groupName ?: ""}\"}")
 	}
 	
 	/**
@@ -1079,10 +1076,9 @@ class FileSystemService(
 	fun deleteFilePermission(path: String, userEmail: String?, groupName: String?, currentUser: CurrentUser) {
 		if (!currentUser.isAdmin)
 			throw SecurityException("Нет прав на изменения правил доступа для файла $path")
-		if (userEmail == null && groupName == null)
-			throw IllegalArgumentException("Необходимо указать почту пользователя или имя группы для удаления прав")
-		if (userEmail != null && groupName != null)
-			throw IllegalArgumentException("Необходимо указать что-то одно: почту пользователя или имя группы")
+		require((userEmail != null) xor (groupName != null)) {
+			"Необходимо указать либо почту пользователя, либо имя группы для удаления прав"
+		}
 		
 		val fileEntity = fileEntityRepository.findByPath(path) ?:
 			throw EntityNotFoundException("Файл '$path' не найден")
@@ -1288,7 +1284,9 @@ class FileSystemService(
 					if (file.isDirectory) {
 						searchRecursively(file)
 					}
-				} catch (e: SecurityException) { /* skip */ }
+				} catch (e: SecurityException) {
+					logger.error(e.message)
+				}
 			}
 		}
 		searchRecursively(directory)

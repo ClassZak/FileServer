@@ -1,13 +1,11 @@
 package service.test
 
 import org.mockito.kotlin.argumentCaptor
-import jakarta.persistence.EntityNotFoundException
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mock
-import org.mockito.MockedStatic
 import org.mockito.Mockito
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.*
@@ -22,9 +20,7 @@ import org.springframework.web.multipart.MultipartFile
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 import java.time.LocalDateTime
-import java.util.*
 
 @ExtendWith(MockitoExtension::class)
 class FileSystemServiceTest {
@@ -260,7 +256,7 @@ class FileSystemServiceTest {
 	fun `setFolderPermission throws when mode lacks READ but not zero`() {
 		val currentUser = CurrentUser(id = 1, email = "u@t.com", isAdmin = true, userDetails = createUser(1))
 		assertThrows(IllegalArgumentException::class.java) {
-			spiedService.setFolderPermission("some/path", 1, null, AccessType.CREATE.value, currentUser)
+			spiedService.setFolderPermission("some/path", "user1@test.com", null, AccessType.CREATE.value, currentUser)
 		}
 	}
 	
@@ -270,10 +266,12 @@ class FileSystemServiceTest {
 		val folder = FolderEntity(path = "some/path", isDeleted = false)
 		val user = createUser(1)
 		whenever(folderEntityRepository.findByPath("some/path")).thenReturn(folder)
-		whenever(userService.getUserEntityById(1)).thenReturn(user)
+		whenever(userService.getUserEntityByEmail("user1@test.com")).thenReturn(user)
 		whenever(folderPermissionRepository.findByFolderEntityAndUser(folder, user)).thenReturn(null)
 		whenever(operationTypeRepository.findByName("CHANGE_PERMISSIONS")).thenReturn(OperationType("CHANGE_PERMISSIONS"))
-		assertDoesNotThrow { spiedService.setFolderPermission("some/path", 1, null, 0, currentUser) }
+		assertDoesNotThrow {
+			spiedService.setFolderPermission("some/path", "user1@test.com", null, 0, currentUser)
+		}
 	}
 	
 	@Test
@@ -282,7 +280,7 @@ class FileSystemServiceTest {
 		val currentUser = CurrentUser(id = 1, email = user.email, isAdmin = false, userDetails = user)
 		doReturn(AccessType.READ.value).whenever(spiedService).checkAccessForDirectory(currentUser, "some/path")
 		assertThrows(SecurityException::class.java) {
-			spiedService.setFolderPermission("some/path", 2, null, AccessType.ALL.value, currentUser)
+			spiedService.setFolderPermission("some/path", "user2@test.com", null, AccessType.ALL.value, currentUser)
 		}
 	}
 	
@@ -855,10 +853,9 @@ class FileSystemServiceTest {
 		val user = createUser(id = 1)
 		val group = Group("g", user).apply { id = 10; members.add(user) }
 		val currentUser = CurrentUser(id = 1, email = user.email, isAdmin = false, userDetails = user)
-		// Мокаем недостаток прав на UPDATE – исключение вылетит до обращения к folderEntityRepository
 		doReturn(AccessType.READ.value).whenever(spiedService).checkAccessForDirectory(eq(currentUser), eq("groups/g"))
 		assertThrows(SecurityException::class.java) {
-			spiedService.setFolderPermission("groups/g", null, group.id, AccessType.READ.value, currentUser)
+			spiedService.setFolderPermission("groups/g", null, "g", AccessType.READ.value, currentUser)
 		}
 	}
 	
@@ -866,12 +863,13 @@ class FileSystemServiceTest {
 	fun `admin can change permissions anywhere`() {
 		val admin = CurrentUser(id = 1, email = "admin@t.com", isAdmin = true, userDetails = createUser(1))
 		val folder = FolderEntity(path = "any/folder", isDeleted = false)
+		val targetUser = createUser(2)
 		whenever(folderEntityRepository.findByPath("any/folder")).thenReturn(folder)
-		whenever(userService.getUserEntityById(2)).thenReturn(createUser(2))
+		whenever(userService.getUserEntityByEmail("user2@test.com")).thenReturn(targetUser)
 		whenever(operationTypeRepository.findByName("CHANGE_PERMISSIONS")).thenReturn(OperationType("CHANGE_PERMISSIONS"))
 		doReturn(AccessType.ALL.value).whenever(spiedService).checkAccessForDirectory(eq(admin), eq("any/folder"))
 		assertDoesNotThrow {
-			spiedService.setFolderPermission("any/folder", 2, null, AccessType.READ.value, admin)
+			spiedService.setFolderPermission("any/folder", "user2@test.com", null, AccessType.READ.value, admin)
 		}
 		verify(folderPermissionRepository).save(any<FolderPermission>())
 	}
