@@ -293,7 +293,7 @@ class FileSystemService(
 				}
 				
 				if (permissions != null) {
-					return permissions   // ближайшее явное разрешение (включая 0)
+					return permissions!!  // ближайшее явное разрешение (включая 0)
 				}
 			}
 			current = current.substringBeforeLast("/", "")

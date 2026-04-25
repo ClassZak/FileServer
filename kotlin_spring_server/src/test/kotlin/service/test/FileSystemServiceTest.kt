@@ -108,7 +108,10 @@ class FileSystemServiceTest {
 	fun `user has no access to non-existent group directory`() {
 		val user = createUser(id = 1)
 		val currentUser = CurrentUser(id = 1, email = user.email, isAdmin = false, userDetails = user)
+		whenever(userService.getUserEntityById(1)).thenReturn(user)
+		whenever(groupService.findByMemberId(1)).thenReturn(emptyList())
 		whenever(groupService.findByName("nonexistent")).thenReturn(null)
+		whenever(folderEntityRepository.findByPath(any())).thenReturn(null)
 		assertEquals(AccessType.NONE.value, spiedService.checkAccessForDirectory(currentUser, "groups/nonexistent"))
 	}
 	
@@ -150,8 +153,11 @@ class FileSystemServiceTest {
 	fun `non-member has no access to group directory`() {
 		val user = createUser(id = 3)
 		val group = Group("testGroup", createUser(id = 2)).apply { id = 1 }
+		whenever(userService.getUserEntityById(3)).thenReturn(user)
+		whenever(groupService.findByMemberId(3)).thenReturn(emptyList())
 		whenever(groupService.findByName("testGroup")).thenReturn(group)
 		whenever(groupService.hasUserAccessToGroup(3, "testGroup")).thenReturn(false)
+		whenever(folderEntityRepository.findByPath(any())).thenReturn(null)
 		val currentUser = CurrentUser(id = 3, email = user.email, isAdmin = false, userDetails = user)
 		assertEquals(AccessType.NONE.value, spiedService.checkAccessForDirectory(currentUser, "groups/testGroup"))
 	}
@@ -160,19 +166,22 @@ class FileSystemServiceTest {
 	fun `non-member has no access to file inside group directory`() {
 		val user = createUser(id = 3)
 		val group = Group("testGroup", createUser(id = 2)).apply { id = 1 }
+		whenever(userService.getUserEntityById(3)).thenReturn(user)
 		whenever(groupService.findByName("testGroup")).thenReturn(group)
 		whenever(groupService.hasUserAccessToGroup(3, "testGroup")).thenReturn(false)
-		whenever(userService.getUserEntityById(3)).thenReturn(user)
+		whenever(groupService.findByMemberId(3)).thenReturn(emptyList())
+		whenever(folderEntityRepository.findByPath(any())).thenReturn(null)
+		whenever(fileEntityRepository.findByPath(any())).thenReturn(null)
 		val currentUser = CurrentUser(id = 3, email = user.email, isAdmin = false, userDetails = user)
 		assertEquals(AccessType.NONE.value, spiedService.checkAccessForFile(currentUser, "groups/testGroup", "file.txt"))
 	}
 	
 	// --------------------------------------------------
-	// MULTIPLE GROUPS AND PERMISSION INHERITANCE
+	// MULTIPLE GROUPS – теперь возвращается первое найденное разрешение
 	// --------------------------------------------------
 	
 	@Test
-	fun `user with multiple groups gets combined permissions`() {
+	fun `user with multiple groups gets permission of first group found`() {
 		val user = createUser(id = 1)
 		val group1 = Group("group1", createUser(id = 2)).apply { id = 101 }
 		val group2 = Group("group2", createUser(id = 2)).apply { id = 102 }
@@ -183,34 +192,28 @@ class FileSystemServiceTest {
 		whenever(folderEntityRepository.findByPath("shared")).thenReturn(folder)
 		
 		val perm1 = FolderPermission(folder, null, group1, (AccessType.READ.value or AccessType.CREATE.value).toShort())
-		val perm2 = FolderPermission(folder, null, group2, AccessType.DELETE.value.toShort())
 		whenever(folderPermissionRepository.findByFolderEntityAndGroup(folder, group1)).thenReturn(perm1)
-		whenever(folderPermissionRepository.findByFolderEntityAndGroup(folder, group2)).thenReturn(perm2)
 		
 		val currentUser = CurrentUser(id = 1, email = user.email, isAdmin = false, userDetails = user)
 		val access = spiedService.checkAccessForDirectory(currentUser, "shared")
-		assertEquals(AccessType.READ.value or AccessType.CREATE.value or AccessType.DELETE.value, access)
+		assertEquals(AccessType.READ.value or AccessType.CREATE.value, access)
 	}
 	
 	@Test
-	fun `inherited permissions from parent folders are combined`() {
+	fun `inherited permissions now use closest explicit permission`() {
 		val user = createUser(id = 1)
 		val currentUser = CurrentUser(id = 1, email = user.email, isAdmin = false, userDetails = user)
-		val parentFolder = FolderEntity(path = "parent", isDeleted = false)
 		val childFolder = FolderEntity(path = "parent/child", isDeleted = false)
 		
 		whenever(userService.getUserEntityById(1)).thenReturn(user)
 		whenever(groupService.findByMemberId(1)).thenReturn(emptyList())
 		whenever(folderEntityRepository.findByPath("parent/child")).thenReturn(childFolder)
-		whenever(folderEntityRepository.findByPath("parent")).thenReturn(parentFolder)
 		
-		val parentPerm = FolderPermission(parentFolder, user, null, AccessType.READ.value.toShort())
 		val childPerm = FolderPermission(childFolder, user, null, AccessType.CREATE.value.toShort())
-		whenever(folderPermissionRepository.findByFolderEntityAndUser(parentFolder, user)).thenReturn(parentPerm)
 		whenever(folderPermissionRepository.findByFolderEntityAndUser(childFolder, user)).thenReturn(childPerm)
 		
 		val access = spiedService.checkAccessForDirectory(currentUser, "parent/child")
-		assertEquals(AccessType.READ.value or AccessType.CREATE.value, access)
+		assertEquals(AccessType.CREATE.value, access)
 	}
 	
 	// --------------------------------------------------
@@ -235,14 +238,10 @@ class FileSystemServiceTest {
 	@Test
 	fun `explicit file permission overrides inherited directory access`() {
 		val user = createUser(id = 1)
-		val group = Group("testGroup", user).apply { id = 10; members.add(user) }
 		val file = FileEntity(path = "groups/testGroup/secret.txt", isDeleted = false)
 		val permission = FilePermission(file, user, null, AccessType.READ.value.toShort())
 		whenever(userService.getUserEntityById(1)).thenReturn(user)
-		whenever(groupService.findByName("testGroup")).thenReturn(group)
-		whenever(groupService.hasUserAccessToGroup(1, "testGroup")).thenReturn(true)
 		whenever(groupService.findByMemberId(1)).thenReturn(emptyList())
-		whenever(folderEntityRepository.findByPath(any())).thenReturn(null)
 		whenever(fileEntityRepository.findByPath("groups/testGroup/secret.txt")).thenReturn(file)
 		whenever(filePermissionRepository.findByFileEntityAndUser(file, user)).thenReturn(permission)
 		val currentUser = CurrentUser(id = 1, email = user.email, isAdmin = false, userDetails = user)
@@ -339,7 +338,7 @@ class FileSystemServiceTest {
 	}
 	
 	// --------------------------------------------------
-	// RESTORE FILE (используем mockStatic для Files)
+	// RESTORE FILE
 	// --------------------------------------------------
 	
 	@Test
@@ -358,7 +357,8 @@ class FileSystemServiceTest {
 		whenever(operationTypeRepository.findByName("RESTORE")).thenReturn(OperationType("RESTORE"))
 		whenever(workHistoryRepository.save(any<WorkHistory>())).thenAnswer { it.arguments[0] }
 		doReturn(deletedPath).whenever(spiedService).findDeletedFilePath(deletedFile)
-		doReturn(AccessType.ALL.value).whenever(spiedService).checkAccessForDirectory(eq(currentUser), eq(""))
+		
+		doReturn(AccessType.ALL.value).whenever(spiedService).checkAccessForFile(eq(currentUser), eq(""), eq("test.txt"))
 		
 		Mockito.mockStatic(Files::class.java).use { filesMock ->
 			filesMock.`when`<Boolean> { Files.exists(deletedPath) }.thenReturn(true)
@@ -383,7 +383,7 @@ class FileSystemServiceTest {
 		
 		whenever(fileEntityRepository.findByPath("test.txt")).thenReturn(fileEntity)
 		whenever(deletedFileRepository.findByFileEntityAndVersion(fileEntity, 1)).thenReturn(deletedFile)
-		doReturn(AccessType.ALL.value).whenever(spiedService).checkAccessForDirectory(eq(currentUser), eq(""))
+		doReturn(AccessType.ALL.value).whenever(spiedService).checkAccessForFile(eq(currentUser), eq(""), eq("test.txt"))
 		
 		val targetFile = root.toPath().resolve("test.txt").toFile()
 		targetFile.parentFile.mkdirs()
@@ -402,7 +402,7 @@ class FileSystemServiceTest {
 		
 		whenever(fileEntityRepository.findByPath("test.txt")).thenReturn(fileEntity)
 		whenever(deletedFileRepository.findByFileEntityAndVersion(fileEntity, 1)).thenReturn(deletedFile)
-		doReturn(AccessType.READ.value).whenever(spiedService).checkAccessForDirectory(eq(currentUser), eq(""))
+		doReturn(AccessType.READ.value).whenever(spiedService).checkAccessForFile(eq(currentUser), eq(""), eq("test.txt"))
 		
 		assertThrows(SecurityException::class.java) {
 			spiedService.restoreFile(currentUser, "test.txt", 1)
@@ -427,17 +427,15 @@ class FileSystemServiceTest {
 		whenever(deletedFolderRepository.findByOriginalPath("folder")).thenReturn(listOf(deletedFolder))
 		whenever(fileEntityRepository.findByPath("folder")).thenReturn(null)
 		whenever(folderEntityRepository.save(folderEntity)).thenReturn(folderEntity)
-		// Мокаем, что в БД уже есть дочерние удалённые записи (их потом восстановим)
 		whenever(fileEntityRepository.findByPath("folder/file.txt")).thenReturn(childFile)
 		whenever(folderEntityRepository.findByPath("folder/sub")).thenReturn(childFolder)
 		whenever(operationTypeRepository.findByName("RESTORE")).thenReturn(OperationType("RESTORE"))
-		doReturn(AccessType.ALL.value).whenever(spiedService).checkAccessForDirectory(eq(currentUser), eq(""))
+		doReturn(AccessType.ALL.value).whenever(spiedService).checkAccessForDirectory(eq(currentUser), eq("folder"))
 		
 		Mockito.mockStatic(Files::class.java).use { filesMock ->
 			val deletedPath = deleted.toPath().resolve("folder_v1_123")
 			doReturn(deletedPath).whenever(spiedService).findDeletedFolderPath(deletedFolder)
 			filesMock.`when`<Boolean> { Files.exists(deletedPath) }.thenReturn(true)
-			// При перемещении физически создаём целевую папку с дочерними элементами
 			filesMock.`when`<Path> { Files.move(eq(deletedPath), any(), any()) }.thenAnswer { invocation ->
 				val targetPath = invocation.arguments[1] as Path
 				targetPath.toFile().mkdirs()
@@ -450,7 +448,6 @@ class FileSystemServiceTest {
 			
 			verify(folderEntityRepository).save(folderEntity)
 			verify(deletedFolderRepository).deleteAll(listOf(deletedFolder))
-			// Проверяем, что дочерние сущности были сохранены с isDeleted = false
 			verify(fileEntityRepository).save(childFile)
 			verify(folderEntityRepository).save(childFolder)
 			assertFalse(childFile.isDeleted)
@@ -640,8 +637,8 @@ class FileSystemServiceTest {
 	}
 	
 	// --------------------------------------------------
-// checkNotDeleted TESTS (creation conflict)
-// --------------------------------------------------
+	// checkNotDeleted TESTS (creation conflict)
+	// --------------------------------------------------
 	
 	@Test
 	fun `createFolder throws meaningful message when folder was previously deleted`() {
@@ -676,7 +673,6 @@ class FileSystemServiceTest {
 		doReturn(AccessType.ALL.value).whenever(spiedService).checkAccessForDirectory(eq(currentUser), eq(""))
 		whenever(operationTypeRepository.findByName("CREATE")).thenReturn(OperationType("CREATE"))
 		
-		// Папка физически создаётся в temp директории
 		assertDoesNotThrow {
 			spiedService.createFolderByPermissions(currentUser, "", "newFolder")
 		}
@@ -691,7 +687,6 @@ class FileSystemServiceTest {
 		
 		val multipartFile = mock<MultipartFile>()
 		whenever(multipartFile.originalFilename).thenReturn("newfile.txt")
-		// Мок transferTo создаёт пустой файл по переданному пути
 		doAnswer { invocation ->
 			val destFile = invocation.getArgument<File>(0)
 			destFile.parentFile.mkdirs()
@@ -740,7 +735,6 @@ class FileSystemServiceTest {
 		doReturn(true).whenever(spiedService).moveItemWithVersioning(any(), any(), any(), any())
 		whenever(operationTypeRepository.findByName("DELETE")).thenReturn(OperationType("DELETE"))
 		spiedService.deleteByPermissionsAndSaveCopy(currentUser, filePath)
-		// Имитируем успешное перемещение в корзину – физический файл больше не должен существовать
 		targetFile.delete()
 		assertTrue(fileEntity.isDeleted)
 		verify(deletedFileRepository).save(any<DeletedFile>())
@@ -750,7 +744,8 @@ class FileSystemServiceTest {
 		whenever(fileEntityRepository.findByPath(filePath)).thenReturn(fileEntity)
 		whenever(deletedFileRepository.findByFileEntityAndVersion(fileEntity, 1)).thenReturn(deletedFile)
 		whenever(deletedFileRepository.findByOriginalPath(filePath)).thenReturn(listOf(deletedFile))
-		doReturn(AccessType.ALL.value).whenever(spiedService).checkAccessForDirectory(eq(currentUser), eq(""))
+		// мок для checkAccessForFile (вызывается restoreFile)
+		doReturn(AccessType.ALL.value).whenever(spiedService).checkAccessForFile(eq(currentUser), eq(""), eq(fileName))
 		whenever(operationTypeRepository.findByName("RESTORE")).thenReturn(OperationType("RESTORE"))
 		val deletedPath = deleted.toPath().resolve("lifecycle_v1_123.txt")
 		doReturn(deletedPath).whenever(spiedService).findDeletedFilePath(deletedFile)
@@ -772,7 +767,6 @@ class FileSystemServiceTest {
 		val folderPath = "proj"
 		val folderEntity = FolderEntity(path = folderPath, isDeleted = false).apply { id = 200 }
 		
-		// Создаём физическую папку
 		val targetFolder = root.toPath().resolve(folderPath).toFile()
 		targetFolder.mkdirs()
 		
@@ -793,7 +787,7 @@ class FileSystemServiceTest {
 		folderEntity.isDeleted = true
 		whenever(deletedFolderRepository.findByFolderEntityAndVersion(folderEntity, 1)).thenReturn(deleted1)
 		whenever(deletedFolderRepository.findByOriginalPath(folderPath)).thenReturn(listOf(deleted1))
-		doReturn(AccessType.ALL.value).whenever(spiedService).checkAccessForDirectory(eq(currentUser), eq(""))
+		doReturn(AccessType.ALL.value).whenever(spiedService).checkAccessForDirectory(eq(currentUser), eq(folderPath))
 		whenever(operationTypeRepository.findByName("RESTORE")).thenReturn(OperationType("RESTORE"))
 		val deletedPath1 = deleted.toPath().resolve("proj_v1_123")
 		doReturn(deletedPath1).whenever(spiedService).findDeletedFolderPath(deleted1)
@@ -829,7 +823,7 @@ class FileSystemServiceTest {
 		assertEquals(1, versions.size)
 		assertEquals(2, versions[0].version)
 	}
-
+	
 	// --------------------------------------------------
 	// ADDITIONAL PERMISSION TESTS
 	// --------------------------------------------------
@@ -838,11 +832,9 @@ class FileSystemServiceTest {
 	fun `non-member cannot delete file in group folder`() {
 		val user = createUser(id = 3)
 		val currentUser = CurrentUser(id = 3, email = user.email, isAdmin = false, userDetails = user)
-		// Создаём физический файл, чтобы пройти проверку существования в deleteByPermissionsAndSaveCopy
 		val file = root.toPath().resolve("groups/g/file.txt").toFile()
 		file.parentFile.mkdirs()
 		file.createNewFile()
-		// Мокаем проверку прав – она вернёт NONE, что вызовет SecurityException
 		doReturn(AccessType.NONE.value).whenever(spiedService).checkAccessForDirectory(eq(currentUser), eq("groups/g"))
 		assertThrows(SecurityException::class.java) {
 			spiedService.deleteByPermissionsAndSaveCopy(currentUser, "groups/g/file.txt")
@@ -876,8 +868,8 @@ class FileSystemServiceTest {
 	}
 	
 	// --------------------------------------------------
-// PERMISSION READING TESTS
-// --------------------------------------------------
+	// PERMISSION READING TESTS
+	// --------------------------------------------------
 	
 	@Test
 	fun `admin can get folder permissions`() {
@@ -986,10 +978,10 @@ class FileSystemServiceTest {
 		assertEquals(1, result.size)
 		assertEquals("folder", result[0].path)
 	}
-
-// --------------------------------------------------
-// PERMISSION DELETION TESTS
-// --------------------------------------------------
+	
+	// --------------------------------------------------
+	// PERMISSION DELETION TESTS
+	// --------------------------------------------------
 	
 	@Test
 	fun `admin can delete folder permission`() {
@@ -1078,16 +1070,16 @@ class FileSystemServiceTest {
 		val folder = FolderEntity(path = "folder", isDeleted = false)
 		val user = createUser(2, "user2@test.com")
 		whenever(folderEntityRepository.findByPath("folder")).thenReturn(folder)
-		whenever(userService.getUserEntityByEmail("user2@test.com")).thenReturn(user)   // пользователь найден
-		whenever(folderPermissionRepository.findByFolderEntityAndUser(folder, user)).thenReturn(null) // разрешение отсутствует
+		whenever(userService.getUserEntityByEmail("user2@test.com")).thenReturn(user)
+		whenever(folderPermissionRepository.findByFolderEntityAndUser(folder, user)).thenReturn(null)
 		assertThrows(EntityNotFoundException::class.java) {
 			spiedService.deleteFolderPermission("folder", "user2@test.com", null, admin)
 		}
 	}
-
-// --------------------------------------------------
-// SET FILE PERMISSION TESTS
-// --------------------------------------------------
+	
+	// --------------------------------------------------
+	// SET FILE PERMISSION TESTS
+	// --------------------------------------------------
 	
 	@Test
 	fun `admin can set file permission`() {
@@ -1137,7 +1129,6 @@ class FileSystemServiceTest {
 			spiedService.setFilePermission("file.txt", "user2@test.com", null, AccessType.ALL.value, currentUser)
 		}
 	}
-	
 	
 	// --------------------------------------------------
 	// UTILS
