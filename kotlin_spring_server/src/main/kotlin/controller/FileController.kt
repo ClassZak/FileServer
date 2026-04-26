@@ -243,6 +243,47 @@ class FileController(
 	}
 	
 	/**
+	 * Скачать удалённый файл из корзины по оригинальному пути и версии.
+	 *
+	 * @param path оригинальный путь файла до удаления.
+	 * @param version версия файла в корзине.
+	 * @param authHeader заголовок Authorization с Bearer токеном.
+	 * @return поток файла с соответствующим Content-Type и заголовком Content-Disposition.
+	 * @throws 404 Not Found – запись об удалённом файле или физический файл не найдены.
+	 * @throws 403 Forbidden – нет прав на чтение.
+	 */
+	@GetMapping("/download/deleted")
+	fun downloadDeletedFile(
+		@RequestParam path: String,
+		@RequestParam version: Int,
+		@RequestHeader("Authorization") authHeader: String
+	): ResponseEntity<Any> {
+		val currentUser = getCurrentUserFromJwt(authHeader)
+		return try {
+			val (file, contentType) = fileSystemService.downloadDeletedFileByPermissions(currentUser, path, version)
+			
+			val resource = FileSystemResource(file)
+			ResponseEntity.ok()
+				.contentType(MediaType.parseMediaType(contentType))
+				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${file.name}\"")
+				.body(resource)
+		} catch (e: IllegalArgumentException) {
+			ResponseEntity.status(HttpStatus.NOT_FOUND)
+				.body(mapOf("error" to (e.message ?: "Удалённый файл не найден")))
+		} catch (e: SecurityException) {
+			ResponseEntity.status(HttpStatus.FORBIDDEN)
+				.body(mapOf("error" to (e.message ?: "Нет прав доступа для скачивания удалённого файла")))
+		} catch (e: IllegalStateException) {
+			ResponseEntity.status(HttpStatus.NOT_FOUND)
+				.body(mapOf("error" to (e.message ?: "Файл не найден в корзине")))
+		} catch (e: Exception) {
+			logger.error("Ошибка при скачивании удалённого файла", e)
+			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(mapOf("error" to "Ошибка при скачивании файла"))
+		}
+	}
+	
+	/**
 	 * Поиск файлов и папок по подстроке в имени.
 	 *
 	 * @param q строка поиска (обязательно).
@@ -636,7 +677,7 @@ class FileController(
 	 * @param isFile (опционально) фильтр по типу: true – файлы, false – папки.
 	 * @param authHeader заголовок Authorization с Bearer токеном.
 	 * @return JSON с полем `history` (массив WorkHistory).
-	 * @throws 403 Forbidden – попытка просмотра чужой истории неадминистратором.
+	 * @throws 403 Forbidden – попытка просмотра чужой истории не администратором.
 	 */
 	@GetMapping("/history")
 	@PreAuthorize("isAuthenticated()")
@@ -647,15 +688,31 @@ class FileController(
 		@RequestHeader("Authorization") authHeader: String
 	): ResponseEntity<Any> {
 		val currentUser = getCurrentUserFromJwt(authHeader)
-		val userId = currentUser.id
+		
 		if (!currentUser.isAdmin && userEmail != null && userEmail != currentUser.email) {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(mapOf("error" to "Нет прав на просмотр чужой истории"))
 		}
+		
+		val targetUserId: Int? = if (currentUser.isAdmin) {
+			// Администратор может фильтровать по конкретному пользователю или смотреть всю историю
+			if (userEmail != null) {
+				val user = userService.getUserByEmail(userEmail)
+				user?.id ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body(mapOf("error" to "Пользователь с email '$userEmail' не найден"))
+			} else {
+				null   // без фильтра – вся история
+			}
+		} else {
+			// Обычный пользователь может смотреть только свою историю
+			currentUser.id!!
+		}
+		
 		val filter = FileSystemService.HistoryFilter(
-			userId = userId ?: if (!currentUser.isAdmin) currentUser.id else null,
+			userId = targetUserId,
 			pathPrefix = pathPrefix,
 			isFile = isFile
 		)
+		
 		val history = fileSystemService.getWorkHistory(filter)
 		return ResponseEntity.ok(mapOf("history" to history))
 	}

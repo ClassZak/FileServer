@@ -655,14 +655,15 @@ class FileSystemService(
 	
 	/**
 	 * Восстанавливает файл из корзины по оригинальному пути и версии.
-	 * Файл перемещается обратно на оригинальный путь, флаг isDeleted снимается,
-	 * все версии удалённого файла физически удаляются.
+	 * Сначала выполняется физическое перемещение (или проверка, что файл уже на месте),
+	 * затем обновляется БД. Это защищает от частичного восстановления при внезапном
+	 * падении сервера между файловой операцией и коммитом транзакции.
 	 *
 	 * @param currentUser аутентифицированный пользователь
 	 * @param originalPath оригинальный путь файла
 	 * @param version версия для восстановления
 	 * @return true в случае успеха
-	 * @throws IllegalArgumentException если запись об удалённом файле не найдена или путь уже занят
+	 * @throws IllegalArgumentException если запись об удалённом файле не найдена или путь уже занят активным файлом
 	 * @throws IllegalStateException если файл не удалён или физический файл отсутствует в корзине
 	 * @throws SecurityException если нет прав на восстановление
 	 */
@@ -680,39 +681,43 @@ class FileSystemService(
 		if (!currentUser.isAdmin && selectedDeleted.deletedByUser.id != currentUser.id)
 			throw SecurityException("Нет прав на восстановление в файла, удалённого другим пользователем")
 		
-		
 		val fileName = extractFileNameFromFullPath(originalPath)
 		val permissions = checkAccessForFile(currentUser, parentPath, fileName)
 		if ((permissions and AccessType.CREATE.value) == 0 && !currentUser.isAdmin) {
 			throw SecurityException("Нет прав на восстановление файла $fileName в $parentPath")
 		}
 		
-		
 		val targetFile = getSafePath(originalPath).toFile()
-		if (targetFile.exists()) {
-			throw IllegalArgumentException("По оригинальному пути уже существует файл: $originalPath")
-		}
-		checkPathNotOccupied(originalPath)
-		
-		// Получаем все удалённые версии этого файла
 		val allDeletedVersions = deletedFileRepository.findByOriginalPath(originalPath)
-		// Физически удаляем все версии из корзины
-		allDeletedVersions.forEach { df ->
-			val sourcePath = findDeletedFilePath(df)
-			Files.deleteIfExists(sourcePath)
-		}
-		// Перемещаем выбранную версию на место (она всё ещё в корзине? На самом деле нужно переместить физический файл)
 		val sourcePath = findDeletedFilePath(selectedDeleted)
-		if (!Files.exists(sourcePath)) {
-			throw IllegalStateException("Файл в корзине не найден: $sourcePath")
+		
+		// ── 1. Физическое восстановление (или проверка, что файл уже на месте) ──
+		if (targetFile.exists()) {
+			// Файл уже существует – возможно, предыдущая попытка восстановления была прервана
+			if (fileEntity.isDeleted) {
+				// просо снимем флаг и почистим корзину
+				logger.info("Файл '$originalPath' уже существует на диске – синхронизируем БД")
+			} else {
+				throw IllegalArgumentException("По оригинальному пути уже существует активный файл: $originalPath")
+			}
+		} else {
+			checkPathNotOccupied(originalPath)
+			if (!Files.exists(sourcePath)) {
+				throw IllegalStateException("Файл в корзине не найден: $sourcePath")
+			}
+			targetFile.parentFile?.mkdirs()
+			Files.move(sourcePath, targetFile.toPath(), StandardCopyOption.ATOMIC_MOVE)
 		}
 		
-		targetFile.parentFile?.mkdirs()
-		Files.move(sourcePath, targetFile.toPath(), StandardCopyOption.ATOMIC_MOVE)
+		// Физически удаляем остальные версии (если есть)
+		allDeletedVersions.forEach { df ->
+			if (df.id != selectedDeleted.id) {
+				Files.deleteIfExists(findDeletedFilePath(df))
+			}
+		}
 		
-		// Удаляем все записи DeletedFile для этого файла
+		// ── 2. Обновление БД ──
 		deletedFileRepository.deleteAll(allDeletedVersions)
-		
 		fileEntity.isDeleted = false
 		fileEntityRepository.save(fileEntity)
 		
@@ -725,14 +730,14 @@ class FileSystemService(
 	
 	/**
 	 * Восстанавливает папку и всё её содержимое из корзины по оригинальному пути и версии.
-	 * Папка перемещается обратно, все версии удалённой папки физически удаляются.
-	 * Содержимое БД синхронизируется с фактическим содержимым восстановленной директории.
+	 * Сначала выполняется физическое перемещение (или проверка, что папка уже на месте),
+	 * затем обновляется БД и синхронизируется содержимое.
 	 *
 	 * @param currentUser аутентифицированный пользователь
 	 * @param originalPath оригинальный путь папки
 	 * @param version версия для восстановления
 	 * @return true в случае успеха
-	 * @throws IllegalArgumentException если запись об удалённой папке не найдена или путь уже занят
+	 * @throws IllegalArgumentException если запись об удалённой папке не найдена или путь уже занят активной папкой
 	 * @throws IllegalStateException если папка не удалена или физическая папка отсутствует в корзине
 	 * @throws SecurityException если нет прав на восстановление
 	 */
@@ -747,7 +752,6 @@ class FileSystemService(
 		
 		val parentPath = Paths.get(originalPath).parent?.toString() ?: ""
 		
-		
 		if (!currentUser.isAdmin && selectedDeleted.deletedByUser.id != currentUser.id)
 			throw SecurityException("Нет прав на восстановление папки, удалённой другим пользователем")
 		val permissions = checkAccessForDirectory(currentUser, originalPath)
@@ -755,23 +759,25 @@ class FileSystemService(
 			throw SecurityException("Нет прав на восстановление в $parentPath")
 		}
 		
-		
 		val targetFolder = getSafePath(originalPath).toFile()
-		if (targetFolder.exists()) {
-			throw IllegalArgumentException("По оригинальному пути уже существует папка: $originalPath")
-		}
-		checkPathNotOccupied(originalPath)
-		
-		// Получаем все удалённые версии этой папки
 		val allDeletedVersions = deletedFolderRepository.findByOriginalPath(originalPath)
-		// Физически удаляем все версии из корзины, кроме выбранной (её мы переместим)
 		val sourcePath = findDeletedFolderPath(selectedDeleted)
-		if (!Files.exists(sourcePath)) {
-			throw IllegalStateException("Папка в корзине не найдена: $sourcePath")
-		}
 		
-		targetFolder.parentFile?.mkdirs()
-		Files.move(sourcePath, targetFolder.toPath(), StandardCopyOption.ATOMIC_MOVE)
+		// ── 1. Физическое восстановление (или проверка, что папка уже на месте) ──
+		if (targetFolder.exists()) {
+			if (folderEntity.isDeleted) {
+				logger.info("Папка '$originalPath' уже существует на диске – синхронизируем БД")
+			} else {
+				throw IllegalArgumentException("По оригинальному пути уже существует активная папка: $originalPath")
+			}
+		} else {
+			checkPathNotOccupied(originalPath)
+			if (!Files.exists(sourcePath)) {
+				throw IllegalStateException("Папка в корзине не найдена: $sourcePath")
+			}
+			targetFolder.parentFile?.mkdirs()
+			Files.move(sourcePath, targetFolder.toPath(), StandardCopyOption.ATOMIC_MOVE)
+		}
 		
 		// Удаляем остальные физические версии
 		allDeletedVersions.filter { it.id != selectedDeleted.id }.forEach { df ->
@@ -779,9 +785,8 @@ class FileSystemService(
 			otherPath.toFile().deleteRecursively()
 		}
 		
-		// Удаляем все записи DeletedFolder для этой папки
+		// ── 2. Обновление БД ──
 		deletedFolderRepository.deleteAll(allDeletedVersions)
-		
 		folderEntity.isDeleted = false
 		folderEntityRepository.save(folderEntity)
 		
@@ -1447,6 +1452,47 @@ class FileSystemService(
 		val file = getSafePath(relativePath).toFile()
 		if (!file.exists() || file.isDirectory) throw IllegalArgumentException("Файл не найден")
 		return Pair(file, getContentType(file))
+	}
+	
+	/**
+	 * Скачивает удалённый файл из корзины по оригинальному пути и версии.
+	 * Проверяет права доступа: администратор, удаливший пользователь,
+	 * участник группы, имеющей доступ к оригинальному пути.
+	 *
+	 * @param currentUser аутентифицированный пользователь
+	 * @param originalPath путь файла
+	 * @param version версия удалённого файла
+	 * @throws IllegalArgumentException Не найдена запись удалённого файла
+	 * @throws SecurityException Отсутствие прав
+	 * @throws IllegalStateException ошибка поиска версии удалённого файла
+	 */
+	@Transactional(readOnly = true)
+	fun downloadDeletedFileByPermissions(
+		currentUser: CurrentUser,
+		originalPath: String,
+		version: Int
+	): Pair<File, String> {
+		val deletedFile = deletedFileRepository.findByOriginalPath(originalPath)
+			.firstOrNull { it.version == version }
+			?: throw IllegalArgumentException("Удалённый файл '$originalPath' с версией $version не найден")
+		
+		val canDownload = currentUser.isAdmin
+				|| deletedFile.deletedByUser.id == currentUser.id
+				|| (isGroupPath(originalPath) && groupService.hasUserAccessToGroup(currentUser.id!!, extractGroupFromPath(originalPath)!!))
+				|| hasGroupAccessToPath(currentUser.id!!, originalPath, isFile = true)
+		
+		if (!canDownload) {
+			throw SecurityException("Нет прав на скачивание удалённого файла: $originalPath (версия $version)")
+		}
+		
+		val physicalFile = findDeletedFilePath(deletedFile).toFile()
+		if (!physicalFile.exists()) {
+			val message = "Физический файл в корзине не найден: ${physicalFile.absolutePath}"
+			logger.error(message)
+			throw IllegalStateException(message)
+		}
+		
+		return Pair(physicalFile, getContentType(physicalFile))
 	}
 	
 	// ================== ПОИСК ==================
