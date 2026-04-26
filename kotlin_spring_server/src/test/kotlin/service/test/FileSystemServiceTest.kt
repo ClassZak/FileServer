@@ -375,7 +375,7 @@ class FileSystemServiceTest {
 	}
 	
 	@Test
-	fun `restoreFile throws when original path already exists`() {
+	fun `restoreFile succeeds when file already exists and isDeleted is true`() {
 		val user = createUser(id = 1)
 		val currentUser = CurrentUser(id = 1, email = user.email, isAdmin = false, userDetails = user)
 		val fileEntity = FileEntity(path = "test.txt", isDeleted = true).apply { id = 100 }
@@ -383,12 +383,42 @@ class FileSystemServiceTest {
 		
 		whenever(fileEntityRepository.findByPath("test.txt")).thenReturn(fileEntity)
 		whenever(deletedFileRepository.findByFileEntityAndVersion(fileEntity, 1)).thenReturn(deletedFile)
+		whenever(deletedFileRepository.findByOriginalPath("test.txt")).thenReturn(listOf(deletedFile))
+		whenever(fileEntityRepository.save(fileEntity)).thenReturn(fileEntity)
+		whenever(operationTypeRepository.findByName("RESTORE")).thenReturn(OperationType("RESTORE"))
 		doReturn(AccessType.ALL.value).whenever(spiedService).checkAccessForFile(eq(currentUser), eq(""), eq("test.txt"))
 		
 		val targetFile = root.toPath().resolve("test.txt").toFile()
 		targetFile.parentFile.mkdirs()
+		targetFile.createNewFile()                     // файл уже существует
+		fileEntity.isDeleted = true                    // но помечен как удалённый
+		
+		Mockito.mockStatic(Files::class.java).use { filesMock ->
+			filesMock.`when`<Boolean> { Files.deleteIfExists(any()) }.thenReturn(true)
+			val result = spiedService.restoreFile(currentUser, "test.txt", 1)
+			assertTrue(result)
+			assertFalse(fileEntity.isDeleted)
+			verify(fileEntityRepository).save(fileEntity)
+			verify(deletedFileRepository).deleteAll(listOf(deletedFile))
+		}
+	}
+	
+	@Test
+	fun `restoreFile throws when file already exists and isDeleted is false`() {
+		val user = createUser(id = 1)
+		val currentUser = CurrentUser(id = 1, email = user.email, isAdmin = false, userDetails = user)
+		val fileEntity = FileEntity(path = "test.txt", isDeleted = false).apply { id = 100 }
+		val deletedFile = DeletedFile(fileEntity, "test.txt", user, LocalDateTime.now(), 1).apply { id = 10 }
+		
+		whenever(fileEntityRepository.findByPath("test.txt")).thenReturn(fileEntity)
+		//whenever(deletedFileRepository.findByFileEntityAndVersion(fileEntity, 1)).thenReturn(deletedFile)
+		//doReturn(AccessType.ALL.value).whenever(spiedService).checkAccessForFile(eq(currentUser), eq(""), eq("test.txt"))
+		
+		val targetFile = root.toPath().resolve("test.txt").toFile()
+		targetFile.parentFile.mkdirs()
 		targetFile.createNewFile()
-		assertThrows(IllegalArgumentException::class.java) {
+		
+		assertThrows(IllegalStateException::class.java) {
 			spiedService.restoreFile(currentUser, "test.txt", 1)
 		}
 	}
