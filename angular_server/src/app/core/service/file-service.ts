@@ -254,7 +254,7 @@ export class FileService {
 				if (error.status === 403)
 					errorMessage = 'У вас нет прав на загрузку файлов в эту директорию.';
 				else
-					errorMessage = error.error?.message || error.error.error || error.message ||  'неизвестная ошибка';
+					errorMessage = error.error?.message || error.error.error || error.message ||	'неизвестная ошибка';
 			}
 			errorMessage = !errorMessage ? 'Ошибка отправки файла.' : `Ошибка отправки файла: ${errorMessage}`;
 			return {
@@ -473,17 +473,18 @@ export class FileService {
 	 * @param version - Version to restore.
 	 * @returns Promise that resolves when restoration is complete.
 	 */
-	async restoreFile(token: string, originalPath: string, version: number): Promise<DefaultServiceResult> {
+		async restoreFile(token: string, originalPath: string, version: number): Promise<DefaultServiceResult> {
 		try {
 			await firstValueFrom(
-				this.http.post(
-					'/api/files/restore/file',
-					{ originalPath, version },
-					CreateConfig.createAuthConfig(token)
-				)
+				this.http.post('/api/files/restore/file', { originalPath, version }, CreateConfig.createAuthConfig(token))
 			);
 			return { success: true };
 		} catch (error) {
+			console.error('restoreFile error', error);
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 403) return { success: false, error: 'Нет прав на восстановление этого файла.' };
+				if (error.status === 409) return { success: false, error: error.error?.error || 'Файл уже восстановлен или путь занят.' };
+			}
 			return FileService.handleError(error, 'Ошибка восстановления файла');
 		}
 	}
@@ -496,17 +497,18 @@ export class FileService {
 	 * @param version - Version to restore.
 	 * @returns Promise that resolves when restoration is complete.
 	 */
-	async restoreFolder(token: string, originalPath: string, version: number): Promise<DefaultServiceResult> {
+		async restoreFolder(token: string, originalPath: string, version: number): Promise<DefaultServiceResult> {
 		try {
 			await firstValueFrom(
-				this.http.post(
-					'/api/files/restore/folder',
-					{ originalPath, version },
-					CreateConfig.createAuthConfig(token)
-				)
+				this.http.post('/api/files/restore/folder', { originalPath, version }, CreateConfig.createAuthConfig(token))
 			);
 			return { success: true };
 		} catch (error) {
+			console.error('restoreFolder error', error);
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 403) return { success: false, error: 'Нет прав на восстановление этой папки.' };
+				if (error.status === 409) return { success: false, error: error.error?.error || 'Папка уже восстановлена или путь занят.' };
+			}
 			return FileService.handleError(error, 'Ошибка восстановления папки');
 		}
 	}
@@ -779,4 +781,49 @@ export class FileService {
 		}
 		return { success: false, error: message };
 	}
+
+		/**
+	 * Downloads a deleted file from the trash by its original path and version.
+	 *
+	 * @param token - JWT authentication token.
+	 * @param originalPath - Original path of the deleted file.
+	 * @param version - Version to download.
+	 * @returns Promise resolving to an object with blob and contentType.
+	 */
+	async downloadDeletedFile(
+		token: string,
+		originalPath: string,
+		version: number
+	): Promise<DefaultServiceResultWithData<DownloadFileResult>> {
+		try {
+			const response = await firstValueFrom(
+				this.http.get(
+					`/api/files/download/deleted?path=${encodeURIComponent(originalPath)}&version=${version}`,
+					{
+						headers: CreateConfig.createAuthConfig(token).headers,
+						responseType: 'blob',
+						observe: 'response'
+					}
+				)
+			);
+			return {
+				success: true,
+				data: {
+					blob: response.body!,
+					contentType: response.headers.get('content-type')!
+				}
+			};
+		} catch (error) {
+			console.error('FileService.downloadDeletedFile error:', error);
+			let errorMessage = 'Ошибка скачивания удалённого файла';
+			if (error instanceof HttpErrorResponse) {
+				if (error.status === 403) errorMessage = 'У вас нет прав на скачивание этого файла из корзины.';
+				else if (error.status === 404) errorMessage = 'Удалённый файл не найден.';
+				else errorMessage = error.error?.error || error.message || errorMessage;
+			}
+			return { success: false, error: errorMessage };
+		}
+	}
+
+
 }
