@@ -21,6 +21,9 @@ app-app-header > form{
 	gap: 5px;
 	width: 100%;
 }
+.header-content a {
+	font-size: 0.8rem;
+}
 .header-content nav {
 	display: flex;
 	align-items: center;

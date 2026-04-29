@@ -31,6 +31,7 @@ export class IconManager {
 		json: 'matfJsonColored',
 		html: 'matfHtmlColored',
 		css: 'matfCssColored',
-		folder: 'matfFolderOpenColored'
+		folder: 'matfFolderOpenColored',
+		file: 'matfDocumentColored',
 	};
 }

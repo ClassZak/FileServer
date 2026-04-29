@@ -24,7 +24,7 @@ describe('FileService (updated API)', () => {
 		httpMock.verify();
 	});
 
-	// ---------- Basic operations (unchanged) ----------
+	// ---------- Basic operations ----------
 	it('should load directory', async () => {
 		const token = 'fake-token';
 		const path = 'some/path';
@@ -143,7 +143,7 @@ describe('FileService (updated API)', () => {
 		expect(result.data?.exists).toBe(true);
 	});
 
-	// ---------- Deleted items (updated) ----------
+	// ---------- Deleted items ----------
 	it('should get deleted files', async () => {
 		const token = 'fake-token';
 		const mockDeletedFiles = [
@@ -283,7 +283,29 @@ describe('FileService (updated API)', () => {
 		expect(result.success).toBe(true);
 	});
 
-	// ---------- Permissions (updated) ----------
+	// ---------- Download deleted file (new) ----------
+	it('should download a deleted file from trash', async () => {
+		const token = 'fake-token';
+		const originalPath = 'archive.zip';
+		const version = 1;
+		const mockBlob = new Blob(['old-content'], { type: 'application/zip' });
+
+		const resultPromise = service.downloadDeletedFile(token, originalPath, version);
+
+		const req = httpMock.expectOne(
+			`/api/files/download/deleted?path=${encodeURIComponent(originalPath)}&version=${version}`
+		);
+		expect(req.request.method).toBe('GET');
+		expect(req.request.headers.get('Authorization')).toBe(`Bearer ${token}`);
+		req.flush(mockBlob, { headers: { 'content-type': 'application/zip' } });
+
+		const result = await resultPromise;
+		expect(result.success).toBe(true);
+		expect(result.data?.blob).toBe(mockBlob);
+		expect(result.data?.contentType).toBe('application/zip');
+	});
+
+	// ---------- Permissions ----------
 	it('should get folder permissions', async () => {
 		const token = 'fake-token';
 		const path = 'shared';
@@ -540,5 +562,68 @@ describe('FileService (updated API)', () => {
 		const result = await resultPromise;
 		expect(result.success).toBe(false);
 		expect(result.error).toContain('У вас нет прав на загрузку файлов в эту директорию');
+	});
+
+	it('should handle 403 error on restore file', async () => {
+		const token = 'fake-token';
+		const originalPath = 'file.txt';
+		const version = 1;
+
+		const resultPromise = service.restoreFile(token, originalPath, version);
+
+		const req = httpMock.expectOne('/api/files/restore/file');
+		req.flush({ error: 'Access denied' }, { status: 403, statusText: 'Forbidden' });
+
+		const result = await resultPromise;
+		expect(result.success).toBe(false);
+		expect(result.error).toContain('Нет прав на восстановление этого файла');
+	});
+
+	it('should handle 409 conflict on restore file', async () => {
+		const token = 'fake-token';
+		const originalPath = 'file.txt';
+		const version = 1;
+
+		const resultPromise = service.restoreFile(token, originalPath, version);
+
+		const req = httpMock.expectOne('/api/files/restore/file');
+		req.flush({ error: 'Path already occupied' }, { status: 409, statusText: 'Conflict' });
+
+		const result = await resultPromise;
+		expect(result.success).toBe(false);
+		expect(result.error).toContain('Path already occupied');
+	});
+
+	it('should handle 403 error on restore folder', async () => {
+		const token = 'fake-token';
+		const originalPath = 'folder';
+		const version = 1;
+
+		const resultPromise = service.restoreFolder(token, originalPath, version);
+
+		const req = httpMock.expectOne('/api/files/restore/folder');
+		req.flush({ error: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
+
+		const result = await resultPromise;
+		expect(result.success).toBe(false);
+		expect(result.error).toContain('Нет прав на восстановление этой папки');
+	});
+
+	it('should handle 404 error on download deleted file', async () => {
+		const token = 'fake-token';
+		const originalPath = 'deleted.zip';
+		const version = 1;
+
+		const resultPromise = service.downloadDeletedFile(token, originalPath, version);
+
+		const req = httpMock.expectOne(
+			`/api/files/download/deleted?path=${encodeURIComponent(originalPath)}&version=${version}`
+		);
+		// Передаём пустой Blob, потому что запрос ожидает responseType: 'blob'
+		req.flush(new Blob(), { status: 404, statusText: 'Not Found' });
+
+		const result = await resultPromise;
+		expect(result.success).toBe(false);
+		expect(result.error).toContain('Удалённый файл не найден');
 	});
 });

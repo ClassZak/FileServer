@@ -73,7 +73,7 @@ export interface DeletedFolderInfo {
  * Entry in the work history log (matches backend HistoryInfo).
  */
 export interface HistoryEntry {
-	workTime: string;
+	workTime: Date | string;
 	operationType: string;
 	userEmail: string;
 	path: string;
