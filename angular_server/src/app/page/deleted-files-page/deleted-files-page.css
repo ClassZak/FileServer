@@ -1,0 +1,9 @@
+@import url(../../app-header/app-header.css);
+@import url(../../file-search-header/file-search-header.css);
+@import url(../../../styles/FilesPage.css);
+
+.info-message {
+	padding: 2rem;
+	text-align: center;
+	color: var(--color-text-secondary);
+}

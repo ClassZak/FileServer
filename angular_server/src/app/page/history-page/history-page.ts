@@ -225,8 +225,7 @@ export class HistoryPage implements OnInit, OnDestroy {
 				console.error(message);
 				throw new Error(message);
 			}
-
-			console.log('Authentication successful');
+			
 			this.isAuthenticated = true;
 			this.authorizedUser = authResult.data.user;
 

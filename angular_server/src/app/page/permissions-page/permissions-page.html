@@ -1,0 +1,150 @@
+<app-app-header></app-app-header>
+<main class="MainContent">
+	@if (isLoading) {
+		<app-loading-spinner [title]="'Loading'"></app-loading-spinner>
+	} @else {
+		<h1>Управление правами доступа</h1>
+
+		<!-- ========== БЛОК РЕДАКТИРОВАНИЯ ПРАВ НА ПУТЬ ========== -->
+		<div class="navigation-panel">
+			<h2>Права на путь</h2>
+			<div class="filter-row">
+				<div class="filter-group">
+					<label class="filter-label">Тип</label>
+					<select [(ngModel)]="targetType" (change)="loadPermissions()" class="path-input filter-select">
+						<option value="folder">Папка</option>
+						<option value="file">Файл</option>
+					</select>
+				</div>
+				<div class="filter-group">
+					<label class="filter-label">Путь</label>
+					<input type="text" [(ngModel)]="path" (ngModelChange)="loadPermissions()" placeholder="Путь (пусто = корень)" class="path-input">
+				</div>
+				<div class="filter-group">
+					<button (click)="loadPermissions()" class="btn btn-blue">Загрузить права</button>
+				</div>
+			</div>
+
+			@if (currentPermissions.length > 0) {
+				<div class="model-table-container">
+					<app-model-table [modelTableDataObject]="currentPermissionsTable"></app-model-table>
+				</div>
+			} @else if (path) {
+				<div class="info-message">Нет явных прав для этого пути</div>
+			} @else {
+				<div class="info-message">Введите путь или оставьте пустым для загрузки прав корневой папки</div>
+			}
+
+			<h2>Добавить / обновить право</h2>
+			<div class="filter-row">
+				<div class="filter-group">
+					<label class="filter-label">Тип субъекта</label>
+					<select [(ngModel)]="permissionType" class="path-input filter-select">
+						<option value="user">Пользователь</option>
+						<option value="group">Группа</option>
+					</select>
+				</div>
+
+				@if (permissionType === 'user') {
+					<div class="filter-group">
+						<label class="filter-label">Фильтр пользователей</label>
+						<input type="text" [(ngModel)]="userSearchFilter" (ngModelChange)="applyFiltersToSelects()" placeholder="Поиск..." class="path-input">
+					</div>
+					<div class="filter-group">
+						<label class="filter-label">Пользователь</label>
+						<select [(ngModel)]="userEmail" class="path-input filter-select">
+							<option value="">-- Выберите --</option>
+							@for (u of filteredUsersForSelect; track u.email) {
+								<option [value]="u.email">{{ u.surname }} {{ u.name }} ({{ u.email }})</option>
+							}
+						</select>
+					</div>
+				} @else {
+					<div class="filter-group">
+						<label class="filter-label">Фильтр групп</label>
+						<input type="text" [(ngModel)]="groupSearchFilter" (ngModelChange)="applyFiltersToSelects()" placeholder="Поиск..." class="path-input">
+					</div>
+					<div class="filter-group">
+						<label class="filter-label">Группа</label>
+						<select [(ngModel)]="groupName" class="path-input filter-select">
+							<option value="">-- Выберите --</option>
+							@for (g of filteredGroupsForSelect; track g.name) {
+								<option [value]="g.name">{{ g.name }}</option>
+							}
+						</select>
+					</div>
+				}
+			</div>
+			<div class="filter-row">
+				<div class="filter-group">
+					<label class="filter-label">Маска прав (0-15)</label>
+					<input type="number" [(ngModel)]="mode" min="0" max="15" class="path-input">
+					<small class="hint">READ=2, WRITE=4, CREATE=1, DELETE=8, ALL=15</small>
+				</div>
+				<div class="filter-group">
+					<button (click)="addPermission()" class="btn btn-green">Добавить / Обновить</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- ========== БЛОК ПРОСМОТРА ВСЕХ ПРАВ ПОЛЬЗОВАТЕЛЯ/ГРУППЫ ========== -->
+		<div class="navigation-panel">
+			<h2>Просмотр всех прав пользователя или группы</h2>
+			<div class="filter-row">
+				<div class="filter-group">
+					<label class="filter-label">Тип</label>
+					<select [(ngModel)]="viewType" (change)="loadViewPermissions()" class="path-input filter-select">
+						<option value="user">Пользователь</option>
+						<option value="group">Группа</option>
+					</select>
+				</div>
+
+				@if (viewType === 'user') {
+					<div class="filter-group">
+						<label class="filter-label">Фильтр пользователей</label>
+						<input type="text" [(ngModel)]="viewUserSearchFilter" (ngModelChange)="applyFiltersToViewSelects()" placeholder="Поиск..." class="path-input">
+					</div>
+					<div class="filter-group">
+						<label class="filter-label">Пользователь</label>
+						<select [(ngModel)]="viewUserEmail" (change)="loadViewPermissions()" class="path-input filter-select">
+							<option value="">Все пользователи</option>
+							@for (u of filteredViewUsers; track u.email) {
+								<option [value]="u.email">{{ u.surname }} {{ u.name }} ({{ u.email }})</option>
+							}
+						</select>
+					</div>
+				} @else {
+					<div class="filter-group">
+						<label class="filter-label">Фильтр групп</label>
+						<input type="text" [(ngModel)]="viewGroupSearchFilter" (ngModelChange)="applyFiltersToViewSelects()" placeholder="Поиск..." class="path-input">
+					</div>
+					<div class="filter-group">
+						<label class="filter-label">Группа</label>
+						<select [(ngModel)]="viewGroupName" (change)="loadViewPermissions()" class="path-input filter-select">
+							<option value="">Все группы</option>
+							@for (g of filteredViewGroups; track g.name) {
+								<option [value]="g.name">{{ g.name }}</option>
+							}
+						</select>
+					</div>
+				}
+			</div>
+			<div class="filter-group" style="margin-top: 12px;">
+				<button (click)="loadViewPermissions()" class="btn btn-blue">Загрузить права</button>
+			</div>
+
+			@if (viewPermissions.length > 0) {
+				<div class="model-table-container">
+					<app-model-table [modelTableDataObject]="viewPermissionsTable"></app-model-table>
+				</div>
+			} @else if ((viewType === 'user' && viewUserEmail) || (viewType === 'group' && viewGroupName)) {
+				<div class="info-message">Нет прав для выбранного субъекта</div>
+			} @else if (viewType === 'user' && !viewUserEmail) {
+				<div class="info-message">Выберите «Все пользователи» или конкретного пользователя</div>
+			} @else if (viewType === 'group' && !viewGroupName) {
+				<div class="info-message">Выберите «Все группы» или конкретную группу</div>
+			}
+		</div>
+	}
+</main>
+<app-footer></app-footer>

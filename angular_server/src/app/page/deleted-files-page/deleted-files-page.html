@@ -1,0 +1,37 @@
+<app-app-header></app-app-header>
+<main class="MainContent">
+	@if (isLoading) {
+		<app-loading-spinner [title]="'Загрузка корзины'"></app-loading-spinner>
+	} @else {
+		<h1>Корзина</h1>
+
+		@if (deletedFiles.length === 0 && deletedFolders.length === 0) {
+			<div class="info-message">Корзина пуста</div>
+		}
+
+		@if (deletedFiles.length > 0) {
+			<div>
+				<app-model-table-tile-component
+				[title]="'Удалённые файлы (' + deletedFiles.length + ')'"
+				[iconName]="IconManager.getFileIcon('file')"
+				></app-model-table-tile-component>
+			</div>
+			<div class="model-table-container">
+				<app-model-table [modelTableDataObject]="filesTableData"></app-model-table>
+			</div>
+		}
+
+		@if (deletedFolders.length > 0) {
+			<div>
+				<app-model-table-tile-component
+				[title]="'Удалённые папки (' + deletedFolders.length + ')'"
+				[iconName]="IconManager.getFileIcon('folder')"
+				></app-model-table-tile-component>
+			</div>
+			<div class="model-table-container">
+				<app-model-table [modelTableDataObject]="foldersTableData"></app-model-table>
+			</div>
+		}
+	}
+</main>
+<app-footer></app-footer>

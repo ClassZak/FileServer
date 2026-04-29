@@ -265,7 +265,6 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				this.router.navigate(['/login']);
 				throw new Error(message);
 			} else {
-				console.log('Аутентификация прошла успешно');
 				this.isAuthenticated = true;
 				this.authorizedUser = authResult.data.user;
 				

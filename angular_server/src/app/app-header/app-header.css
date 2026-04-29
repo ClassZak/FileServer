@@ -8,17 +8,17 @@ app-app-header {
 }
 .header-content {
 	width: 90%;
-	margin: 10px auto;
+	margin: 5px auto;
 	display: flex;
 	align-items: center;
-	gap: 10px;
+	gap: 4px;
 }
 app-app-header > *{
 	display: inline;
 }
 app-app-header > form{
 	display: flex;
-	gap: 5px;
+	gap: 4px;
 	width: 100%;
 }
 .header-content a {
@@ -28,7 +28,7 @@ app-app-header > form{
 	display: flex;
 	align-items: center;
 	width: auto;
-	gap: 10px;
+	gap: 4px;
 }
 .header-content nav > *{
 	display: inline;

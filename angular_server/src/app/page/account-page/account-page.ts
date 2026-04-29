@@ -130,7 +130,6 @@ export class AccountPage implements OnInit {
 			}
 
 			if (authResult.data?.authenticated) {
-				console.log('Аутентификация прошла успешно');
 				this.isAuthenticated = true;
 				this.user = authResult.data.user;
 				
