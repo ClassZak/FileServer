@@ -41,10 +41,28 @@
 						[title]="'Группы'"		
 						[className]="'btn btn-blue'">
 					</app-redirection-button>
-					
+
 					<button (click)="openAddAdminToGroupModal()" class="btn btn-green">
 						Вступить в группу
 					</button>
+
+					<app-redirection-button 
+						[reference]="'/history'" 
+						[title]="'История'"		
+						[className]="'btn btn-blue'">
+					</app-redirection-button>
+
+					<app-redirection-button 
+						[reference]="'/trash'" 
+						[title]="'Корзина'"		
+						[className]="'btn btn-red'">
+					</app-redirection-button>
+
+					<app-redirection-button 
+						[reference]="'/permissions'" 
+						[title]="'Права пользователей'"		
+						[className]="'btn btn-red'">
+					</app-redirection-button>
 				</div>
 			}
 			
