@@ -1,13 +1,23 @@
 <app-app-header></app-app-header>
 <main class="MainContent">
 	@if (isLoading) {
-		<app-loading-spinner [title]="'Loading'"></app-loading-spinner>
+		<app-loading-spinner [title]="'Загрузка'"></app-loading-spinner>
 	} @else {
 		<h1>Управление правами доступа</h1>
 
-		<!-- ========== БЛОК РЕДАКТИРОВАНИЯ ПРАВ НА ПУТЬ ========== -->
+		<!-- ==================== СЕКЦИЯ 1: ПРАВА НА ПУТЬ ==================== -->
 		<div class="navigation-panel">
 			<h2>Права на путь</h2>
+			<div class="warning-box">
+				<p><strong>⚠️ Важные ограничения:</strong></p>
+				<ul>
+					<li>Корневая папка (<code>/</code>) неудаляема. По умолчанию права на корень имеет только администратор.</li>
+					<li>Папка <code>/groups</code> и все групповые папки (<code>/groups/&lt;имя_группы&gt;</code>) также неудаляемы.</li>
+					<li>Доступ к файлам внутри групповой папки имеют только члены этой группы и администратор.</li>
+					<li>Нельзя выдать права участнику одной группы на папку другой группы.</li>
+				</ul>
+			</div>
+
 			<div class="filter-row">
 				<div class="filter-group">
 					<label class="filter-label">Тип</label>
@@ -35,7 +45,7 @@
 				<div class="info-message">Введите путь или оставьте пустым для загрузки прав корневой папки</div>
 			}
 
-			<h2>Добавить / обновить право</h2>
+			<h3>Добавить / обновить право на указанный путь</h3>
 			<div class="filter-row">
 				<div class="filter-group">
 					<label class="filter-label">Тип субъекта</label>
@@ -87,13 +97,13 @@
 			</div>
 		</div>
 
-		<!-- ========== БЛОК ПРОСМОТРА ВСЕХ ПРАВ ПОЛЬЗОВАТЕЛЯ/ГРУППЫ ========== -->
+		<!-- ==================== СЕКЦИЯ 2: ПРОСМОТР ВСЕХ ПРАВ ПОЛЬЗОВАТЕЛЯ/ГРУППЫ ==================== -->
 		<div class="navigation-panel">
 			<h2>Просмотр всех прав пользователя или группы</h2>
 			<div class="filter-row">
 				<div class="filter-group">
 					<label class="filter-label">Тип</label>
-					<select [(ngModel)]="viewType" (change)="loadViewPermissions()" class="path-input filter-select">
+					<select [(ngModel)]="viewType" class="path-input filter-select">
 						<option value="user">Пользователь</option>
 						<option value="group">Группа</option>
 					</select>
@@ -106,7 +116,7 @@
 					</div>
 					<div class="filter-group">
 						<label class="filter-label">Пользователь</label>
-						<select [(ngModel)]="viewUserEmail" (change)="loadViewPermissions()" class="path-input filter-select">
+						<select [(ngModel)]="viewUserEmail" class="path-input filter-select">
 							<option value="">Все пользователи</option>
 							@for (u of filteredViewUsers; track u.email) {
 								<option [value]="u.email">{{ u.surname }} {{ u.name }} ({{ u.email }})</option>
@@ -120,7 +130,7 @@
 					</div>
 					<div class="filter-group">
 						<label class="filter-label">Группа</label>
-						<select [(ngModel)]="viewGroupName" (change)="loadViewPermissions()" class="path-input filter-select">
+						<select [(ngModel)]="viewGroupName" class="path-input filter-select">
 							<option value="">Все группы</option>
 							@for (g of filteredViewGroups; track g.name) {
 								<option [value]="g.name">{{ g.name }}</option>
@@ -128,9 +138,10 @@
 						</select>
 					</div>
 				}
-			</div>
-			<div class="filter-group" style="margin-top: 12px;">
-				<button (click)="loadViewPermissions()" class="btn btn-blue">Загрузить права</button>
+
+				<div class="filter-group">
+					<button (click)="loadViewPermissions()" class="btn btn-blue">Загрузить права</button>
+				</div>
 			</div>
 
 			@if (viewPermissions.length > 0) {

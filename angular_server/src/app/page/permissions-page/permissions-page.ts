@@ -17,6 +17,7 @@ import { NoticeService } from '../../core/view-core/service/notice-service';
 import { Notification, NotificationType } from '../../core/view-core/model/notification';
 import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
 import { ModelTable } from '../../component/model-table/model-table';
+import { parentPath } from '../../core/model/history-info';
 
 @Component({
 	selector: 'app-permissions-page',
@@ -28,7 +29,6 @@ import { ModelTable } from '../../component/model-table/model-table';
 		AppHeader,
 		AppFooter,
 		LoadingSpinner,
-
 		ModelTable
 	],
 	templateUrl: './permissions-page.html',
@@ -38,20 +38,18 @@ export class PermissionsPage implements OnInit, OnDestroy {
 	isLoading = true;
 	isAdmin = false;
 
-	// ----------------------------------------------
-	// Edit permissions on a specific path
-	// ----------------------------------------------
+	// ---------- Section 1: permissions on a specific path ----------
 	targetType: 'folder' | 'file' = 'folder';
 	path: string = '';
 	currentPermissions: (FolderPermissionInfo | FilePermissionInfo)[] = [];
 
-	// Add / update permission
+	// Add/update permission form
 	permissionType: 'user' | 'group' = 'user';
 	userEmail: string = '';
 	groupName: string = '';
 	mode: number = 5;
 
-	// Filtering for user/group selects (edit section)
+	// Selects filtering
 	userSearchFilter: string = '';
 	groupSearchFilter: string = '';
 	filteredUsersForSelect: UserAdminModel[] = [];
@@ -59,15 +57,7 @@ export class PermissionsPage implements OnInit, OnDestroy {
 	allUsers: UserAdminModel[] = [];
 	allGroups: GroupBasicInfo[] = [];
 
-	// ----------------------------------------------
-	// View all permissions of a user or group
-	// ----------------------------------------------
-	viewType: 'user' | 'group' = 'user';
-	viewUserEmail: string = '';        // empty means "all users"
-	viewGroupName: string = '';        // empty means "all groups"
-	viewPermissions: PermissionInfo[] = [];
-
-		// ModelTable objects
+	// Table for current permissions (with delete action)
 	currentPermissionsTable: ModelTableDataObject<any> = new ModelTableDataObject(
 		[
 			{ header: 'Субъект', field: (item: any) => item.userEmail || item.groupName },
@@ -78,6 +68,12 @@ export class PermissionsPage implements OnInit, OnDestroy {
 			actionsHeader: 'Действия',
 			actionsConfigs: [
 				{
+					type: ActionType.LINK,
+					label: 'Перейти',
+					class: 'btn btn-blue',
+					href: (item: any) => `/files/${item.path || this.path}`
+				},
+				{
 					type: ActionType.ACTION,
 					label: 'Удалить',
 					class: 'btn btn-red',
@@ -87,22 +83,46 @@ export class PermissionsPage implements OnInit, OnDestroy {
 		}
 	);
 
-	viewPermissionsTable: ModelTableDataObject<PermissionInfo> = new ModelTableDataObject(
-		[
-			{ header: 'Тип', field: (item: PermissionInfo) => item.type === 'folder' ? 'Папка' : 'Файл' },
-			{ header: 'Путь', field: 'path' },
-			{ header: 'Маска (0-15)', field: 'mode' }
-		],
-		[]
-	);
+	// ---------- Section 2: view all permissions of a user/group ----------
+	viewType: 'user' | 'group' = 'user';
+	viewUserEmail: string = '';      // empty = all users
+	viewGroupName: string = '';      // empty = all groups
+	viewPermissions: PermissionInfo[] = [];
 
-	// Filtering for view selects
 	viewUserSearchFilter: string = '';
 	viewGroupSearchFilter: string = '';
 	filteredViewUsers: UserAdminModel[] = [];
 	filteredViewGroups: GroupBasicInfo[] = [];
 
-	// URL query parameters subscriptions
+	// Table for view permissions (read‑only, no actions)
+	viewPermissionsTable: ModelTableDataObject<PermissionInfo> = new ModelTableDataObject(
+		[
+			{ header: 'Тип', field: (item: PermissionInfo) => item.type === 'folder' ? 'Папка' : 'Файл' },
+			{
+				header: 'Путь',
+				field: 'path',
+				icon: (item: PermissionInfo) => item.type === 'folder' ? 'matfFolderOpenColored' : 'matfDocumentColored'
+			},
+			{ header: 'Маска (0-15)', field: 'mode' }
+		],
+		[],
+		{
+			actionsHeader: 'Действия',
+			actionsConfigs: [
+				{
+					type: ActionType.LINK,
+					label: 'Перейти',
+					class: 'btn btn-blue',
+					href: (item: PermissionInfo) => `/files/${item.type === 'folder' ? item.path : parentPath(item.path)}`
+				}
+			]
+		}
+	);
+
+	// Flag to prevent full page reload when only one section reloads
+	private loadingPermissions = false;
+	private loadingView = false;
+
 	private querySub?: Subscription;
 
 	constructor(
@@ -127,7 +147,7 @@ export class PermissionsPage implements OnInit, OnDestroy {
 			await this.loadUsersAndGroups();
 
 			this.querySub = this.route.queryParamMap.subscribe(async params => {
-				// Edit section
+				// Section 1
 				this.targetType = (params.get('targetType') as 'folder' | 'file') || 'folder';
 				this.path = params.get('path') || '';
 				this.permissionType = (params.get('permType') as 'user' | 'group') || 'user';
@@ -135,7 +155,7 @@ export class PermissionsPage implements OnInit, OnDestroy {
 				this.groupName = params.get('groupName') || '';
 				this.mode = params.get('mode') ? parseInt(params.get('mode')!) : 5;
 
-				// View section
+				// Section 2
 				this.viewType = (params.get('viewType') as 'user' | 'group') || 'user';
 				this.viewUserEmail = params.get('viewUserEmail') || '';
 				this.viewGroupName = params.get('viewGroupName') || '';
@@ -143,14 +163,17 @@ export class PermissionsPage implements OnInit, OnDestroy {
 				this.applyFiltersToSelects();
 				this.applyFiltersToViewSelects();
 
-				if (this.path !== undefined) {
-					await this.loadPermissions();
+				// Load data without global loading indicator
+				if (!this.loadingPermissions) {
+					this.loadPermissions().catch(console.warn);
 				}
-				await this.loadViewPermissions();
+				if (!this.loadingView) {
+					this.loadViewPermissions().catch(console.warn);
+				}
 			});
 		} catch (error) {
 			console.error(error);
-			this.noticeService.addNotificationErrorTypeByMessage(`Ошибка авторищации ${(error as Error).message}`);
+			this.noticeService.addNotificationErrorTypeByMessage(`Ошибка авторизации ${(error as Error).message}`);
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
@@ -204,7 +227,6 @@ export class PermissionsPage implements OnInit, OnDestroy {
 		);
 	}
 
-	// Filtering for view section selects
 	applyFiltersToViewSelects(): void {
 		const userFilter = this.viewUserSearchFilter.toLowerCase();
 		this.filteredViewUsers = this.allUsers.filter(u =>
@@ -218,7 +240,6 @@ export class PermissionsPage implements OnInit, OnDestroy {
 		);
 	}
 
-	// Update URL with current state
 	private updateUrl(): void {
 		const queryParams: any = {
 			targetType: this.targetType,
@@ -239,60 +260,52 @@ export class PermissionsPage implements OnInit, OnDestroy {
 		});
 	}
 
-	// Load permissions for current path
+	// ---------- Section 1 methods ----------
 	async loadPermissions(): Promise<void> {
-		// Если путь пуст – не делаем запрос, просто очищаем таблицу
 		if (!this.path.trim()) {
 			this.currentPermissions = [];
 			this.currentPermissionsTable.models = [];
 			this.updateUrl();
-			this.cdr.detectChanges();
 			return;
 		}
-		const token = AuthService.getToken();
-		if (!token) return;
-		this.isLoading = true;
+		this.loadingPermissions = true;
 		try {
+			const token = AuthService.getToken();
+			if (!token) return;
+			let res;
 			if (this.targetType === 'folder') {
-				const res = await this.fileService.getFolderPermissions(token, this.path);
-				if (res.success && res.data) {
-					this.currentPermissions = res.data;
-					this.currentPermissionsTable.models = this.currentPermissions;
-				} else {
-					throw new Error(res.error);
-				}
+				res = await this.fileService.getFolderPermissions(token, this.path);
 			} else {
-				const res = await this.fileService.getFilePermissions(token, this.path);
-				if (res.success && res.data) {
-					this.currentPermissions = res.data;
-					this.currentPermissionsTable.models = this.currentPermissions;
-				} else {
-					throw new Error(res.error);
-				}
+				res = await this.fileService.getFilePermissions(token, this.path);
+			}
+			if (res.success && res.data) {
+				this.currentPermissions = res.data;
+				this.currentPermissionsTable.models = this.currentPermissions;
+			} else {
+				throw new Error(res.error);
 			}
 		} catch (error) {
 			this.noticeService.addNotification(new Notification(NotificationType.Error, (error as Error).message));
 			this.currentPermissions = [];
 			this.currentPermissionsTable.models = [];
 		} finally {
-			this.isLoading = false;
+			this.loadingPermissions = false;
 			this.updateUrl();
 			this.cdr.detectChanges();
 		}
 	}
 
-	// Add or update permission
 	async addPermission(): Promise<void> {
 		if (!this.path.trim()) {
-			this.noticeService.addNotification(new Notification(NotificationType.Warning, 'Enter a path'));
+			this.noticeService.addNotification(new Notification(NotificationType.Warning, 'Введите путь'));
 			return;
 		}
 		if (this.permissionType === 'user' && !this.userEmail) {
-			this.noticeService.addNotification(new Notification(NotificationType.Warning, 'Select a user'));
+			this.noticeService.addNotification(new Notification(NotificationType.Warning, 'Выберите пользователя'));
 			return;
 		}
 		if (this.permissionType === 'group' && !this.groupName) {
-			this.noticeService.addNotification(new Notification(NotificationType.Warning, 'Select a group'));
+			this.noticeService.addNotification(new Notification(NotificationType.Warning, 'Выберите группу'));
 			return;
 		}
 		const token = AuthService.getToken();
@@ -313,7 +326,7 @@ export class PermissionsPage implements OnInit, OnDestroy {
 				result = await this.fileService.setFilePermission(token, request);
 			}
 			if (result.success) {
-				this.noticeService.addNotification(new Notification(NotificationType.Success, 'Permission added/updated'));
+				this.noticeService.addNotification(new Notification(NotificationType.Success, 'Право добавлено/обновлено'));
 				await this.loadPermissions();
 			} else {
 				throw new Error(result.error);
@@ -323,7 +336,6 @@ export class PermissionsPage implements OnInit, OnDestroy {
 		}
 	}
 
-	// Delete permission
 	async deletePermission(perm: FolderPermissionInfo | FilePermissionInfo): Promise<void> {
 		const token = AuthService.getToken();
 		if (!token) return;
@@ -345,7 +357,7 @@ export class PermissionsPage implements OnInit, OnDestroy {
 				);
 			}
 			if (result.success) {
-				this.noticeService.addNotification(new Notification(NotificationType.Success, 'Permission deleted'));
+				this.noticeService.addNotification(new Notification(NotificationType.Success, 'Право удалено'));
 				await this.loadPermissions();
 			} else {
 				throw new Error(result.error);
@@ -355,15 +367,14 @@ export class PermissionsPage implements OnInit, OnDestroy {
 		}
 	}
 
-	// Load all permissions for selected subject (or all users/groups)
+	// ---------- Section 2 methods ----------
 	async loadViewPermissions(): Promise<void> {
-		const token = AuthService.getToken();
-		if (!token) return;
-		this.isLoading = true;
+		this.loadingView = true;
 		try {
+			const token = AuthService.getToken();
+			if (!token) return;
 			if (this.viewType === 'user') {
 				if (!this.viewUserEmail) {
-					// Load permissions for all users
 					await this.loadAllUsersPermissions(token);
 				} else {
 					const res = await this.fileService.getUserPermissions(token, this.viewUserEmail);
@@ -392,7 +403,7 @@ export class PermissionsPage implements OnInit, OnDestroy {
 			this.viewPermissions = [];
 			this.viewPermissionsTable.models = [];
 		} finally {
-			this.isLoading = false;
+			this.loadingView = false;
 			this.updateUrl();
 			this.cdr.detectChanges();
 		}
@@ -400,15 +411,22 @@ export class PermissionsPage implements OnInit, OnDestroy {
 
 	private async loadAllUsersPermissions(token: string): Promise<void> {
 		const allPerms: PermissionInfo[] = [];
+		let hasError = false;
 		for (const user of this.allUsers) {
 			try {
 				const res = await this.fileService.getUserPermissions(token, user.email);
 				if (res.success && res.data) {
 					allPerms.push(...res.data);
+				} else {
+					throw new Error(res.error);
 				}
 			} catch (e) {
 				console.warn(`Failed to load permissions for user ${user.email}`, e);
+				hasError = true;
 			}
+		}
+		if (hasError) {
+			this.noticeService.addNotification(new Notification(NotificationType.Warning, 'Некоторые права пользователей не загружены'));
 		}
 		this.viewPermissions = allPerms;
 		this.viewPermissionsTable.models = this.viewPermissions;
