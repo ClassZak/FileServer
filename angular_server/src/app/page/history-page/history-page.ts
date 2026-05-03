@@ -26,20 +26,22 @@ import {
 } from '../../core/model/history-info';
 import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
 import { UserAdminModel } from '../../core/model/user-admin-model';
+import { RedirectionButton } from "../../component/redirection-button/redirection-button";
 
 @Component({
 	selector: 'app-history-page',
 	standalone: true,
 	imports: [
-		CommonModule,
-		FormsModule,
-		RouterModule,
-		AppHeader,
-		AppFooter,
-		LoadingSpinner,
-		ModelTable,
-		ModelTableTileComponent
-	],
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    AppHeader,
+    AppFooter,
+    LoadingSpinner,
+    ModelTable,
+    ModelTableTileComponent,
+    RedirectionButton
+],
 	providers: [DatePipe],
 	templateUrl: './history-page.html',
 	styleUrls: ['./history-page.css']

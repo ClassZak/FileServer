@@ -72,6 +72,12 @@ app-app-header > form{
 	.header-content nav {
 		gap: 2px;
 	}
+
+
+
+	.header-content {
+		flex-direction: column;
+	}
 }
 @media screen and (width < 380px) {
 	.header-content {

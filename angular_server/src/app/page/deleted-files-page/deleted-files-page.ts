@@ -13,18 +13,20 @@ import { AdminService } from '../../core/service/admin-service';
 import { NoticeService } from '../../core/view-core/service/notice-service';
 import { Notification, NotificationType } from '../../core/view-core/model/notification';
 import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
+import { RedirectionButton } from "../../component/redirection-button/redirection-button";
 
 @Component({
 	selector: 'app-deleted-files-page',
 	standalone: true,
 	imports: [
-		CommonModule,
-		AppHeader,
-		AppFooter,
-		LoadingSpinner,
-		ModelTable,
-		ModelTableTileComponent
-	],
+    CommonModule,
+    AppHeader,
+    AppFooter,
+    LoadingSpinner,
+    ModelTable,
+    ModelTableTileComponent,
+    RedirectionButton
+],
 	providers: [DatePipe],
 	templateUrl: './deleted-files-page.html',
 	styleUrls: ['./deleted-files-page.css']

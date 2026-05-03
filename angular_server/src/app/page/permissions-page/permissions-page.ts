@@ -18,19 +18,21 @@ import { Notification, NotificationType } from '../../core/view-core/model/notif
 import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
 import { ModelTable } from '../../component/model-table/model-table';
 import { parentPath } from '../../core/model/history-info';
+import { RedirectionButton } from "../../component/redirection-button/redirection-button";
 
 @Component({
 	selector: 'app-permissions-page',
 	standalone: true,
 	imports: [
-		CommonModule,
-		FormsModule,
-		RouterModule,
-		AppHeader,
-		AppFooter,
-		LoadingSpinner,
-		ModelTable
-	],
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    AppHeader,
+    AppFooter,
+    LoadingSpinner,
+    ModelTable,
+    RedirectionButton
+],
 	templateUrl: './permissions-page.html',
 	styleUrls: ['./permissions-page.css']
 })
