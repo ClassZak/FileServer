@@ -109,5 +109,5 @@ cd kotlin_spring_server
 
 ## 👨‍💻 Аккаунты по умолчанию
 
-Администатор Иванов Артем Сергеевич Ivanov.AS@example.com с паролем 123456a
-1 2 3 42sfsdf2@mail.com с паролем 123456a
+- Администатор Иванов Артем Сергеевич Ivanov.AS@example.com с паролем 123456a
+- 1 2 3 42sfsdf2@mail.com с паролем 123456a
