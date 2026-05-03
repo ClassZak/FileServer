@@ -20,4 +20,6 @@ interface DeletedFolderRepository : JpaRepository<DeletedFolder, Long> {
 	fun findByFolderEntityOrderByVersionDesc(@Param("folderEntity") folderEntity: FolderEntity): List<DeletedFolder>
 	
 	fun findByOriginalPath(originalPath: String): List<DeletedFolder>
+	
+	fun findByFolderEntityAndVersion(folderEntity: org.zak.entity.FolderEntity, version: Int): DeletedFolder?
 }

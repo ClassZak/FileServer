@@ -60,6 +60,11 @@ class UserService(
 			surname, name, patronymic
 		)
 	}
+	fun findByEmail(email: String): User? {
+		return userRepository.findByEmail(
+			email
+		)
+	}
 	
 	fun authenticate(request: LoginRequest): User? {
 		val user = userRepository.findByEmail(request.email)

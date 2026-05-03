@@ -15,7 +15,6 @@ import org.zak.dto.file.FolderInfo
 import org.zak.entity.*
 import org.zak.repository.*
 import java.io.File
-import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -24,8 +23,6 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.time.LocalDateTime
 import java.util.*
 import kotlin.io.path.Path
-import kotlin.io.path.absolute
-import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 
 /**
@@ -50,11 +47,9 @@ enum class AccessType(val value: Int) {
  * Информация об удалённом файле для передачи клиенту.
  */
 data class DeletedFileInfo(
-	val id: Long,
 	val originalPath: String,
 	val deletedAt: LocalDateTime,
 	val version: Int,
-	val deletedByUserId: Int,
 	val deletedByUserEmail: String
 )
 
@@ -62,12 +57,53 @@ data class DeletedFileInfo(
  * Информация об удалённой папке для передачи клиенту.
  */
 data class DeletedFolderInfo(
-	val id: Long,
 	val originalPath: String,
 	val deletedAt: LocalDateTime,
 	val version: Int,
-	val deletedByUserId: Int,
 	val deletedByUserEmail: String
+)
+
+/**
+ * Информация об удалённой папке для передачи клиенту.
+ */
+data class HistoryInfo(
+	val workTime: LocalDateTime,
+	val operationType: String,
+	val userEmail: String,
+	val path: String,
+	val isFile: Boolean,
+	val details: String?
+)
+
+/**
+ * Информация о праве доступа на папку для ответа клиенту.
+ */
+data class FolderPermissionInfo(
+	val id: Long?,
+	val userEmail: String?,
+	val groupName: String?,
+	val mode: Int
+)
+
+/**
+ * Информация о праве доступа на файл для ответа клиенту.
+ */
+data class FilePermissionInfo(
+	val id: Long?,
+	val userEmail: String?,
+	val groupName: String?,
+	val mode: Int
+)
+
+/**
+ * Универсальная информация о праве доступа (используется для групп и пользователей).
+ */
+data class PermissionInfo(
+	val type: String,         // "file" или "folder"
+	val path: String,
+	val userEmail: String?,
+	val groupName: String?,
+	val mode: Int
 )
 
 /**
@@ -104,7 +140,6 @@ class FileSystemService(
 	
 	private val logger = LoggerFactory.getLogger(FileSystemService::class.java)
 	private val groupsDir = "groups"
-	private val recoveredDir = "recovered"
 	
 	@Value("\${file-server.root-directory:./files}")
 	private lateinit var rootDirectory: String
@@ -188,20 +223,35 @@ class FileSystemService(
 	// ================== ПРОВЕРКА ПРАВ ==================
 	
 	/**
+	 * Проверяет, что путь свободен для восстановления:
+	 * - физический файл/папка не должны существовать
+	 * - в БД не должно быть активной (isDeleted = false) записи
+	 * Удалённые записи (isDeleted = true) допустимы.
+	 */
+	private fun checkPathNotOccupied(path: String) {
+		val target = getSafePath(path).toFile()
+		if (target.exists()) {
+			throw IllegalStateException("Невозможно восстановить: по пути '$path' уже существует файл или папка")
+		}
+		val file = fileEntityRepository.findByPath(path)
+		if (file != null && !file.isDeleted) {
+			throw IllegalStateException("Невозможно восстановить: файл '$path' уже активен в системе")
+		}
+		val folder = folderEntityRepository.findByPath(path)
+		if (folder != null && !folder.isDeleted) {
+			throw IllegalStateException("Невозможно восстановить: папка '$path' уже активна в системе")
+		}
+	}
+	
+	/**
 	 * Вычисляет эффективные права доступа текущего пользователя к директории.
-	 *
-	 * Алгоритм:
-	 * - Администратор всегда имеет полный доступ.
-	 * - Для пустого пути (корень) не-админ получает NONE.
-	 * - Папка `groups` доступна только на чтение.
-	 * - Для групповых папок (`groups/groupName/...`) участники группы по умолчанию имеют ALL,
-	 *   который может быть переопределён явными разрешениями в `FolderPermission`.
-	 * - Для остальных путей права вычисляются как побитовое ИЛИ всех разрешений,
-	 *   найденных для текущего пользователя и его групп вдоль всей иерархии папок.
+	 * Правило: ближайшее явное разрешение (пользователь + группы) переопределяет вышестоящие,
+	 * включая нулевые маски (явный запрет).
+	 * Для путей внутри групп, где пользователь состоит, базовое право ALL, если явных прав нет.
 	 *
 	 * @param currentUser аутентифицированный пользователь
 	 * @param path относительный путь к директории
-	 * @return битовая маска разрешённых операций (AccessType)
+	 * @return битовая маска разрешённых операций (Int)
 	 */
 	fun checkAccessForDirectory(currentUser: CurrentUser, path: String): Int {
 		if (currentUser.isAdmin) return AccessType.ALL.value
@@ -209,79 +259,83 @@ class FileSystemService(
 		val safePath = getRelativePath(getSafePath(path))
 		val userId = currentUser.id!!
 		
+		// Фиксированные права для корня и /groups
 		if (safePath.isEmpty()) return AccessType.READ.value
 		if (safePath == groupsDir) return AccessType.READ.value
 		
-		if (isGroupDirectory(safePath)) {
-			val groupName = extractGroupFromPath(safePath) ?: return AccessType.NONE.value
-			val group = groupService.findByName(groupName) ?: return AccessType.NONE.value
-			if (!groupService.hasUserAccessToGroup(userId, groupName)) return AccessType.NONE.value
-			
-			var current = safePath
-			var permissions = AccessType.ALL.value
-			val user = userService.getUserEntityById(userId)!!
-			while (current.isNotEmpty()) {
-				val folderEntity = folderEntityRepository.findByPath(current)
-				if (folderEntity != null) {
-					folderPermissionRepository.findByFolderEntityAndUser(folderEntity, user)?.let {
-						permissions = it.mode.toInt()
-					}
-					folderPermissionRepository.findByFolderEntityAndGroup(folderEntity, group)?.let {
-						permissions = permissions or it.mode.toInt()
-					}
-				}
-				current = current.substringBeforeLast("/", "")
-			}
-			return permissions
-		}
-		
-		var current = safePath
-		var permissions = AccessType.NONE.value
 		val user = userService.getUserEntityById(userId)!!
 		val groups = groupService.findByMemberId(userId)
+		
+		// Определяем, находится ли путь внутри групповой папки и состоит ли пользователь в этой группе
+		val isGroupPath = isGroupDirectory(safePath)
+		val groupName = if (isGroupPath) extractGroupFromPath(safePath) else null
+		val group = groupName?.let { groupService.findByName(it) }
+		val hasGroupAccess = isGroupPath && group != null && groupService.hasUserAccessToGroup(userId, groupName)
+		
+		// Ищем ближайшее явное право, поднимаясь от целевой папки вверх
+		var current = safePath
 		while (current.isNotEmpty()) {
 			val folderEntity = folderEntityRepository.findByPath(current)
 			if (folderEntity != null) {
+				var permissions: Int? = null
+				
+				// Права конкретного пользователя
 				folderPermissionRepository.findByFolderEntityAndUser(folderEntity, user)?.let {
-					permissions = permissions or it.mode.toInt()
+					permissions = it.mode.toInt()
 				}
-				groups.forEach { group ->
-					folderPermissionRepository.findByFolderEntityAndGroup(folderEntity, group)?.let {
-						permissions = permissions or it.mode.toInt()
+				
+				// Права групп, в которых состоит пользователь (если для пользователя не найдено)
+				if (permissions == null) {
+					// Используем firstNotNullOfOrNull для поиска первого найденного разрешения
+					permissions = groups.firstNotNullOfOrNull { g ->
+						folderPermissionRepository.findByFolderEntityAndGroup(folderEntity, g)?.mode?.toInt()
 					}
+				}
+				
+				if (permissions != null) {
+					return permissions!!  // ближайшее явное разрешение (включая 0)
 				}
 			}
 			current = current.substringBeforeLast("/", "")
 		}
-		return permissions
+		
+		// Явных прав не найдено: для групповой папки даём ALL, иначе NONE
+		return if (hasGroupAccess) AccessType.ALL.value else AccessType.NONE.value
 	}
 	
 	/**
 	 * Вычисляет эффективные права доступа к файлу.
 	 * Сначала проверяются явные разрешения на сам файл, затем права родительской директории.
+	 *
+	 * @param currentUser аутентифицированный пользователь
+	 * @param path относительный путь к родительской директории
+	 * @param fileName имя файла
+	 * @return битовая маска разрешённых операций (Int)
 	 */
 	fun checkAccessForFile(currentUser: CurrentUser, path: String, fileName: String): Int {
 		if (currentUser.isAdmin) return AccessType.ALL.value
 		
 		val safePath = getRelativePath(getSafePath(path))
 		val safeFullPath = if (safePath.isEmpty()) fileName else "$safePath/$fileName"
-		val dirPermissions = checkAccessForDirectory(currentUser, path)
 		val userId = currentUser.id!!
 		val user = userService.getUserEntityById(userId)!!
 		val groups = groupService.findByMemberId(userId)
 		
 		val fileEntity = fileEntityRepository.findByPath(safeFullPath)
 		if (fileEntity != null) {
+			// Явное право пользователя на файл
 			filePermissionRepository.findByFileEntityAndUser(fileEntity, user)?.let {
 				return it.mode.toInt()
 			}
+			// Явное право группы на файл
 			groups.forEach { group ->
 				filePermissionRepository.findByFileEntityAndGroup(fileEntity, group)?.let {
 					return it.mode.toInt()
 				}
 			}
 		}
-		return dirPermissions
+		// Нет явных прав на файл – наследуем права родительской папки
+		return checkAccessForDirectory(currentUser, path)
 	}
 	
 	/** Проверяет, находится ли путь внутри директории `groups`. */
@@ -302,6 +356,12 @@ class FileSystemService(
 	 * Возвращает список файлов и папок в указанной директории, учитывая права доступа.
 	 * Папки, на которые у пользователя нет прямого права READ, всё равно отображаются,
 	 * если внутри есть доступные для чтения элементы (просвечивание).
+	 *
+	 * @param currentUser аутентифицированный пользователь
+	 * @param relativePath относительный путь к директории
+	 * @return пара: список файлов и список папок
+	 * @throws SecurityException если нет прав на чтение директории
+	 * @throws IllegalArgumentException если директория не существует
 	 */
 	fun listDirectoryByPermissions(currentUser: CurrentUser, relativePath: String): Pair<List<FileInfo>, List<FolderInfo>> {
 		val permissions = checkAccessForDirectory(currentUser, relativePath)
@@ -333,7 +393,7 @@ class FileSystemService(
 					}
 				}
 			} catch (e: SecurityException) {
-				logger.warn("Нет доступа к: ${file.name}")
+				logger.warn("Нет доступа к: ${file.name} \n${e.message}")
 			}
 		}
 		
@@ -347,12 +407,12 @@ class FileSystemService(
 	 * доступный текущему пользователю для чтения.
 	 */
 	private fun hasAnyReadableChild(currentUser: CurrentUser, folderPath: String): Boolean {
-		val childrenFiles = fileEntityRepository.findByPathStartingWith(folderPath + "/")
+		val childrenFiles = fileEntityRepository.findByPathStartingWith("$folderPath/")
 		if (childrenFiles.any { file ->
 				!file.isDeleted && (checkAccessForFile(currentUser, file.path.substringBeforeLast("/"), file.path.substringAfterLast("/")) and AccessType.READ.value) != 0
 			}) return true
 		
-		val childrenFolders = folderEntityRepository.findByPathStartingWith(folderPath + "/")
+		val childrenFolders = folderEntityRepository.findByPathStartingWith("$folderPath/")
 		return childrenFolders.any { childFolder ->
 			!childFolder.isDeleted && (checkAccessForDirectory(currentUser, childFolder.path) and AccessType.READ.value) != 0
 		}
@@ -362,8 +422,14 @@ class FileSystemService(
 	
 	/**
 	 * Создаёт новую папку с проверкой прав и записью в БД и историю.
-	 * @throws SecurityException если нет права CREATE.
-	 * @throws IllegalStateException если папка была ранее удалена.
+	 *
+	 * @param currentUser аутентифицированный пользователь
+	 * @param relativePath относительный путь к родительской директории
+	 * @param folderName имя новой папки
+	 * @return информация о созданной папке
+	 * @throws SecurityException если нет права CREATE
+	 * @throws IllegalArgumentException если родительская директория не найдена или папка уже существует
+	 * @throws IllegalStateException если папка была ранее удалена или не удалось создать физическую папку
 	 */
 	@Transactional
 	fun createFolderByPermissions(currentUser: CurrentUser, relativePath: String, folderName: String): FolderInfo {
@@ -392,15 +458,7 @@ class FileSystemService(
 		
 		val folderEntity = FolderEntity(path = folderPath, isDeleted = false)
 		folderEntityRepository.save(folderEntity)
-		
-		recordHistory(
-			operationName = "CREATE",
-			user = currentUser.userDetails!!,
-			folderEntity = folderEntity,
-			path = folderPath,
-			isFile = false
-		)
-		
+		recordHistory("CREATE", currentUser.userDetails!!, folderEntity = folderEntity, path = folderPath, isFile = false)
 		logger.info("Папка создана: $folderPath")
 		return createFolderInfo(newFolder)
 	}
@@ -409,6 +467,14 @@ class FileSystemService(
 	
 	/**
 	 * Загружает файл в указанную директорию с проверкой прав, созданием сущности и записью в историю.
+	 *
+	 * @param currentUser аутентифицированный пользователь
+	 * @param relativePath относительный путь к целевой директории
+	 * @param file загружаемый файл
+	 * @return информация о загруженном файле
+	 * @throws SecurityException если нет права CREATE
+	 * @throws IllegalArgumentException если целевая директория не найдена или файл уже существует
+	 * @throws IllegalStateException если файл был ранее удалён
 	 */
 	@Transactional
 	fun uploadFileByPermissions(currentUser: CurrentUser, relativePath: String, file: MultipartFile): FileInfo {
@@ -435,15 +501,7 @@ class FileSystemService(
 		
 		val fileEntity = FileEntity(path = filePath, isDeleted = false)
 		fileEntityRepository.save(fileEntity)
-		
-		recordHistory(
-			operationName = "UPLOAD",
-			user = currentUser.userDetails!!,
-			fileEntity = fileEntity,
-			path = filePath,
-			isFile = true
-		)
-		
+		recordHistory("UPLOAD", currentUser.userDetails!!, fileEntity = fileEntity, path = filePath, isFile = true)
 		logger.info("Файл загружен: $filePath")
 		return createFileInfo(targetFile)
 	}
@@ -454,6 +512,13 @@ class FileSystemService(
 	 * Перемещает файл или папку в корзину с сохранением версии.
 	 * Для файлов/папок, удаляемых повторно, увеличивается номер версии,
 	 * а в корзине создаётся копия с именем, содержащим `_v{version}_{timestamp}`.
+	 *
+	 * @param currentUser аутентифицированный пользователь
+	 * @param relativePath путь к удаляемому элементу
+	 * @return true в случае успеха
+	 * @throws IllegalArgumentException если элемент не найден
+	 * @throws SecurityException если нет прав на удаление или попытка удалить папку групп
+	 * @throws EntityNotFoundException если сущность не найдена в БД
 	 */
 	@Transactional
 	fun deleteByPermissionsAndSaveCopy(currentUser: CurrentUser, relativePath: String): Boolean {
@@ -469,6 +534,10 @@ class FileSystemService(
 		}
 		if (relativePath == groupsDir) {
 			throw SecurityException("Папка групп неудаляема")
+		}
+		// Запрет ручного удаления папки конкретной группы
+		if (isGroupRootDirectory(relativePath)) {
+			throw SecurityException("Папка группы не может быть удалена вручную. Используйте удаление группы.")
 		}
 		
 		val isFile = target.isFile
@@ -501,12 +570,7 @@ class FileSystemService(
 			entity as FileEntity
 			entity.isDeleted = true
 			fileEntityRepository.save(entity)
-			val deletedFile = DeletedFile(
-				fileEntity = entity,
-				originalPath = relativePath,
-				deletedByUser = user,
-				version = version
-			)
+			val deletedFile = DeletedFile(fileEntity = entity, originalPath = relativePath, deletedByUser = user, version = version)
 			deletedFileRepository.save(deletedFile)
 			recordHistory("DELETE", user, fileEntity = entity, path = relativePath, isFile = true,
 				details = "{\"version\": $version, \"deletedPath\": \"$deletedRelativePath\"}")
@@ -514,12 +578,7 @@ class FileSystemService(
 			entity as FolderEntity
 			entity.isDeleted = true
 			folderEntityRepository.save(entity)
-			val deletedFolder = DeletedFolder(
-				folderEntity = entity,
-				originalPath = relativePath,
-				deletedByUser = user,
-				version = version
-			)
+			val deletedFolder = DeletedFolder(folderEntity = entity, originalPath = relativePath, deletedByUser = user, version = version)
 			deletedFolderRepository.save(deletedFolder)
 			recordHistory("DELETE", user, folderEntity = entity, path = relativePath, isFile = false,
 				details = "{\"version\": $version, \"deletedPath\": \"$deletedRelativePath\"}")
@@ -529,7 +588,15 @@ class FileSystemService(
 		return true
 	}
 	
-	/** Генерирует путь для удалённого файла с меткой версии и временной меткой. */
+	/**
+	 * Генерирует путь для удалённого файла с меткой версии и временной меткой.
+	 * Формат: `{nameWithoutExt}_v{version}_{timestamp}{ext}`
+	 *
+	 * @param originalPath оригинальный путь файла
+	 * @param timestamp временная метка удаления
+	 * @param version номер версии
+	 * @return путь к удалённому файлу в корзине
+	 */
 	fun generateDeletedFilePath(originalPath: String, timestamp: Long, version: Int): String {
 		val baseName = Paths.get(originalPath).fileName.toString()
 		val nameWithoutExt = baseName.substringBeforeLast(".")
@@ -539,7 +606,15 @@ class FileSystemService(
 		return if (parentDir.isEmpty()) newName else "$parentDir/$newName"
 	}
 	
-	/** Генерирует путь для удалённой папки с меткой версии и временной меткой. */
+	/**
+	 * Генерирует путь для удалённой папки с меткой версии и временной меткой.
+	 * Формат: `{folderName}_v{version}_{timestamp}`
+	 *
+	 * @param originalPath оригинальный путь папки
+	 * @param timestamp временная метка удаления
+	 * @param version номер версии
+	 * @return путь к удалённой папке в корзине
+	 */
 	fun generateDeletedFolderPath(originalPath: String, timestamp: Long, version: Int): String {
 		val folderName = Paths.get(originalPath).fileName.toString()
 		val parentDir = Paths.get(originalPath).parent?.toString() ?: ""
@@ -547,7 +622,15 @@ class FileSystemService(
 		return if (parentDir.isEmpty()) newName else "$parentDir/$newName"
 	}
 	
-	/** Перемещает файл или папку в корзину с возможностью переименования. */
+	/**
+	 * Перемещает файл или папку в корзину с возможностью переименования.
+	 *
+	 * @param sourcePath исходный абсолютный путь
+	 * @param targetDir целевая директория (корзина)
+	 * @param sourceBaseDir базовая директория исходных файлов
+	 * @param targetRelativePath относительный путь внутри корзины
+	 * @return true в случае успешного перемещения, false при ошибке
+	 */
 	fun moveItemWithVersioning(sourcePath: String, targetDir: File, sourceBaseDir: File, targetRelativePath: String): Boolean {
 		val sourceFile = File(sourcePath)
 		if (!sourceFile.exists()) return false
@@ -571,117 +654,194 @@ class FileSystemService(
 	// ================== ВОССТАНОВЛЕНИЕ ==================
 	
 	/**
-	 * Восстанавливает файл из корзины по идентификатору удалённой записи.
-	 * Файл перемещается обратно на оригинальный путь, флаг isDeleted снимается.
+	 * Восстанавливает файл из корзины по оригинальному пути и версии.
+	 * Сначала выполняется физическое перемещение (или проверка, что файл уже на месте),
+	 * затем обновляется БД. Это защищает от частичного восстановления при внезапном
+	 * падении сервера между файловой операцией и коммитом транзакции.
+	 *
+	 * @param currentUser аутентифицированный пользователь
+	 * @param originalPath оригинальный путь файла
+	 * @param version версия для восстановления
+	 * @return true в случае успеха
+	 * @throws IllegalArgumentException если запись об удалённом файле не найдена или путь уже занят активным файлом
+	 * @throws IllegalStateException если файл не удалён или физический файл отсутствует в корзине
+	 * @throws SecurityException если нет прав на восстановление
 	 */
 	@Transactional
-	fun restoreFile(deletedFileId: Long, currentUser: CurrentUser): Boolean {
-		val deleted = deletedFileRepository.findById(deletedFileId).orElseThrow {
-			IllegalArgumentException("Запись об удалённом файле не найдена")
-		}
-		val fileEntity = deleted.fileEntity
-		if (!fileEntity.isDeleted) throw IllegalStateException("Файл уже не удалён")
+	fun restoreFile(currentUser: CurrentUser, originalPath: String, version: Int): Boolean {
+		val fileEntity = fileEntityRepository.findByPath(originalPath)
+			?: throw IllegalArgumentException("Запись об удалённом файле не найдена")
+		if (!fileEntity.isDeleted)
+			throw IllegalStateException("Файл не удалён для его восстановления")
+		val selectedDeleted = deletedFileRepository.findByFileEntityAndVersion(fileEntity, version)
+			?: throw IllegalArgumentException("Запись об удалённом файле с версией $version не найдена")
 		
-		val originalPath = deleted.originalPath
 		val parentPath = Paths.get(originalPath).parent?.toString() ?: ""
 		
-		val permissions = checkAccessForDirectory(currentUser, parentPath)
+		if (!currentUser.isAdmin && selectedDeleted.deletedByUser.id != currentUser.id)
+			throw SecurityException("Нет прав на восстановление в файла, удалённого другим пользователем")
+		
+		val fileName = extractFileNameFromFullPath(originalPath)
+		val permissions = checkAccessForFile(currentUser, parentPath, fileName)
 		if ((permissions and AccessType.CREATE.value) == 0 && !currentUser.isAdmin) {
-			throw SecurityException("Нет прав на восстановление в $parentPath")
+			throw SecurityException("Нет прав на восстановление файла $fileName в $parentPath")
 		}
 		
 		val targetFile = getSafePath(originalPath).toFile()
+		val allDeletedVersions = deletedFileRepository.findByOriginalPath(originalPath)
+		val sourcePath = findDeletedFilePath(selectedDeleted)
+		
+		// ── 1. Физическое восстановление (или проверка, что файл уже на месте) ──
 		if (targetFile.exists()) {
-			throw IllegalArgumentException("По оригинальному пути уже существует файл: $originalPath")
+			// Файл уже существует – возможно, предыдущая попытка восстановления была прервана
+			if (fileEntity.isDeleted) {
+				// просо снимем флаг и почистим корзину
+				logger.info("Файл '$originalPath' уже существует на диске – синхронизируем БД")
+			} else {
+				throw IllegalArgumentException("По оригинальному пути уже существует активный файл: $originalPath")
+			}
+		} else {
+			checkPathNotOccupied(originalPath)
+			if (!Files.exists(sourcePath)) {
+				throw IllegalStateException("Файл в корзине не найден: $sourcePath")
+			}
+			targetFile.parentFile?.mkdirs()
+			Files.move(sourcePath, targetFile.toPath(), StandardCopyOption.ATOMIC_MOVE)
 		}
-		checkNotDeleted(originalPath)
 		
-		val sourcePath = findDeletedFilePath(deleted)
-		if (!Files.exists(sourcePath)) {
-			throw IllegalStateException("Файл в корзине не найден: $sourcePath")
+		// Физически удаляем остальные версии (если есть)
+		allDeletedVersions.forEach { df ->
+			if (df.id != selectedDeleted.id) {
+				Files.deleteIfExists(findDeletedFilePath(df))
+			}
 		}
 		
-		targetFile.parentFile?.mkdirs()
-		Files.move(sourcePath, targetFile.toPath(), StandardCopyOption.ATOMIC_MOVE)
-		
+		// ── 2. Обновление БД ──
+		deletedFileRepository.deleteAll(allDeletedVersions)
 		fileEntity.isDeleted = false
 		fileEntityRepository.save(fileEntity)
-		deletedFileRepository.delete(deleted)
 		
 		recordHistory("RESTORE", currentUser.userDetails!!, fileEntity = fileEntity,
-			path = originalPath, isFile = true, details = "{\"version\": ${deleted.version}}")
+			path = originalPath, isFile = true, details = "{\"version\": $version}")
 		
-		logger.info("Файл восстановлен: $originalPath")
+		logger.info("Файл восстановлен: $originalPath (версия $version)")
 		return true
 	}
 	
 	/**
-	 * Восстанавливает папку и всё её содержимое из корзины.
-	 * Восстанавливаются только те дочерние элементы, которые были удалены вместе с папкой.
+	 * Восстанавливает папку и всё её содержимое из корзины по оригинальному пути и версии.
+	 * Сначала выполняется физическое перемещение (или проверка, что папка уже на месте),
+	 * затем обновляется БД и синхронизируется содержимое.
+	 *
+	 * @param currentUser аутентифицированный пользователь
+	 * @param originalPath оригинальный путь папки
+	 * @param version версия для восстановления
+	 * @return true в случае успеха
+	 * @throws IllegalArgumentException если запись об удалённой папке не найдена или путь уже занят активной папкой
+	 * @throws IllegalStateException если папка не удалена или физическая папка отсутствует в корзине
+	 * @throws SecurityException если нет прав на восстановление
 	 */
 	@Transactional
-	fun restoreFolder(deletedFolderId: Long, currentUser: CurrentUser): Boolean {
-		val deleted = deletedFolderRepository.findById(deletedFolderId).orElseThrow {
-			IllegalArgumentException("Запись об удалённой папке не найдена")
-		}
-		val folderEntity = deleted.folderEntity
-		if (!folderEntity.isDeleted) throw IllegalStateException("Папка уже не удалена")
+	fun restoreFolder(currentUser: CurrentUser, originalPath: String, version: Int): Boolean {
+		val folderEntity = folderEntityRepository.findByPath(originalPath)
+			?: throw IllegalArgumentException("Запись об удалённой папке не найдена")
+		if (!folderEntity.isDeleted)
+			throw IllegalStateException("Папка не удалена для её восстановления")
+		val selectedDeleted = deletedFolderRepository.findByFolderEntityAndVersion(folderEntity, version)
+			?: throw IllegalArgumentException("Запись об удалённой папке с версией $version не найдена")
 		
-		val originalPath = deleted.originalPath
 		val parentPath = Paths.get(originalPath).parent?.toString() ?: ""
 		
-		val permissions = checkAccessForDirectory(currentUser, parentPath)
+		if (!currentUser.isAdmin && selectedDeleted.deletedByUser.id != currentUser.id)
+			throw SecurityException("Нет прав на восстановление папки, удалённой другим пользователем")
+		val permissions = checkAccessForDirectory(currentUser, originalPath)
 		if ((permissions and AccessType.CREATE.value) == 0 && !currentUser.isAdmin) {
 			throw SecurityException("Нет прав на восстановление в $parentPath")
 		}
 		
 		val targetFolder = getSafePath(originalPath).toFile()
+		val allDeletedVersions = deletedFolderRepository.findByOriginalPath(originalPath)
+		val sourcePath = findDeletedFolderPath(selectedDeleted)
+		
+		// ── 1. Физическое восстановление (или проверка, что папка уже на месте) ──
 		if (targetFolder.exists()) {
-			throw IllegalArgumentException("По оригинальному пути уже существует папка: $originalPath")
+			if (folderEntity.isDeleted) {
+				logger.info("Папка '$originalPath' уже существует на диске – синхронизируем БД")
+			} else {
+				throw IllegalArgumentException("По оригинальному пути уже существует активная папка: $originalPath")
+			}
+		} else {
+			checkPathNotOccupied(originalPath)
+			if (!Files.exists(sourcePath)) {
+				throw IllegalStateException("Папка в корзине не найдена: $sourcePath")
+			}
+			targetFolder.parentFile?.mkdirs()
+			Files.move(sourcePath, targetFolder.toPath(), StandardCopyOption.ATOMIC_MOVE)
 		}
-		checkNotDeleted(originalPath)
 		
-		val sourcePath = findDeletedFolderPath(deleted)
-		if (!Files.exists(sourcePath)) {
-			throw IllegalStateException("Папка в корзине не найдена: $sourcePath")
+		// Удаляем остальные физические версии
+		allDeletedVersions.filter { it.id != selectedDeleted.id }.forEach { df ->
+			val otherPath = findDeletedFolderPath(df)
+			otherPath.toFile().deleteRecursively()
 		}
 		
-		targetFolder.parentFile?.mkdirs()
-		Files.move(sourcePath, targetFolder.toPath(), StandardCopyOption.ATOMIC_MOVE)
-		
+		// ── 2. Обновление БД ──
+		deletedFolderRepository.deleteAll(allDeletedVersions)
 		folderEntity.isDeleted = false
 		folderEntityRepository.save(folderEntity)
-		restoreChildren(folderEntity, originalPath, currentUser)
 		
-		deletedFolderRepository.delete(deleted)
+		// Синхронизируем БД с фактическим содержимым восстановленной папки
+		syncFolderContentsAfterRestore(originalPath)
 		
 		recordHistory("RESTORE", currentUser.userDetails!!, folderEntity = folderEntity,
-			path = originalPath, isFile = false, details = "{\"version\": ${deleted.version}}")
+			path = originalPath, isFile = false, details = "{\"version\": $version}")
 		
-		logger.info("Папка восстановлена: $originalPath")
+		logger.info("Папка восстановлена: $originalPath (версия $version)")
 		return true
 	}
 	
-	/** Рекурсивно снимает флаг isDeleted со всех дочерних файлов и папок. */
-	private fun restoreChildren(folder: FolderEntity, basePath: String, currentUser: CurrentUser) {
-		val childrenFiles = fileEntityRepository.findByPathStartingWith(basePath + "/")
-		childrenFiles.forEach { file ->
-			if (file.isDeleted) {
-				file.isDeleted = false
-				fileEntityRepository.save(file)
-			}
-		}
-		val childrenFolders = folderEntityRepository.findByPathStartingWith(basePath + "/")
-		childrenFolders.forEach { childFolder ->
-			if (childFolder.isDeleted) {
-				childFolder.isDeleted = false
-				folderEntityRepository.save(childFolder)
-				restoreChildren(childFolder, childFolder.path, currentUser)
+	private fun syncFolderContentsAfterRestore(folderPath: String) {
+		val targetDir = getSafePath(folderPath).toFile()
+		if (!targetDir.exists()) return
+		
+		targetDir.walkTopDown().forEach { file ->
+			if (file == targetDir) return@forEach
+			val relPath = getRelativePath(file.toPath())
+			if (file.isFile) {
+				var fileEntity = fileEntityRepository.findByPath(relPath)
+				if (fileEntity == null) {
+					fileEntity = FileEntity(path = relPath, isDeleted = false)
+					fileEntityRepository.save(fileEntity)
+				} else {
+					if (fileEntity.isDeleted) {
+						fileEntity.isDeleted = false
+						fileEntityRepository.save(fileEntity)
+					}
+				}
+				// Удаляем любые записи DeletedFile для этого файла (если были)
+				deletedFileRepository.findByOriginalPath(relPath).forEach { deletedFileRepository.delete(it) }
+			} else {
+				var folderEntity = folderEntityRepository.findByPath(relPath)
+				if (folderEntity == null) {
+					folderEntity = FolderEntity(path = relPath, isDeleted = false)
+					folderEntityRepository.save(folderEntity)
+				} else {
+					if (folderEntity.isDeleted) {
+						folderEntity.isDeleted = false
+						folderEntityRepository.save(folderEntity)
+					}
+				}
+				deletedFolderRepository.findByOriginalPath(relPath).forEach { deletedFolderRepository.delete(it) }
 			}
 		}
 	}
 	
-	/** Находит физический путь к удалённому файлу в корзине по записи DeletedFile. */
+	/**
+	 * Находит физический путь к удалённому файлу в корзине по записи DeletedFile.
+	 * Использует регулярное выражение для поиска файла с именем `{baseName}_v{version}_*`.
+	 *
+	 * @param deleted запись об удалённом файле
+	 * @return абсолютный путь к файлу в корзине */
 	fun findDeletedFilePath(deleted: DeletedFile): Path {
 		val originalPath = deleted.originalPath
 		val version = deleted.version
@@ -693,7 +853,13 @@ class FileSystemService(
 		return found?.firstOrNull()?.toPath() ?: safeRootPathDeleted.resolve(originalPath)
 	}
 	
-	/** Находит физический путь к удалённой папке в корзине по записи DeletedFolder. */
+	/**
+	 * Находит физический путь к удалённой папке в корзине по записи DeletedFolder.
+	 * Использует регулярное выражение для поиска папки с именем `{folderName}_v{version}_*`.
+	 *
+	 * @param deleted запись об удалённой папке
+	 * @return абсолютный путь к папке в корзине
+	 */
 	fun findDeletedFolderPath(deleted: DeletedFolder): Path {
 		val originalPath = deleted.originalPath
 		val version = deleted.version
@@ -708,71 +874,220 @@ class FileSystemService(
 	// ================== ОКОНЧАТЕЛЬНОЕ УДАЛЕНИЕ ==================
 	
 	/**
-	 * Окончательно удаляет файл (только для администратора).
-	 * Физический файл удаляется, сущность и права удаляются из БД,
-	 * в истории ссылка на сущность обнуляется.
+	 * Окончательно удаляет файл и все его версии (только для администратора).
+	 * Физические файлы удаляются, сущность и права удаляются из БД,
+	 * в истории ссылка на сущность обнуляется и добавляется текстовая информация.
+	 *
+	 * @param originalPath оригинальный путь файла
+	 * @param currentUser текущий пользователь (должен быть администратором)
+	 * @throws SecurityException если пользователь не администратор
+	 * @throws EntityNotFoundException если файл не найден в БД
 	 */
 	@Transactional
-	fun permanentDeleteFile(deletedFileId: Long, currentUser: CurrentUser) {
+	fun permanentDeleteFileByPath(originalPath: String, currentUser: CurrentUser) {
 		if (!currentUser.isAdmin) throw SecurityException("Только администратор может удалять файлы окончательно")
-		val deleted = deletedFileRepository.findById(deletedFileId).orElseThrow()
-		val fileEntity = deleted.fileEntity
+		val fileEntity = fileEntityRepository.findByPath(originalPath)
+			?: throw EntityNotFoundException("Файл с путём '$originalPath' не найден в БД")
 		
-		val sourcePath = findDeletedFilePath(deleted)
-		Files.deleteIfExists(sourcePath)
-		
-		workHistoryRepository.findAll().filter { it.fileEntity?.id == fileEntity.id }.forEach {
-			it.fileEntity = null
-			workHistoryRepository.save(it)
+		val deletedFiles = deletedFileRepository.findByOriginalPath(originalPath)
+		deletedFiles.forEach { df ->
+			val sourcePath = findDeletedFilePath(df)
+			Files.deleteIfExists(sourcePath)
 		}
-		
+		workHistoryRepository.findAll().filter { it.fileEntity?.id == fileEntity.id }.forEach { wh ->
+			val newDetails = buildString {
+				if (!wh.details.isNullOrBlank()) append(wh.details).append("; ")
+				append("Файл окончательно удалён администратором. Путь: $originalPath")
+			}
+			wh.fileEntity = null
+			wh.details = newDetails
+			workHistoryRepository.save(wh)
+		}
 		filePermissionRepository.deleteAll(filePermissionRepository.findByFileEntity(fileEntity))
+		deletedFileRepository.deleteAll(deletedFiles)
 		fileEntityRepository.delete(fileEntity)
-		deletedFileRepository.delete(deleted)
-		
-		logger.info("Файл окончательно удалён: ${deleted.originalPath}")
+		logger.info("Файл '$originalPath' и все его версии окончательно удалены администратором ${currentUser.email}")
 	}
 	
-	/** Окончательно удаляет папку (только для администратора). */
+	/**
+	 * Окончательно удаляет папку и все её версии, включая все дочерние элементы (только для администратора).
+	 * Физические папки и файлы удаляются, сущности и права удаляются из БД,
+	 * в истории ссылки обнуляются.
+	 *
+	 * @param originalPath оригинальный путь папки
+	 * @param currentUser текущий пользователь (должен быть администратором)
+	 * @throws SecurityException если пользователь не администратор
+	 * @throws EntityNotFoundException если папка не найдена в БД
+	 */
 	@Transactional
-	fun permanentDeleteFolder(deletedFolderId: Long, currentUser: CurrentUser) {
+	fun permanentDeleteFolderByPath(originalPath: String, currentUser: CurrentUser) {
 		if (!currentUser.isAdmin) throw SecurityException("Только администратор может удалять папки окончательно")
-		val deleted = deletedFolderRepository.findById(deletedFolderId).orElseThrow()
-		val folderEntity = deleted.folderEntity
+		val folderEntity = folderEntityRepository.findByPath(originalPath)
+			?: throw EntityNotFoundException("Папка с путём '$originalPath' не найдена в БД")
 		
-		val sourcePath = findDeletedFolderPath(deleted)
-		sourcePath.toFile().deleteRecursively()
+		val deletedFolders = deletedFolderRepository.findByOriginalPath(originalPath)
+		deletedFolders.forEach { df ->
+			val sourcePath = findDeletedFolderPath(df)
+			sourcePath.toFile().deleteRecursively()
+		}
+		workHistoryRepository.findAll().filter { it.folderEntity?.id == folderEntity.id }.forEach { wh ->
+			val newDetails = buildString {
+				if (!wh.details.isNullOrBlank()) append(wh.details).append("; ")
+				append("Папка окончательно удалена администратором. Путь: $originalPath")
+			}
+			wh.folderEntity = null
+			wh.details = newDetails
+			workHistoryRepository.save(wh)
+		}
 		
-		workHistoryRepository.findAll().filter { it.folderEntity?.id == folderEntity.id }.forEach {
-			it.folderEntity = null
-			workHistoryRepository.save(it)
+		// Каскадное удаление дочерних элементов
+		val childFiles = fileEntityRepository.findByPathStartingWith("$originalPath/")
+		childFiles.forEach { file ->
+			filePermissionRepository.deleteAll(filePermissionRepository.findByFileEntity(file))
+			deletedFileRepository.findByOriginalPath(file.path).forEach { deletedFileRepository.delete(it) }
+			workHistoryRepository.findAll().filter { it.fileEntity?.id == file.id }.forEach { wh ->
+				wh.fileEntity = null
+				wh.details = (wh.details ?: "") + "; Удалён в составе папки $originalPath"
+				workHistoryRepository.save(wh)
+			}
+			fileEntityRepository.delete(file)
+		}
+		
+		val childFolders = folderEntityRepository.findByPathStartingWith("$originalPath/")
+		childFolders.forEach { folder ->
+			folderPermissionRepository.deleteAll(folderPermissionRepository.findByFolderEntity(folder))
+			deletedFolderRepository.findByOriginalPath(folder.path).forEach { deletedFolderRepository.delete(it) }
+			workHistoryRepository.findAll().filter { it.folderEntity?.id == folder.id }.forEach { wh ->
+				wh.folderEntity = null
+				wh.details = (wh.details ?: "") + "; Удалена в составе папки $originalPath"
+				workHistoryRepository.save(wh)
+			}
+			folderEntityRepository.delete(folder)
 		}
 		
 		folderPermissionRepository.deleteAll(folderPermissionRepository.findByFolderEntity(folderEntity))
+		deletedFolderRepository.deleteAll(deletedFolders)
 		folderEntityRepository.delete(folderEntity)
-		deletedFolderRepository.delete(deleted)
 		
-		logger.info("Папка окончательно удалена: ${deleted.originalPath}")
+		logger.info("Папка '$originalPath' и все её версии окончательно удалены администратором ${currentUser.email}")
 	}
 	
 	// ================== УПРАВЛЕНИЕ ПРАВАМИ ==================
 	
+	// ================== ПРОСМОТР ПРАВ =======================
+	/**
+	 * Возвращает список прав, назначенных на папку.
+	 * Доступно только администратору.
+	 *
+	 * @param path путь к папке
+	 * @param currentUser аутентифицированный пользователь
+	 * @return список FolderPermissionInfo
+	 * @throws SecurityException если пользователь не администратор
+	 * @throws EntityNotFoundException если папка не найдена
+	 */
+	fun getFolderPermissions(path: String, currentUser: CurrentUser): List<FolderPermissionInfo> {
+		if (!currentUser.isAdmin)
+			throw SecurityException("Только администратор может просматривать все права на папки")
+		val folder = folderEntityRepository.findByPath(path)
+			?: throw EntityNotFoundException("Папка '$path' не найдена")
+		return folderPermissionRepository.findByFolderEntity(folder).map { fp ->
+			FolderPermissionInfo(
+				id = fp.id,
+				userEmail = fp.user?.email,
+				groupName = fp.group?.name,
+				mode = fp.mode.toInt()
+			)
+		}
+	}
+	
+	/**
+	 * Возвращает список прав, назначенных на файл.
+	 * Доступно только администратору.
+	 *
+	 * @param path путь к файлу
+	 * @param currentUser аутентифицированный пользователь
+	 * @return список FilePermissionInfo
+	 * @throws SecurityException если пользователь не администратор
+	 * @throws EntityNotFoundException если файл не найден
+	 */
+	fun getFilePermissions(path: String, currentUser: CurrentUser): List<FilePermissionInfo> {
+		if (!currentUser.isAdmin)
+			throw SecurityException("Только администратор может просматривать все права на файлы")
+		val file = fileEntityRepository.findByPath(path)
+			?: throw EntityNotFoundException("Файл '$path' не найден")
+		return filePermissionRepository.findByFileEntity(file).map { fp ->
+			FilePermissionInfo(
+				id = fp.id,
+				userEmail = fp.user?.email,
+				groupName = fp.group?.name,
+				mode = fp.mode.toInt()
+			)
+		}
+	}
+	
+	/**
+	 * Возвращает все права, выданные группе.
+	 * Администратор видит всё, участник группы – права своей группы.
+	 *
+	 * @param groupName имя группы
+	 * @param currentUser аутентифицированный пользователь
+	 * @return список PermissionInfo (тип, путь, email, группа, маска прав)
+	 * @throws EntityNotFoundException если группа не найдена
+	 * @throws SecurityException если пользователь не администратор и не участник группы
+	 */
+	fun getGroupPermissions(groupName: String, currentUser: CurrentUser): List<PermissionInfo> {
+		val group = groupService.findByName(groupName)
+			?: throw EntityNotFoundException("Группа '$groupName' не найдена")
+		if (!currentUser.isAdmin && !groupService.hasUserAccessToGroup(currentUser.id!!, groupName))
+			throw SecurityException("Нет доступа к правам группы '$groupName'")
+		
+		return folderPermissionRepository.findAll()
+			.filter { it.group?.name == groupName }
+			.map { PermissionInfo("folder", it.folderEntity.path, null, groupName, it.mode.toInt()) } +
+				filePermissionRepository.findAll()
+					.filter { it.group?.name == groupName }
+					.map { PermissionInfo("file", it.fileEntity.path, null, groupName, it.mode.toInt()) }
+	}
+	
+	/**
+	 * Возвращает все права, выданные конкретному пользователю.
+	 * Администратор может запрашивать любые, обычный пользователь – только свои.
+	 *
+	 * @param userEmail email пользователя
+	 * @param currentUser аутентифицированный пользователь
+	 * @return список PermissionInfo (тип, путь, email, группа, маска прав)
+	 * @throws SecurityException если обычный пользователь запрашивает чужие права
+	 * @throws EntityNotFoundException если пользователь не найден
+	 */
+	fun getUserPermissions(userEmail: String, currentUser: CurrentUser): List<PermissionInfo> {
+		if (!currentUser.isAdmin && currentUser.email != userEmail)
+			throw SecurityException("Вы можете просматривать только свои права")
+		val user = userService.getUserEntityByEmail(userEmail)
+			?: throw EntityNotFoundException("Пользователь '$userEmail' не найден")
+		
+		return folderPermissionRepository.findAll()
+			.filter { it.user?.email == userEmail }
+			.map { PermissionInfo("folder", it.folderEntity.path, userEmail, null, it.mode.toInt()) } +
+				filePermissionRepository.findAll()
+					.filter { it.user?.email == userEmail }
+					.map { PermissionInfo("file", it.fileEntity.path, userEmail, null, it.mode.toInt()) }
+	}
+	
 	/**
 	 * Устанавливает или обновляет явное разрешение для папки.
+	 *
 	 * @param path путь к папке
-	 * @param userId идентификатор пользователя (если указан, groupId должен быть null)
-	 * @param groupId идентификатор группы (если указан, userId должен быть null)
+	 * @param userEmail почта пользователя (если указано, groupName должен быть null)
+	 * @param groupName имя группы (если указано, userEmail должен быть null)
 	 * @param mode битовая маска прав (0-15)
+	 * @param currentUser аутентифицированный пользователь
+	 * @throws IllegalArgumentException если указаны оба или ни одного идентификатора
+	 * @throws SecurityException если нет прав на изменение разрешений или попытка ограничить права группы в групповой папке
+	 * @throws EntityNotFoundException если папка или субъект не найдены
 	 */
 	@Transactional
-	fun setFolderPermission(
-		path: String,
-		userId: Int?,
-		groupId: Int?,
-		mode: Int,
-		currentUser: CurrentUser
-	) {
-		require((userId != null) xor (groupId != null)) { "Укажите ровно одно: userId или groupId" }
+	fun setFolderPermission(path: String, userEmail: String?, groupName: String?, mode: Int, currentUser: CurrentUser) {
+		require((userEmail != null) xor (groupName != null)) { "Укажите ровно одно: userEmail или groupName" }
 		val permissions = checkAccessForDirectory(currentUser, path)
 		if ((permissions and AccessType.UPDATE.value) == 0) {
 			throw SecurityException("Нет прав на изменение разрешений для '$path'")
@@ -781,12 +1096,11 @@ class FileSystemService(
 		
 		val folderEntity = folderEntityRepository.findByPath(path)
 			?: throw EntityNotFoundException("Папка не найдена: $path")
-		// Запрет на ограничение прав группы в групповой папке и создание прав для других групп в групповой папке
-		if (groupId != null && isGroupDirectory(path))
+		if (groupName != null && isGroupDirectory(path))
 			throw SecurityException("Группы должны иметь полный доступ к своим папкам. Путь '$path' принадлежит группе")
 		
-		val user = userId?.let { userService.getUserEntityById(it) }
-		val group = groupId?.let { groupService.read(it) ?: throw EntityNotFoundException("Группа не найдена") }
+		val user = userEmail?.let { userService.getUserEntityByEmail(it) }
+		val group = groupName?.let { groupService.findByName(it) ?: throw EntityNotFoundException("Группа '$groupName' не найдена") }
 		
 		val existing = if (user != null) {
 			folderPermissionRepository.findByFolderEntityAndUser(folderEntity, user)
@@ -800,41 +1114,69 @@ class FileSystemService(
 		} else {
 			folderPermissionRepository.save(FolderPermission(folderEntity, user, group, mode.toShort()))
 		}
-		
-		recordHistory("CHANGE_PERMISSIONS", currentUser.userDetails!!,
-			folderEntity = folderEntity, path = path, isFile = false,
-			details = "{\"mode\": $mode, \"userId\": $userId, \"groupId\": $groupId}")
+		recordHistory("CHANGE_PERMISSIONS", currentUser.userDetails!!, folderEntity = folderEntity, path = path, isFile = false,
+			details = "{\"mode\": $mode, \"userEmail\": \"${userEmail ?: ""}\", \"groupName\": \"${groupName ?: ""}\"}")
 	}
 	
-	/** Удаляет явное разрешение для папки. */
+	/**
+	 * Удаляет явное разрешение для папки.
+	 *
+	 * @param path путь к папке
+	 * @param userEmail почта пользователя (если указано – удаляет права пользователя)
+	 * @param groupName имя группы (если указано – удаляет права группы)
+	 * @param currentUser аутентифицированный пользователь
+	 * @throws SecurityException если нет прав на изменение разрешений
+	 * @throws IllegalArgumentException если не указан ни пользователь, ни группа, или указаны оба
+	 * @throws EntityNotFoundException если папка или разрешение не найдены
+	 */
 	@Transactional
-	fun deleteFolderPermission(permissionId: Long, currentUser: CurrentUser) {
-		val perm = folderPermissionRepository.findById(permissionId).orElseThrow()
-		val path = perm.folderEntity.path
-		val permissions = checkAccessForDirectory(currentUser, path)
-		if ((permissions and AccessType.UPDATE.value) == 0) {
-			throw SecurityException("Нет прав на изменение разрешений для '$path'")
+	fun deleteFolderPermission(path: String, userEmail: String?, groupName: String?, currentUser: CurrentUser) {
+		if (!currentUser.isAdmin)
+			throw SecurityException("Нет прав на изменение правил доступа для папки '$path'")
+		require((userEmail != null) xor (groupName != null)) {
+			"Необходимо указать либо почту пользователя, либо имя группы для удаления прав"
 		}
+		
+		val folderEntity = folderEntityRepository.findByPath(path)
+			?: throw EntityNotFoundException("Папка '$path' не найдена")
+		
+		val user = userEmail?.let { userService.getUserEntityByEmail(it) }
+		val group = groupName?.let { groupService.findByName(it) }
+		
+		val perm = if (user != null) {
+			folderPermissionRepository.findByFolderEntityAndUser(folderEntity, user)
+		} else {
+			folderPermissionRepository.findByFolderEntityAndGroup(folderEntity, group!!)
+		} ?: throw EntityNotFoundException("Запись о правах доступа к папке '$path' не найдена")
+		
+		val permissionId = perm.id
+		
 		folderPermissionRepository.delete(perm)
-		recordHistory("CHANGE_PERMISSIONS", currentUser.userDetails!!,
-			folderEntity = perm.folderEntity, path = path, isFile = false,
-			details = "{\"action\": \"delete\", \"permissionId\": $permissionId}")
+		recordHistory(
+			"CHANGE_PERMISSIONS", currentUser.userDetails!!,
+			folderEntity = folderEntity, path = path, isFile = false,
+			details = "{\"action\": \"delete\", \"permissionId\": ${permissionId}}"
+		)
 	}
 	
-	/** Устанавливает или обновляет явное разрешение для файла. */
+	/**
+	 * Устанавливает или обновляет явное разрешение для файла.
+	 *
+	 * @param path путь к файлу
+	 * @param userEmail почта пользователя (если указано, groupName должен быть null)
+	 * @param groupName имя группы (если указано, userEmail должен быть null)
+	 * @param mode битовая маска прав (0-15)
+	 * @param currentUser аутентифицированный пользователь
+	 * @throws IllegalArgumentException если указаны оба или ни одного идентификатора
+	 * @throws SecurityException если нет прав на изменение разрешений или попытка ограничить права группы в групповой папке
+	 * @throws EntityNotFoundException если файл или субъект не найдены
+	 */
 	@Transactional
-	fun setFilePermission(
-		path: String,
-		userId: Int?,
-		groupId: Int?,
-		mode: Int,
-		currentUser: CurrentUser
-	) {
-		require((userId != null) xor (groupId != null)) { "Укажите ровно одно: userId или groupId" }
+	fun setFilePermission(path: String, userEmail: String?, groupName: String?, mode: Int, currentUser: CurrentUser) {
+		require((userEmail != null) xor (groupName != null)) { "Укажите ровно одно: userEmail или groupName" }
 		val fileEntity = fileEntityRepository.findByPath(path)
 			?: throw EntityNotFoundException("Файл не найден: $path")
-		// Запрет на ограничение прав группы в групповой папке и создание прав для других групп в групповой папке
-		if (groupId != null && isGroupDirectory(Paths.get(path).parent?.toString() ?: "")) {
+		if (groupName != null && isGroupDirectory(Paths.get(path).parent?.toString() ?: "")) {
 			throw SecurityException("Нельзя ограничивать права группы на файлы внутри её папки")
 		}
 		val parentPath = Paths.get(path).parent?.toString() ?: ""
@@ -844,8 +1186,8 @@ class FileSystemService(
 		}
 		validateMode(mode)
 		
-		val user = userId?.let { userService.getUserEntityById(it) }
-		val group = groupId?.let { groupService.read(it) ?: throw EntityNotFoundException("Группа не найдена") }
+		val user = userEmail?.let { userService.getUserEntityByEmail(it) }
+		val group = groupName?.let { groupService.findByName(it) ?: throw EntityNotFoundException("Группа '$groupName' не найдена") }
 		
 		val existing = if (user != null) {
 			filePermissionRepository.findByFileEntityAndUser(fileEntity, user)
@@ -859,25 +1201,44 @@ class FileSystemService(
 		} else {
 			filePermissionRepository.save(FilePermission(fileEntity, user, group, mode.toShort()))
 		}
-		
-		recordHistory("CHANGE_PERMISSIONS", currentUser.userDetails!!,
-			fileEntity = fileEntity, path = path, isFile = true,
-			details = "{\"mode\": $mode, \"userId\": $userId, \"groupId\": $groupId}")
+		recordHistory("CHANGE_PERMISSIONS", currentUser.userDetails!!, fileEntity = fileEntity, path = path, isFile = true,
+			details = "{\"mode\": $mode, \"userEmail\": \"${userEmail ?: ""}\", \"groupName\": \"${groupName ?: ""}\"}")
 	}
 	
-	/** Удаляет явное разрешение для файла. */
+	/**
+	 * Удаляет явное разрешение для файла.
+	 *
+	 * @param path путь для файла
+	 * @param userEmail почта пользователя
+	 * @param groupName имя группы
+	 * @param currentUser аутентифицированный пользователь
+	 * @throws SecurityException если нет прав на изменение разрешений
+	 * @throws EntityNotFoundException если разрешение не найдено
+	 */
 	@Transactional
-	fun deleteFilePermission(permissionId: Long, currentUser: CurrentUser) {
-		val perm = filePermissionRepository.findById(permissionId).orElseThrow()
-		val path = perm.fileEntity.path
-		val parentPath = Paths.get(path).parent?.toString() ?: ""
-		val permissions = checkAccessForDirectory(currentUser, parentPath)
-		if ((permissions and AccessType.UPDATE.value) == 0) {
-			throw SecurityException("Нет прав на изменение разрешений для '$path'")
+	fun deleteFilePermission(path: String, userEmail: String?, groupName: String?, currentUser: CurrentUser) {
+		if (!currentUser.isAdmin)
+			throw SecurityException("Нет прав на изменения правил доступа для файла $path")
+		require((userEmail != null) xor (groupName != null)) {
+			"Необходимо указать либо почту пользователя, либо имя группы для удаления прав"
 		}
+		
+		val fileEntity = fileEntityRepository.findByPath(path) ?:
+			throw EntityNotFoundException("Файл '$path' не найден")
+		
+		val user = userEmail?.let { userService.getUserEntityByEmail(it) }
+		val group = groupName?.let { groupService.findByName(it) }
+		val perm = if (userEmail != null)
+			filePermissionRepository.findByFileEntityAndUser(fileEntity, user = user!!)
+		else
+			filePermissionRepository.findByFileEntityAndGroup(fileEntity, group = group!!)
+		if (perm == null)
+			throw EntityNotFoundException("Запись о правах доступа к файлу по пути '$path' не найдена")
+		
+		val permissionId = perm.id
+		
 		filePermissionRepository.delete(perm)
-		recordHistory("CHANGE_PERMISSIONS", currentUser.userDetails!!,
-			fileEntity = perm.fileEntity, path = path, isFile = true,
+		recordHistory("CHANGE_PERMISSIONS", currentUser.userDetails!!, fileEntity = perm.fileEntity, path = path, isFile = true,
 			details = "{\"action\": \"delete\", \"permissionId\": $permissionId}")
 	}
 	
@@ -894,47 +1255,121 @@ class FileSystemService(
 	/**
 	 * Возвращает список удалённых файлов, доступных текущему пользователю.
 	 * Администратор видит все, обычный пользователь — только свои или из своих групп.
+	 *
+	 *
+	 */
+	/**
+	 * Возвращает список удалённых файлов, доступных текущему пользователю.
+	 * Администратор видит все, обычный пользователь —:
+	 *   • удалённые им самим;
+	 *   • из путей групп, в которых он состоит;
+	 *   • из любых папок, на которые его группам выданы явные права.
+	 *
+	 *  @param currentUser аутентифицированный пользователь
+	 * 	@return список DeletedFileInfo
 	 */
 	fun getDeletedFilesForUser(currentUser: CurrentUser): List<DeletedFileInfo> {
 		val all = deletedFileRepository.findAllOrderByDeletedAtDesc()
 		return all.filter { df ->
-			currentUser.isAdmin || df.deletedByUser.id == currentUser.id ||
-					(isGroupPath(df.originalPath) && groupService.hasUserAccessToGroup(currentUser.id!!, extractGroupFromPath(df.originalPath)!!))
+			currentUser.isAdmin ||
+					df.deletedByUser.id == currentUser.id ||
+					(isGroupPath(df.originalPath) && groupService.hasUserAccessToGroup(currentUser.id!!, extractGroupFromPath(df.originalPath)!!)) ||
+					hasGroupAccessToPath(currentUser.id!!, df.originalPath, isFile = true)
 		}.map { df ->
 			DeletedFileInfo(
-				id = df.id!!,
 				originalPath = df.originalPath,
 				deletedAt = df.deletedAt,
 				version = df.version,
-				deletedByUserId = df.deletedByUser.id!!,
 				deletedByUserEmail = df.deletedByUser.email
 			)
 		}
 	}
 	
-	/** Возвращает список удалённых папок, доступных текущему пользователю. */
+	/**
+	 * Возвращает список удалённых папок, доступных текущему пользователю.
+	 * Аналогично файлам, но проверяется также возможность доступа к самой папке.
+	 *
+	 * @param currentUser аутентифицированный пользователь
+	 * @return список DeletedFolderInfo
+	 */
 	fun getDeletedFoldersForUser(currentUser: CurrentUser): List<DeletedFolderInfo> {
 		val all = deletedFolderRepository.findAllOrderByDeletedAtDesc()
 		return all.filter { df ->
-			currentUser.isAdmin || df.deletedByUser.id == currentUser.id ||
-					(isGroupPath(df.originalPath) && groupService.hasUserAccessToGroup(currentUser.id!!, extractGroupFromPath(df.originalPath)!!))
+			currentUser.isAdmin ||
+					df.deletedByUser.id == currentUser.id ||
+					(isGroupPath(df.originalPath) && groupService.hasUserAccessToGroup(currentUser.id!!, extractGroupFromPath(df.originalPath)!!)) ||
+					hasGroupAccessToPath(currentUser.id!!, df.originalPath, isFile = false)
 		}.map { df ->
 			DeletedFolderInfo(
-				id = df.id!!,
 				originalPath = df.originalPath,
 				deletedAt = df.deletedAt,
 				version = df.version,
-				deletedByUserId = df.deletedByUser.id!!,
 				deletedByUserEmail = df.deletedByUser.email
 			)
 		}
+	}
+	
+	/**
+	 * Проверяет, есть ли у пользователя (через его группы) какие-либо разрешения
+	 * на указанный путь (файл или папку). Поднимается от целевого пути вверх,
+	 * пока не найдёт разрешение для любой из групп пользователя.
+	 *
+	 * @param userId идентификатор пользователя
+	 * @param path путь к файлу/папке
+	 * @param isFile true – проверять FilePermission, false – FolderPermission
+	 * @return true, если хотя бы одна группа имеет разрешение
+	 */
+	private fun hasGroupAccessToPath(userId: Int, path: String, isFile: Boolean): Boolean {
+		val groups = groupService.findByMemberId(userId)
+		if (groups.isEmpty()) return false
+		
+		// Проверка явного права на сам файл/папку (если сущность найдена)
+		if (isFile) {
+			val fileEntity = fileEntityRepository.findByPath(path)
+			if (fileEntity != null) {
+				groups.forEach { group ->
+					if (filePermissionRepository.findByFileEntityAndGroup(fileEntity, group) != null)
+						return true
+				}
+			}
+		} else {
+			val folderEntity = folderEntityRepository.findByPath(path)
+			if (folderEntity != null) {
+				groups.forEach { group ->
+					if (folderPermissionRepository.findByFolderEntityAndGroup(folderEntity, group) != null)
+						return true
+				}
+			}
+		}
+		
+		// Поднимаемся по родительским директориям
+		var currentPath = path
+		while (currentPath.contains('/')) {
+			currentPath = currentPath.substringBeforeLast("/", "")
+			if (currentPath.isEmpty()) break
+			val folderEntity = folderEntityRepository.findByPath(currentPath)
+			if (folderEntity != null) {
+				groups.forEach { group ->
+					if (folderPermissionRepository.findByFolderEntityAndGroup(folderEntity, group) != null)
+						return true
+				}
+			}
+		}
+		return false
 	}
 	
 	// ================== ПОЛУЧЕНИЕ ВЕРСИЙ УДАЛЁННЫХ ФАЙЛОВ И ПАПОК ==================
 	
 	/**
-	 * Возвращает список версий удалённого файла, доступного текущему пользователю.
+	 * Возвращает список версий удалённого файла, доступных текущему пользователю.
 	 * Администратор видит все, обычный пользователь — только свои или из своих групп.
+	 *
+	 * @param currentUser аутентифицированный пользователь
+	 * @param parentPath родительская папка файла
+	 * @param fileName имя файла
+	 * @return список DeletedFileInfo
+	 * @throws EntityNotFoundException если файл не найден или не был удалён
+	 * @throws SecurityException если нет прав на чтение файла
 	 */
 	fun getDeletedFileVersionsForUser(currentUser: CurrentUser, parentPath: String, fileName: String): List<DeletedFileInfo> {
 		val fullPath = Path(parentPath, fileName).toString()
@@ -953,17 +1388,24 @@ class FileSystemService(
 					(isGroupPath(df.originalPath) && groupService.hasUserAccessToGroup(currentUser.id!!, extractGroupFromPath(df.originalPath)!!))
 		}.map { df ->
 			DeletedFileInfo(
-				id = df.id!!,
 				originalPath = df.originalPath,
 				deletedAt = df.deletedAt,
 				version = df.version,
-				deletedByUserId = df.deletedByUser.id!!,
 				deletedByUserEmail = df.deletedByUser.email
 			)
 		}
 	}
 	
-	/** Возвращает список версий удалённой папки, доступных текущему пользователю. */
+	/**
+	 * Возвращает список версий удалённой папки, доступных текущему пользователю.
+	 * Администратор видит все, обычный пользователь — только свои или из своих групп.
+	 *
+	 * @param currentUser аутентифицированный пользователь
+	 * @param path путь к папке
+	 * @return список DeletedFolderInfo
+	 * @throws EntityNotFoundException если папка не найдена или не была удалена
+	 * @throws SecurityException если нет прав на чтение папки
+	 */
 	fun getDeletedFolderVersionsForUser(currentUser: CurrentUser, path: String): List<DeletedFolderInfo> {
 		if (folderEntityRepository.findByPath(path) == null)
 			throw EntityNotFoundException("Папка '$path' не найдена")
@@ -979,11 +1421,9 @@ class FileSystemService(
 					(isGroupPath(df.originalPath) && groupService.hasUserAccessToGroup(currentUser.id!!, extractGroupFromPath(df.originalPath)!!))
 		}.map { df ->
 			DeletedFolderInfo(
-				id = df.id!!,
 				originalPath = df.originalPath,
 				deletedAt = df.deletedAt,
 				version = df.version,
-				deletedByUserId = df.deletedByUser.id!!,
 				deletedByUserEmail = df.deletedByUser.email
 			)
 		}
@@ -995,7 +1435,12 @@ class FileSystemService(
 	
 	/**
 	 * Скачивает файл с проверкой права READ.
-	 * @return пара: файл и его MIME-тип.
+	 *
+	 * @param currentUser аутентифицированный пользователь
+	 * @param relativePath путь к файлу
+	 * @return пара: файл и его MIME-тип
+	 * @throws SecurityException если нет прав на чтение
+	 * @throws IllegalArgumentException если файл не найден или это директория
 	 */
 	fun downloadFileByPermissions(currentUser: CurrentUser, relativePath: String): Pair<File, String> {
 		val parentPath = Paths.get(relativePath).parent?.toString() ?: ""
@@ -1009,10 +1454,57 @@ class FileSystemService(
 		return Pair(file, getContentType(file))
 	}
 	
+	/**
+	 * Скачивает удалённый файл из корзины по оригинальному пути и версии.
+	 * Проверяет права доступа: администратор, удаливший пользователь,
+	 * участник группы, имеющей доступ к оригинальному пути.
+	 *
+	 * @param currentUser аутентифицированный пользователь
+	 * @param originalPath путь файла
+	 * @param version версия удалённого файла
+	 * @throws IllegalArgumentException Не найдена запись удалённого файла
+	 * @throws SecurityException Отсутствие прав
+	 * @throws IllegalStateException ошибка поиска версии удалённого файла
+	 */
+	@Transactional(readOnly = true)
+	fun downloadDeletedFileByPermissions(
+		currentUser: CurrentUser,
+		originalPath: String,
+		version: Int
+	): Pair<File, String> {
+		val deletedFile = deletedFileRepository.findByOriginalPath(originalPath)
+			.firstOrNull { it.version == version }
+			?: throw IllegalArgumentException("Удалённый файл '$originalPath' с версией $version не найден")
+		
+		val canDownload = currentUser.isAdmin
+				|| deletedFile.deletedByUser.id == currentUser.id
+				|| (isGroupPath(originalPath) && groupService.hasUserAccessToGroup(currentUser.id!!, extractGroupFromPath(originalPath)!!))
+				|| hasGroupAccessToPath(currentUser.id!!, originalPath, isFile = true)
+		
+		if (!canDownload) {
+			throw SecurityException("Нет прав на скачивание удалённого файла: $originalPath (версия $version)")
+		}
+		
+		val physicalFile = findDeletedFilePath(deletedFile).toFile()
+		if (!physicalFile.exists()) {
+			val message = "Физический файл в корзине не найден: ${physicalFile.absolutePath}"
+			logger.error(message)
+			throw IllegalStateException(message)
+		}
+		
+		return Pair(physicalFile, getContentType(physicalFile))
+	}
+	
 	// ================== ПОИСК ==================
 	
 	/**
 	 * Рекурсивно ищет файлы и папки по подстроке в имени, учитывая права доступа.
+	 *
+	 * @param currentUser аутентифицированный пользователь
+	 * @param query поисковый запрос
+	 * @param basePath базовая директория для поиска
+	 * @return пара: список файлов и список папок
+	 * @throws SecurityException если нет прав на чтение в базовой директории
 	 */
 	fun searchFilesAndFoldersByPermissions(currentUser: CurrentUser, query: String, basePath: String): Pair<List<FileInfo>, List<FolderInfo>> {
 		val dirPerm = checkAccessForDirectory(currentUser, basePath)
@@ -1038,14 +1530,22 @@ class FileSystemService(
 					if (file.isDirectory) {
 						searchRecursively(file)
 					}
-				} catch (e: SecurityException) { /* skip */ }
+				} catch (e: SecurityException) {
+					logger.error(e.message)
+				}
 			}
 		}
 		searchRecursively(directory)
 		return Pair(filesList, foldersList)
 	}
 	
-	/** Проверяет существование пути и наличие права READ у пользователя. */
+	/**
+	 * Проверяет существование пути и наличие права READ у пользователя.
+	 *
+	 * @param currentUser аутентифицированный пользователь
+	 * @param relativePath путь для проверки
+	 * @return true, если путь существует и доступен для чтения
+	 */
 	fun pathExistsByPermissions(currentUser: CurrentUser, relativePath: String): Boolean {
 		val file = getSafePath(relativePath).toFile()
 		if (!file.exists()) return false
@@ -1060,7 +1560,11 @@ class FileSystemService(
 	
 	// ================== ГРУППОВЫЕ ПАПКИ ==================
 	
-	/** Создаёт папку для новой группы. */
+	/**
+	 * Создаёт папку для новой группы.
+	 *
+	 * @param groupName имя группы
+	 */
 	fun createGroupFolder(groupName: String) {
 		val safeName = sanitizeFileName(groupName)
 		val dirPath = safeRootPath.resolve(groupsDir).resolve(safeName)
@@ -1070,7 +1574,10 @@ class FileSystemService(
 		logger.info("Создана папка группы: $groupName")
 	}
 	
-	/** Перемещает папку группы в корзину (при удалении группы). */
+	/**
+	 * Перемещает папку группы в корзину (при удалении группы).
+	 *
+	 * @param groupName имя группы */
 	fun deleteGroupFolder(groupName: String) {
 		val safeName = sanitizeFileName(groupName)
 		val folderPath = "$groupsDir/$safeName"
@@ -1085,7 +1592,13 @@ class FileSystemService(
 		logger.info("Папка группы $groupName перемещена в корзину")
 	}
 	
-	/** Переименовывает папку группы при изменении имени группы. */
+	/**
+	 * Переименовывает папку группы при изменении имени группы.
+	 *
+	 * @param oldGroupName старое имя группы
+	 * @param newGroupName новое имя группы
+	 * @return true если перемещение успешно, false если исходная папка не существует
+	 */
 	fun moveGroupFolder(oldGroupName: String, newGroupName: String): Boolean {
 		val safeOld = sanitizeFileName(oldGroupName)
 		val safeNew = sanitizeFileName(newGroupName)
@@ -1107,6 +1620,7 @@ class FileSystemService(
 	
 	/**
 	 * Записывает событие в историю операций.
+	 *
 	 * @param operationName имя типа операции (должно существовать в таблице OperationType)
 	 */
 	private fun recordHistory(
@@ -1134,13 +1648,31 @@ class FileSystemService(
 	
 	/**
 	 * Возвращает отфильтрованный список записей истории.
+	 *
 	 * @param filters фильтры по пользователю, префиксу пути и типу (файл/папка)
+	 * @return список HistoryInfo
 	 */
-	fun getWorkHistory(filters: HistoryFilter): List<WorkHistory> {
+	fun getWorkHistory(filters: HistoryFilter): List<HistoryInfo> {
 		return workHistoryRepository.findAll().filter { wh ->
 			(filters.userId == null || wh.user.id == filters.userId) &&
 					(filters.pathPrefix == null || wh.path.startsWith(filters.pathPrefix)) &&
 					(filters.isFile == null || wh.isFile == filters.isFile)
+		}.map{
+			wh ->
+			val path = if (wh.fileEntity!=null)
+				wh.fileEntity!!.path
+			else if (wh.folderEntity!=null)
+				wh.folderEntity!!.path
+			else wh.path
+			
+			HistoryInfo(
+				workTime = wh.workTime,
+				operationType = wh.operationType.name,
+				userEmail = wh.user.email,
+				path = path,
+				details = wh.details,
+				isFile = wh.isFile,
+			)
 		}
 	}
 	
@@ -1216,4 +1748,7 @@ class FileSystemService(
 			else -> "application/octet-stream"
 		}
 	}
+	
+	/** Извлекает имя файла из полного пути */
+	private fun extractFileNameFromFullPath(fullPath: String): String = Paths.get(fullPath).fileName.toString()
 }
