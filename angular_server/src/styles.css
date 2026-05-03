@@ -234,7 +234,10 @@ app-groups-page,
 app-home,
 app-login-page,
 app-user-page,
-app-users-page
+app-users-page,
+app-history-page,
+app-deleted-files-page,
+app-permissions-page
 {
 	display: flex;
 	flex-direction: column;

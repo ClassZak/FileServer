@@ -11,4 +11,8 @@ export const routes: Routes = [
 	{ path: 'groups', loadComponent: () => import('./page/groups-page/groups-page').then(m => m.GroupsPage) },
 	{ path: 'group/:name', loadComponent: () => import('./page/group-page/group-page').then(m => m.GroupPage) },
 	{ path: 'files/**', loadComponent: () => import('./page/files-page/files-page').then(m => m.FilesPageComponent) },
+	{ path: 'history', loadComponent: () => import('./page/history-page/history-page').then(m => m.HistoryPage) },
+	{ path: 'history/email/:email', loadComponent: () => import('./page/history-page/history-page').then(m => m.HistoryPage) },
+	{ path: 'trash', loadComponent: () => import('./page/deleted-files-page/deleted-files-page').then(m => m.DeletedFilesPage) },
+	{ path: 'permissions', loadComponent: () => import('./page/permissions-page/permissions-page').then(m => m.PermissionsPage) }
 ];

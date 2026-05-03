@@ -1,0 +1,79 @@
+@import url(../../app-header/app-header.css);
+@import url(../../file-search-header/file-search-header.css);
+@import url(../../../styles/FilesPage.css);
+
+.navigation-panel {
+	background-color: var(--color-bg-surface);
+	border: 1px solid var(--color-border-default);
+	border-radius: 4px;
+	padding: 16px;
+	margin-bottom: 24px;
+}
+
+.filter-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 12px;
+	margin-bottom: 12px;
+}
+
+.filter-group {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.filter-label {
+	font-size: 0.85rem;
+	color: var(--color-text-secondary);
+	font-weight: 500;
+}
+
+.path-input,
+.filter-select {
+	padding: 8px 12px;
+	background-color: black;
+	border: 1px solid var(--color-border-default);
+	border-radius: 4px;
+	color: var(--color-input-text);
+	font-size: 14px;
+	min-width: 140px;
+}
+
+.filter-select {
+	cursor: pointer;
+	appearance: auto;
+}
+
+.path-input:focus,
+.filter-select:focus {
+	outline: none;
+	border-color: var(--color-info-text);
+}
+
+.current-path-info {
+	font-size: 14px;
+	color: var(--color-text-secondary);
+	margin-top: 8px;
+}
+
+.current-path-label {
+	font-weight: 600;
+	margin-right: 4px;
+}
+
+@media screen and (width < 576px) {
+	.navigation-panel {
+		padding: 12px;
+	}
+	.filter-row {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 8px;
+	}
+	.path-input,
+	.filter-select {
+		width: 100%;
+	}
+}

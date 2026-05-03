@@ -1,0 +1,97 @@
+<app-app-header></app-app-header>
+<main class="MainContent">
+	@if (isLoading) {
+		<app-loading-spinner [title]="'Loading'"></app-loading-spinner>
+	} @else {
+		<h1>История работы</h1>
+
+		@if (isAdmin) {
+			<div class="buttons-row">
+				<app-redirection-button 
+					[className]="'btn btn-blue'" 
+					[title]="'Пользователи'" 
+					[reference]="'/users'"
+				>
+				</app-redirection-button>
+				<app-redirection-button 
+					[className]="'btn btn-blue'" 
+					[title]="'Группы'" 
+					[reference]="'/groups'"
+				>
+				</app-redirection-button>
+				<app-redirection-button 
+					[reference]="'/trash'" 
+					[title]="'Корзина'"		
+					[className]="'btn btn-red'">
+				</app-redirection-button>
+				<app-redirection-button 
+					[reference]="'/permissions'" 
+					[title]="'Права пользователей'"		
+					[className]="'btn btn-red'">
+				</app-redirection-button>
+			</div>
+		}
+
+		<div class="navigation-panel">
+			<div class="filter-row">
+				<div class="filter-group">
+					<label class="filter-label">Префикс пути</label>
+					<input
+						type="text"
+						[(ngModel)]="pathPrefix"
+						(ngModelChange)="applyFilters()"
+						placeholder="например groups/"
+						class="path-input"
+					/>
+				</div>
+
+				<div class="filter-group">
+					<label class="filter-label">Тип</label>
+					<select [(ngModel)]="isFile" (change)="applyFilters()" class="path-input filter-select">
+						<option [ngValue]="null">Всё</option>
+						<option [ngValue]="true">Файлы</option>
+						<option [ngValue]="false">Папки</option>
+					</select>
+				</div>
+
+				@if (isAdmin && allUsers.length > 0) {
+					<div class="filter-group">
+						<label class="filter-label">Пользователь</label>
+						<select [(ngModel)]="historyMode" (change)="applyFilters()" class="path-input filter-select">
+							<option value="my" selected>Моя история</option>
+							<option value="all">История всех пользователей</option>
+							<br>
+							@for (u of allUsers; track u.email) {
+								<option [ngValue]="u.email">{{u.surname}} {{u.name}} ({{u.email}})</option>
+							}
+						</select>
+					</div>
+				}
+
+				<button (click)="resetFilters()" class="nav-button back-button">Сбросить фильтры</button>
+			</div>
+
+			<div class="current-path-info">
+				<span class="current-path-label">Выбранный пользователь:</span>
+				{{ historyMode === 'all' ? 'Все' : (historyMode === 'my' ? (authorizedUser?.email) : historyMode) }}
+			</div>
+		</div>
+
+		@if (currentHistoryModelTableDataObject) {
+			<div>
+				<app-model-table-tile-component
+					[title]="'История работы'"
+					[iconName]="IconManager.getFileIcon('folder')"
+				>
+				</app-model-table-tile-component>
+			</div>
+			<div class="model-table-container">
+				<app-model-table
+					[modelTableDataObject]="currentHistoryModelTableDataObject"
+				>
+				</app-model-table>
+			</div>
+		}
+	}
+</main>
+<app-footer></app-footer>

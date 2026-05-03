@@ -265,7 +265,6 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				this.router.navigate(['/login']);
 				throw new Error(message);
 			} else {
-				console.log('Аутентификация прошла успешно');
 				this.isAuthenticated = true;
 				this.authorizedUser = authResult.data.user;
 				
@@ -561,7 +560,9 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				return;
 			}
 
-			await this.fileService.deleteItem(token, this.itemToDelete.path);
+			const result = await this.fileService.deleteItem(token, this.itemToDelete.path);
+			if (!result.success)
+				throw new Error(result.error ?? 'Неизвестная ошибка');
 
 			this.showDeleteModal = false;
 			this.itemToDelete = null;

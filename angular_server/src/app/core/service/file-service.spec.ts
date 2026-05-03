@@ -3,7 +3,7 @@ import { provideHttpClientTesting, HttpTestingController } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { FileService, DirectoryList, SearchResults } from './file-service';
 
-describe('FileService (instance)', () => {
+describe('FileService (updated API)', () => {
 	let service: FileService;
 	let httpMock: HttpTestingController;
 
@@ -24,6 +24,7 @@ describe('FileService (instance)', () => {
 		httpMock.verify();
 	});
 
+	// ---------- Basic operations ----------
 	it('should load directory', async () => {
 		const token = 'fake-token';
 		const path = 'some/path';
@@ -126,7 +127,6 @@ describe('FileService (instance)', () => {
 		expect(result.data?.contentType).toBe('text/plain');
 	});
 
-	// ---------- Existence check ----------
 	it('should check existence (exists)', async () => {
 		const token = 'fake-token';
 		const path = 'some/path';
@@ -147,14 +147,13 @@ describe('FileService (instance)', () => {
 	it('should get deleted files', async () => {
 		const token = 'fake-token';
 		const mockDeletedFiles = [
-			{ id: 1, originalPath: 'file.txt', deletedAt: new Date().toISOString(), version: 1, deletedByUserId: 42, deletedByUserEmail: 'user@example.com' }
+			{ originalPath: 'file.txt', deletedAt: new Date().toISOString(), version: 1, deletedByUserEmail: 'user@example.com' }
 		];
 
 		const resultPromise = service.getDeletedFiles(token);
 
 		const req = httpMock.expectOne('/api/files/deleted/files');
 		expect(req.request.method).toBe('GET');
-		expect(req.request.headers.get('Authorization')).toBe(`Bearer ${token}`);
 		req.flush({ deletedFiles: mockDeletedFiles });
 
 		const result = await resultPromise;
@@ -165,14 +164,13 @@ describe('FileService (instance)', () => {
 	it('should get deleted folders', async () => {
 		const token = 'fake-token';
 		const mockDeletedFolders = [
-			{ id: 1, originalPath: 'folder', deletedAt: new Date().toISOString(), version: 1, deletedByUserId: 42, deletedByUserEmail: 'user@example.com' }
+			{ originalPath: 'folder', deletedAt: new Date().toISOString(), version: 1, deletedByUserEmail: 'user@example.com' }
 		];
 
 		const resultPromise = service.getDeletedFolders(token);
 
 		const req = httpMock.expectOne('/api/files/deleted/folders');
 		expect(req.request.method).toBe('GET');
-		expect(req.request.headers.get('Authorization')).toBe(`Bearer ${token}`);
 		req.flush({ deletedFolders: mockDeletedFolders });
 
 		const result = await resultPromise;
@@ -180,76 +178,222 @@ describe('FileService (instance)', () => {
 		expect(result.data).toEqual(mockDeletedFolders);
 	});
 
-	it('should restore a file', async () => {
+	it('should get deleted file versions', async () => {
 		const token = 'fake-token';
-		const deletedId = 123;
+		const parentPath = 'docs';
+		const fileName = 'report.pdf';
+		const mockVersions = [
+			{ originalPath: 'docs/report.pdf', deletedAt: new Date().toISOString(), version: 1, deletedByUserEmail: 'user@example.com' },
+			{ originalPath: 'docs/report.pdf', deletedAt: new Date().toISOString(), version: 2, deletedByUserEmail: 'user@example.com' }
+		];
 
-		const resultPromise = service.restoreFile(token, deletedId);
+		const resultPromise = service.getDeletedFileVersions(token, parentPath, fileName);
 
-		const req = httpMock.expectOne(`/api/files/restore/file/${deletedId}`);
+		const req = httpMock.expectOne(req =>
+			req.url === '/api/files/deleted/file/versions'
+			&& req.params.get('parentPath') === parentPath
+			&& req.params.get('fileName') === fileName
+		);
+		expect(req.request.method).toBe('GET');
+		req.flush({ versions: mockVersions });
+
+		const result = await resultPromise;
+		expect(result.success).toBe(true);
+		expect(result.data).toEqual(mockVersions);
+	});
+
+	it('should get deleted folder versions', async () => {
+		const token = 'fake-token';
+		const path = 'project';
+		const mockVersions = [
+			{ originalPath: 'project', deletedAt: new Date().toISOString(), version: 1, deletedByUserEmail: 'user@example.com' }
+		];
+
+		const resultPromise = service.getDeletedFolderVersions(token, path);
+
+		const req = httpMock.expectOne(req =>
+			req.url === '/api/files/deleted/folder/versions'
+			&& req.params.get('path') === path
+		);
+		expect(req.request.method).toBe('GET');
+		req.flush({ versions: mockVersions });
+
+		const result = await resultPromise;
+		expect(result.success).toBe(true);
+		expect(result.data).toEqual(mockVersions);
+	});
+
+	it('should restore a file by path and version', async () => {
+		const token = 'fake-token';
+		const originalPath = 'documents/notes.txt';
+		const version = 2;
+
+		const resultPromise = service.restoreFile(token, originalPath, version);
+
+		const req = httpMock.expectOne('/api/files/restore/file');
 		expect(req.request.method).toBe('POST');
-		expect(req.request.headers.get('Authorization')).toBe(`Bearer ${token}`);
+		expect(req.request.body).toEqual({ originalPath, version });
 		req.flush({});
 
 		const result = await resultPromise;
 		expect(result.success).toBe(true);
 	});
 
-	it('should restore a folder', async () => {
+	it('should restore a folder by path and version', async () => {
 		const token = 'fake-token';
-		const deletedId = 456;
+		const originalPath = 'projects/old';
+		const version = 1;
 
-		const resultPromise = service.restoreFolder(token, deletedId);
+		const resultPromise = service.restoreFolder(token, originalPath, version);
 
-		const req = httpMock.expectOne(`/api/files/restore/folder/${deletedId}`);
+		const req = httpMock.expectOne('/api/files/restore/folder');
 		expect(req.request.method).toBe('POST');
-		expect(req.request.headers.get('Authorization')).toBe(`Bearer ${token}`);
+		expect(req.request.body).toEqual({ originalPath, version });
 		req.flush({});
 
 		const result = await resultPromise;
 		expect(result.success).toBe(true);
 	});
 
-	it('should permanently delete a file', async () => {
+	it('should permanently delete a file by path', async () => {
 		const token = 'fake-token';
-		const deletedId = 123;
+		const path = 'tmp/log.txt';
 
-		const resultPromise = service.permanentDeleteFile(token, deletedId);
+		const resultPromise = service.permanentDeleteFile(token, path);
 
-		const req = httpMock.expectOne(`/api/files/permanent/file/${deletedId}`);
+		const req = httpMock.expectOne(`/api/files/permanent/file?path=${encodeURIComponent(path)}`);
 		expect(req.request.method).toBe('DELETE');
-		expect(req.request.headers.get('Authorization')).toBe(`Bearer ${token}`);
 		req.flush({});
 
 		const result = await resultPromise;
 		expect(result.success).toBe(true);
 	});
 
-	it('should permanently delete a folder', async () => {
+	it('should permanently delete a folder by path', async () => {
 		const token = 'fake-token';
-		const deletedId = 456;
+		const path = 'tmp/old_project';
 
-		const resultPromise = service.permanentDeleteFolder(token, deletedId);
+		const resultPromise = service.permanentDeleteFolder(token, path);
 
-		const req = httpMock.expectOne(`/api/files/permanent/folder/${deletedId}`);
+		const req = httpMock.expectOne(`/api/files/permanent/folder?path=${encodeURIComponent(path)}`);
 		expect(req.request.method).toBe('DELETE');
-		expect(req.request.headers.get('Authorization')).toBe(`Bearer ${token}`);
 		req.flush({});
 
 		const result = await resultPromise;
 		expect(result.success).toBe(true);
+	});
+
+	// ---------- Download deleted file (new) ----------
+	it('should download a deleted file from trash', async () => {
+		const token = 'fake-token';
+		const originalPath = 'archive.zip';
+		const version = 1;
+		const mockBlob = new Blob(['old-content'], { type: 'application/zip' });
+
+		const resultPromise = service.downloadDeletedFile(token, originalPath, version);
+
+		const req = httpMock.expectOne(
+			`/api/files/download/deleted?path=${encodeURIComponent(originalPath)}&version=${version}`
+		);
+		expect(req.request.method).toBe('GET');
+		expect(req.request.headers.get('Authorization')).toBe(`Bearer ${token}`);
+		req.flush(mockBlob, { headers: { 'content-type': 'application/zip' } });
+
+		const result = await resultPromise;
+		expect(result.success).toBe(true);
+		expect(result.data?.blob).toBe(mockBlob);
+		expect(result.data?.contentType).toBe('application/zip');
 	});
 
 	// ---------- Permissions ----------
-	it('should set folder permission', async () => {
+	it('should get folder permissions', async () => {
 		const token = 'fake-token';
-		const request = { path: 'folder', userId: 1, mode: 7 };
+		const path = 'shared';
+		const mockPermissions = [
+			{ id: 1, userEmail: 'a@b.com', groupName: null, mode: 7 },
+			{ id: 2, userEmail: null, groupName: 'dev', mode: 15 }
+		];
+
+		const resultPromise = service.getFolderPermissions(token, path);
+
+		const req = httpMock.expectOne(req =>
+			req.url === '/api/files/permissions/folder'
+			&& req.params.get('path') === path
+		);
+		expect(req.request.method).toBe('GET');
+		req.flush({ permissions: mockPermissions });
+
+		const result = await resultPromise;
+		expect(result.success).toBe(true);
+		expect(result.data).toEqual(mockPermissions);
+	});
+
+	it('should get file permissions', async () => {
+		const token = 'fake-token';
+		const path = 'report.pdf';
+		const mockPermissions = [
+			{ id: 10, userEmail: 'editor@test.com', groupName: null, mode: 3 }
+		];
+
+		const resultPromise = service.getFilePermissions(token, path);
+
+		const req = httpMock.expectOne(req =>
+			req.url === '/api/files/permissions/file'
+			&& req.params.get('path') === path
+		);
+		expect(req.request.method).toBe('GET');
+		req.flush({ permissions: mockPermissions });
+
+		const result = await resultPromise;
+		expect(result.success).toBe(true);
+		expect(result.data).toEqual(mockPermissions);
+	});
+
+	it('should get group permissions', async () => {
+		const token = 'fake-token';
+		const groupName = 'developers';
+		const mockPermissions = [
+			{ type: 'folder', path: 'src', userEmail: null, groupName: 'developers', mode: 15 },
+			{ type: 'file', path: 'README.md', userEmail: null, groupName: 'developers', mode: 5 }
+		];
+
+		const resultPromise = service.getGroupPermissions(token, groupName);
+
+		const req = httpMock.expectOne(`/api/files/permissions/group/${groupName}`);
+		expect(req.request.method).toBe('GET');
+		req.flush({ permissions: mockPermissions });
+
+		const result = await resultPromise;
+		expect(result.success).toBe(true);
+		expect(result.data).toEqual(mockPermissions);
+	});
+
+	it('should get user permissions (own)', async () => {
+		const token = 'fake-token';
+		const userEmail = 'me@test.com';
+		const mockPermissions = [
+			{ type: 'folder', path: 'private', userEmail: 'me@test.com', groupName: null, mode: 7 }
+		];
+
+		const resultPromise = service.getUserPermissions(token, userEmail);
+
+		const req = httpMock.expectOne(`/api/files/permissions/user/${userEmail}`);
+		expect(req.request.method).toBe('GET');
+		req.flush({ permissions: mockPermissions });
+
+		const result = await resultPromise;
+		expect(result.success).toBe(true);
+		expect(result.data).toEqual(mockPermissions);
+	});
+
+	it('should set folder permission with userEmail', async () => {
+		const token = 'fake-token';
+		const request = { path: 'docs', userEmail: 'user@test.com', groupName: null, mode: 7 };
 
 		const resultPromise = service.setFolderPermission(token, request);
 
 		const req = httpMock.expectOne('/api/files/permissions/folder');
 		expect(req.request.method).toBe('PUT');
-		expect(req.request.headers.get('Authorization')).toBe(`Bearer ${token}`);
 		expect(req.request.body).toEqual(request);
 		req.flush({});
 
@@ -257,15 +401,55 @@ describe('FileService (instance)', () => {
 		expect(result.success).toBe(true);
 	});
 
-	it('should delete folder permission', async () => {
+	it('should set folder permission with groupName', async () => {
 		const token = 'fake-token';
-		const permissionId = 100;
+		const request = { path: 'team', userEmail: null, groupName: 'dev', mode: 15 };
 
-		const resultPromise = service.deleteFolderPermission(token, permissionId);
+		const resultPromise = service.setFolderPermission(token, request);
 
-		const req = httpMock.expectOne(`/api/files/permissions/folder/${permissionId}`);
+		const req = httpMock.expectOne('/api/files/permissions/folder');
+		expect(req.request.method).toBe('PUT');
+		expect(req.request.body).toEqual(request);
+		req.flush({});
+
+		const result = await resultPromise;
+		expect(result.success).toBe(true);
+	});
+
+	it('should delete folder permission by path and userEmail', async () => {
+		const token = 'fake-token';
+		const path = 'docs';
+		const userEmail = 'user@test.com';
+
+		const resultPromise = service.deleteFolderPermission(token, path, userEmail);
+
+		const req = httpMock.expectOne(req =>
+			req.url === '/api/files/permissions/folder'
+			&& req.params.get('path') === path
+			&& req.params.get('userEmail') === userEmail
+			&& !req.params.has('groupName')
+		);
 		expect(req.request.method).toBe('DELETE');
-		expect(req.request.headers.get('Authorization')).toBe(`Bearer ${token}`);
+		req.flush({});
+
+		const result = await resultPromise;
+		expect(result.success).toBe(true);
+	});
+
+	it('should delete folder permission by path and groupName', async () => {
+		const token = 'fake-token';
+		const path = 'team';
+		const groupName = 'dev';
+
+		const resultPromise = service.deleteFolderPermission(token, path, undefined, groupName);
+
+		const req = httpMock.expectOne(req =>
+			req.url === '/api/files/permissions/folder'
+			&& req.params.get('path') === path
+			&& req.params.get('groupName') === groupName
+			&& !req.params.has('userEmail')
+		);
+		expect(req.request.method).toBe('DELETE');
 		req.flush({});
 
 		const result = await resultPromise;
@@ -274,13 +458,12 @@ describe('FileService (instance)', () => {
 
 	it('should set file permission', async () => {
 		const token = 'fake-token';
-		const request = { path: 'file.txt', groupId: 2, mode: 5 };
+		const request = { path: 'secret.txt', userEmail: null, groupName: 'admin', mode: 15 };
 
 		const resultPromise = service.setFilePermission(token, request);
 
 		const req = httpMock.expectOne('/api/files/permissions/file');
 		expect(req.request.method).toBe('PUT');
-		expect(req.request.headers.get('Authorization')).toBe(`Bearer ${token}`);
 		expect(req.request.body).toEqual(request);
 		req.flush({});
 
@@ -288,15 +471,38 @@ describe('FileService (instance)', () => {
 		expect(result.success).toBe(true);
 	});
 
-	it('should delete file permission', async () => {
+	it('should delete file permission by path and userEmail', async () => {
 		const token = 'fake-token';
-		const permissionId = 200;
+		const path = 'file.txt';
+		const userEmail = 'joe@test.com';
 
-		const resultPromise = service.deleteFilePermission(token, permissionId);
+		const resultPromise = service.deleteFilePermission(token, path, userEmail);
 
-		const req = httpMock.expectOne(`/api/files/permissions/file/${permissionId}`);
+		const req = httpMock.expectOne(req =>
+			req.url === '/api/files/permissions/file'
+			&& req.params.get('path') === path
+			&& req.params.get('userEmail') === userEmail
+		);
 		expect(req.request.method).toBe('DELETE');
-		expect(req.request.headers.get('Authorization')).toBe(`Bearer ${token}`);
+		req.flush({});
+
+		const result = await resultPromise;
+		expect(result.success).toBe(true);
+	});
+
+	it('should delete file permission by path and groupName', async () => {
+		const token = 'fake-token';
+		const path = 'file.txt';
+		const groupName = 'managers';
+
+		const resultPromise = service.deleteFilePermission(token, path, undefined, groupName);
+
+		const req = httpMock.expectOne(req =>
+			req.url === '/api/files/permissions/file'
+			&& req.params.get('path') === path
+			&& req.params.get('groupName') === groupName
+		);
+		expect(req.request.method).toBe('DELETE');
 		req.flush({});
 
 		const result = await resultPromise;
@@ -306,13 +512,14 @@ describe('FileService (instance)', () => {
 	// ---------- History ----------
 	it('should get history without filters', async () => {
 		const token = 'fake-token';
-		const mockHistory = [{ id: 1, workTime: new Date().toISOString(), operationType: { id: 1, name: 'CREATE' }, user: { id: 1, email: 'a@b.c' }, fileEntity: null, folderEntity: null, path: 'f.txt', isFile: true, details: null }];
+		const mockHistory = [
+			{ workTime: new Date().toISOString(), operationType: 'CREATE', userEmail: 'a@b.c', path: 'f.txt', isFile: true, details: null }
+		];
 
 		const resultPromise = service.getHistory(token);
 
 		const req = httpMock.expectOne('/api/files/history');
 		expect(req.request.method).toBe('GET');
-		expect(req.request.headers.get('Authorization')).toBe(`Bearer ${token}`);
 		req.flush({ history: mockHistory });
 
 		const result = await resultPromise;
@@ -320,18 +527,20 @@ describe('FileService (instance)', () => {
 		expect(result.data).toEqual(mockHistory);
 	});
 
-	it('should get history with filters', async () => {
+	it('should get history with userEmail filter', async () => {
 		const token = 'fake-token';
-		const filters = { userId: 1, pathPrefix: 'groups/', isFile: true };
-		const mockHistory = [] as any[];
+		const filters = { userEmail: 'admin@test.com', pathPrefix: 'groups/', isFile: false };
+		const mockHistory: any[] = [];
 
 		const resultPromise = service.getHistory(token, filters);
 
-		const req = httpMock.expectOne(req => req.url === '/api/files/history');
+		const req = httpMock.expectOne(
+			req => req.url === '/api/files/history'
+				&& req.params.get('userEmail') === 'admin@test.com'
+				&& req.params.get('pathPrefix') === 'groups/'
+				&& req.params.get('isFile') === 'false'
+		);
 		expect(req.request.method).toBe('GET');
-		expect(req.request.params.get('userId')).toBe('1');
-		expect(req.request.params.get('pathPrefix')).toBe('groups/');
-		expect(req.request.params.get('isFile')).toBe('true');
 		req.flush({ history: mockHistory });
 
 		const result = await resultPromise;
@@ -353,5 +562,68 @@ describe('FileService (instance)', () => {
 		const result = await resultPromise;
 		expect(result.success).toBe(false);
 		expect(result.error).toContain('У вас нет прав на загрузку файлов в эту директорию');
+	});
+
+	it('should handle 403 error on restore file', async () => {
+		const token = 'fake-token';
+		const originalPath = 'file.txt';
+		const version = 1;
+
+		const resultPromise = service.restoreFile(token, originalPath, version);
+
+		const req = httpMock.expectOne('/api/files/restore/file');
+		req.flush({ error: 'Access denied' }, { status: 403, statusText: 'Forbidden' });
+
+		const result = await resultPromise;
+		expect(result.success).toBe(false);
+		expect(result.error).toContain('Нет прав на восстановление этого файла');
+	});
+
+	it('should handle 409 conflict on restore file', async () => {
+		const token = 'fake-token';
+		const originalPath = 'file.txt';
+		const version = 1;
+
+		const resultPromise = service.restoreFile(token, originalPath, version);
+
+		const req = httpMock.expectOne('/api/files/restore/file');
+		req.flush({ error: 'Path already occupied' }, { status: 409, statusText: 'Conflict' });
+
+		const result = await resultPromise;
+		expect(result.success).toBe(false);
+		expect(result.error).toContain('Path already occupied');
+	});
+
+	it('should handle 403 error on restore folder', async () => {
+		const token = 'fake-token';
+		const originalPath = 'folder';
+		const version = 1;
+
+		const resultPromise = service.restoreFolder(token, originalPath, version);
+
+		const req = httpMock.expectOne('/api/files/restore/folder');
+		req.flush({ error: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
+
+		const result = await resultPromise;
+		expect(result.success).toBe(false);
+		expect(result.error).toContain('Нет прав на восстановление этой папки');
+	});
+
+	it('should handle 404 error on download deleted file', async () => {
+		const token = 'fake-token';
+		const originalPath = 'deleted.zip';
+		const version = 1;
+
+		const resultPromise = service.downloadDeletedFile(token, originalPath, version);
+
+		const req = httpMock.expectOne(
+			`/api/files/download/deleted?path=${encodeURIComponent(originalPath)}&version=${version}`
+		);
+		// Передаём пустой Blob, потому что запрос ожидает responseType: 'blob'
+		req.flush(new Blob(), { status: 404, statusText: 'Not Found' });
+
+		const result = await resultPromise;
+		expect(result.success).toBe(false);
+		expect(result.error).toContain('Удалённый файл не найден');
 	});
 });
