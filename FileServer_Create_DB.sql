@@ -236,6 +236,14 @@ CALL AddUser(
     '$2b$12$jD2Wp2GTzmZgQy.eFloEBeSPEsC1/uI8TR6aCQdzbHlJnXRlq4gHq', -- 123456a
     TRUE
 );
+CALL AddUser(
+	'1',
+    '2',
+    '3',
+    '42sfsdf2@mail.com',
+    '$2b$12$jD2Wp2GTzmZgQy.eFloEBeSPEsC1/uI8TR6aCQdzbHlJnXRlq4gHq', -- 123456a
+    FALSE
+);
 SELECT * FROM `User`;
 SELECT * FROM Administrator;
 
