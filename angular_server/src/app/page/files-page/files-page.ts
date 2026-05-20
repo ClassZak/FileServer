@@ -208,7 +208,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			this.initSubscriptions();
 		} catch (error) {
 			console.error('Ошибка при загрузке страницы:', error);
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке страницы:', '{error}'`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке страницы:', '${(error as Error).message}'`));
 		}
 	}
 

@@ -176,7 +176,7 @@ export class HistoryPage implements OnInit, OnDestroy {
 		} catch (error) {
 			console.error('History page initialisation error:', error);
 			this.noticeService.addNotification(
-				new Notification(NotificationType.Error, `Error loading page: '{error}'`)
+				new Notification(NotificationType.Error, `Error loading page: '${(error as Error).message}'`)
 			);
 		}
 

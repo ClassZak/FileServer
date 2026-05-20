@@ -112,7 +112,7 @@ export class UsersPage implements OnInit {
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке аутентификации: '{error}'`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке аутентификации: '${(error as Error).message}'`));
 			this.router.navigate(['/login']);
 			return;
 		}
@@ -132,7 +132,7 @@ export class UsersPage implements OnInit {
 				throw new Error(result.error);
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке статуса администратора:, '{error}'`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке статуса администратора:, '${(error as Error).message}'`));
 			this.isAdmin = false;
 			Promise.resolve().then(()=>{this.router.navigate(['/account']);});
 		}
@@ -152,7 +152,7 @@ export class UsersPage implements OnInit {
 			}
 		} catch (error) {
 			console.error('Ошибка при загрузке пользователей', error);
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке пользователей:, '{error}'`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке пользователей:, '${(error as Error).message}'`));
 		} finally {
 			this.cdr.detectChanges();
 		}

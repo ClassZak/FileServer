@@ -84,7 +84,7 @@ export class LoginPage {
 				throw new Error(errorMessage);
 			}
 		} catch (error) {
-			this.error = `Произошла ошибка при входе: '{error}'`;
+			this.error = `Произошла ошибка при входе: '${(error as Error).message}'`;
 			this.noticeService.addNotification(new Notification(NotificationType.Error, this.error));
 		} finally {
 			this.isSubmiting = false;
