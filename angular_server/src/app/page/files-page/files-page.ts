@@ -203,12 +203,16 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit(): Promise<void> {
+		this.isLoading = true;
 		try{
 			await this.checkAuthentication();
 			this.initSubscriptions();
 		} catch (error) {
 			console.error('Ошибка при загрузке страницы:', error);
 			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке страницы:', '${(error as Error).message}'`));
+		} finally {
+			this.isLoading = false;  // скрываем спиннер после инициализации подписок
+			this.cdr.detectChanges();
 		}
 	}
 
@@ -257,7 +261,6 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 	private async checkAuthentication(): Promise<void> {
 		try {
 			const authResult = await this.authService.checkAuth();
-			
 			if (!authResult.success || !authResult.data?.authenticated) {
 				const message = `Аутентификация не пройдена: ${authResult.error}`;
 				console.error(message);
@@ -267,17 +270,14 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			} else {
 				this.isAuthenticated = true;
 				this.authorizedUser = authResult.data.user;
-				
 				await this.checkAdminStatus();
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке аутентификации: '${(error as Error).message}'`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке аутентификации: ${(error as Error).message}`));
 			this.unsubscribeAll();
 			this.router.navigate(['/login']);
 			return;
-		} finally {
-			this.isLoading = false;
 		}
 		this.cdr.detectChanges();
 	}
