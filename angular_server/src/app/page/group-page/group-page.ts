@@ -160,7 +160,7 @@ export class GroupPage implements OnInit, OnDestroy {
 			await this.checkAdminStatus();
 		} catch (error) {
 			console.error('Ошибка аутентификации при загрузке страницы:', error);
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка аутентификации при загрузке страницы: ${error}`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка аутентификации при загрузке страницы: '{error}'`));
 		}
 		try{
 			this.paramSubscription = this.route.paramMap.subscribe(params => {
@@ -173,7 +173,7 @@ export class GroupPage implements OnInit, OnDestroy {
 			});
 			await Promise.all([this.loadGroupData(), this.loadUsers()]);
 		} catch (error) {
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка аутентификации при загрузке страницы: ${error}`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка аутентификации при загрузке страницы: '{error}'`));
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
@@ -202,7 +202,7 @@ export class GroupPage implements OnInit, OnDestroy {
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке аутентификации: ${error}`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке аутентификации: '{error}'`));
 			this.paramSubscription?.unsubscribe();
 			this.router.navigate(['/login']);
 			return;
@@ -224,7 +224,7 @@ export class GroupPage implements OnInit, OnDestroy {
 				);
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке статуса администратора: ${error}`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке статуса администратора: '{error}'`));
 		}
 	}
 	private async loadGroupData(): Promise<void> {
@@ -252,7 +252,7 @@ export class GroupPage implements OnInit, OnDestroy {
 		} catch (error) {
 			console.error('Ошибка при загрузки данных группы:', error);
 			this.error = (error as Error).message;
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузки данных группы: ${error}`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузки данных группы: '{error}'`));
 		}
 	}
 	private async loadUsers(){
@@ -268,7 +268,7 @@ export class GroupPage implements OnInit, OnDestroy {
 			}
 		} catch (error) {
 			console.error('Ошибка при загрузке пользователей', error);
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке пользователей: ${error}`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке пользователей: '{error}'`));
 		}
 	}
 

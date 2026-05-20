@@ -48,7 +48,7 @@ export class UpdateUserPasswordModalComponent {
 		} catch (error) {
 			console.error(error);
 			this.error = (error as Error).message;
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при обновлении пароля: ${error}`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при обновлении пароля: '${error}'`));
 		} finally {
 			this.submitting = false;
 		}

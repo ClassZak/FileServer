@@ -176,7 +176,7 @@ export class HistoryPage implements OnInit, OnDestroy {
 		} catch (error) {
 			console.error('History page initialisation error:', error);
 			this.noticeService.addNotification(
-				new Notification(NotificationType.Error, `Error loading page: ${error}`)
+				new Notification(NotificationType.Error, `Error loading page: '{error}'`)
 			);
 		}
 
@@ -223,7 +223,7 @@ export class HistoryPage implements OnInit, OnDestroy {
 			const authResult = await this.authService.checkAuth();
 
 			if (!authResult.success || !authResult.data?.authenticated) {
-				const message = `Authentication failed: ${authResult.error}`;
+				const message = authResult.error;
 				console.error(message);
 				throw new Error(message);
 			}
@@ -233,7 +233,7 @@ export class HistoryPage implements OnInit, OnDestroy {
 
 			await this.checkAdminStatus();
 		} catch (error) {
-			const message = `Authentication check error: ${(error as Error).message}`;
+			const message = `Ошибка авторизации: ${(error as Error).message}`;
 			console.error(message);
 			this.noticeService.addNotification(new Notification(NotificationType.Error, message));
 			this.router.navigate(['/login']);

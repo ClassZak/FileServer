@@ -208,7 +208,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			this.initSubscriptions();
 		} catch (error) {
 			console.error('Ошибка при загрузке страницы:', error);
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке страницы:', ${error}`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке страницы:', '{error}'`));
 		}
 	}
 
@@ -272,7 +272,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке аутентификации:', ${error}`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке аутентификации: '${(error as Error).message}'`));
 			this.unsubscribeAll();
 			this.router.navigate(['/login']);
 			return;
@@ -296,7 +296,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 				);
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке статуса администратора:', ${error}`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке статуса администратора: '${error}'`));
 		}
 	}
 
