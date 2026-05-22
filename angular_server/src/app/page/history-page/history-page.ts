@@ -174,9 +174,9 @@ export class HistoryPage implements OnInit, OnDestroy {
 				await this.loadUsers();
 			}
 		} catch (error) {
-			console.error('History page initialisation error:', error);
+			console.error('HistoryPage initialisation error:', error);
 			this.noticeService.addNotification(
-				new Notification(NotificationType.Error, `Error loading page: '${(error as Error).message}'`)
+				new Notification(NotificationType.Error, `Ошибка загрузки страницы: '${(error as Error).message}'`)
 			);
 		}
 
@@ -244,15 +244,15 @@ export class HistoryPage implements OnInit, OnDestroy {
 	private async checkAdminStatus(): Promise<void> {
 		try {
 			const token = AuthService.getToken();
-			if (!token) throw new Error('No auth token');
+			if (!token) throw new Error('Нет токена авторизации');
 			const result = await this.adminService.isAdmin(token);
 			if (result.success) {
 				this.isAdmin = result.data!.isAdmin;
 			} else {
-				throw new Error(result.error || 'Unable to check admin status');
+				throw new Error(result.error || 'Не удалось проверить права администратора');
 			}
 		} catch (error) {
-			const message = `Admin status check error: ${(error as Error).message}`;
+			const message = `Ошибка проверки прав администратора: ${(error as Error).message}`;
 			console.error(message);
 			this.noticeService.addNotification(new Notification(NotificationType.Error, message));
 		}
@@ -268,7 +268,9 @@ export class HistoryPage implements OnInit, OnDestroy {
 				this.allUsers = result.data.users;
 			}
 		} catch (error) {
-			console.error('Failed to load user list:', error);
+			const message = `Не удалось загрузить список пользователей: ${(error as Error).message}`;
+			console.error(error);
+			this.noticeService.addNotificationErrorTypeByMessage(message);
 		}
 	}
 
@@ -311,7 +313,7 @@ export class HistoryPage implements OnInit, OnDestroy {
 
 			const result = await this.fileService.getHistory(token, filters);
 			if (!result.success || !result.data) {
-				throw new Error(result.error || 'Failed to load history');
+				throw new Error(result.error || 'Не удалось загрузить историю работы');
 			}
 
 			const raw = result.data;
@@ -353,7 +355,7 @@ export class HistoryPage implements OnInit, OnDestroy {
 				);
 			}
 		} catch (error) {
-			console.error('Load history error:', error);
+			console.error('Ошибка загрузки истории:', error);
 			this.noticeService.addNotificationErrorTypeByMessage((error as Error).message);
 		} finally {
 			this.isLoading = false;

@@ -21,7 +21,7 @@ app-app-header > form{
 	gap: 4px;
 	width: 100%;
 }
-.header-content a {
+.header-content a, .header-content .dropdown {
 	font-size: 0.8rem;
 }
 .header-content nav {
@@ -52,7 +52,7 @@ app-app-header > form{
 		padding: 2px;
 	}
 
-	.header-content a::before {
+	.header-content nav > a::before {
 		content: '';
 		position: absolute;
 		inset: 0;
@@ -78,6 +78,48 @@ app-app-header > form{
 	.header-content {
 		flex-direction: column;
 	}
+
+
+
+
+	/* Dropdown menu */
+	.dropdown {
+		position: relative;
+	}
+	.dropdown-toggle {
+		font-size: 0.7rem;
+		position: relative;
+		border-radius: 2px;
+		padding: 2px;
+		display: inline-block;
+	}
+	.dropdown-toggle::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		padding: 2px;
+		background: linear-gradient(to bottom, transparent 0%, transparent 50%, var(--color-border-header) 100%);
+		-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+		mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+		-webkit-mask-composite: xor;
+		mask-composite: exclude;
+		pointer-events: none;
+	}
+
+	/* Dropdown menu position correctiration */
+	.dropdown-menu {
+		left: auto;
+		right: 0;
+		min-width: 140px;
+		max-width: 90vw;
+	}
+	.dropdown-menu a {
+		padding: 6px 12px;
+		font-size: 0.75rem;
+		white-space: normal;
+		word-break: break-word;
+	}
 }
 @media screen and (width < 380px) {
 	.header-content {
@@ -88,4 +130,64 @@ app-app-header > form{
 
 app-file-search-header{
 	width: 100%;
+}
+
+
+
+
+
+
+
+
+/* Dropdown menu */
+.dropdown {
+	position: relative;
+	display: inline-block;
+}
+
+.dropdown-toggle {
+	font-family: Arial, sans-serif;
+	cursor: pointer;
+	display: inline-block;
+	color: var(--color-text-primary);
+	text-decoration: none;
+}
+
+.dropdown-toggle:hover {
+	text-decoration: underline;
+}
+
+.dropdown-menu {
+	position: absolute;
+	top: 100%;
+	left: auto;
+	background-color: var(--color-bg-surface);
+	min-width: 160px;
+	box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+	border-radius: 5px;
+	padding: 8px 0;
+	z-index: 1000;
+	display: none;
+	opacity: 0;
+	transition: opacity 0.2s ease;
+}
+
+.dropdown:hover .dropdown-menu {
+	display: block;
+	opacity: 1;
+}
+
+.dropdown-menu a {
+	border-radius: 5px;
+	display: block;
+	padding: 8px 16px;
+	margin: 4px;
+	color: var(--color-text-primary);
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.dropdown-menu a:hover {
+	background-color: var(--color-bg-hover);
+	text-decoration: none;
 }
