@@ -17,13 +17,9 @@ export class Home implements OnInit {
 	isAdmin: boolean = false;
 
 	constructor(
-		private router: Router,
 		private cdr: ChangeDetectorRef,
 		private authService: AuthService,
-		private adminService: AdminService,
-
-
-		private noticeService: NoticeService
+		private adminService: AdminService
 	) {}
 
 	
