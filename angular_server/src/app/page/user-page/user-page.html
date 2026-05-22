@@ -1,4 +1,4 @@
-<app-app-header></app-app-header>
+<app-app-header [isAdmin]="isAdmin"></app-app-header>
 <main class="MainContent">
 	@if (isLoading){
 		<app-loading-spinner [title]="'Загрузка пользователя'"></app-loading-spinner>

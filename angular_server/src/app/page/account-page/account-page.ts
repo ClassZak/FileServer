@@ -112,7 +112,7 @@ export class AccountPage implements OnInit {
 				await this.loadGroups();
 		} catch (error) {
 			console.error('Ошибка при загрузке страницы:', error);
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке страницы:', ${error}`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке страницы:', '${error}'`));
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
@@ -143,7 +143,7 @@ export class AccountPage implements OnInit {
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке аутентификации:', ${error}`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке аутентификации: '${error}'`));
 			this.router.navigate(['/login']);
 			return;
 		}
@@ -164,7 +164,7 @@ export class AccountPage implements OnInit {
 				);
 		} catch (error) {
 			console.error('Ошибка при проверке статуса администратора:', error);
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке статуса администратора: ${error}`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке статуса администратора: '${(error as Error).message}'`));
 		}
 	}
 
@@ -187,7 +187,7 @@ export class AccountPage implements OnInit {
 			}
 		} catch (error) {
 			console.error('Ошибка при загрузке ваших групп:', error);
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке ваших групп: ${error}`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке ваших групп: '${(error as Error).message}'`));
 		} finally {
 			this.isLoadingMyGroups = false;
 			this.cdr.detectChanges();
@@ -211,7 +211,7 @@ export class AccountPage implements OnInit {
 			}
 		} catch (error) {
 			console.error('Ошибка при загрузке групп', error);
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке групп: ${error}`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке групп: '${(error as Error).message}'`));
 		} finally {
 			this.isLoadingGroups = false;
 			this.cdr.detectChanges();
@@ -224,7 +224,7 @@ export class AccountPage implements OnInit {
 			if (!result.success)
 				throw new Error(result.error ?? 'Ошибка при выходе из системы');
 		} catch (error) {
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при выходе из системы: ${error}`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при выходе из системы: '${(error as Error).message}'`));
 		}
 		this.router.navigate(['/login']);
 	}
@@ -275,7 +275,7 @@ export class AccountPage implements OnInit {
 			this.noticeService.addNotification(new Notification(NotificationType.Success, 'Пароль успешно изменён'));
 		} catch (error) {
 			console.error('Error updating password:', error);
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при обновлении пароля: ${error}`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при обновлении пароля: '${(error as Error).message}'`));
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();
@@ -319,7 +319,7 @@ export class AccountPage implements OnInit {
 			this.cdr.detectChanges();
 		} catch (error) {
 			console.error('Ошибка при добавлении себя в группу:', error);
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при добавлении себя в группу: ${error}`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при добавлении себя в группу: '${(error as Error).message}'`));
 		} finally {
 			this.isLoading = false;
 			this.cdr.detectChanges();

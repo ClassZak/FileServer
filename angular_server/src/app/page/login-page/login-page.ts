@@ -56,6 +56,9 @@ export class LoginPage {
 	async handleLogin(e: Event, loginByEmail: boolean = true) {
 		e.preventDefault();
 		this.isSubmiting = true;
+		this.cdr.detectChanges();
+
+		let isNavigate = false;
 		
 		try {
 			const result = loginByEmail ? 
@@ -73,6 +76,7 @@ export class LoginPage {
 				
 				if (authResult.data?.authenticated) {
 					this.noticeService.addNotification(new Notification(NotificationType.Success, 'Вы успешно авторизировались'));
+					isNavigate = true;
 					this.router.navigate(['/account']);
 					return;
 				} else
@@ -84,12 +88,14 @@ export class LoginPage {
 				throw new Error(errorMessage);
 			}
 		} catch (error) {
-			this.error = `Произошла ошибка при входе: ${error}`;
+			this.error = `Произошла ошибка при входе: '${(error as Error).message}'`;
 			this.noticeService.addNotification(new Notification(NotificationType.Error, this.error));
 		} finally {
-			this.isSubmiting = false;
+			if (!isNavigate) {
+				this.isSubmiting = false;
+				this.cdr.detectChanges();
+			}
 		}
-		this.cdr.detectChanges();
 	}
 
 	private async checkAuthentication(): Promise<void> {

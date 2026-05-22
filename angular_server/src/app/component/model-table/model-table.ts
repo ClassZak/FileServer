@@ -155,7 +155,6 @@ export class ModelTable<TModel>
 	 */
 	@HostListener('window:resize')
 	onWindowResize(): void {
-		console.log('window:resize');
 		if (this.resizeTimer) {
 			clearTimeout(this.resizeTimer);
 		}

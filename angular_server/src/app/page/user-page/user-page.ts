@@ -102,7 +102,7 @@ export class UserPage implements OnInit, OnDestroy {
 			await this.checkAuthentication();
 		} catch (error) {
 			console.error('Ошибка аутентификации при загрузке страницы:', error);
-			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка аутентификации при загрузке страницы: ${error}`));
+			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка аутентификации при загрузке страницы: '${(error as Error).message}'`));
 		}
 		this.paramSubscription = this.route.paramMap.subscribe(params => {
 			this.userEmail = params.get('email') || '';

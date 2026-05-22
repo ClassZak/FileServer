@@ -1,4 +1,4 @@
-<app-app-header></app-app-header>
+<app-app-header [isAdmin]="isAdmin"></app-app-header>
 
 <main class="MainContent">
 	@if (isLoading) {
@@ -7,6 +7,43 @@
 		</app-loading-spinner>
 	} @else {
 		<h1 class="account-title">Личный кабинет</h1>
+		@if (isAdmin) {
+			<div class='buttons-row'>
+				<app-redirection-button 
+					[reference]="'/users'" 
+					[title]="'Пользователи'"		
+					[className]="'btn btn-blue'">
+				</app-redirection-button>
+				
+				<app-redirection-button 
+					[reference]="'/groups'" 
+					[title]="'Группы'"		
+					[className]="'btn btn-blue'">
+				</app-redirection-button>
+
+				<button (click)="openAddAdminToGroupModal()" class="btn btn-green">
+					Вступить в группу
+				</button>
+
+				<app-redirection-button 
+					[reference]="'/history'" 
+					[title]="'История'"		
+					[className]="'btn btn-blue'">
+				</app-redirection-button>
+
+				<app-redirection-button 
+					[reference]="'/trash'" 
+					[title]="'Корзина'"		
+					[className]="'btn btn-red'">
+				</app-redirection-button>
+
+				<app-redirection-button 
+					[reference]="'/permissions'" 
+					[title]="'Права пользователей'"		
+					[className]="'btn btn-red'">
+				</app-redirection-button>
+			</div>
+		}
 		<div class="account-container">
 			<div class="account-card">
 				<h2>Информация о пользователе</h2>
@@ -27,44 +64,6 @@
 					</button>
 				</div>
 			</div>
-		
-			@if (isAdmin) {
-				<div class='buttons-row'>
-					<app-redirection-button 
-						[reference]="'/users'" 
-						[title]="'Пользователи'"		
-						[className]="'btn btn-blue'">
-					</app-redirection-button>
-					
-					<app-redirection-button 
-						[reference]="'/groups'" 
-						[title]="'Группы'"		
-						[className]="'btn btn-blue'">
-					</app-redirection-button>
-
-					<button (click)="openAddAdminToGroupModal()" class="btn btn-green">
-						Вступить в группу
-					</button>
-
-					<app-redirection-button 
-						[reference]="'/history'" 
-						[title]="'История'"		
-						[className]="'btn btn-blue'">
-					</app-redirection-button>
-
-					<app-redirection-button 
-						[reference]="'/trash'" 
-						[title]="'Корзина'"		
-						[className]="'btn btn-red'">
-					</app-redirection-button>
-
-					<app-redirection-button 
-						[reference]="'/permissions'" 
-						[title]="'Права пользователей'"		
-						[className]="'btn btn-red'">
-					</app-redirection-button>
-				</div>
-			}
 			
 			@if (!isLoadingMyGroups) {
 				@if (currentGroupModelTableDataObjectRef && currentGroupModelTableDataObjectRef.models.length) {

@@ -1,11 +1,21 @@
 <div class="header-content">
 	<nav>
 		<a [routerLink]="'/'">Главная</a>
-		<a [routerLink]="'/files'">Файлы</a>
 		<a [routerLink]="'/about'">О проекте</a>
 		<a [routerLink]="'/account'">Аккаунт</a>
+		<a [routerLink]="'/files'">Файлы</a>
 		<a [routerLink]="'/history'">История</a>
 		<a [routerLink]="'/trash'">Корзина</a>
+		@if (isAdmin) {
+			<div class="dropdown">
+				<span class="dropdown-toggle">Админ</span>
+				<div class="dropdown-menu">
+					<a [routerLink]="'/groups'">Группы</a>
+					<a [routerLink]="'/users'">Пользователи</a>
+					<a [routerLink]="'/permissions'">Права</a>
+				</div>
+			</div>
+		}
 	</nav>
 	<app-file-search-header></app-file-search-header>
 </div>

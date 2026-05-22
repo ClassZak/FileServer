@@ -223,10 +223,15 @@ export class PermissionsPage implements OnInit, OnDestroy {
 			(u.surname && u.surname.toLowerCase().includes(userFilter)) ||
 			(u.name && u.name.toLowerCase().includes(userFilter))
 		);
+		if (this.filteredUsersForSelect && this.filteredUsersForSelect.length > 0)
+			this.userEmail = this.filteredUsersForSelect[0].email;
+
 		const groupFilter = this.groupSearchFilter.toLowerCase();
 		this.filteredGroupsForSelect = this.allGroups.filter(g =>
 			g.name.toLowerCase().includes(groupFilter)
 		);
+		if (this.filteredGroupsForSelect && this.filteredGroupsForSelect.length > 0)
+			this.groupName = this.filteredGroupsForSelect[0].name;
 	}
 
 	applyFiltersToViewSelects(): void {

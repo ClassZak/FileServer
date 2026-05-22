@@ -141,7 +141,7 @@ export class DeletedFilesPage implements OnInit {
 		const authResult = await this.authService.checkAuth();
 		if (!authResult.success || !authResult.data?.authenticated) {
 			this.router.navigate(['/login']);
-			throw new Error('Не авторизован');
+			throw new Error('Пользователь не авторизован');
 		}
 		this.authorizedUserEmail = authResult.data.user?.email || '';
 		const token = AuthService.getToken();

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { FileSearchHeader } from "../file-search-header/file-search-header";
 import { RouterLink } from "@angular/router";
 
@@ -9,5 +9,5 @@ import { RouterLink } from "@angular/router";
 	styleUrl: './app-header.css',
 })
 export class AppHeader {
-
+	@Input() isAdmin: boolean = false;
 }
