@@ -32,15 +32,15 @@ import { RedirectionButton } from "../../component/redirection-button/redirectio
 	selector: 'app-history-page',
 	standalone: true,
 	imports: [
-    CommonModule,
-    FormsModule,
-    RouterModule,
-    AppHeader,
-    AppFooter,
-    LoadingSpinner,
-    ModelTable,
-    ModelTableTileComponent,
-    RedirectionButton
+	CommonModule,
+	FormsModule,
+	RouterModule,
+	AppHeader,
+	AppFooter,
+	LoadingSpinner,
+	ModelTable,
+	ModelTableTileComponent,
+	RedirectionButton
 ],
 	providers: [DatePipe],
 	templateUrl: './history-page.html',
@@ -72,7 +72,8 @@ export class HistoryPage implements OnInit, OnDestroy {
 			{
 				header: 'Время работы',
 				field: (item: HistoryInfoAdmin) =>
-					this.datePipe.transform(item.workTime, 'dd.MM.yyyy HH:mm:ss')
+					this.datePipe.transform(item.workTime, 'dd.MM.yyyy HH:mm:ss'),
+				sortField: 'workTime'
 			},
 			{
 				header: 'Тип операции',
@@ -116,7 +117,8 @@ export class HistoryPage implements OnInit, OnDestroy {
 			{
 				header: 'Время работы',
 				field: (item: HistoryInfo) =>
-					this.datePipe.transform(item.workTime, 'dd.MM.yyyy HH:mm:ss')
+					this.datePipe.transform(item.workTime, 'dd.MM.yyyy HH:mm:ss'),
+				sortField: 'workTime'
 			},
 			{
 				header: 'Тип операции',

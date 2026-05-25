@@ -5,7 +5,13 @@
 			<tr>
 				@for (col of modelTableDataObject.columnDefinitions; track $index; let colIndex = $index) {
 					<th [class]="col.headerClass" #headerCell>
-						<div class="cell">{{ col.header}}</div>
+						<div class="cell">
+							<span class="header-text">{{ col.header }}</span>
+							<span class="sort-icon"
+								  [class]="getSortIconClass(colIndex)"
+								  (click)="toggleSort(colIndex, $event)">
+							</span>
+						</div>
 						@if (!isLastColumn(colIndex)) {
 							<span class="resize-handle" (mousedown)="startResize($event, colIndex)"></span>
 						}
@@ -21,7 +27,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			@for (model of modelTableDataObject.models; track $index) {
+			@for (model of sortedModels; track $index) {
 				<tr>
 					@for (col of modelTableDataObject.columnDefinitions; track $index; let colIndex = $index) {
 						<td [class]="col.cellClass" [class.resize-active]="resizing && resizingColIndex === colIndex">

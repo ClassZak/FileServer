@@ -90,7 +90,7 @@ export class GroupPage implements OnInit, OnDestroy {
 			{header: 'Имя', field: 'name'},
 			{header: 'Отчество', field: 'patronymic'},
 			{header: 'Почта', field: 'email'},
-			{header: 'Дата создания', field: (item: UserAdminModel) => this.datePipe.transform(item.createdAt, 'dd.MM.yyyy HH:mm:ss')},
+			{header: 'Дата создания', field: (item: UserAdminModel) => this.datePipe.transform(item.createdAt, 'dd.MM.yyyy HH:mm:ss'), sortField: 'createdAt'},
 		],
 		[],
 		{

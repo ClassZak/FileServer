@@ -19,13 +19,13 @@ import { RedirectionButton } from "../../component/redirection-button/redirectio
 	selector: 'app-deleted-files-page',
 	standalone: true,
 	imports: [
-    CommonModule,
-    AppHeader,
-    AppFooter,
-    LoadingSpinner,
-    ModelTable,
-    ModelTableTileComponent,
-    RedirectionButton
+	CommonModule,
+	AppHeader,
+	AppFooter,
+	LoadingSpinner,
+	ModelTable,
+	ModelTableTileComponent,
+	RedirectionButton
 ],
 	providers: [DatePipe],
 	templateUrl: './deleted-files-page.html',
@@ -48,7 +48,7 @@ export class DeletedFilesPage implements OnInit {
 				field: 'originalPath',
 				icon: (item: DeletedFileInfo) => this.getFileIconFromPath(item.originalPath)
 			},
-			{ header: 'Дата удаления', field: (item: DeletedFileInfo) => this.datePipe.transform(item.deletedAt, 'dd.MM.yyyy HH:mm:ss') },
+			{ header: 'Дата удаления', field: (item: DeletedFileInfo) => this.datePipe.transform(item.deletedAt, 'dd.MM.yyyy HH:mm:ss'), sortField: 'deletedAt'},
 			{ header: 'Версия', field: 'version' },
 			{ header: 'Кем удалён', field: 'deletedByUserEmail' }
 		],
@@ -86,7 +86,7 @@ export class DeletedFilesPage implements OnInit {
 				field: 'originalPath',
 				icon: () => IconManager.getFileIcon('folder')
 			},
-			{ header: 'Дата удаления', field: (item: DeletedFolderInfo) => this.datePipe.transform(item.deletedAt, 'dd.MM.yyyy HH:mm:ss') },
+			{ header: 'Дата удаления', field: (item: DeletedFolderInfo) => this.datePipe.transform(item.deletedAt, 'dd.MM.yyyy HH:mm:ss'), sortField: 'deletedAt' },
 			{ header: 'Версия', field: 'version' },
 			{ header: 'Кем удалён', field: 'deletedByUserEmail' }
 		],
