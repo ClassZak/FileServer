@@ -56,6 +56,12 @@ export class ModelTable<TModel>
 	private resizeTimer: any;
 	private manualResizeHappened = false;
 
+	// ---------- Single column sorting ----------
+	/**
+	 * Current sort state. `null` means no active sorting.
+	 */
+	sortState: { colIndex: number; direction: 'asc' | 'desc' } | null = null;
+
 	constructor(
 		private renderer: Renderer2,
 		private cdr: ChangeDetectorRef
@@ -64,10 +70,12 @@ export class ModelTable<TModel>
 	/**
 	 * Reacts to changes in the input modelTableDataObject.
 	 * Resets column widths and re-initializes them after data update.
+	 * Also clears sorting when data changes.
 	 */
 	ngOnChanges(changes: SimpleChanges): void {
 		if (changes['modelTableDataObject'] && this.modelTableDataObject) {
 			this.resetColumnWidths();
+			this.sortState = null;                     // clear sorting on data change
 			setTimeout(() => {
 				if (this.table?.nativeElement) {
 					this.initColumnWidths();
@@ -359,6 +367,95 @@ export class ModelTable<TModel>
 			: resizeLineRef.clientWidth;
 		resizeLineRef.style.left = `${xpos}px`;
 	}
+
+
+	// ====================== Single column sorting ======================
+
+	/**
+	 * Toggles sort direction for a column.
+	 * - If the column is not the currently sorted one, sets it to ascending.
+	 * - If it is already ascending, switches to descending.
+	 * - If it is descending, removes sorting (back to natural order).
+	 */
+	toggleSort(colIndex: number, event: MouseEvent): void {
+		event.stopPropagation();
+
+		if (!this.sortState || this.sortState.colIndex !== colIndex) {
+			// first click or different column → ascending
+			this.sortState = { colIndex, direction: 'asc' };
+		} else if (this.sortState.direction === 'asc') {
+			// second click → descending
+			this.sortState = { colIndex, direction: 'desc' };
+		} else {
+			// third click → remove sort
+			this.sortState = null;
+		}
+
+		this.cdr.detectChanges();
+	}
+
+	/**
+	 * Returns the CSS class for the sort icon of the given column.
+	 */
+	getSortIconClass(colIndex: number): string {
+		if (this.sortState?.colIndex !== colIndex) return 'sort-none';
+		return this.sortState.direction === 'asc' ? 'sort-asc' : 'sort-desc';
+	}
+
+	/**
+	 * Returns the models array, sorted if a sort state is active.
+	 * Does not modify the original array.
+	 */
+	get sortedModels(): TModel[] {
+		const models = this.modelTableDataObject?.models;
+		if (!models || !this.sortState) {
+			return models ?? [];
+		}
+
+		const { colIndex, direction } = this.sortState;
+		const colDef = this.modelTableDataObject?.columnDefinitions[colIndex];
+		if (!colDef) return models;
+
+		const multiplier = direction === 'asc' ? 1 : -1;
+
+		// shallow copy
+		const sorted = [...models];
+
+		sorted.sort((a, b) => {
+			const valA = this.getSortValue(a, colDef);
+			const valB = this.getSortValue(b, colDef);
+
+			// handle null / undefined
+			if (valA == null && valB == null) return 0;
+			if (valA == null) return 1 * multiplier;
+			if (valB == null) return -1 * multiplier;
+
+			// string comparison
+			if (typeof valA === 'string' && typeof valB === 'string') {
+				return valA.localeCompare(valB) * multiplier;
+			}
+
+			// numeric / Date / other comparison
+			return (valA < valB ? -1 : valA > valB ? 1 : 0) * multiplier;
+		});
+
+		return sorted;
+	}
+
+	/**
+	 * Extracts the value used for sorting a column.
+	 * Uses `sortField` if defined, otherwise falls back to `field`.
+	 */
+	private getSortValue(item: TModel, colDef: ColumnDefinition<TModel>): any {
+		const sortField = colDef.sortField ?? colDef.field;
+		if (typeof sortField === 'function') {
+			return sortField(item);
+		}
+		return (item as any)[sortField];
+	}
+
+	// ====================== End of sorting ======================
+
 
 	/**
 	 * Returns the icon name for a given column and model item.

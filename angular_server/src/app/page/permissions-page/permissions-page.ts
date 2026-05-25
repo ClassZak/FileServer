@@ -24,14 +24,14 @@ import { RedirectionButton } from "../../component/redirection-button/redirectio
 	selector: 'app-permissions-page',
 	standalone: true,
 	imports: [
-    CommonModule,
-    FormsModule,
-    RouterModule,
-    AppHeader,
-    AppFooter,
-    LoadingSpinner,
-    ModelTable,
-    RedirectionButton
+	CommonModule,
+	FormsModule,
+	RouterModule,
+	AppHeader,
+	AppFooter,
+	LoadingSpinner,
+	ModelTable,
+	RedirectionButton
 ],
 	templateUrl: './permissions-page.html',
 	styleUrls: ['./permissions-page.css']

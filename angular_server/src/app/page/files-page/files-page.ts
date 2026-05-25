@@ -69,8 +69,8 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 		[
 			{header:'Имя', field:'name', icon:((item: FileInfo)=>IconManager.getFileIcon(item.extension))},
 			{header:'Расширение', field:'extension', icon:((item: FileInfo)=>IconManager.getFileIcon(item.extension))},
-			{header:'Размер', field:'readableSize'},
-			{header:'Дата изменения', field:'lastModified'},
+			{header:'Размер', field:'readableSize', sortField:'size'},
+			{header:'Дата изменения', field:'lastModified', sortField: 'lastModified'},
 		],
 		[],
 		{
@@ -94,8 +94,8 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 	foldersModelTableDataObject: ModelTableDataObject<FolderInfo> = new ModelTableDataObject(
 		[
 			{header: 'Имя', field: 'name', icon:((item: FolderInfo)=>IconManager.getFileIcon('folder'))},
-			{header: 'Дата изменения', field:'lastModified'},
-			{header: 'Размер', field:'readableSize'}
+			{header: 'Дата изменения', field:'lastModified', sortField: 'lastModified'},
+			{header: 'Размер', field:'readableSize', sortField:'size'}
 		],
 		[],
 		{
@@ -121,8 +121,8 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			{header:'Путь', field:((item: FileInfo)=>{return FileInfo.getRelativePath(item,this.searchPath)}), icon:((item: FileInfo)=>IconManager.getFileIcon(item.extension))},
 			{header:'Имя', field:'name', icon:((item: FileInfo)=>IconManager.getFileIcon(item.extension))},
 			{header:'Расширение', field:'extension', icon:((item: FileInfo)=>IconManager.getFileIcon(item.extension))},
-			{header:'Размер', field:'readableSize'},
-			{header:'Дата изменения', field:'lastModified'},
+			{header:'Размер', field:'readableSize', sortField:'size'},
+			{header:'Дата изменения', field:'lastModified', sortField: 'lastModified'},
 		],
 		[],
 		{
@@ -146,8 +146,8 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 	foldersFoundModelTableDataObject: ModelTableDataObject<FolderInfo> = new ModelTableDataObject(
 		[
 			{header: 'Имя', field: 'name', icon:((item: FolderInfo)=>IconManager.getFileIcon('folder'))},
-			{header: 'Дата изменения', field:'lastModified'},
-			{header: 'Размер', field:'readableSize'}
+			{header: 'Дата изменения', field:'lastModified', sortField: 'lastModified'},
+			{header: 'Размер', field:'readableSize', sortField:'size'}
 		],
 		[],
 		{

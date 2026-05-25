@@ -34,7 +34,12 @@ table.model-table th div.cell{
 	overflow-x: auto;
 	vertical-align: middle;
 	white-space: nowrap;
-	display: inline-block;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 4px;
+	width: 100%;
+	box-sizing: border-box;
 }
 
 
@@ -218,4 +223,61 @@ td.resize-active {
 	z-index: 1000;
 	pointer-events: none;
 	transform: translateX(-200%);
+}
+
+
+
+
+/* ---------- Sorting ---------- */
+.header-text {
+	flex: 1 1 auto;
+	user-select: text; /* allow text selection */
+}
+
+.sort-icon {
+	flex-shrink: 0;
+	width: 16px;
+	height: 16px;
+	cursor: pointer;
+	position: relative; /* create stacking context */
+	z-index: 3;         /* appear above resize-handle */
+	margin-left: auto;  /* push to the right edge */
+	margin-right: 6px;  /* avoid being covered by the resize handle */
+}
+
+/* Neutral state (hollow square) */
+.sort-none::before {
+	content: '';
+	display: block;
+	width: 10px;
+	height: 10px;
+	border: 2px solid var(--color-text-secondary, #666);
+	border-radius: 2px;
+	margin: 3px;
+	background-color: white;
+	/* no background – transparent inside, works on any background */
+}
+
+/* Ascending arrow */
+.sort-asc::before {
+	content: '';
+	display: block;
+	width: 0;
+	height: 0;
+	border-left: 5px solid transparent;
+	border-right: 5px solid transparent;
+	border-bottom: 8px solid var(--color-text-primary, #333);
+	margin: 4px 3px;
+}
+
+/* Descending arrow */
+.sort-desc::before {
+	content: '';
+	display: block;
+	width: 0;
+	height: 0;
+	border-left: 5px solid transparent;
+	border-right: 5px solid transparent;
+	border-top: 8px solid var(--color-text-primary, #333);
+	margin: 4px 3px;
 }

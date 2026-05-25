@@ -62,6 +62,11 @@ export interface ColumnDefinition<T> {
 	 * If a function is provided, it receives the item and returns the value.
 	 */
 	field: keyof T | ((item: T) => any);
+	/** 
+	 * Optional: value used for sorting.
+	 * If not set, `field` is used.
+	 */
+	sortField?: keyof T | ((item: T) => any);
 	// Optional CSS class for the cell.
 	cellClass?: string;
 	// Optional CSS class for the header cell.
