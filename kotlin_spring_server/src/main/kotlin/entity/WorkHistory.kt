@@ -32,7 +32,7 @@ class WorkHistory(
 	var isFile: Boolean = true,
 	
 	@Lob
-	@Column(name = "Details", nullable = true)
+	@Column(name = "Details", nullable = true, length = 65535)
 	var details: String? = null,
 	
 ) : BaseEntity<Long>()

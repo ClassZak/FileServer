@@ -23,7 +23,6 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.time.LocalDateTime
 import java.util.*
 import kotlin.io.path.Path
-import kotlin.io.path.exists
 
 /**
  * Типы доступа, представленные в виде битовой маски.
@@ -1594,25 +1593,87 @@ class FileSystemService(
 	
 	/**
 	 * Переименовывает папку группы при изменении имени группы.
+	 * Переименовывает папку удалённых файлов и папок группы при изменении имени группы,
+	 * а также обновляет права доступа, сущности файлов и папок и их удалённых записей.
+	 * Обновляет историю работы
 	 *
 	 * @param oldGroupName старое имя группы
 	 * @param newGroupName новое имя группы
 	 * @return true если перемещение успешно, false если исходная папка не существует
 	 */
-	fun moveGroupFolder(oldGroupName: String, newGroupName: String): Boolean {
+	@Transactional
+	fun updateFileSystemForNewGroupName(oldGroupName: String, newGroupName: String): Boolean {
+		if (oldGroupName == newGroupName) return true
+		
+		val workHistoryUpdated = workHistoryRepository.updateGroupPaths(oldGroupName, newGroupName)
+		
+		val deletedFileUpdated = deletedFileRepository.updateGroupPaths(oldGroupName, newGroupName)
+		val fileEntityUpdated = fileEntityRepository.updateGroupPaths(oldGroupName, newGroupName)
+		val deletedFolderUpdated = deletedFolderRepository.updateGroupPaths(oldGroupName, newGroupName)
+		val folderEntityRepository = folderEntityRepository.updateGroupPaths(oldGroupName, newGroupName)
+		
+		
+		logger.info("WorkHistory updated: $workHistoryUpdated rows")
+		
+		logger.info("DeletedFile updated: $deletedFileUpdated rows")
+		logger.info("FileEntity updated: $fileEntityUpdated rows")
+		logger.info("DeletedFolder updated: $deletedFolderUpdated rows")
+		logger.info("FolderEntity updated: $folderEntityRepository rows")
+		
+		
+		if (!moveGroupFolder(oldGroupName, newGroupName)) {
+			logger.error("moveGroupFolder failed for $oldGroupName -> $newGroupName")
+			return false
+		}
+		
+		if (!moveDeletedGroupFolder(oldGroupName, newGroupName)) {
+			logger.error("moveDeletedGroupFolder failed for $oldGroupName -> $newGroupName")
+			return false
+		}
+		
+		return true
+	}
+	
+	/**
+	 * Переименовывает папку группы при изменении имени группы.
+	 *
+	 * @param oldGroupName старое имя группы
+	 * @param newGroupName новое имя группы
+	 * @return true если перемещение успешно, false если исходная папка не существует
+	 */
+	private fun moveGroupFolder(oldGroupName: String, newGroupName: String): Boolean {
+		if (oldGroupName == newGroupName)
+			return true
+		
 		val safeOld = sanitizeFileName(oldGroupName)
 		val safeNew = sanitizeFileName(newGroupName)
 		val oldPath = safeRootPath.resolve(groupsDir).resolve(safeOld)
 		val newPath = safeRootPath.resolve(groupsDir).resolve(safeNew)
 		if (!Files.exists(oldPath)) return false
 		Files.move(oldPath, newPath, StandardCopyOption.ATOMIC_MOVE)
-		val oldFolderPath = "$groupsDir/$safeOld"
-		val newFolderPath = "$groupsDir/$safeNew"
-		val folderEntity = folderEntityRepository.findByPath(oldFolderPath)
-		folderEntity?.let {
-			it.path = newFolderPath
-			folderEntityRepository.save(it)
-		}
+		
+		return true
+	}
+	
+	/**
+	 * Переименовывает папку удалённых файлов и папок группы при изменении имени группы,
+	 * а также обновляет права доступа, сущности файлов и папок и их удалённых записей
+	 *
+	 * @param oldGroupName старое имя группы
+	 * @param newGroupName новое имя группы
+	 * @return true если перемещение успешно, false если исходная папка не существует
+	 */
+	private fun moveDeletedGroupFolder(oldGroupName: String, newGroupName: String): Boolean {
+		if (oldGroupName == newGroupName)
+			return  true
+		
+		val safeOld = sanitizeFileName(oldGroupName)
+		val safeNew = sanitizeFileName(newGroupName)
+		val oldDeletedFolderPath = safeRootPathDeleted.resolve(groupsDir).resolve(safeOld)
+		val newDeletedFolderPath = safeRootPathDeleted.resolve(groupsDir).resolve(safeNew)
+		if (!Files.exists(oldDeletedFolderPath)) return false
+		Files.move(oldDeletedFolderPath, newDeletedFolderPath, StandardCopyOption.ATOMIC_MOVE)
+		
 		return true
 	}
 	
