@@ -225,9 +225,11 @@ class GroupService(
 		logger.info("Создание группы '$name' пользователем ${creator.email}")
 		
 		// Проверка уникальности имени группы
-		if (groupRepository.existsByName(name)) {
+		if (groupRepository.existsByName(name))
 			throw IllegalArgumentException("Группа с именем '$name' уже существует")
-		}
+		
+		if (name.contains(Regex("\\|/")))
+			throw IllegalArgumentException("Имя новой группы содержит недопустимые символы")
 		
 		val group = Group(name = name, creator = creator)
 		group.members.add(creator) // Создатель автоматически становится участником
@@ -248,9 +250,14 @@ class GroupService(
 		EntityNotFoundException("Пользователь с email '$creatorEmail' не найден")
 		
 		// Проверка уникальности нового имени
-		if (currentName != newName && groupRepository.existsByName(newName)) {
-			throw IllegalArgumentException("Группа с именем '$newName' уже существует")
+		if (currentName != newName)
+		{
+			if(groupRepository.existsByName(newName))
+				throw IllegalArgumentException("Группа с именем '$newName' уже существует")
+			if (newName.contains(Regex("\\|/")))
+				throw IllegalArgumentException("Новое имя группы содержит недопустимые символы")
 		}
+		
 		
 		// При смене создателя добавляем его в участники, если он там отсутствует
 		if (group.creator.id != creator.id && !group.members.any { it.id == creator.id }) {

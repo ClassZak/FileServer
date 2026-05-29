@@ -21,12 +21,14 @@ import org.zak.dto.UserResponse
 import org.zak.dto.ValidationResult
 import org.zak.entity.User
 import org.zak.repository.UserRepository
+import org.zak.repository.WorkHistoryRepository
 import java.time.format.DateTimeFormatter
 
 @Service
 class UserService(
 	private val userRepository: UserRepository,
 	private val administratorService: AdministratorService,
+	private val workHistoryRepository: WorkHistoryRepository,
 	private val passwordEncoder: PasswordEncoder
 ) : UserDetailsService {
 	private val logger = LoggerFactory.getLogger(UserService::class.java)
@@ -183,6 +185,7 @@ class UserService(
 	
 	@Transactional
 	fun deleteUser(user: User){
+		workHistoryRepository.deleteUserHistory(user)
 		userRepository.delete(user)
 	}
 	

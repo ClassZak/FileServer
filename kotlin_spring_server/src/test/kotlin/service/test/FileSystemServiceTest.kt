@@ -408,7 +408,6 @@ class FileSystemServiceTest {
 		val user = createUser(id = 1)
 		val currentUser = CurrentUser(id = 1, email = user.email, isAdmin = false, userDetails = user)
 		val fileEntity = FileEntity(path = "test.txt", isDeleted = false).apply { id = 100 }
-		val deletedFile = DeletedFile(fileEntity, "test.txt", user, LocalDateTime.now(), 1).apply { id = 10 }
 		
 		whenever(fileEntityRepository.findByPath("test.txt")).thenReturn(fileEntity)
 		//whenever(deletedFileRepository.findByFileEntityAndVersion(fileEntity, 1)).thenReturn(deletedFile)
@@ -658,7 +657,7 @@ class FileSystemServiceTest {
 		val folderEntity = FolderEntity(path = "groups/$oldName", isDeleted = false)
 		whenever(folderEntityRepository.findByPath("groups/$oldName")).thenReturn(folderEntity)
 		
-		val result = spiedService.moveGroupFolder(oldName, newName)
+		val result = spiedService.updateFileSystemForNewGroupName(oldName, newName)
 		assertTrue(result)
 		assertFalse(Files.exists(oldDir.toPath()))
 		assertTrue(Files.exists(root.toPath().resolve("groups/$newName")))
@@ -874,7 +873,6 @@ class FileSystemServiceTest {
 	@Test
 	fun `group member cannot restrict group permissions on group folder`() {
 		val user = createUser(id = 1)
-		val group = Group("g", user).apply { id = 10; members.add(user) }
 		val currentUser = CurrentUser(id = 1, email = user.email, isAdmin = false, userDetails = user)
 		doReturn(AccessType.READ.value).whenever(spiedService).checkAccessForDirectory(eq(currentUser), eq("groups/g"))
 		assertThrows(SecurityException::class.java) {
@@ -976,8 +974,8 @@ class FileSystemServiceTest {
 		val folder = FolderEntity(path = "folder", isDeleted = false)
 		val fp = FolderPermission(folder, user.userDetails!!, null, AccessType.DELETE.value.toShort())
 		val file = FileEntity(path = "file.txt", isDeleted = false)
-		val flp = FilePermission(file, user.userDetails!!, null, AccessType.READ.value.toShort())
-		whenever(userService.getUserEntityByEmail("u@t.com")).thenReturn(user.userDetails!!)
+		val flp = FilePermission(file, user.userDetails, null, AccessType.READ.value.toShort())
+		whenever(userService.getUserEntityByEmail("u@t.com")).thenReturn(user.userDetails)
 		whenever(folderPermissionRepository.findAll()).thenReturn(listOf(fp))
 		whenever(filePermissionRepository.findAll()).thenReturn(listOf(flp))
 		val result = spiedService.getUserPermissions("u@t.com", user)

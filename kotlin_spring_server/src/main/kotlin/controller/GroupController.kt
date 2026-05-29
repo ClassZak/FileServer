@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import jakarta.persistence.EntityNotFoundException
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
 import org.zak.dto.GroupBasicInfoDto
 import org.zak.service.FileSystemService
@@ -152,6 +153,7 @@ class GroupController(
 	/**
 	 * Обновить информацию о группе по имени (только для администраторов)
 	 */
+	@Transactional
 	@PutMapping("/name/{groupName}")
 	@PreAuthorize("isAuthenticated()")
 	fun updateGroupByName(
@@ -167,7 +169,7 @@ class GroupController(
 		
 		return try {
 			groupService.update(groupName, request.newName, request.creatorEmail)
-			fileSystemService.moveGroupFolder(groupName, request.newName)
+			fileSystemService.updateFileSystemForNewGroupName(groupName, request.newName)
 			successResponse(mapOf("success" to true, "message" to "Группа обновлена"))
 		} catch (e: IllegalArgumentException) {
 			errorResponse(HttpStatus.BAD_REQUEST, e.message ?: "Ошибка обновления группы")

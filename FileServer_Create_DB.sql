@@ -4,7 +4,7 @@ USE FileServer1;
 
 
 -- -----------------------------------------------------
--- Пользователь и администратор
+-- User and administrator
 -- -----------------------------------------------------
 CREATE TABLE `User` (
 	Id				INT AUTO_INCREMENT PRIMARY KEY,
@@ -13,7 +13,7 @@ CREATE TABLE `User` (
 	Patronymic		VARCHAR(45) NOT NULL,
 	Email			VARCHAR(60) NOT NULL,
 	PasswordHash	CHAR(60) NOT NULL,
-	CreatedAt		TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	CreatedAt		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE Administrator (
@@ -26,7 +26,7 @@ CREATE TABLE Administrator (
 
 
 -- -----------------------------------------------------
--- Группа и её участники
+-- Group and members
 -- -----------------------------------------------------
 CREATE TABLE `Group` (
 	Id			INT AUTO_INCREMENT PRIMARY KEY,
@@ -49,12 +49,12 @@ CREATE TABLE GroupMember (
 
 
 -- -----------------------------------------------------
--- Файлы и папки (с флагом мягкого удаления)
+-- Files and folders (with soft deletion flag)
 -- -----------------------------------------------------
 CREATE TABLE FileEntity (
 	Id			BIGINT AUTO_INCREMENT PRIMARY KEY,
 	Path		NVARCHAR(4096) NOT NULL UNIQUE,
-	CreatedAt	TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	CreatedAt	TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	IsDeleted	BOOLEAN NOT NULL DEFAULT FALSE,
 
 	INDEX path_index (Path(768))
@@ -63,7 +63,7 @@ CREATE TABLE FileEntity (
 CREATE TABLE FolderEntity (
 	Id			BIGINT AUTO_INCREMENT PRIMARY KEY,
 	Path		NVARCHAR(4096) NOT NULL UNIQUE,
-	CreatedAt	TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	CreatedAt	TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	IsDeleted	BOOLEAN NOT NULL DEFAULT FALSE,
 
 	INDEX path_index (Path(768))
@@ -73,7 +73,7 @@ CREATE TABLE FolderEntity (
 
 
 -- -----------------------------------------------------
--- Удалённые версии
+-- Deleted versions
 -- -----------------------------------------------------
 CREATE TABLE DeletedFile (
 	Id				BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -108,7 +108,7 @@ CREATE TABLE DeletedFolder (
 
 
 -- -----------------------------------------------------
--- Права доступа
+-- Permissions
 -- -----------------------------------------------------
 CREATE TABLE FilePermission (
 	Id				BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -148,7 +148,7 @@ CREATE TABLE FolderPermission (
 
 
 -- -----------------------------------------------------
--- История работы (с сохранением пути и типа объекта)
+-- Work history (with path save)
 -- -----------------------------------------------------
 CREATE TABLE OperationType (
 	Id		INT AUTO_INCREMENT NOT NULL PRIMARY KEY,
@@ -205,7 +205,7 @@ CREATE PROCEDURE AddUser(
     IN p_Name         VARCHAR(45),
     IN p_Patronymic   VARCHAR(45),
     IN p_Email        VARCHAR(60),
-    IN p_PasswordHash CHAR(60),        -- BCrypt-хеш
+    IN p_PasswordHash CHAR(60),        -- BCrypt-hash
     IN p_IsAdmin      BOOLEAN
 )
 BEGIN
