@@ -1,36 +1,9 @@
 <app-app-header [isAdmin]="isAdmin"></app-app-header>
 <main class="MainContent">
 	@if (isLoading) {
-		<app-loading-spinner [title]="'Загрузка корзины'"></app-loading-spinner>
+		<app-loading-spinner [title]="'Загрузка'"></app-loading-spinner>
 	} @else {
 		<h1>Корзина</h1>
-
-		@if (isAdmin) {
-			<div class="buttons-row">
-				<app-redirection-button 
-					[className]="'btn btn-blue'" 
-					[title]="'Пользователи'" 
-					[reference]="'/users'"
-				>
-				</app-redirection-button>
-				<app-redirection-button 
-					[className]="'btn btn-blue'" 
-					[title]="'Группы'" 
-					[reference]="'/groups'"
-				>
-				</app-redirection-button>
-				<app-redirection-button 
-					[reference]="'/history'" 
-					[title]="'История'"		
-					[className]="'btn btn-blue'">
-				</app-redirection-button>
-				<app-redirection-button 
-					[reference]="'/permissions'" 
-					[title]="'Права пользователей'"		
-					[className]="'btn btn-red'">
-				</app-redirection-button>
-			</div>
-		}
 
 		@if (deletedFiles.length === 0 && deletedFolders.length === 0) {
 			<div class="info-message">Корзина пуста</div>

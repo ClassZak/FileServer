@@ -1,7 +1,7 @@
 <app-app-header [isAdmin]="isAdmin"></app-app-header>
 <main class="MainContent">
 	@if (isLoading){
-		<app-loading-spinner [title]="'Загрузка пользователей'"></app-loading-spinner>
+		<app-loading-spinner [title]="'Загрузка'"></app-loading-spinner>
 	} @else {
 		<h1>Все пользователи</h1>
 		<div class="add-user-container">
@@ -21,29 +21,6 @@
 		@if (error) {
 			<div class="error-message">{{ error }}</div>
 		}
-		<div class="buttons-row">
-			<app-redirection-button 
-				[className]="'btn btn-blue'" 
-				[title]="'Группы'" 
-				[reference]="'/groups'"
-			>
-			</app-redirection-button>
-			<app-redirection-button 
-				[reference]="'/history'" 
-				[title]="'История'"		
-				[className]="'btn btn-blue'">
-			</app-redirection-button>
-			<app-redirection-button 
-				[reference]="'/trash'" 
-				[title]="'Корзина'"		
-				[className]="'btn btn-red'">
-			</app-redirection-button>
-			<app-redirection-button 
-				[reference]="'/permissions'" 
-				[title]="'Права пользователей'"		
-				[className]="'btn btn-red'">
-			</app-redirection-button>
-		</div>
 	}
 </main>
 <app-footer></app-footer>

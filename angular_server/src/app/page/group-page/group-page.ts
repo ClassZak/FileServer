@@ -355,7 +355,7 @@ export class GroupPage implements OnInit, OnDestroy {
 			if (response.success && this.groupName != updateGroupModel.newName){
 				this.groupName = updateGroupModel.newName;
 				this.isUpdateGroupModalComponentOpen = false;
-				this.router.navigate([`/group/${encodeURIComponent(this.groupName)}`]);
+				this.router.navigate([`/group/${this.groupName}`]);
 				await this.loadGroupData();
 				this.cdr.detectChanges();
 				return;

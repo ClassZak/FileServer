@@ -1,7 +1,7 @@
 <app-app-header [isAdmin]="isAdmin"></app-app-header>
 <main class="MainContent">
 	@if (isLoading) {
-		<app-loading-spinner [title]="'Загрузка группы'"></app-loading-spinner>
+		<app-loading-spinner [title]="'Загрузка'"></app-loading-spinner>
 	} @else {
 		@if (this.isAdmin){
 			<div class="account-card">
@@ -40,35 +40,6 @@
 				>
 					Добавить пользователя в группу
 				</button>
-			</div>
-			<div class="buttons-row">
-				<app-redirection-button 
-					[className]="'btn btn-blue'" 
-					[title]="'Пользователи'" 
-					[reference]="'/users'"
-				>
-				</app-redirection-button>
-				<app-redirection-button 
-					[className]="'btn btn-blue'" 
-					[title]="'Группы'" 
-					[reference]="'/groups'"
-				>
-				</app-redirection-button>
-				<app-redirection-button 
-					[reference]="'/history'" 
-					[title]="'История'"		
-					[className]="'btn btn-blue'">
-				</app-redirection-button>
-				<app-redirection-button 
-					[reference]="'/trash'" 
-					[title]="'Корзина'"		
-					[className]="'btn btn-red'">
-				</app-redirection-button>
-				<app-redirection-button 
-					[reference]="'/permissions'" 
-					[title]="'Права пользователей'"		
-					[className]="'btn btn-red'">
-				</app-redirection-button>
 			</div>
 		} @else {
 			<div class="account-card">

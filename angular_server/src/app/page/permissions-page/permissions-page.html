@@ -5,33 +5,6 @@
 	} @else {
 		<h1>Управление правами доступа</h1>
 
-		@if (isAdmin) {
-			<div class="buttons-row">
-				<app-redirection-button 
-					[className]="'btn btn-blue'" 
-					[title]="'пользователи'" 
-					[reference]="'/users'"
-				>
-				</app-redirection-button>
-				<app-redirection-button 
-					[className]="'btn btn-blue'" 
-					[title]="'Группы'" 
-					[reference]="'/groups'"
-				>
-				</app-redirection-button>
-				<app-redirection-button 
-					[reference]="'/history'" 
-					[title]="'История'"		
-					[className]="'btn btn-blue'">
-				</app-redirection-button>
-				<app-redirection-button 
-					[reference]="'/trash'" 
-					[title]="'Корзина'"		
-					[className]="'btn btn-red'">
-				</app-redirection-button>
-			</div>
-		}
-
 		<!-- ==================== СЕКЦИЯ 1: ПРАВА НА ПУТЬ ==================== -->
 		<div class="navigation-panel">
 			<h2>Права на путь</h2>
@@ -48,14 +21,14 @@
 			<div class="filter-row">
 				<div class="filter-group">
 					<label class="filter-label">Тип</label>
-					<select [(ngModel)]="targetType" (change)="loadPermissions()" class="path-input filter-select">
+					<select [(ngModel)]="targetType" class="path-input filter-select">
 						<option value="folder">Папка</option>
 						<option value="file">Файл</option>
 					</select>
 				</div>
 				<div class="filter-group">
 					<label class="filter-label">Путь</label>
-					<input type="text" [(ngModel)]="path" (ngModelChange)="loadPermissions()" placeholder="Путь (пусто = корень)" class="path-input">
+					<input type="text" [(ngModel)]="path" placeholder="Путь (пусто = корень)" class="path-input">
 				</div>
 				<div class="filter-group">
 					<button (click)="loadPermissions()" class="btn btn-blue">Загрузить права</button>
