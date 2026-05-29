@@ -9,39 +9,6 @@
 			<div class="files-header">
 				<h1 class="files-title">Поиск</h1>
 			</div>
-			@if (isAdmin) {
-				<div class='buttons-row'>
-					<app-redirection-button 
-						[reference]="'/users'" 
-						[title]="'Пользователи'"		
-						[className]="'btn btn-blue'">
-					</app-redirection-button>
-					
-					<app-redirection-button 
-						[reference]="'/groups'" 
-						[title]="'Группы'"		
-						[className]="'btn btn-blue'">
-					</app-redirection-button>
-
-					<app-redirection-button 
-						[reference]="'/history'" 
-						[title]="'История'"		
-						[className]="'btn btn-blue'">
-					</app-redirection-button>
-
-					<app-redirection-button 
-						[reference]="'/trash'" 
-						[title]="'Корзина'"		
-						[className]="'btn btn-red'">
-					</app-redirection-button>
-
-					<app-redirection-button 
-						[reference]="'/permissions'" 
-						[title]="'Права пользователей'"		
-						[className]="'btn btn-red'">
-					</app-redirection-button>
-				</div>
-			}
 			<div class="search-mode-panel">
 				<div class="flex">
 					<div class="search-mode-info">
@@ -142,40 +109,6 @@
 			<div class="files-header">
 				<h1 class="files-title">Файловый менеджер</h1>
 			</div>
-
-			@if (isAdmin) {
-				<div class='buttons-row'>
-					<app-redirection-button 
-						[reference]="'/users'" 
-						[title]="'Пользователи'"		
-						[className]="'btn btn-blue'">
-					</app-redirection-button>
-					
-					<app-redirection-button 
-						[reference]="'/groups'" 
-						[title]="'Группы'"		
-						[className]="'btn btn-blue'">
-					</app-redirection-button>
-
-					<app-redirection-button 
-						[reference]="'/history'" 
-						[title]="'История'"		
-						[className]="'btn btn-blue'">
-					</app-redirection-button>
-
-					<app-redirection-button 
-						[reference]="'/trash'" 
-						[title]="'Корзина'"		
-						[className]="'btn btn-red'">
-					</app-redirection-button>
-
-					<app-redirection-button 
-						[reference]="'/permissions'" 
-						[title]="'Права пользователей'"		
-						[className]="'btn btn-red'">
-					</app-redirection-button>
-				</div>
-			}
 
 			<div class="navigation-panel">
 				<app-file-search [currentPath]="currentPath"></app-file-search>

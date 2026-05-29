@@ -12,7 +12,7 @@ import { FileService, DeletedFileInfo, DeletedFolderInfo } from '../../core/serv
 import { AdminService } from '../../core/service/admin-service';
 import { NoticeService } from '../../core/view-core/service/notice-service';
 import { Notification, NotificationType } from '../../core/view-core/model/notification';
-import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
+import { ActionConfig, ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
 import { RedirectionButton } from "../../component/redirection-button/redirection-button";
 
 @Component({
@@ -124,8 +124,29 @@ export class DeletedFilesPage implements OnInit {
 		try {
 			await this.checkAuth();
 			if (!this.isAdmin) {
-				this.router.navigate(['/account']);
-				return;
+				this.filesTableData.actionsConfig!.actionsConfigs = [
+					{
+						type: ActionType.ACTION,
+						label: 'Восстановить',
+						class: 'btn btn-green',
+						onClick: (item: DeletedFileInfo) => this.restoreFile(item)
+					},
+					{
+						type: ActionType.ACTION,
+						label: 'Скачать',
+						class: 'btn btn-blue',
+						onClick: (item: DeletedFileInfo) => this.downloadDeletedFile(item)
+					}
+				];
+				this.foldersTableData.actionsConfig!.actionsConfigs = [
+					{
+						type: ActionType.ACTION,
+						label: 'Восстановить',
+						class: 'btn btn-green',
+						onClick: (item: DeletedFolderInfo) => this.restoreFolder(item)
+					}
+				]
+
 			}
 			await this.loadDeletedItems();
 		} catch (error) {
@@ -253,6 +274,7 @@ export class DeletedFilesPage implements OnInit {
 			if (result.success) {
 				this.noticeService.addNotification(new Notification(NotificationType.Success, 'Файл окончательно удалён'));
 				await this.loadDeletedItems();
+				this.cdr.detectChanges();
 			} else {
 				throw new Error(result.error);
 			}

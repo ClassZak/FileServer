@@ -83,8 +83,6 @@ export class LoginPage {
 					throw new Error('Ошибка авторизации после входа');
 			} else {
 				const errorMessage = result.error ?? defaultErrorMessage;
-				this.noticeService.addNotification(new Notification(NotificationType.Error, errorMessage));
-
 				throw new Error(errorMessage);
 			}
 		} catch (error) {
