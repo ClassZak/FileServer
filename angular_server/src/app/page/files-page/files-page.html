@@ -1,8 +1,7 @@
 <app-app-header [isAdmin]="isAdmin"></app-app-header>
 <main class="MainContent">
 	@if (isLoading){
-		<app-loading-spinner [title]="'Загрузка'">
-		</app-loading-spinner>
+		<app-loading-spinner [title]="'Загрузка'"></app-loading-spinner>
 	} @else {
 		<!-- SEARCH MODE -->
 		@if (isSearchMode) {

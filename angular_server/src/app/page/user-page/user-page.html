@@ -1,7 +1,7 @@
 <app-app-header [isAdmin]="isAdmin"></app-app-header>
 <main class="MainContent">
 	@if (isLoading){
-		<app-loading-spinner [title]="'Загрузка пользователя'"></app-loading-spinner>
+		<app-loading-spinner [title]="'Загрузка'"></app-loading-spinner>
 	} @else {
 		<div class="account-card">
 			<h2>Информация о пользователе</h2>

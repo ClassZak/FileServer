@@ -2,9 +2,7 @@
 
 <main class="MainContent">
 	@if (isLoading) {
-		<app-loading-spinner
-			[title]="'Загрузка'">
-		</app-loading-spinner>
+		<app-loading-spinner [title]="'Загрузка'"></app-loading-spinner>
 	} @else {
 		<h1 class="account-title">Личный кабинет</h1>
 		@if (isAdmin) {
