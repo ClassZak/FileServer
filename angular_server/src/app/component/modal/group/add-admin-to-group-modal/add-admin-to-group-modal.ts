@@ -7,7 +7,7 @@ import { ModalComponent } from '../../modal/modal';
 interface Group {
 	name: string;
 	membersCount?: number;
-	creatorEmail?: string;
+	headEmail?: string;
 }
 
 @Component({

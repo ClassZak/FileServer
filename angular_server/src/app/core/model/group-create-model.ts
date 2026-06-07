@@ -3,10 +3,10 @@
  */
 export class GroupCreateModel {
 	public name: string;
-	public creatorEmail: string;
+	public headEmail: string;
 	
-	constructor(name = '', creatorEmail = '') {
+	constructor(name = '', headEmail = '') {
 		this.name = name;
-		this.creatorEmail = creatorEmail;
+		this.headEmail = headEmail;
 	}
 }

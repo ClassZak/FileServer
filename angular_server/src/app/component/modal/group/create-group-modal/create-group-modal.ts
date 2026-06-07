@@ -11,7 +11,7 @@ import { Notification, NotificationType } from '../../../../core/view-core/model
 
 export interface GroupCreateModel {
 	name: string;
-	creatorEmail: string;
+	headEmail: string;
 }
 
 @Component({
@@ -30,7 +30,7 @@ export class CreateGroupModalComponent implements OnChanges {
 	submitting = false;
 	formData: GroupCreateModel = {
 		name: '',
-		creatorEmail: ''
+		headEmail: ''
 	};
 	searchQuery = '';
 	filteredUsers: User[] = [];
@@ -67,15 +67,15 @@ export class CreateGroupModalComponent implements OnChanges {
 		}
 	}
 
-	selectCreator(email: string): void {
-		this.formData.creatorEmail = email;
+	selectHead(email: string): void {
+		this.formData.headEmail = email;
 		this.searchQuery = '';
 		this.filteredUsers = [];
-		delete this.errors['creatorEmail'];
+		delete this.errors['headEmail'];
 	}
 
-	clearCreator(): void {
-		this.formData.creatorEmail = '';
+	clearHead(): void {
+		this.formData.headEmail = '';
 		this.searchQuery = '';
 	}
 
@@ -90,10 +90,10 @@ export class CreateGroupModalComponent implements OnChanges {
 			newErrors['name'] = 'Название не должно превышать 64 символа';
 		}
 
-		if (!this.formData.creatorEmail) {
-			newErrors['creatorEmail'] = 'Выберите создателя группы';
-		} else if (!this.users.some(u => u.email === this.formData.creatorEmail)) {
-			newErrors['creatorEmail'] = 'Выбранный пользователь не найден';
+		if (!this.formData.headEmail) {
+			newErrors['headEmail'] = 'Выберите главу группы';
+		} else if (!this.users.some(u => u.email === this.formData.headEmail)) {
+			newErrors['headEmail'] = 'Выбранный пользователь не найден';
 		}
 
 		this.errors = newErrors;
@@ -126,13 +126,13 @@ export class CreateGroupModalComponent implements OnChanges {
 	}
 
 	resetForm(): void {
-		this.formData = { name: '', creatorEmail: '' };
+		this.formData = { name: '', headEmail: '' };
 		this.searchQuery = '';
 		this.filteredUsers = [];
 		this.errors = {};
 	}
 
-	get selectedCreator(): User | undefined {
-		return this.users.find(u => u.email === this.formData.creatorEmail);
+	get selectedHead(): User | undefined {
+		return this.users.find(u => u.email === this.formData.headEmail);
 	}
 }

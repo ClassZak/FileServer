@@ -25,11 +25,11 @@ describe('GroupPage', () => {
 		const groupServiceMock = {
 			getGroupFullDetails: vi.fn().mockResolvedValue({
 				success: true,
-				data: { group: { name: 'test', membersCount: 1, creator: {}, members: [] } }
+				data: { group: { name: 'test', membersCount: 1, head: {}, members: [] } }
 			}),
 			getGroupFullDetailsAdmin: vi.fn().mockResolvedValue({
 				success: true,
-				data: { group: { name: 'test', membersCount: 1, creator: {}, members: [] } }
+				data: { group: { name: 'test', membersCount: 1, head: {}, members: [] } }
 			}),
 			addUserToGroup: vi.fn().mockResolvedValue({ success: true }),
 			deleteGroup: vi.fn().mockResolvedValue({ success: true }),

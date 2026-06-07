@@ -33,7 +33,7 @@ describe('GroupService (instance)', () => {
 			group: {
 				name: 'test-group',
 				membersCount: 2,
-				creator: { surname: 'Creator', name: 'C', patronymic: 'C', email: 'c@test.com' },
+				head: { surname: 'Head', name: 'C', patronymic: 'C', email: 'c@test.com' },
 				members: []
 			}
 		};
@@ -51,7 +51,7 @@ describe('GroupService (instance)', () => {
 
 	it('should get my groups', async () => {
 		const token = 'fake-token';
-		const mockGroups = [{ name: 'g1', membersCount: 1, creatorEmail: 'c@test.com' }];
+		const mockGroups = [{ name: 'g1', membersCount: 1, headEmail: 'c@test.com' }];
 
 		const resultPromise = service.getMyGroups(token);
 
@@ -65,7 +65,7 @@ describe('GroupService (instance)', () => {
 
 	it('should create a group', async () => {
 		const token = 'fake-token';
-		const groupData = new GroupCreateModel('new-group', 'creator@test.com');
+		const groupData = new GroupCreateModel('new-group', 'head@test.com');
 
 		const resultPromise = service.createGroup(token, groupData);
 

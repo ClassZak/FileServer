@@ -25,7 +25,7 @@ describe('GroupsPage', () => {
 		const groupServiceMock = {
 			getAllGroups: vi.fn().mockResolvedValue({
 				success: true,
-				data: [{ name: 'g1', membersCount: 1, creatorEmail: 'c@test.com' }]
+				data: [{ name: 'g1', membersCount: 1, headEmail: 'c@test.com' }]
 			}),
 			createGroup: vi.fn().mockResolvedValue({ success: true })
 		};

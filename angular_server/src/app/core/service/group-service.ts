@@ -99,12 +99,12 @@ export class GroupService {
 
 			const groupData = response.group;
 
-			// Transform creator (no date fields in User model)
-			const creator = new User(
-				groupData.creator.surname,
-				groupData.creator.name,
-				groupData.creator.patronymic,
-				groupData.creator.email
+			// Transform head (no date fields in User model)
+			const head = new User(
+				groupData.head.surname,
+				groupData.head.name,
+				groupData.head.patronymic,
+				groupData.head.email
 			);
 
 			// Transform members (no date fields)
@@ -123,7 +123,7 @@ export class GroupService {
 					group: new GroupDetails(
 						groupData.name,
 						groupData.membersCount,
-						creator,
+						head,
 						members
 					)
 				}
@@ -171,13 +171,13 @@ export class GroupService {
 			// Helper to convert date string to Date object (assuming server sends ISO without timezone)
 			const toDate = (dateStr: string): Date => new Date(dateStr);
 
-			// Transform creator with date conversion
-			const creator = new UserAdminModel(
-				groupData.creator.surname,
-				groupData.creator.name,
-				groupData.creator.patronymic,
-				groupData.creator.email,
-				groupData.creator.createdAt
+			// Transform head with date conversion
+			const head = new UserAdminModel(
+				groupData.head.surname,
+				groupData.head.name,
+				groupData.head.patronymic,
+				groupData.head.email,
+				groupData.head.createdAt
 			);
 
 			return {
@@ -186,7 +186,7 @@ export class GroupService {
 					group: new GroupDetails(
 						groupData.name,
 						groupData.membersCount,
-						creator,
+						head,
 						groupData.members
 					)
 				}
@@ -360,7 +360,7 @@ export class GroupService {
 	 *
 	 * @param {string} authToken JWT token
 	 * @param {string} groupName Current group name
-	 * @param {GroupUpdateModel} updateData Object with newName and creatorEmail
+	 * @param {GroupUpdateModel} updateData Object with newName and headEmail
 	 * @returns {Promise<DefaultServiceResult>} Object with "error" or "success" key
 	 */
 	async updateGroup(authToken: string, groupName: string, updateData: GroupUpdateModel): Promise<DefaultServiceResult> {

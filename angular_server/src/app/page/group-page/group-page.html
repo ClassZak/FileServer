@@ -9,7 +9,7 @@
 				<div class="account-info">
 					<p><strong>Название:</strong>{{group?.name}}</p>
 					<p><strong>Количество участников:</strong>{{group?.membersCount}}</p>
-					<p><strong>Создатель:</strong>{{group?.creator?.toString()}}</p>
+					<p><strong>Глава:</strong>{{group?.head?.toString()}}</p>
 				</div>
 			</div>
 			<div class="buttons-row">
@@ -47,7 +47,7 @@
 				<div class="account-info">
 					<p><strong>Название:</strong>{{group?.name}}</p>
 					<p><strong>Количество участников:</strong>{{group?.membersCount}}</p>
-					<p><strong>Создатель:</strong>{{group?.creator?.toString()}}</p>
+					<p><strong>Глава:</strong>{{group?.head?.toString()}}</p>
 				</div>
 				<h1>Участники группы</h1>
 				@if (currentUserModelTableDataObjectRef && currentUserModelTableDataObjectRef.models.length) {			

@@ -32,28 +32,28 @@
 				<div class="hint">От 3 до 64 символов</div>
 			</div>
 
-			<!-- Поле поиска создателя – тоже в div -->
+			<!-- Поле поиска главы группы – тоже в div -->
 			<div>
-				<label for="creatorSearch">Создатель группы *</label>
+				<label for="headSearch">Глава группы *</label>
 				<input
-					id="creatorSearch"
+					id="headSearch"
 					type="text"
 					[(ngModel)]="searchQuery"
 					(ngModelChange)="onSearchChange()"
-					name="creatorSearch"
+					name="headSearch"
 					placeholder="Начните вводить email, фамилию или имя"
 					[disabled]="submitting"
 					autocomplete="off"
 				/>
 
 				<!-- Выбранный пользователь -->
-				@if (selectedCreator && !searchQuery) {
+				@if (selectedHead && !searchQuery) {
 					<div class="selected-user">
 						<div class="selected-user-name">
-							<strong>Выбран:</strong> {{ selectedCreator.surname }} {{ selectedCreator.name }} {{ selectedCreator.patronymic }}
+							<strong>Выбран:</strong> {{ selectedHead.surname }} {{ selectedHead.name }} {{ selectedHead.patronymic }}
 						</div>
-						<div class="selected-user-email">{{ selectedCreator.email }}</div>
-						<button type="button" (click)="clearCreator()" class="change-button">
+						<div class="selected-user-email">{{ selectedHead.email }}</div>
+						<button type="button" (click)="clearHead()" class="change-button">
 							Изменить
 						</button>
 					</div>
@@ -63,7 +63,7 @@
 				@if (searchQuery && filteredUsers.length > 0) {
 					<div class="user-list">
 						@for (user of filteredUsers; track user.email) {
-							<div class="user-item" (click)="selectCreator(user.email)">
+							<div class="user-item" (click)="selectHead(user.email)">
 								<div class="user-name">
 									{{ user.surname }} {{ user.name }} {{ user.patronymic }}
 								</div>
@@ -77,8 +77,8 @@
 					<div class="no-results">Пользователи не найдены</div>
 				}
 
-				@if (errors['creatorEmail']) {
-					<div class="error-text">{{ errors['creatorEmail'] }}</div>
+				@if (errors['headEmail']) {
+					<div class="error-text">{{ errors['headEmail'] }}</div>
 				}
 			</div>
 		</div>
@@ -87,7 +87,7 @@
 		<div class="form-info">
 			<strong>Информация:</strong>
 			<ul>
-				<li>Создатель группы автоматически становится её участником</li>
+				<li>Глава группы автоматически становится её участником</li>
 				<li>Название группы должно быть уникальным</li>
 				<li>Только администраторы могут создавать группы</li>
 			</ul>

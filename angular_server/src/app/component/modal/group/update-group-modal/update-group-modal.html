@@ -31,25 +31,25 @@
 				</div>
 			</div>
 			<div>
-				<label for="creatorSearch">Создатель группы *</label>
+				<label for="headSearch">Глава группы *</label>
 				<input
-					id="creatorSearch"
+					id="headSearch"
 					type="text"
 					[(ngModel)]="searchQuery"
 					(ngModelChange)="onSearchChange()"
-					name="creatorSearch"
+					name="headSearch"
 					placeholder="Начните вводить email, фамилию или имя"
 					[disabled]="submitting"
 					autocomplete="off"
 				/>
-				<!--Selected creator-->
-				@if (selectedCreator && !searchQuery) {
+				<!--Selected head-->
+				@if (selectedHead && !searchQuery) {
 					<div class="selected-user">
 						<div class="selected-user-name">
-							<strong>Текущий создатель:</strong> {{ selectedCreator.surname }} {{ selectedCreator.name }} {{ selectedCreator.patronymic }}
+							<strong>Текущий глава:</strong> {{ selectedHead.surname }} {{ selectedHead.name }} {{ selectedHead.patronymic }}
 						</div>
-						<div class="selected-user-email">{{ selectedCreator.email }}</div>
-						<button type="button" (click)="clearCreator()" class="change-button">
+						<div class="selected-user-email">{{ selectedHead.email }}</div>
+						<button type="button" (click)="clearHead()" class="change-button">
 							Изменить
 						</button>
 					</div>
@@ -58,7 +58,7 @@
 				@if (searchQuery && filteredUsers.length > 0) {
 					<div class="user-list">
 						@for (user of filteredUsers; track user.email) {
-							<div class="user-item" (click)="selectCreator(user.email)">
+							<div class="user-item" (click)="selectHead(user.email)">
 								<div class="user-name">
 									{{ user.surname }} {{ user.name }} {{ user.patronymic }}
 								</div>
@@ -70,8 +70,8 @@
 				@if (searchQuery && filteredUsers.length === 0) {
 					<div class="no-results">Пользователи не найдены</div>
 				}
-				@if (errors['creatorEmail']) {
-					<div class="error-text">{{ errors['creatorEmail'] }}</div>
+				@if (errors['headEmail']) {
+					<div class="error-text">{{ errors['headEmail'] }}</div>
 				}
 			</div>
 		</div>
@@ -79,8 +79,8 @@
 			<strong>Важная информация:</strong>
 			<ul>
 				<li>Изменение названия группы приведёт к обновлению всех ссылок и путей</li>
-				<li>Новый создатель группы автоматически станет её участником</li>
-				<li>Прежний создатель останется участником группы, если не был удалён</li>
+				<li>Новый глава группы автоматически станет её участником</li>
+				<li>Прежний глава останется участником группы, если не был удалён</li>
 			</ul>
 		</div>
 		<div class="form-actions">

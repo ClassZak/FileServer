@@ -4,11 +4,11 @@
 export class GroupBasicInfo {
 	public name: string;
 	public membersCount: number;
-	public creatorEmail: string;
+	public headEmail: string;
 	
-	constructor(name: string, membersCount: number, creatorEmail: string) {
+	constructor(name: string, membersCount: number, headEmail: string) {
 		this.name = name || '';
 		this.membersCount = membersCount || 0;
-		this.creatorEmail = creatorEmail || '';
+		this.headEmail = headEmail || '';
 	}
 }
