@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { User } from '../../core/model/user';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -22,6 +22,7 @@ import { GroupService } from '../../core/service/group-service';
 import { ModelTable } from "../../component/model-table/model-table";
 import { NoticeService } from '../../core/view-core/service/notice-service';
 import { Notification, NotificationBuilder, NotificationType } from '../../core/view-core/model/notification';
+import { Title } from '@angular/platform-browser';
 
 @Component({
 	selector: 'app-user-page',
@@ -33,13 +34,15 @@ import { Notification, NotificationBuilder, NotificationType } from '../../core/
 	UpdateUserModalComponent,
 	UpdateUserPasswordModalComponent,
 	DeleteUserModalComponent,
-	RedirectionButton,
 	ModelTable
 ],
 	templateUrl: './user-page.html',
 	styleUrl: './user-page.css',
 })
 export class UserPage implements OnInit, OnDestroy {
+	// Title
+	private titleService = inject(Title);
+	
 	public isLoading: boolean = true;
 	isUpdateUserModalOpen : boolean = false;
 	isUpdateUserPasswordModalOpen : boolean = false;
@@ -110,6 +113,7 @@ export class UserPage implements OnInit, OnDestroy {
 				this.router.navigate(['/account']);
 				return;
 			}
+			this.titleService.setTitle(`Пользователь '${this.userEmail}'`);
 		});
 		try{
 			await this.checkAdminStatus();

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
@@ -22,6 +22,7 @@ import { UserAdminModel } from '../../core/model/user-admin-model';
 import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
 import { NoticeService } from '../../core/view-core/service/notice-service';
 import { Notification, NotificationType } from '../../core/view-core/model/notification';
+import { Title } from '@angular/platform-browser';
 
 @Component({
 	selector: 'app-groups-page',
@@ -33,13 +34,15 @@ import { Notification, NotificationType } from '../../core/view-core/model/notif
 
 		ModelTable,
 
-		CreateGroupModalComponent,
-		RedirectionButton
+		CreateGroupModalComponent
 	],
 	templateUrl: './groups-page.html',
 	styleUrl: './groups-page.css',
 })
 export class GroupsPage implements OnInit {
+	// Title
+	private titleService = inject(Title);
+	
 	public isLoading: boolean = true;
 	isCreateGroupModalComponentOpen: boolean = false;
 	isAdmin: boolean = false;
@@ -82,6 +85,8 @@ export class GroupsPage implements OnInit {
 	) {}
 
 	async ngOnInit(): Promise<void> {
+		this.titleService.setTitle('Группы');
+
 		try {
 			await this.checkAuthentication();
 			await this.checkAdminStatus();

@@ -12,15 +12,6 @@
 					<p><strong>Создатель:</strong>{{group?.creator?.toString()}}</p>
 				</div>
 			</div>
-			@if (currentUserModelTableDataObjectRef && currentUserModelTableDataObjectRef.models.length) {
-				<h1>Участники группы</h1>
-				<div class="model-table-container">
-					<app-model-table
-						[modelTableDataObject]="currentUserModelTableDataObjectRef"
-					>
-					</app-model-table>
-				</div>
-			}
 			<div class="buttons-row">
 				<button
 					(click)="setIsDeleteGroupModalComponentOpen(true)"
@@ -41,6 +32,15 @@
 					Добавить пользователя в группу
 				</button>
 			</div>
+			@if (currentUserModelTableDataObjectRef && currentUserModelTableDataObjectRef.models.length) {
+				<h1>Участники группы</h1>
+				<div class="model-table-container">
+					<app-model-table
+						[modelTableDataObject]="currentUserModelTableDataObjectRef"
+					>
+					</app-model-table>
+				</div>
+			}
 		} @else {
 			<div class="account-card">
 				<h2>Информация о группе</h2>

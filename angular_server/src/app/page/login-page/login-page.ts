@@ -1,10 +1,11 @@
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AppHeader } from "../../app-header/app-header";
 import { AppFooter } from '../../app-footer/app-footer';
 import { AuthService, CheckAuthResult } from '../../core/service/auth-service';
 import { DefaultServiceResult, DefaultServiceResultWithData } from '../../core/model/default-server-result';
+import { Title } from '@angular/platform-browser';
 
 
 import { NoticeService } from '../../core/view-core/service/notice-service';
@@ -23,6 +24,9 @@ enum LoginFormType {
 	styleUrl: './login-page.css',
 })
 export class LoginPage {
+	// Title
+	private titleService = inject(Title);
+	
 	email: string = '';
 	password: string = '';
 	surname: string = '';
@@ -45,6 +49,7 @@ export class LoginPage {
 
 	async ngOnInit(): Promise<void> {
 		this.checkAuthentication();
+		this.titleService.setTitle('Вход');
 	}
 
 	async handleEmailLogin(e: Event) {

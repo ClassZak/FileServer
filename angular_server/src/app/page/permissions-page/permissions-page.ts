@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -19,6 +19,7 @@ import { ActionType, ModelTableDataObject } from '../../core/model/model-table-t
 import { ModelTable } from '../../component/model-table/model-table';
 import { parentPath } from '../../core/model/history-info';
 import { RedirectionButton } from "../../component/redirection-button/redirection-button";
+import { Title } from '@angular/platform-browser';
 
 @Component({
 	selector: 'app-permissions-page',
@@ -30,13 +31,15 @@ import { RedirectionButton } from "../../component/redirection-button/redirectio
 	AppHeader,
 	AppFooter,
 	LoadingSpinner,
-	ModelTable,
-	RedirectionButton
+	ModelTable
 ],
 	templateUrl: './permissions-page.html',
 	styleUrls: ['./permissions-page.css']
 })
 export class PermissionsPage implements OnInit, OnDestroy {
+	// Title
+	private titleService = inject(Title);
+	
 	isLoading = true;
 	isAdmin = false;
 
@@ -140,6 +143,7 @@ export class PermissionsPage implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit(): Promise<void> {
+		this.titleService.setTitle('Права');
 		try {
 			await this.checkAuth();
 			if (!this.isAdmin) {

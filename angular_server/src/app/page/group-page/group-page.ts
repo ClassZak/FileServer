@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { AppHeader } from '../../app-header/app-header';
 import { AppFooter } from '../../app-footer/app-footer';
 import { LoadingSpinner } from '../../component/loading-spinner/loading-spinner';
@@ -23,6 +23,7 @@ import { ModelTable } from '../../component/model-table/model-table';
 import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
 import { NoticeService } from '../../core/view-core/service/notice-service';
 import { Notification, NotificationType } from '../../core/view-core/model/notification';
+import { Title } from '@angular/platform-browser';
 
 @Component({
 	selector: 'app-group-page',
@@ -37,8 +38,7 @@ import { Notification, NotificationType } from '../../core/view-core/model/notif
 
 		ModelTable,
 
-		UpdateGroupModalComponent,
-		RedirectionButton
+		UpdateGroupModalComponent
 	],
 	providers: [
 		DatePipe
@@ -47,6 +47,9 @@ import { Notification, NotificationType } from '../../core/view-core/model/notif
 	styleUrl: './group-page.css',
 })
 export class GroupPage implements OnInit, OnDestroy {
+	// Title
+	private titleService = inject(Title);
+	
 	public isLoading: boolean = true;
 	isAuthenticated: boolean = false;
 	authorizedUser?: User;
@@ -178,6 +181,8 @@ export class GroupPage implements OnInit, OnDestroy {
 			this.isLoading = false;
 			this.cdr.detectChanges();
 		}
+
+		this.titleService.setTitle(`Группа '${this.groupName}'`);
 	}
 	ngOnDestroy(): void {
 		this.paramSubscription?.unsubscribe();

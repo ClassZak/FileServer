@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { AppFooter } from '../../app-footer/app-footer'
 import { AppHeader } from "../../app-header/app-header";
 import { Router } from '@angular/router';
@@ -6,6 +6,7 @@ import { AuthService, CheckAuthResult } from '../../core/service/auth-service';
 import { NoticeService } from '../../core/view-core/service/notice-service';
 import { DefaultServiceResultWithData } from '../../core/model/default-server-result';
 import AdminService from '../../core/service/admin-service';
+import { Title } from '@angular/platform-browser';
 
 @Component({
 	selector: 'app-home',
@@ -14,6 +15,9 @@ import AdminService from '../../core/service/admin-service';
 	styleUrl: './home.css',
 })
 export class Home implements OnInit {
+	// Title
+	private titleService = inject(Title);
+	
 	isAdmin: boolean = false;
 
 	constructor(
@@ -25,6 +29,7 @@ export class Home implements OnInit {
 	
 	async ngOnInit(): Promise<void> {
 		this.checkAuthentication();
+		this.titleService.setTitle('Главная');
 	}
 
 
