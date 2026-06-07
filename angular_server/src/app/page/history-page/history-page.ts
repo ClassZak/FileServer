@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -27,6 +27,7 @@ import {
 import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
 import { UserAdminModel } from '../../core/model/user-admin-model';
 import { RedirectionButton } from "../../component/redirection-button/redirection-button";
+import { Title } from '@angular/platform-browser';
 
 @Component({
 	selector: 'app-history-page',
@@ -47,6 +48,9 @@ import { RedirectionButton } from "../../component/redirection-button/redirectio
 	styleUrls: ['./history-page.css']
 })
 export class HistoryPage implements OnInit, OnDestroy {
+	// Title
+	private titleService = inject(Title);
+	
 	// Static references for template usage
 	IconManager = IconManager;
 	OperationTypeLabels = OperationTypeLabels;
@@ -170,6 +174,8 @@ export class HistoryPage implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit(): Promise<void> {
+		this.titleService.setTitle('История');
+
 		try {
 			await this.checkAuthentication();
 			if (this.isAdmin) {
@@ -187,6 +193,7 @@ export class HistoryPage implements OnInit, OnDestroy {
 			const emailParam = params.get('email');
 			if (emailParam) {
 				this.historyMode = emailParam;
+				this.titleService.setTitle(`История пользователя '${emailParam}'`);
 			}
 		});
 
@@ -197,6 +204,13 @@ export class HistoryPage implements OnInit, OnDestroy {
 			this.isFile = isFileParam === 'true' ? true : (isFileParam === 'false' ? false : null);
 			if (params.get('all') === 'true') {
 				this.historyMode = 'all';
+			} else {
+				const emailParam = params.get('email');
+				if (emailParam) {
+					const fileModeLabel = 
+						isFileParam == null ? '' : ` (${isFileParam ? 'файлы' : 'папки'})`;
+					this.titleService.setTitle(`История пользователя '${emailParam}'${fileModeLabel}`);
+				}
 			}
 			this.applyDefaultsAndLoad();
 		});

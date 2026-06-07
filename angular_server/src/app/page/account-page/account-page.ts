@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
@@ -23,6 +23,7 @@ import { ActionType, ModelTableDataObject } from '../../core/model/model-table-t
 import { ModelTable } from '../../component/model-table/model-table';
 import { NoticeService } from '../../core/view-core/service/notice-service';
 import { Notification, NotificationType } from '../../core/view-core/model/notification';
+import { Title } from '@angular/platform-browser';
 
 @Component({
 	selector: 'app-account-page',
@@ -43,6 +44,9 @@ import { Notification, NotificationType } from '../../core/view-core/model/notif
 	styleUrl: './account-page.css'
 })
 export class AccountPage implements OnInit {
+	// Title
+	private titleService = inject(Title);
+
 	public isLoading: boolean = true;
 	isLoadingGroups: boolean = true;
 	isLoadingMyGroups: boolean = true;
@@ -106,6 +110,7 @@ export class AccountPage implements OnInit {
 	) {}
 
 	async ngOnInit(): Promise<void> {
+		this.titleService.setTitle('Аккаунт');
 		try {
 			await this.checkAuthentication();
 			if (this.isAdmin)

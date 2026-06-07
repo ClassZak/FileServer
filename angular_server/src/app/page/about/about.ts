@@ -1,18 +1,23 @@
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { AppFooter } from '../../app-footer/app-footer'
 import { AppHeader } from "../../app-header/app-header";
 import { RouterLink } from "@angular/router";
 import { AuthService, CheckAuthResult } from '../../core/service/auth-service';
 import AdminService from '../../core/service/admin-service';
 import { DefaultServiceResultWithData } from '../../core/model/default-server-result';
+import { Title } from '@angular/platform-browser';
 
 @Component({
+	
 	selector: 'app-about',
 	imports: [AppFooter, AppHeader, RouterLink],
 	templateUrl: './about.html',
 	styleUrl: './about.css',
 })
 export class About {
+	// Title
+	private titleService = inject(Title);
+	
 	isAdmin: boolean = false;
 
 	constructor(
@@ -24,6 +29,7 @@ export class About {
 	
 	async ngOnInit(): Promise<void> {
 		this.checkAuthentication();
+		this.titleService.setTitle('О проекте');
 	}
 
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule, UrlSegment } from '@angular/router';
@@ -27,6 +27,8 @@ import { IconManager } from '../../component/icon-manager/icon-manager';
 import { NoticeService } from '../../core/view-core/service/notice-service';
 import { Notification, NotificationType } from '../../core/view-core/model/notification';
 
+import { Title } from '@angular/platform-browser';
+
 @Component({
 	selector: 'app-files-page',
 	standalone: true,
@@ -51,6 +53,9 @@ import { Notification, NotificationType } from '../../core/view-core/model/notif
 	styleUrls: ['./files-page.css'],
 })
 export class FilesPageComponent implements OnInit, OnDestroy {
+	// Title
+	private titleService = inject(Title);
+
 	// Static references
 	IconManager = IconManager;
 
@@ -203,6 +208,8 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit(): Promise<void> {
+		this.titleService.setTitle('Файлы');
+
 		this.isLoading = true;
 		try{
 			await this.checkAuthentication();
@@ -225,8 +232,11 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			this.currentPath = path;
 			this.pathInput = path;
 			// Download directory in default mode
-			if (!this.isSearchMode)
+			if (!this.isSearchMode) {
 				this.loadDirectory();
+				if (this.currentPath)
+					this.titleService.setTitle(`Файлы '${this.currentPath}'`);
+			}
 		});
 
 		// URL query params subscribtion (for search)
@@ -239,6 +249,10 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			}
 
 			if (this.isSearchMode) {
+				if (!this.searchPath)
+					this.titleService.setTitle('Поиск');
+				else
+					this.titleService.setTitle(`Поиск '${this.searchPath}'`);
 				this.searchQuery = q!;
 				this.searchPath = queryMap.get('searchPath') || '';
 				this.performSearch();

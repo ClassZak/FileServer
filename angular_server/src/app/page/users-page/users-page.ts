@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Injectable, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, Injectable, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
@@ -18,6 +18,7 @@ import { UserAdminModel } from '../../core/model/user-admin-model';
 import { RedirectionButton } from '../../component/redirection-button/redirection-button';
 import { ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
 import { ModelTable } from "../../component/model-table/model-table";
+import { Title } from '@angular/platform-browser';
 
 // Notifications
 import { NoticeService } from '../../core/view-core/service/notice-service';
@@ -40,6 +41,9 @@ import { Notification, NotificationType } from '../../core/view-core/model/notif
 	styleUrl: './users-page.css',
 })
 export class UsersPage implements OnInit {
+	// Title
+	private titleService = inject(Title);
+
 	public isLoading: boolean = true;
 	isCreateUserModalComponentOpen: boolean = false;
 	isAuthenticated: boolean = false;
@@ -81,6 +85,8 @@ export class UsersPage implements OnInit {
 	) {}
 
 	async ngOnInit(): Promise<void> {
+		this.titleService.setTitle('Пользователи');
+
 		try {
 			await this.checkAuthentication();
 			await this.checkAdminStatus();

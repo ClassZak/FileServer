@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { AppHeader } from '../../app-header/app-header';
@@ -14,6 +14,7 @@ import { NoticeService } from '../../core/view-core/service/notice-service';
 import { Notification, NotificationType } from '../../core/view-core/model/notification';
 import { ActionConfig, ActionType, ModelTableDataObject } from '../../core/model/model-table-types';
 import { RedirectionButton } from "../../component/redirection-button/redirection-button";
+import { Title } from '@angular/platform-browser';
 
 @Component({
 	selector: 'app-deleted-files-page',
@@ -32,6 +33,9 @@ import { RedirectionButton } from "../../component/redirection-button/redirectio
 	styleUrls: ['./deleted-files-page.css']
 })
 export class DeletedFilesPage implements OnInit {
+	// Title
+	private titleService = inject(Title);
+
 	IconManager = IconManager;
 	isLoading = true;
 	isAdmin = false;
@@ -41,7 +45,7 @@ export class DeletedFilesPage implements OnInit {
 	deletedFolders: DeletedFolderInfo[] = [];
 
 	// Deleted files table
-	filesTableData: ModelTableDataObject<DeletedFileInfo> = new ModelTableDataObject(
+	filesTableDataAdmin: ModelTableDataObject<DeletedFileInfo> = new ModelTableDataObject(
 		[
 			{
 				header: 'Путь',
@@ -77,9 +81,39 @@ export class DeletedFilesPage implements OnInit {
 			]
 		}
 	);
+	filesTableData: ModelTableDataObject<DeletedFileInfo> = new ModelTableDataObject(
+		[
+			{
+				header: 'Путь',
+				field: 'originalPath',
+				icon: (item: DeletedFileInfo) => this.getFileIconFromPath(item.originalPath)
+			},
+			{ header: 'Дата удаления', field: (item: DeletedFileInfo) => this.datePipe.transform(item.deletedAt, 'dd.MM.yyyy HH:mm:ss'), sortField: 'deletedAt'},
+			{ header: 'Версия', field: 'version' },
+		],
+		[],
+		{
+			actionsHeader: 'Действия',
+			actionsConfigs: [
+				{
+					type: ActionType.ACTION,
+					label: 'Восстановить',
+					class: 'btn btn-green',
+					onClick: (item: DeletedFileInfo) => this.restoreFile(item)
+				},
+				{
+					type: ActionType.ACTION,
+					label: 'Скачать',
+					class: 'btn btn-blue',
+					onClick: (item: DeletedFileInfo) => this.downloadDeletedFile(item)
+				},
+			]
+		}
+	);
+	currFilesTableData?: ModelTableDataObject<DeletedFileInfo>;
 
 	// Deleted folders table
-	foldersTableData: ModelTableDataObject<DeletedFolderInfo> = new ModelTableDataObject(
+	foldersTableDataAdmin: ModelTableDataObject<DeletedFolderInfo> = new ModelTableDataObject(
 		[
 			{
 				header: 'Путь',
@@ -109,6 +143,30 @@ export class DeletedFilesPage implements OnInit {
 			]
 		}
 	);
+	foldersTableData: ModelTableDataObject<DeletedFolderInfo> = new ModelTableDataObject(
+		[
+			{
+				header: 'Путь',
+				field: 'originalPath',
+				icon: () => IconManager.getFileIcon('folder')
+			},
+			{ header: 'Дата удаления', field: (item: DeletedFolderInfo) => this.datePipe.transform(item.deletedAt, 'dd.MM.yyyy HH:mm:ss'), sortField: 'deletedAt' },
+			{ header: 'Версия', field: 'version' },
+		],
+		[],
+		{
+			actionsHeader: 'Действия',
+			actionsConfigs: [
+				{
+					type: ActionType.ACTION,
+					label: 'Восстановить',
+					class: 'btn btn-green',
+					onClick: (item: DeletedFolderInfo) => this.restoreFolder(item)
+				},
+			]
+		}
+	);
+	currFoldersTableData?: ModelTableDataObject<DeletedFolderInfo>;
 
 	constructor(
 		private router: Router,
@@ -121,32 +179,16 @@ export class DeletedFilesPage implements OnInit {
 	) {}
 
 	async ngOnInit(): Promise<void> {
+		this.titleService.setTitle('Корзина');
+
 		try {
 			await this.checkAuth();
-			if (!this.isAdmin) {
-				this.filesTableData.actionsConfig!.actionsConfigs = [
-					{
-						type: ActionType.ACTION,
-						label: 'Восстановить',
-						class: 'btn btn-green',
-						onClick: (item: DeletedFileInfo) => this.restoreFile(item)
-					},
-					{
-						type: ActionType.ACTION,
-						label: 'Скачать',
-						class: 'btn btn-blue',
-						onClick: (item: DeletedFileInfo) => this.downloadDeletedFile(item)
-					}
-				];
-				this.foldersTableData.actionsConfig!.actionsConfigs = [
-					{
-						type: ActionType.ACTION,
-						label: 'Восстановить',
-						class: 'btn btn-green',
-						onClick: (item: DeletedFolderInfo) => this.restoreFolder(item)
-					}
-				]
-
+			if (this.isAdmin) {
+				this.currFilesTableData = this.filesTableDataAdmin;
+				this.currFoldersTableData = this.foldersTableDataAdmin;
+			} else {
+				this.currFilesTableData = this.filesTableData;
+				this.currFoldersTableData = this.foldersTableData;
 			}
 			await this.loadDeletedItems();
 		} catch (error) {
@@ -189,7 +231,7 @@ export class DeletedFilesPage implements OnInit {
 			const filesResult = await this.fileService.getDeletedFiles(token);
 			if (filesResult.success && filesResult.data) {
 				this.deletedFiles = filesResult.data;
-				this.filesTableData.models = this.deletedFiles;
+				this.currFilesTableData!.models = this.deletedFiles;
 			} else {
 				throw new Error(filesResult.error || 'Ошибка загрузки удалённых файлов');
 			}
@@ -201,7 +243,7 @@ export class DeletedFilesPage implements OnInit {
 			const foldersResult = await this.fileService.getDeletedFolders(token);
 			if (foldersResult.success && foldersResult.data) {
 				this.deletedFolders = foldersResult.data;
-				this.foldersTableData.models = this.deletedFolders;
+				this.currFoldersTableData!.models = this.deletedFolders;
 			} else {
 				throw new Error(foldersResult.error || 'Ошибка загрузки удалённых папок');
 			}
