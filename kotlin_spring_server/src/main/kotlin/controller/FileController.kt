@@ -252,7 +252,7 @@ class FileController(
 	 * @throws 404 Not Found – запись об удалённом файле или физический файл не найдены.
 	 * @throws 403 Forbidden – нет прав на чтение.
 	 */
-	@GetMapping("/download/")
+	@GetMapping("/download/deleted")
 	fun downloadDeletedFile(
 		@RequestParam path: String,
 		@RequestParam version: Int,

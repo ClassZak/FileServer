@@ -844,9 +844,12 @@ class FileSystemService(
 	fun findDeletedFilePath(deleted: DeletedFile): Path {
 		val originalPath = deleted.originalPath
 		val version = deleted.version
-		val baseName = Paths.get(originalPath).fileName.toString()
+		val fullName = Paths.get(originalPath).fileName.toString()
+		val nameWithoutExt = fullName.substringBeforeLast(".")
+		// Экранируем, чтобы символы типа ( ) [ ] . и т.п. не ломали регулярку
+		val quotedName = java.util.regex.Pattern.quote(nameWithoutExt)
+		val pattern = "${quotedName}_v${version}_\\d+.*"
 		val parentDir = Paths.get(originalPath).parent?.toString() ?: ""
-		val pattern = "${baseName}_v${version}_\\d+.*"
 		val dir = safeRootPathDeleted.resolve(parentDir).toFile()
 		val found = dir.listFiles { _, name -> name.matches(Regex(pattern)) }
 		return found?.firstOrNull()?.toPath() ?: safeRootPathDeleted.resolve(originalPath)
