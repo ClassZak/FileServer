@@ -69,15 +69,15 @@ class GroupService(
 			return null // Скрываем существование группы
 		}
 		
-		// Получаем группу с участниками и создателем
-		val group = groupRepository.findByNameWithMembersAndCreator(groupName) ?: return null
+		// Получаем группу с участниками и главой
+		val group = groupRepository.findByNameWithMembersAndHead(groupName) ?: return null
 		
-		// Преобразуем создателя в UserDto
-		val creatorDto = UserModelResponse(
-			surname = group.creator.surname,
-			name = group.creator.name,
-			patronymic = group.creator.patronymic,
-			email = group.creator.email
+		// Преобразуем главу в UserDto
+		val headDto = UserModelResponse(
+			surname = group.head.surname,
+			name = group.head.name,
+			patronymic = group.head.patronymic,
+			email = group.head.email
 		)
 		
 		// Преобразуем участников в UserDto
@@ -93,7 +93,7 @@ class GroupService(
 		return GroupDetailsDto(
 			name = group.name,
 			membersCount = group.members.size,
-			creator = creatorDto,
+			head = headDto,
 			members = memberDtos
 		)
 	}
@@ -111,16 +111,16 @@ class GroupService(
 			return null // Скрываем существование группы
 		}
 		
-		// Получаем группу с участниками и создателем
-		val group = groupRepository.findByNameWithMembersAndCreator(groupName) ?: return null
+		// Получаем группу с участниками и главой
+		val group = groupRepository.findByNameWithMembersAndHead(groupName) ?: return null
 		
-		// Преобразуем создателя в UserDto
-		val creatorDto = UserModelAdminResponse(
-			surname = group.creator.surname,
-			name = group.creator.name,
-			patronymic = group.creator.patronymic,
-			email = group.creator.email,
-			createdAt = group.creator.createdAt
+		// Преобразуем главу в UserDto
+		val headDto = UserModelAdminResponse(
+			surname = group.head.surname,
+			name = group.head.name,
+			patronymic = group.head.patronymic,
+			email = group.head.email,
+			createdAt = group.head.createdAt
 		)
 		
 		// Преобразуем участников в UserDto
@@ -137,7 +137,7 @@ class GroupService(
 		return GroupDetailsDtoAdmin(
 			name = group.name,
 			membersCount = group.members.size,
-			creator = creatorDto,
+			head = headDto,
 			members = memberDtos
 		)
 	}
@@ -198,7 +198,7 @@ class GroupService(
 			GroupBasicInfoDto(
 				name = group.name,
 				membersCount = group.members.size,
-				creatorEmail = group.creator.email
+				headEmail = group.head.email
 			)
 		}
 	}
@@ -212,17 +212,17 @@ class GroupService(
 	/**
 	 * Создание группы
 	 */
-	fun create(name: String, creatorId: Int): Group {
-		val user = userRepository.findById(creatorId).orElseThrow {
-			EntityNotFoundException("Пользователь с ID $creatorId не найден")
+	fun create(name: String, headId: Int): Group {
+		val user = userRepository.findById(headId).orElseThrow {
+			EntityNotFoundException("Пользователь с ID $headId не найден")
 		}
 		return create(name, user)
 	}
 	
-	fun create(name: String, creator: User?): Group {
-		requireNotNull(creator) { "Не найден пользователь для создания группы" }
+	fun create(name: String, head: User?): Group {
+		requireNotNull(head) { "Не найден пользователь для создания группы" }
 		
-		logger.info("Создание группы '$name' пользователем ${creator.email}")
+		logger.info("Создание группы '$name' пользователем ${head.email}")
 		
 		// Проверка уникальности имени группы
 		if (groupRepository.existsByName(name))
@@ -231,8 +231,8 @@ class GroupService(
 		if (name.contains(Regex("\\|/")))
 			throw IllegalArgumentException("Имя новой группы содержит недопустимые символы")
 		
-		val group = Group(name = name, creator = creator)
-		group.members.add(creator) // Создатель автоматически становится участником
+		val group = Group(name = name, head = head)
+		group.members.add(head) // Глава автоматически становится участником
 		
 		return groupRepository.save(group)
 	}
@@ -240,14 +240,14 @@ class GroupService(
 	/**
 	 * Обновление группы по имени
 	 */
-	fun update(currentName: String, newName: String, creatorEmail: String) {
-		logger.info("Обновление группы '$currentName' -> '$newName', новый создатель: $creatorEmail")
+	fun update(currentName: String, newName: String, headEmail: String) {
+		logger.info("Обновление группы '$currentName' -> '$newName', новый глава группы: $headEmail")
 		
 		val group = groupRepository.findByName(currentName) ?: throw
 		EntityNotFoundException("Группа '$currentName' не найдена")
 		
-		val creator = userRepository.findByEmail(creatorEmail) ?: throw
-		EntityNotFoundException("Пользователь с email '$creatorEmail' не найден")
+		val head = userRepository.findByEmail(headEmail) ?: throw
+		EntityNotFoundException("Пользователь с email '$headEmail' не найден")
 		
 		// Проверка уникальности нового имени
 		if (currentName != newName)
@@ -259,13 +259,13 @@ class GroupService(
 		}
 		
 		
-		// При смене создателя добавляем его в участники, если он там отсутствует
-		if (group.creator.id != creator.id && !group.members.any { it.id == creator.id }) {
-			group.members.add(creator)
+		// При смене главы группы добавляем его в участники, если он там отсутствует
+		if (group.head.id != head.id && !group.members.any { it.id == head.id }) {
+			group.members.add(head)
 		}
 		
 		group.name = newName
-		group.creator = creator
+		group.head = head
 		groupRepository.save(group)
 		
 		logger.info("Группа успешно обновлена: '$currentName' -> '$newName'")
@@ -320,9 +320,9 @@ class GroupService(
 			throw IllegalArgumentException("Пользователь '$userEmail' не состоит в группе '$groupName'")
 		}
 		
-		// Запрет на исключение создателя
-		if (group.creator.id == user.id) {
-			throw IllegalStateException("Невозможно исключить создателя группы '$groupName'")
+		// Запрет на исключение главы
+		if (group.head.id == user.id) {
+			throw IllegalStateException("Невозможно исключить главу группы '$groupName'")
 		}
 		
 		group.members.removeIf { it.id == user.id }

@@ -9,8 +9,8 @@ class Group(
 	var name: String,
 	
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
-	@JoinColumn(name = "IdCreator", nullable = false)
-	var creator: User,
+	@JoinColumn(name = "IdHead", nullable = false)
+	var head: User,
 	
 	@ManyToMany
 	@JoinTable(

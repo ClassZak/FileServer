@@ -14,7 +14,7 @@ import org.zak.entity.User
 interface GroupRepository : JpaRepository<Group, Int> {
 	// Базовые методы
 	fun findByName(name: String): Group?
-	fun findByCreatorId(creatorId: Int): List<Group>
+	fun findByHeadId(headId: Int): List<Group>
 	
 	@Query("SELECT g FROM Group g JOIN g.members m WHERE m.id = :userId")
 	fun findByMemberId(@Param("userId") userId: Int): List<Group>
@@ -55,8 +55,8 @@ interface GroupRepository : JpaRepository<Group, Int> {
 	/**
 	 * Получение группы с участниками (для детального просмотра)
 	 */
-	@Query("SELECT DISTINCT g FROM Group g LEFT JOIN FETCH g.members LEFT JOIN FETCH g.creator WHERE g.name = :name")
-	fun findByNameWithMembersAndCreator(@Param("name") name: String): Group?
+	@Query("SELECT DISTINCT g FROM Group g LEFT JOIN FETCH g.members LEFT JOIN FETCH g.head WHERE g.name = :name")
+	fun findByNameWithMembersAndHead(@Param("name") name: String): Group?
 	
 	/**
 	 * Проверка существования группы по имени
@@ -86,7 +86,7 @@ interface GroupRepository : JpaRepository<Group, Int> {
         SELECT new org.zak.dto.GroupBasicInfoDto(
             g.name,
             SIZE(g.members),
-            g.creator.email
+            g.head.email
         )
         FROM Group g JOIN g.members m
         WHERE m.id = :userId
@@ -101,7 +101,7 @@ interface GroupRepository : JpaRepository<Group, Int> {
         SELECT new org.zak.dto.GroupBasicInfoDto(
             g.name,
             SIZE(g.members),
-            g.creator.email
+            g.head.email
         )
         FROM Group g
         ORDER BY g.name
