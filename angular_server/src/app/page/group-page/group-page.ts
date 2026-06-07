@@ -323,8 +323,8 @@ export class GroupPage implements OnInit, OnDestroy {
 	public async handleConfirmRemoveUserFromGroupModalComponent() : Promise<void>{
 		try {
 			const selectedUserEmail = this.selectedUserEmail;
-			if (this.group && this.selectedUserEmail == this.group?.creator.email)
-				throw new Error('Вы не можете исключить из группы её создателя');
+			if (this.group && this.selectedUserEmail == this.group?.head.email)
+				throw new Error('Вы не можете исключить из группы её главу');
 			const token = AuthService.getToken();
 			if(!token)
 				throw new Error('Отсутствует токен авторизации');

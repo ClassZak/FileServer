@@ -1,8 +1,8 @@
 export class GroupUpdateModel {
 	public newName:string;
-	public creatorEmail: string;
-	constructor (newName: string, creatorEmail: string){
+	public headEmail: string;
+	constructor (newName: string, headEmail: string){
 		this.newName = newName;
-		this.creatorEmail = creatorEmail;
+		this.headEmail = headEmail;
 	}
 }

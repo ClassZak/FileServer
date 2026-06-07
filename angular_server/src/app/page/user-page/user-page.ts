@@ -59,7 +59,7 @@ export class UserPage implements OnInit, OnDestroy {
 		[
 			{header: 'Название', field: 'name'},
 			{header: 'Число участников', field: 'membersCount'},
-			{header: 'Почта создателя', field: 'creatorEmail'},
+			{header: 'Почта главы группы', field: 'headEmail'},
 		],
 		[],
 		{

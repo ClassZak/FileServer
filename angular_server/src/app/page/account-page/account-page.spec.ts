@@ -30,7 +30,7 @@ describe('AccountPage', () => {
 		const groupServiceMock = {
 			getAllGroupsStatic: vi.fn().mockResolvedValue({
 				success: true,
-				data: [{ name: 'g1', membersCount: 1, creatorEmail: 'c@test.com' }]
+				data: [{ name: 'g1', membersCount: 1, headEmail: 'c@test.com' }]
 			}),
 			createGroupStatic: vi.fn().mockResolvedValue({ success: true })
 		};

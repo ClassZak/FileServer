@@ -60,7 +60,7 @@ export class AccountPage implements OnInit {
 		[
 			{header: 'Название', field: 'name'},
 			{header: 'Число участников', field: 'membersCount'},
-			{header: 'Почта создателя', field: 'creatorEmail'},
+			{header: 'Почта главы группы', field: 'headEmail'},
 		],
 		[],
 		{
@@ -79,7 +79,7 @@ export class AccountPage implements OnInit {
 		[
 			{header: 'Название', field: 'name'},
 			{header: 'Число участников', field: 'membersCount'},
-			{header: 'Почта создателя', field: 'creatorEmail'},
+			{header: 'Почта главы группы', field: 'headEmail'},
 		],
 		[],
 		{
