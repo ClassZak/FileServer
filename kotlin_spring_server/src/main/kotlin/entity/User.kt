@@ -28,7 +28,7 @@ class User(
 	@OneToOne(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true)
 	var administrator: Administrator? = null
 	
-	@OneToMany(mappedBy = "creator", fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "head", fetch = FetchType.LAZY)
 	val createdGroups: MutableSet<Group> = mutableSetOf()
 	
 	@ManyToMany(mappedBy = "members")

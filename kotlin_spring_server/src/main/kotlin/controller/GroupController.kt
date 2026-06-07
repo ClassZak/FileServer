@@ -132,14 +132,14 @@ class GroupController(
 		
 		
 		return try {
-			val userCreator = userService.getUserEntityByEmail(request.creatorEmail)
+			val userHead = userService.getUserEntityByEmail(request.headEmail)
 				?: throw EntityNotFoundException()
 			
-			val group = groupService.create(request.name, userCreator.id!!)
+			val group = groupService.create(request.name, userHead.id!!)
 			val resultForClient = GroupBasicInfoDto(
 				name = group.name,
 				membersCount = group.members.size,
-				creatorEmail = group.creator.email
+				headEmail = group.head.email
 			)
 			fileSystemService.createGroupFolder(group.name)
 			ResponseEntity.status(HttpStatus.CREATED).body(mapOf("group" to resultForClient))
@@ -168,7 +168,7 @@ class GroupController(
 		}
 		
 		return try {
-			groupService.update(groupName, request.newName, request.creatorEmail)
+			groupService.update(groupName, request.newName, request.headEmail)
 			fileSystemService.updateFileSystemForNewGroupName(groupName, request.newName)
 			successResponse(mapOf("success" to true, "message" to "Группа обновлена"))
 		} catch (e: IllegalArgumentException) {
@@ -261,7 +261,7 @@ class GroupController(
 		} catch (e: IllegalArgumentException) {
 			errorResponse(HttpStatus.BAD_REQUEST, e.message ?: "Ошибка исключения пользователя")
 		} catch (e: IllegalStateException) {
-			errorResponse(HttpStatus.BAD_REQUEST, e.message ?: "Невозможно исключить создателя группы")
+			errorResponse(HttpStatus.BAD_REQUEST, e.message ?: "Невозможно исключить главу группы")
 		} catch (e: EntityNotFoundException) {
 			errorResponse(HttpStatus.NOT_FOUND, e.message ?: "Группа или пользователь не найдены")
 		}
@@ -370,12 +370,12 @@ class GroupController(
 /**
  * DTO для создания группы
  */
-data class CreateGroupRequest(val name: String, val creatorEmail: String)
+data class CreateGroupRequest(val name: String, val headEmail: String)
 
 /**
  * DTO для обновления группы по имени
  */
 data class UpdateGroupByNameRequest(
 	val newName: String,          // Новое имя группы (может совпадать со старым)
-	val creatorEmail: String      // Email нового создателя группы
+	val headEmail: String      // Email нового главы группы
 )

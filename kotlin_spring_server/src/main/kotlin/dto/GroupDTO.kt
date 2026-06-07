@@ -11,7 +11,7 @@ import java.time.LocalDateTime
 data class GroupDetailsDto(
 	val name: String,
 	val membersCount: Int,
-	val creator: UserModelResponse,
+	val head: UserModelResponse,
 	val members: List<UserModelResponse> = emptyList()
 )
 
@@ -22,7 +22,7 @@ data class GroupDetailsDto(
 data class GroupDetailsDtoAdmin(
 	val name: String,
 	val membersCount: Int,
-	val creator: UserModelAdminResponse,
+	val head: UserModelAdminResponse,
 	val members: List<UserModelAdminResponse> = emptyList()
 )
 
@@ -35,5 +35,5 @@ data class GroupDetailsDtoAdmin(
 data class GroupBasicInfoDto(
 	val name: String,
 	val membersCount: Int,
-	val creatorEmail: String
+	val headEmail: String
 )
