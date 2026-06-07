@@ -34,7 +34,6 @@ import { Title } from '@angular/platform-browser';
 	UpdateUserModalComponent,
 	UpdateUserPasswordModalComponent,
 	DeleteUserModalComponent,
-	RedirectionButton,
 	ModelTable
 ],
 	templateUrl: './user-page.html',

@@ -40,8 +40,7 @@ import { Title } from '@angular/platform-browser';
 	AppFooter,
 	LoadingSpinner,
 	ModelTable,
-	ModelTableTileComponent,
-	RedirectionButton
+	ModelTableTileComponent
 ],
 	providers: [DatePipe],
 	templateUrl: './history-page.html',

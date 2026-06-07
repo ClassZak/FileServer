@@ -33,7 +33,6 @@ import { Title } from '@angular/platform-browser';
 		AppFooter, 
 		AppHeader, 
 		LoadingSpinner,
-		RedirectionButton,
 
 		ModelTable,
 

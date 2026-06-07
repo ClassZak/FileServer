@@ -26,7 +26,6 @@ import { Title } from '@angular/platform-browser';
 	LoadingSpinner,
 	ModelTable,
 	ModelTableTileComponent,
-	RedirectionButton
 ],
 	providers: [DatePipe],
 	templateUrl: './deleted-files-page.html',

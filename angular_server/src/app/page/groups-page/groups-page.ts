@@ -34,8 +34,7 @@ import { Title } from '@angular/platform-browser';
 
 		ModelTable,
 
-		CreateGroupModalComponent,
-		RedirectionButton
+		CreateGroupModalComponent
 	],
 	templateUrl: './groups-page.html',
 	styleUrl: './groups-page.css',

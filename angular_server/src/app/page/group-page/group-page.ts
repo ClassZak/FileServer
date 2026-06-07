@@ -38,8 +38,7 @@ import { Title } from '@angular/platform-browser';
 
 		ModelTable,
 
-		UpdateGroupModalComponent,
-		RedirectionButton
+		UpdateGroupModalComponent
 	],
 	providers: [
 		DatePipe

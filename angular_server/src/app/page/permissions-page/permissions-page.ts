@@ -31,8 +31,7 @@ import { Title } from '@angular/platform-browser';
 	AppHeader,
 	AppFooter,
 	LoadingSpinner,
-	ModelTable,
-	RedirectionButton
+	ModelTable
 ],
 	templateUrl: './permissions-page.html',
 	styleUrls: ['./permissions-page.css']

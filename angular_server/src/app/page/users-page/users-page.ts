@@ -34,7 +34,6 @@ import { Notification, NotificationType } from '../../core/view-core/model/notif
 		LoadingSpinner,
 
 		CreateUserModalComponent,
-		RedirectionButton,
 		ModelTable
 ],
 	templateUrl: './users-page.html',
