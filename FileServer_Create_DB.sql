@@ -232,7 +232,7 @@ CALL AddUser(
 	'Иванов',
     'Артем',
     'Сергеевич',
-    'Ivanov.AS@example.com',
+    'ivanov.as@example.com',
     '$2b$12$jD2Wp2GTzmZgQy.eFloEBeSPEsC1/uI8TR6aCQdzbHlJnXRlq4gHq', -- 123456a
     TRUE
 );
