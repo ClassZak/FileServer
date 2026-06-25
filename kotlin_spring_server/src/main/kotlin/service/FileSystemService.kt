@@ -1185,8 +1185,9 @@ class FileSystemService(
 	 */
 	@Transactional
 	fun setFilePermission(path: String, userEmail: String?, groupName: String?, mode: Int, currentUser: CurrentUser) {
+		val normalizedPath = if (path.startsWith("/")) path.drop(1) else path
 		require((userEmail != null) xor (groupName != null)) { "Укажите ровно одно: userEmail или groupName" }
-		val fileEntity = fileEntityRepository.findByPathAndIsDeletedFalse(path)
+		val fileEntity = fileEntityRepository.findByPathAndIsDeletedFalse(normalizedPath)
 			?: throw EntityNotFoundException("Файл '$path' не найден")
 		if (groupName != null && isGroupDirectory(Paths.get(path).parent?.toString() ?: "")) {
 			throw SecurityException("Нельзя ограничивать права группы на файлы внутри её папки")
