@@ -76,7 +76,7 @@ export class PermissionsPage implements OnInit, OnDestroy {
 					type: ActionType.LINK,
 					label: 'Перейти',
 					class: 'btn btn-blue',
-					href: (item: any) => `/files/${item.path || this.path}`
+					href: (item: any) => `/files/${item.path || this.path.replace(/^\//, '')}`
 				},
 				{
 					type: ActionType.ACTION,
@@ -159,7 +159,7 @@ export class PermissionsPage implements OnInit, OnDestroy {
 			this.querySub = this.route.queryParamMap.subscribe(async params => {
 				// Section 1
 				this.targetType = (params.get('targetType') as 'folder' | 'file') || 'folder';
-				this.path = params.get('path') || '';
+				this.path = params.get('path')?.replace(/^\//, '') || '';
 				this.permissionType = (params.get('permType') as 'user' | 'group') || 'user';
 				this.userEmail = params.get('userEmail') || '';
 				this.groupName = params.get('groupName') || '';
@@ -259,7 +259,7 @@ export class PermissionsPage implements OnInit, OnDestroy {
 	private updateUrl(): void {
 		const queryParams: any = {
 			targetType: this.targetType,
-			path: this.path,
+			path: this.path.replace(/^\//, ''),
 			permType: this.permissionType,
 			mode: this.mode,
 			viewType: this.viewType
@@ -278,7 +278,7 @@ export class PermissionsPage implements OnInit, OnDestroy {
 
 	// ---------- Section 1 methods ----------
 	async loadPermissions(): Promise<void> {
-		if (!this.path.trim()) {
+		if (!this.path.replace(/^\//, '').trim()) {
 			this.currentPermissions = [];
 			this.currentPermissionsTable.models = [];
 			this.updateUrl();
@@ -290,9 +290,9 @@ export class PermissionsPage implements OnInit, OnDestroy {
 			if (!token) return;
 			let res;
 			if (this.targetType === 'folder') {
-				res = await this.fileService.getFolderPermissions(token, this.path);
+				res = await this.fileService.getFolderPermissions(token, this.path.replace(/^\//, ''));
 			} else {
-				res = await this.fileService.getFilePermissions(token, this.path);
+				res = await this.fileService.getFilePermissions(token, this.path.replace(/^\//, ''));
 			}
 			if (res.success && res.data) {
 				this.currentPermissions = res.data;
@@ -312,7 +312,7 @@ export class PermissionsPage implements OnInit, OnDestroy {
 	}
 
 	async addPermission(): Promise<void> {
-		if (!this.path.trim()) {
+		if (!this.path.replace(/^\//, '').trim()) {
 			this.noticeService.addNotification(new Notification(NotificationType.Warning, 'Введите путь'));
 			return;
 		}
@@ -328,7 +328,7 @@ export class PermissionsPage implements OnInit, OnDestroy {
 		if (!token) return;
 
 		const request: SetPermissionRequest = {
-			path: this.path,
+			path: this.path.replace(/^\//, ''),
 			userEmail: this.permissionType === 'user' ? this.userEmail : null,
 			groupName: this.permissionType === 'group' ? this.groupName : null,
 			mode: this.mode
@@ -360,14 +360,14 @@ export class PermissionsPage implements OnInit, OnDestroy {
 			if (this.targetType === 'folder') {
 				result = await this.fileService.deleteFolderPermission(
 					token,
-					this.path,
+					this.path.replace(/^\//, ''),
 					perm.userEmail || undefined,
 					perm.groupName || undefined
 				);
 			} else {
 				result = await this.fileService.deleteFilePermission(
 					token,
-					this.path,
+					this.path.replace(/^\//, ''),
 					perm.userEmail || undefined,
 					perm.groupName || undefined
 				);
@@ -450,15 +450,23 @@ export class PermissionsPage implements OnInit, OnDestroy {
 
 	private async loadAllGroupsPermissions(token: string): Promise<void> {
 		const allPerms: PermissionInfo[] = [];
+		let hasError = false;
 		for (const group of this.allGroups) {
 			try {
 				const res = await this.fileService.getGroupPermissions(token, group.name);
-				if (res.success && res.data) {
+				if (res.success && res.data)
 					allPerms.push(...res.data);
-				}
+				else
+					throw new Error(res.error || 'Неизвестная ошибка');
 			} catch (e) {
 				console.warn(`Ошибка загрузки прав группы ${group.name}`, e);
+				hasError = true;
 			}
+		}
+		if (hasError) {
+			this.noticeService.addNotification(
+				new Notification(NotificationType.Warning, 'Некоторые права групп не загружены')
+			);
 		}
 		this.viewPermissions = allPerms;
 		this.viewPermissionsTable.models = this.viewPermissions;
