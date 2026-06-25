@@ -114,6 +114,7 @@ export class UsersPage implements OnInit {
 				console.log('Аутентификация прошла успешно');
 				this.isAuthenticated = true;
 				this.authorizedUser = authResult.data?.user;
+				this.cdr.detectChanges();
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
@@ -129,8 +130,10 @@ export class UsersPage implements OnInit {
 			if(token === null)
 				throw "У вас нет токена авторизации";
 			const result = await this.adminService.isAdmin(token);
-			if (result.success)
+			if (result.success) {
+				this.cdr.detectChanges();
 				this.isAdmin = result.data!.isAdmin;
+			}
 			else if (!result.success && !result.error)
 				this.router.navigate(['/account']);
 			else

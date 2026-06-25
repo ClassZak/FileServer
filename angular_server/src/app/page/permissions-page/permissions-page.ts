@@ -104,6 +104,10 @@ export class PermissionsPage implements OnInit, OnDestroy {
 		[
 			{ header: 'Тип', field: (item: PermissionInfo) => item.type === 'folder' ? 'Папка' : 'Файл' },
 			{
+				header: 'Субъект',
+				field: (item: PermissionInfo) => item.userEmail || item.groupName || '—'
+			},
+			{
 				header: 'Путь',
 				field: 'path',
 				icon: (item: PermissionInfo) => item.type === 'folder' ? 'matfFolderOpenColored' : 'matfDocumentColored'
@@ -194,13 +198,14 @@ export class PermissionsPage implements OnInit, OnDestroy {
 		const authResult = await this.authService.checkAuth();
 		if (!authResult.success || !authResult.data?.authenticated) {
 			this.router.navigate(['/login']);
-			throw new Error('Not authenticated');
+			throw new Error('Вы не вошли в систему');
 		}
 		const token = AuthService.getToken();
-		if (!token) throw new Error('No token');
+		if (!token) throw new Error('Нет токена авторизации');
 		const adminCheck = await this.adminService.isAdmin(token);
 		this.isAdmin = adminCheck.success && adminCheck.data?.isAdmin === true;
-		if (!this.isAdmin) throw new Error('Admin rights required');
+		this.cdr.detectChanges();
+		if (!this.isAdmin) throw new Error('Необходимы права пользователя');
 	}
 
 	private async loadUsersAndGroups(): Promise<void> {
@@ -432,7 +437,7 @@ export class PermissionsPage implements OnInit, OnDestroy {
 					throw new Error(res.error);
 				}
 			} catch (e) {
-				console.warn(`Failed to load permissions for user ${user.email}`, e);
+				console.warn(`Ошибка загрузки прав пользователя ${user.email}`, e);
 				hasError = true;
 			}
 		}
@@ -452,7 +457,7 @@ export class PermissionsPage implements OnInit, OnDestroy {
 					allPerms.push(...res.data);
 				}
 			} catch (e) {
-				console.warn(`Failed to load permissions for group ${group.name}`, e);
+				console.warn(`Ошибка загрузки прав группы ${group.name}`, e);
 			}
 		}
 		this.viewPermissions = allPerms;

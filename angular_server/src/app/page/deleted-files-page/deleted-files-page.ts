@@ -259,6 +259,7 @@ export class DeletedFilesPage implements OnInit {
 			if (result.success) {
 				this.noticeService.addNotification(new Notification(NotificationType.Success, 'Файл восстановлен'));
 				await this.loadDeletedItems();
+				this.cdr.detectChanges();
 			} else {
 				throw new Error(result.error);
 			}
@@ -275,6 +276,7 @@ export class DeletedFilesPage implements OnInit {
 			if (result.success) {
 				this.noticeService.addNotification(new Notification(NotificationType.Success, 'Папка восстановлена'));
 				await this.loadDeletedItems();
+				this.cdr.detectChanges();
 			} else {
 				throw new Error(result.error);
 			}
@@ -333,6 +335,7 @@ export class DeletedFilesPage implements OnInit {
 			if (result.success) {
 				this.noticeService.addNotification(new Notification(NotificationType.Success, 'Папка окончательно удалена'));
 				await this.loadDeletedItems();
+				this.cdr.detectChanges();
 			} else {
 				throw new Error(result.error);
 			}

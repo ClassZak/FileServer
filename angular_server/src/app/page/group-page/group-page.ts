@@ -211,8 +211,9 @@ export class GroupPage implements OnInit, OnDestroy {
 			this.paramSubscription?.unsubscribe();
 			this.router.navigate(['/login']);
 			return;
+		} finally {
+			this.cdr.detectChanges();
 		}
-		this.cdr.detectChanges();
 	}
 	private async checkAdminStatus(): Promise<void> {
 		try {
@@ -220,8 +221,10 @@ export class GroupPage implements OnInit, OnDestroy {
 			if(token === null)
 				throw "У вас нет токена авторизации";
 			const result = await this.adminService.isAdmin(token);
-			if (result.success)
+			if (result.success) {
 				this.isAdmin = result.data!.isAdmin;
+				this.cdr.detectChanges();
+			}
 			else
 				throw new Error(
 					result.error ?
