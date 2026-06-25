@@ -6,15 +6,26 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
+import org.zak.entity.FileEntity
 import org.zak.entity.FolderEntity
 
 @Repository
 interface FolderEntityRepository : JpaRepository<FolderEntity, Long> {
 	fun findByPath(path: String): FolderEntity?
 	
+	fun findAllByPath(path: String): List<FolderEntity>
+	
+	fun findByPathAndIsDeletedFalse(path: String): FolderEntity?
+	
+	fun findByPathAndIsDeletedTrue(path: String): FolderEntity?
+	
+	fun findAllByPathAndIsDeletedTrue(path: String): List<FolderEntity>
+	
 	@Query("SELECT f FROM FolderEntity f WHERE f.path LIKE CONCAT(:prefix, '%')")
 	fun findByPathStartingWith(@Param("prefix") prefix: String): List<FolderEntity>
 	
+	@Query("SELECT f FROM FolderEntity f WHERE f.isDeleted = FALSE AND f.path LIKE CONCAT(:prefix, '%')")
+	fun findByPathAndIsDeletedFalseStartingWith(@Param("prefix") prefix: String): List<FolderEntity>
 	
 	@Modifying
 	@Transactional

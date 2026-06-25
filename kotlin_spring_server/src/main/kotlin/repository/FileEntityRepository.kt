@@ -12,9 +12,19 @@ import org.zak.entity.FileEntity
 interface FileEntityRepository : JpaRepository<FileEntity, Long> {
 	fun findByPath(path: String): FileEntity?
 	
+	fun findAllByPath(path: String): List<FileEntity>
+	
+	fun findByPathAndIsDeletedFalse(path: String): FileEntity?
+	
+	fun findByPathAndIsDeletedTrue(path: String): FileEntity?
+	
+	fun findAllByPathAndIsDeletedTrue(path: String): List<FileEntity>
+	
 	@Query("SELECT f FROM FileEntity f WHERE f.path LIKE CONCAT(:prefix, '%')")
 	fun findByPathStartingWith(@Param("prefix") prefix: String): List<FileEntity>
 	
+	@Query("SELECT f FROM FileEntity f WHERE f.isDeleted = FALSE AND f.path LIKE CONCAT(:prefix, '%')")
+	fun findByPathAndIsDeletedFalseStartingWith(@Param("prefix") prefix: String): List<FileEntity>
 	
 	@Modifying
 	@Transactional

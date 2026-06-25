@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
+import org.zak.entity.DeletedFile
 import org.zak.entity.DeletedFolder
 import org.zak.entity.FolderEntity
 import java.time.LocalDateTime
@@ -21,6 +22,14 @@ interface DeletedFolderRepository : JpaRepository<DeletedFolder, Long> {
 		SELECT df FROM DeletedFolder df ORDER BY df.deletedAt DESC
 	""")
 	fun findAllOrderByDeletedAtDesc(): List<DeletedFolder>
+	
+	@Query("""
+		SELECT df
+		FROM DeletedFolder df
+		WHERE df.folderEntity.path = :path
+		ORDER BY df.version DESC
+	""")
+	fun findAllByPathAndOrderByVersionDesc(path: String): List<DeletedFolder>
 	
 	@Query("""
 		SELECT df FROM DeletedFolder df WHERE df.folderEntity = :folderEntity ORDER BY df.version DESC
