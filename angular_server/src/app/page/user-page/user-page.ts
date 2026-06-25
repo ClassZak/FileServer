@@ -168,8 +168,10 @@ export class UserPage implements OnInit, OnDestroy {
 			if(token === null)
 				throw "У вас нет токена авторизации";
 			const result = await this.adminService.isAdmin(token);
-			if (result.success)
+			if (result.success) {
 				this.isAdmin = result.data!.isAdmin;
+				this.cdr.detectChanges();
+			}
 			else if (!result.success && !result.error)
 				this.router.navigate(['/account']);
 			else

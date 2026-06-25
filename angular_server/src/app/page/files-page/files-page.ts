@@ -218,7 +218,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			console.error('Ошибка при загрузке страницы:', error);
 			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при загрузке страницы:', '${(error as Error).message}'`));
 		} finally {
-			this.isLoading = false;  // скрываем спиннер после инициализации подписок
+			this.isLoading = false;
 			this.cdr.detectChanges();
 		}
 	}
@@ -284,7 +284,9 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 			} else {
 				this.isAuthenticated = true;
 				this.authorizedUser = authResult.data.user;
+				this.cdr.detectChanges();
 				await this.checkAdminStatus();
+				this.cdr.detectChanges();
 			}
 		} catch (error) {
 			console.error('Ошибка при проверке аутентификации:', error);
@@ -331,6 +333,7 @@ export class FilesPageComponent implements OnInit, OnDestroy {
 	private async loadDirectory(): Promise<void> {
 		this.isLoading = true;
 		this.error = '';
+		this.cdr.detectChanges();
 
 		try {
 			const token = AuthService.getToken();

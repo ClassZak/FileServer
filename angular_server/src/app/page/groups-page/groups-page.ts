@@ -142,6 +142,8 @@ export class GroupsPage implements OnInit {
 			this.noticeService.addNotification(new Notification(NotificationType.Error, `Ошибка при проверке статуса администратора: '${(error as Error).message}'`));
 			this.isAdmin = false;
 			Promise.resolve().then(()=>{this.router.navigate(['/account']);});
+		} finally {
+			this.cdr.detectChanges();
 		}
 	}
 

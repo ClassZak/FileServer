@@ -263,6 +263,7 @@ export class HistoryPage implements OnInit, OnDestroy {
 			const result = await this.adminService.isAdmin(token);
 			if (result.success) {
 				this.isAdmin = result.data!.isAdmin;
+				this.cdr.detectChanges();
 			} else {
 				throw new Error(result.error || 'Не удалось проверить права администратора');
 			}

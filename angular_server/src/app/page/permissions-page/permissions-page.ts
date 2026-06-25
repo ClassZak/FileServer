@@ -200,7 +200,8 @@ export class PermissionsPage implements OnInit, OnDestroy {
 		if (!token) throw new Error('No token');
 		const adminCheck = await this.adminService.isAdmin(token);
 		this.isAdmin = adminCheck.success && adminCheck.data?.isAdmin === true;
-		if (!this.isAdmin) throw new Error('Admin rights required');
+		this.cdr.detectChanges();
+		if (!this.isAdmin) throw new Error('Необходимы права пользователя');
 	}
 
 	private async loadUsersAndGroups(): Promise<void> {
@@ -432,7 +433,7 @@ export class PermissionsPage implements OnInit, OnDestroy {
 					throw new Error(res.error);
 				}
 			} catch (e) {
-				console.warn(`Failed to load permissions for user ${user.email}`, e);
+				console.warn(`Ошибка загрузки прав пользователя ${user.email}`, e);
 				hasError = true;
 			}
 		}
@@ -452,7 +453,7 @@ export class PermissionsPage implements OnInit, OnDestroy {
 					allPerms.push(...res.data);
 				}
 			} catch (e) {
-				console.warn(`Failed to load permissions for group ${group.name}`, e);
+				console.warn(`Ошибка загрузки прав группы ${group.name}`, e);
 			}
 		}
 		this.viewPermissions = allPerms;

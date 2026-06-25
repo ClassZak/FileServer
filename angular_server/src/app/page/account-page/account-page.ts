@@ -136,10 +136,12 @@ export class AccountPage implements OnInit {
 			if (authResult.data?.authenticated) {
 				this.isAuthenticated = true;
 				this.user = authResult.data.user;
+				this.cdr.detectChanges();
 				
 				// Load addition information
-				await this.checkAdminStatus()
-				await this.loadMyGroups()
+				await this.checkAdminStatus();
+				await this.loadMyGroups();
+				this.cdr.detectChanges();
 			} else {
 				console.error('Аутентификация не пройдена:', authResult.error);
 				this.router.navigate(['/login']);
@@ -159,8 +161,10 @@ export class AccountPage implements OnInit {
 			if(token === null)
 				throw "У вас нет токена авторизации";
 			const result = await this.adminService.isAdmin(token);
-			if (result.success)
+			if (result.success) {
 				this.isAdmin = result.data!.isAdmin;
+				this.cdr.detectChanges();
+			}
 			else
 				throw new Error(
 					result.error ?

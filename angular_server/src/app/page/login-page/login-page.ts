@@ -77,7 +77,7 @@ export class LoginPage {
 			if (result.success) {
 				const authResult = await this.authService.checkAuth();
 				if (!authResult.success)
-					throw new Error(authResult.error ?? 'Ошибка авторизации после входа');
+					throw new Error(authResult.error ?? 'Не удалось войти');
 				
 				if (authResult.data?.authenticated) {
 					this.noticeService.addNotification(new Notification(NotificationType.Success, 'Вы успешно авторизировались'));
@@ -85,7 +85,7 @@ export class LoginPage {
 					this.router.navigate(['/account']);
 					return;
 				} else
-					throw new Error('Ошибка авторизации после входа');
+					throw new Error('Не удалось войти');
 			} else {
 				const errorMessage = result.error ?? defaultErrorMessage;
 				throw new Error(errorMessage);
