@@ -104,6 +104,10 @@ export class PermissionsPage implements OnInit, OnDestroy {
 		[
 			{ header: 'Тип', field: (item: PermissionInfo) => item.type === 'folder' ? 'Папка' : 'Файл' },
 			{
+				header: 'Субъект',
+				field: (item: PermissionInfo) => item.userEmail || item.groupName || '—'
+			},
+			{
 				header: 'Путь',
 				field: 'path',
 				icon: (item: PermissionInfo) => item.type === 'folder' ? 'matfFolderOpenColored' : 'matfDocumentColored'
@@ -194,10 +198,10 @@ export class PermissionsPage implements OnInit, OnDestroy {
 		const authResult = await this.authService.checkAuth();
 		if (!authResult.success || !authResult.data?.authenticated) {
 			this.router.navigate(['/login']);
-			throw new Error('Not authenticated');
+			throw new Error('Вы не вошли в систему');
 		}
 		const token = AuthService.getToken();
-		if (!token) throw new Error('No token');
+		if (!token) throw new Error('Нет токена авторизации');
 		const adminCheck = await this.adminService.isAdmin(token);
 		this.isAdmin = adminCheck.success && adminCheck.data?.isAdmin === true;
 		this.cdr.detectChanges();

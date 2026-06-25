@@ -49,16 +49,16 @@
 					<p><strong>Количество участников:</strong>{{group?.membersCount}}</p>
 					<p><strong>Глава:</strong>{{group?.head?.toString()}}</p>
 				</div>
-				<h1>Участники группы</h1>
-				@if (currentUserModelTableDataObjectRef && currentUserModelTableDataObjectRef.models.length) {			
-					<div class="model-table-container">
-						<app-model-table
-							[modelTableDataObject]="currentUserModelTableDataObjectRef"
-						>
-						</app-model-table>
-					</div>
-				}
 			</div>
+			<h1>Участники группы</h1>
+			@if (currentUserModelTableDataObjectRef && currentUserModelTableDataObjectRef.models.length) {			
+				<div class="model-table-container">
+					<app-model-table
+						[modelTableDataObject]="currentUserModelTableDataObjectRef"
+					>
+					</app-model-table>
+				</div>
+			}
 		}
 	}
 </main>
